@@ -75,6 +75,7 @@ class TsubameSRSDatabase extends Dexie {
   constructor() {
     super('tsubame-srs')
 
+    // Version 1: Initial schema
     this.version(1).stores({
       // Read-only tables (synced from server)
       profiles: 'id',
@@ -90,6 +91,20 @@ class TsubameSRSDatabase extends Dexie {
 
       // Sync management
       syncQueue: '++id, table, created_at',
+      syncMetadata: 'key',
+    })
+
+    // Version 2: Add attempts index to syncQueue for querying pending entries
+    this.version(2).stores({
+      profiles: 'id',
+      noteTypes: 'id',
+      cardTemplates: 'id, note_type_id',
+      decks: 'id, owner_id',
+      notes: 'id, deck_id',
+      cards: 'id, note_id, deck_id',
+      cardStates: 'id, user_id, card_id, due, [user_id+card_id]',
+      reviewLogs: 'id, user_id, card_id, synced_at',
+      syncQueue: '++id, table, created_at, attempts',
       syncMetadata: 'key',
     })
   }

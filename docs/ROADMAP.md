@@ -123,7 +123,7 @@
 1. Phase 4.1: TTS統合（OpenAI TTS / Google Cloud TTS）
 
 ### 既知の問題
-- なし
+- 学習開始前からオフラインだと学習画面に入れない（カードデータの事前キャッシュが必要）
 
 ### 完了済み
 - [x] プロジェクト設計（DB、SRS、ノートタイプ等）
@@ -154,3 +154,4 @@
 - [x] Phase 3.1 ローカルDB（Dexie.jsスキーマ定義、ローカル保存ロジック）
 - [x] Phase 3.2 同期（sync_queue実装、オンライン検知、競合検知・解決UI）
 - [x] Phase 3.3 PWA対応（Service Worker、オフラインページ、インストール促進UI）
+- [x] Phase 3 動作確認完了・Dexieスキーマバグ修正（syncQueueにattemptsインデックス追加）
