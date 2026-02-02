@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { NoteEditor } from '@/components/deck/NoteEditor'
+import { CSVImporter } from '@/components/deck/CSVImporter'
 import type { NoteType } from '@/types/database'
 
 interface Note {
@@ -47,10 +48,16 @@ export function DeckDetailClient({ deckId, notes, noteTypes, canEdit }: DeckDeta
   const router = useRouter()
   const [isAddingNote, setIsAddingNote] = useState(false)
   const [showDistributeModal, setShowDistributeModal] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
 
   const handleNoteAdded = () => {
     setIsAddingNote(false)
     router.refresh() // Refresh to show new note
+  }
+
+  const handleImportComplete = () => {
+    setShowImportModal(false)
+    router.refresh() // Refresh to show imported notes
   }
 
   // Note type name lookup
@@ -64,6 +71,15 @@ export function DeckDetailClient({ deckId, notes, noteTypes, canEdit }: DeckDeta
       {/* Action Buttons for Teachers */}
       {canEdit && (
         <div className="mb-6 flex gap-3">
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            CSVインポート
+          </button>
           <button
             onClick={() => setShowDistributeModal(true)}
             className="flex-1 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2"
@@ -144,6 +160,35 @@ export function DeckDetailClient({ deckId, notes, noteTypes, canEdit }: DeckDeta
           deckId={deckId}
           onClose={() => setShowDistributeModal(false)}
         />
+      )}
+
+      {/* CSV Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">CSVインポート</h2>
+                <button
+                  onClick={() => setShowImportModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              <CSVImporter
+                deckId={deckId}
+                noteTypes={noteTypes}
+                onImportComplete={handleImportComplete}
+                onCancel={() => setShowImportModal(false)}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
