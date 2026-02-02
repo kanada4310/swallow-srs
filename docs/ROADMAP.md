@@ -48,8 +48,8 @@
 - [ ] クラス管理
 
 ### 2.2 デッキ管理
-- [ ] デッキ作成・編集UI
-- [ ] ノート追加UI
+- [x] デッキ作成・編集UI
+- [x] ノート追加UI
 - [ ] デッキ配布（クラス/個人）
 
 ### 2.3 CSVインポート
@@ -115,26 +115,17 @@
 
 ## 現在の進捗
 
-**Phase**: Phase 1 完了 / Phase 2 準備中
+**Phase**: Phase 2 進行中
 **最終更新**: 2026-02-02
-**次のタスク**: RLSポリシー適用、デッキ作成UI
+**次のタスク**: デッキ配布機能、生徒管理UI
 
 ### 次回セッションで最初にやること
-1. **RLSポリシーの適用**（循環参照問題の恒久対策）
-   - `supabase/migrations/002_fix_rls_policies.sql` を Supabase SQL Editor で実行
-   - SECURITY DEFINER関数を使用して循環参照を解決
-2. 講師向けデッキ作成・編集UI
-3. ノート追加UI（カード作成）
+1. デッキ配布機能（クラス/個人への配布UI）
+2. 講師ダッシュボード（生徒一覧・進捗表示）
+3. クラス管理UI
 
 ### 既知の問題
-- **RLSポリシー循環参照**: `deck_assignments` → `class_members` → `classes` の参照で無限ループが発生
-  - 一時対策として以下のポリシーを削除済み:
-    - `Users can view assigned decks` (decks)
-    - `Users can view cards in assigned decks` (cards)
-    - `Users can view notes in assigned decks` (notes)
-    - `Assigned users can view their assignments` (deck_assignments)
-    - `Teachers can view students review logs` (review_logs)
-  - これにより配布デッキ機能は現在動作しない（自分のデッキのみ表示）
+- なし（RLSポリシー循環参照問題は002_fix_rls_policies.sqlで解決済み）
 
 ### 完了済み
 - [x] プロジェクト設計（DB、SRS、ノートタイプ等）
@@ -153,4 +144,7 @@
 - [x] 型定義ファイル作成（src/types/database.ts）
 - [x] テストデータで動作確認完了
 - [x] テンプレートレンダリング機能実装（HTMLサニタイズ、Cloze対応、テスト33件追加）
-- [x] RLSポリシー修正SQL作成（002_fix_rls_policies.sql）
+- [x] RLSポリシー修正SQL作成・適用（002_fix_rls_policies.sql）
+- [x] デッキ作成API・UI実装（POST /api/decks、/decks/new）
+- [x] ノート追加API・UI実装（POST /api/notes、NoteEditorコンポーネント）
+- [x] デッキ詳細ページ実装（/decks/[id]、ノート一覧表示）

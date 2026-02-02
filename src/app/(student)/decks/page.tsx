@@ -177,7 +177,7 @@ function DeckCard({ deck }: { deck: DeckWithStats }) {
 
   return (
     <Link
-      href={`/study?deck=${deck.id}`}
+      href={`/decks/${deck.id}`}
       className="block bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md hover:border-gray-300 transition-all"
     >
       <div className="flex items-center justify-between">
