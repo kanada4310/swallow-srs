@@ -1,9 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { StudyCard } from './StudyCard'
-import { Ease, getNextIntervalPreview, type CardSchedule } from '@/lib/srs/scheduler'
+import {
+  Ease,
+  getNextIntervalPreview,
+  calculateNextReview,
+  type CardSchedule,
+} from '@/lib/srs/scheduler'
 import type { FieldValues } from '@/lib/template'
+import { saveAnswerLocally, pushToServer, getSyncStatus } from '@/lib/db/sync'
+import { isOnline as checkOnline } from '@/lib/db/utils'
+import { SyncStatusBadge } from '@/components/ui/SyncStatusBadge'
 
 interface CardData {
   id: string
@@ -20,13 +28,47 @@ interface CardData {
 interface StudySessionProps {
   deckName: string
   initialCards: CardData[]
+  userId: string
 }
 
-export function StudySession({ deckName, initialCards }: StudySessionProps) {
-  const [cards] = useState<CardData[]>(initialCards)
+export function StudySession({ deckName, initialCards, userId }: StudySessionProps) {
+  const [cards, setCards] = useState<CardData[]>(initialCards)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [stats, setStats] = useState({ reviewed: 0, correct: 0 })
+  const [isOnline, setIsOnline] = useState(true)
+  const cardStartTime = useRef<number>(Date.now())
+
+  // Track online status
+  useEffect(() => {
+    setIsOnline(checkOnline())
+
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  // Reset timer when moving to new card
+  useEffect(() => {
+    cardStartTime.current = Date.now()
+  }, [currentIndex])
+
+  // Try to sync when coming back online
+  useEffect(() => {
+    if (isOnline) {
+      const { pendingCount } = getSyncStatus()
+      if (pendingCount > 0) {
+        pushToServer().catch(console.warn)
+      }
+    }
+  }, [isOnline])
 
   const currentCard = cards[currentIndex]
 
@@ -34,19 +76,56 @@ export function StudySession({ deckName, initialCards }: StudySessionProps) {
     if (!currentCard || isSubmitting) return
 
     setIsSubmitting(true)
+    const timeMs = Date.now() - cardStartTime.current
+    const now = new Date()
 
     try {
-      const response = await fetch('/api/study/answer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cardId: currentCard.id,
-          ease,
-        }),
+      // Calculate new schedule locally
+      const newSchedule = calculateNextReview(currentCard.schedule, ease, now)
+
+      // Save locally first (offline-first)
+      await saveAnswerLocally(
+        userId,
+        currentCard.id,
+        ease,
+        {
+          due: newSchedule.due,
+          interval: newSchedule.interval,
+          easeFactor: newSchedule.easeFactor,
+          repetitions: newSchedule.repetitions,
+          state: newSchedule.state,
+          learningStep: newSchedule.learningStep,
+        },
+        currentCard.schedule.interval,
+        timeMs
+      )
+
+      // Update card schedule in state for interval preview
+      setCards(prevCards => {
+        const updated = [...prevCards]
+        updated[currentIndex] = {
+          ...updated[currentIndex],
+          schedule: newSchedule,
+        }
+        return updated
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to submit answer')
+      // Try to sync with server if online
+      if (isOnline) {
+        try {
+          await fetch('/api/study/answer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              cardId: currentCard.id,
+              ease,
+              timeMs,
+            }),
+          })
+        } catch (syncError) {
+          // Sync failed, but local save succeeded - will retry later
+          console.warn('Server sync failed, will retry later:', syncError)
+        }
       }
 
       // Update stats
@@ -58,7 +137,7 @@ export function StudySession({ deckName, initialCards }: StudySessionProps) {
       // Move to next card
       setCurrentIndex(prev => prev + 1)
     } catch (error) {
-      console.error('Error submitting answer:', error)
+      console.error('Error saving answer:', error)
     } finally {
       setIsSubmitting(false)
     }
@@ -91,12 +170,15 @@ export function StudySession({ deckName, initialCards }: StudySessionProps) {
             </div>
           </div>
         </div>
-        <a
-          href="/decks"
-          className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          デッキ一覧に戻る
-        </a>
+        <div className="flex flex-col items-center gap-3">
+          <a
+            href="/decks"
+            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            デッキ一覧に戻る
+          </a>
+          <SyncStatusBadge />
+        </div>
       </div>
     )
   }
@@ -132,7 +214,17 @@ export function StudySession({ deckName, initialCards }: StudySessionProps) {
       <div className="max-w-2xl mx-auto mb-6">
         <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
           <span>{deckName}</span>
-          <span>{currentIndex + 1} / {cards.length}</span>
+          <div className="flex items-center gap-4">
+            <span>{currentIndex + 1} / {cards.length}</span>
+            {!isOnline && (
+              <span className="flex items-center gap-1 text-yellow-600">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21" />
+                </svg>
+                オフライン
+              </span>
+            )}
+          </div>
         </div>
         <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
           <div

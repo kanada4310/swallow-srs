@@ -240,6 +240,7 @@ export default async function StudyPage({
         <StudySession
           deckName={deck.name}
           initialCards={studyCards}
+          userId={profile.id}
         />
       </div>
     </AppLayout>
