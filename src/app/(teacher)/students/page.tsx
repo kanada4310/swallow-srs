@@ -1,10 +1,43 @@
 import { createClient } from '@/lib/supabase/server'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { redirect } from 'next/navigation'
+import { StudentsClient } from './StudentsClient'
 
 interface Profile {
   id: string
   name: string
   role: 'student' | 'teacher' | 'admin'
+}
+
+interface ClassWithMembers {
+  id: string
+  name: string
+  created_at: string
+  updated_at: string
+  class_members: { user_id: string }[]
+}
+
+async function getClasses(userId: string) {
+  const supabase = await createClient()
+
+  const { data: classes } = await supabase
+    .from('classes')
+    .select(`
+      id,
+      name,
+      created_at,
+      updated_at,
+      class_members (user_id)
+    `)
+    .eq('teacher_id', userId)
+    .order('created_at', { ascending: false })
+
+  return (classes as ClassWithMembers[] | null)?.map(c => ({
+    id: c.id,
+    name: c.name,
+    memberCount: c.class_members?.length || 0,
+    created_at: c.created_at,
+  })) || []
 }
 
 export default async function StudentsPage() {
@@ -18,25 +51,20 @@ export default async function StudentsPage() {
     .single() as { data: Profile | null }
 
   if (!profile) {
-    return null
+    redirect('/login')
   }
+
+  // Only teachers and admins can access this page
+  if (profile.role === 'student') {
+    redirect('/decks')
+  }
+
+  const classes = await getClasses(profile.id)
 
   return (
     <AppLayout userName={profile.name} userRole={profile.role}>
       <div className="max-w-4xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">生徒管理</h1>
-
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-          <div className="text-gray-400 mb-4">
-            <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-            </svg>
-          </div>
-          <h2 className="text-lg font-medium text-gray-900 mb-2">生徒がいません</h2>
-          <p className="text-gray-500">
-            クラスを作成して、生徒を追加しましょう。
-          </p>
-        </div>
+        <StudentsClient initialClasses={classes} />
       </div>
     </AppLayout>
   )
