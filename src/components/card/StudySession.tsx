@@ -1,0 +1,155 @@
+'use client'
+
+import { useState } from 'react'
+import { StudyCard } from './StudyCard'
+import { Ease, getNextIntervalPreview, type CardSchedule } from '@/lib/srs/scheduler'
+import type { FieldValues } from '@/lib/template'
+
+interface CardData {
+  id: string
+  fieldValues: FieldValues
+  template: {
+    front: string
+    back: string
+    css: string
+  }
+  clozeNumber?: number
+  schedule: CardSchedule
+}
+
+interface StudySessionProps {
+  deckName: string
+  initialCards: CardData[]
+}
+
+export function StudySession({ deckName, initialCards }: StudySessionProps) {
+  const [cards] = useState<CardData[]>(initialCards)
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [stats, setStats] = useState({ reviewed: 0, correct: 0 })
+
+  const currentCard = cards[currentIndex]
+
+  const handleAnswer = async (ease: Ease) => {
+    if (!currentCard || isSubmitting) return
+
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch('/api/study/answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cardId: currentCard.id,
+          ease,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to submit answer')
+      }
+
+      // Update stats
+      setStats(prev => ({
+        reviewed: prev.reviewed + 1,
+        correct: ease >= Ease.Good ? prev.correct + 1 : prev.correct,
+      }))
+
+      // Move to next card
+      setCurrentIndex(prev => prev + 1)
+    } catch (error) {
+      console.error('Error submitting answer:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Session complete
+  if (currentIndex >= cards.length) {
+    return (
+      <div className="max-w-lg mx-auto text-center py-12">
+        <div className="text-green-500 mb-4">
+          <svg className="w-20 h-20 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">学習完了!</h2>
+        <p className="text-gray-600 mb-6">
+          {deckName}の今日の学習が終わりました。
+        </p>
+        <div className="bg-gray-100 rounded-lg p-4 mb-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="text-3xl font-bold text-gray-900">{stats.reviewed}</div>
+              <div className="text-sm text-gray-500">学習したカード</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-green-600">
+                {stats.reviewed > 0 ? Math.round((stats.correct / stats.reviewed) * 100) : 0}%
+              </div>
+              <div className="text-sm text-gray-500">正答率</div>
+            </div>
+          </div>
+        </div>
+        <a
+          href="/decks"
+          className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          デッキ一覧に戻る
+        </a>
+      </div>
+    )
+  }
+
+  // No cards to study
+  if (cards.length === 0) {
+    return (
+      <div className="max-w-lg mx-auto text-center py-12">
+        <div className="text-gray-400 mb-4">
+          <svg className="w-20 h-20 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">学習するカードがありません</h2>
+        <p className="text-gray-600 mb-6">
+          今日の学習は完了しています。また明日来てください!
+        </p>
+        <a
+          href="/decks"
+          className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          デッキ一覧に戻る
+        </a>
+      </div>
+    )
+  }
+
+  const intervalPreviews = getNextIntervalPreview(currentCard.schedule)
+
+  return (
+    <div className="py-6">
+      {/* Progress */}
+      <div className="max-w-2xl mx-auto mb-6">
+        <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
+          <span>{deckName}</span>
+          <span>{currentIndex + 1} / {cards.length}</span>
+        </div>
+        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-blue-600 transition-all duration-300"
+            style={{ width: `${((currentIndex) / cards.length) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Card */}
+      <StudyCard
+        fieldValues={currentCard.fieldValues}
+        template={currentCard.template}
+        clozeNumber={currentCard.clozeNumber}
+        intervalPreviews={intervalPreviews}
+        onAnswer={handleAnswer}
+      />
+    </div>
+  )
+}

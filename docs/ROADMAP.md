@@ -3,38 +3,41 @@
 ## Phase 1: MVP（最小限の動作版）
 
 ### 1.1 環境構築
-- [ ] Next.js 14 プロジェクト初期化
-- [ ] Tailwind CSS セットアップ
-- [ ] Vitest セットアップ
-- [ ] Supabase プロジェクト作成（クラウド）
-- [ ] Googleログイン設定（Google Cloud Console）
-- [ ] 環境変数設定（.env.local）
+- [x] Next.js 14 プロジェクト初期化
+- [x] Tailwind CSS セットアップ
+- [x] Vitest セットアップ
+- [x] Supabase プロジェクト作成（クラウド）
+- [x] Googleログイン設定（Google Cloud Console）
+- [x] 環境変数設定（.env.local）
 
 ### 1.2 認証
-- [ ] Supabase Auth + Googleログイン設定
-- [ ] ログイン/ログアウトページ
-- [ ] プロフィール作成フロー（role選択）
-- [ ] 認証ミドルウェア
+- [x] Supabase Auth + Googleログイン設定
+- [x] ログイン/ログアウトページ
+- [x] プロフィール作成フロー（role選択）
+- [x] 認証ミドルウェア
 
 ### 1.3 データベース
-- [ ] Supabaseスキーマ作成（SQL実行）
-- [ ] RLSポリシー設定
+- [x] Supabaseスキーマ作成（SQL実行）（profilesテーブルのみ）
+- [x] RLSポリシー設定（profilesテーブルのみ）
+- [x] 残りのスキーマSQL作成（supabase/migrations/001_initial_schema.sql）
+- [x] 残りのスキーマSQL実行（classes, note_types, decks, cards等）
 - [ ] 型定義自動生成
 
 ### 1.4 基本UI
-- [ ] レイアウト（ヘッダー、ナビ）
-- [ ] デッキ一覧ページ
-- [ ] カード学習画面（基本）
+- [x] レイアウト（ヘッダー、ナビ）
+- [x] ダッシュボードページ
+- [x] デッキ一覧ページ（機能実装）
+- [x] カード学習画面（基本）
 
 ### 1.5 SRSコア
-- [ ] SM-2アルゴリズム実装
-- [ ] card_states 更新ロジック
-- [ ] 今日の復習カード取得
+- [x] SM-2アルゴリズム実装
+- [x] card_states 更新ロジック
+- [x] 今日の復習カード取得
 
 ### 1.6 ノートタイプ
-- [ ] Basic テンプレート実装
-- [ ] テンプレートレンダリング（HTMLサニタイズ）
-- [ ] Cloze テンプレート実装
+- [x] Basic テンプレート実装（DB初期データとして）
+- [x] テンプレートレンダリング（HTMLサニタイズ）
+- [x] Cloze テンプレート実装（DB初期データとして）
 
 ---
 
@@ -112,11 +115,42 @@
 
 ## 現在の進捗
 
-**Phase**: 設計完了、環境構築前
-**最終更新**: 2026-02-01
-**次のタスク**: Phase 1.1 環境構築
+**Phase**: Phase 1 完了 / Phase 2 準備中
+**最終更新**: 2026-02-02
+**次のタスク**: RLSポリシー適用、デッキ作成UI
+
+### 次回セッションで最初にやること
+1. **RLSポリシーの適用**（循環参照問題の恒久対策）
+   - `supabase/migrations/002_fix_rls_policies.sql` を Supabase SQL Editor で実行
+   - SECURITY DEFINER関数を使用して循環参照を解決
+2. 講師向けデッキ作成・編集UI
+3. ノート追加UI（カード作成）
+
+### 既知の問題
+- **RLSポリシー循環参照**: `deck_assignments` → `class_members` → `classes` の参照で無限ループが発生
+  - 一時対策として以下のポリシーを削除済み:
+    - `Users can view assigned decks` (decks)
+    - `Users can view cards in assigned decks` (cards)
+    - `Users can view notes in assigned decks` (notes)
+    - `Assigned users can view their assignments` (deck_assignments)
+    - `Teachers can view students review logs` (review_logs)
+  - これにより配布デッキ機能は現在動作しない（自分のデッキのみ表示）
 
 ### 完了済み
 - [x] プロジェクト設計（DB、SRS、ノートタイプ等）
 - [x] Claude Code開発アーキテクチャ整備
 - [x] Git初期化 & GitHubプッシュ
+- [x] Phase 1.1 環境構築（Next.js 14, Tailwind, Vitest, Supabase）
+- [x] Phase 1.2 認証（Googleログイン、プロフィール設定）
+- [x] Phase 1.3 データベース（profilesテーブル、RLS）
+- [x] Phase 1.4 基本UI（ダッシュボード、レイアウト、ナビゲーション）
+- [x] 残りのDBスキーマSQL作成・実行（classes, note_types, decks, cards等）
+- [x] 認証ミドルウェア強化（ルート保護、プロフィールチェック）
+- [x] デッキ一覧ページ機能実装（自分のデッキ表示、学習状況バッジ）
+- [x] カード学習画面実装（フリップ、回答ボタン、進捗表示、完了画面）
+- [x] SM-2アルゴリズム実装（テスト22件パス）
+- [x] 学習回答API（card_states更新、review_logs記録）
+- [x] 型定義ファイル作成（src/types/database.ts）
+- [x] テストデータで動作確認完了
+- [x] テンプレートレンダリング機能実装（HTMLサニタイズ、Cloze対応、テスト33件追加）
+- [x] RLSポリシー修正SQL作成（002_fix_rls_policies.sql）
