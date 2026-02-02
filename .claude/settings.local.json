@@ -20,7 +20,9 @@
       "Bash(npm run dev:*)",
       "Bash(npm run test:*)",
       "Bash(ls:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)"
     ]
   }
 }
