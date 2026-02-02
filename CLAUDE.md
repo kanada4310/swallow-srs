@@ -65,6 +65,11 @@ npm run test:watch   # Vitest 監視モード
 - @docs/ARCHITECTURE.md - 詳細設計・DB スキーマ
 - @docs/ROADMAP.md - 開発ロードマップ
 
+## セッション終了時のルール
+
+- **必ずコミット・プッシュする**: セッション終了前に未コミットの変更がある場合は、コミットしてGitHubにプッシュすること
+- コミットメッセージは変更内容を簡潔に説明する
+
 ## 禁止事項
 
 - `dangerouslySetInnerHTML` を未サニタイズで使用しない
