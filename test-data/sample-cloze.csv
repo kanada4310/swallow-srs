@@ -1,0 +1,5 @@
+Text,Extra
+"The {{c1::capital}} of Japan is Tokyo.",geography
+"Water boils at {{c1::100}} degrees {{c2::Celsius}}.",science
+"{{c1::Einstein}} developed the theory of {{c2::relativity}}.",physics
+"The chemical formula for water is {{c1::H2O}}.",chemistry
