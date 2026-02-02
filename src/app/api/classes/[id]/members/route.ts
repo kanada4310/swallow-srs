@@ -35,11 +35,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     let targetUserId = userId
 
     if (!targetUserId && email) {
-      // Find user by email
+      // Find user by email (case-insensitive)
       const { data: targetProfile } = await supabase
         .from('profiles')
         .select('id, role')
-        .eq('email', email.trim().toLowerCase())
+        .ilike('email', email.trim())
         .single()
 
       if (!targetProfile) {
