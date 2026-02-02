@@ -72,9 +72,9 @@
 - [x] 競合検知・解決UI（ローカル/サーバー選択）
 
 ### 3.3 PWA
-- [ ] Service Worker
-- [ ] オフラインページ
-- [ ] インストール促進
+- [x] Service Worker
+- [x] オフラインページ
+- [x] インストール促進
 
 ---
 
@@ -115,12 +115,12 @@
 
 ## 現在の進捗
 
-**Phase**: Phase 3 オフライン対応（3.1, 3.2完了）、PWA準備中
+**Phase**: Phase 3 オフライン対応完了、Phase 4 LLM連携準備中
 **最終更新**: 2026-02-02
-**次のタスク**: PWA対応（Phase 3.3）
+**次のタスク**: Phase 4.1 音声生成（TTS）
 
 ### 次回セッションで最初にやること
-1. Phase 3.3: PWA対応（Service Worker、オフラインページ、インストール促進）
+1. Phase 4.1: TTS統合（OpenAI TTS / Google Cloud TTS）
 
 ### 既知の問題
 - なし
@@ -153,3 +153,4 @@
 - [x] CSVインポート機能（CSVパーサー、マッピングUI、バリデーション、一括インポート）
 - [x] Phase 3.1 ローカルDB（Dexie.jsスキーマ定義、ローカル保存ロジック）
 - [x] Phase 3.2 同期（sync_queue実装、オンライン検知、競合検知・解決UI）
+- [x] Phase 3.3 PWA対応（Service Worker、オフラインページ、インストール促進UI）

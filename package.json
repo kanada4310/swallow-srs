@@ -12,10 +12,12 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@ducanh2912/next-pwa": "^10.2.9",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.93.3",
     "dexie": "^4.3.0",
     "dompurify": "^3.3.1",
+    "lucide-react": "^0.563.0",
     "next": "14.2.35",
     "react": "^18",
     "react-dom": "^18"
@@ -32,6 +34,7 @@
     "eslint-config-next": "14.2.35",
     "jsdom": "^27.4.0",
     "postcss": "^8",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.1",
     "typescript": "^5",
     "vitest": "^4.0.18"

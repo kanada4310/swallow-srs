@@ -1,5 +1,6 @@
 import { Header } from '@/components/ui/Header'
 import { BottomNav } from '@/components/ui/BottomNav'
+import { InstallPrompt } from '@/components/ui/InstallPrompt'
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -15,6 +16,7 @@ export function AppLayout({ children, userName, userRole = 'student' }: AppLayou
         {children}
       </main>
       <BottomNav role={userRole} />
+      <InstallPrompt />
     </div>
   )
 }
