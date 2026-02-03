@@ -166,3 +166,4 @@
 - [x] Phase 4.2 例文生成（Claude API統合、一括生成機能、学習画面表示）
 - [x] Phase 4.2 動作確認完了（Supabaseマイグレーション適用、ANTHROPIC_API_KEY設定、一括生成・学習画面表示確認）
 - [x] Phase 4.3 OCR機能（Claude Vision統合、写真から単語抽出、レビュー・編集UI、デッキ詳細ページ統合）
+- [x] Phase 4.3 動作確認完了
