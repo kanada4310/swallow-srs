@@ -54,11 +54,32 @@ npm run test:watch   # Vitest 監視モード
 ### セキュリティ
 - HTMLテンプレート: サニタイズ必須
 
-## LLM連携（Phase 4予定）
+## LLM連携（Phase 4）
 
-- **OCR**: 単語帳写真→テキスト抽出（Claude Vision）
-- **TTS**: 単語・例文の音声生成（OpenAI TTS）
-- **例文生成**: 単語から例文自動生成（Claude）
+- **TTS**: 単語・例文の音声生成（OpenAI TTS） ✅ 完了
+- **例文生成**: 単語から例文・コロケーション自動生成（Claude API） ✅ 完了
+- **OCR**: 単語帳写真→テキスト抽出（Claude Vision）- 未実装
+
+## 現在の進捗（2026-02-03更新）
+
+**Phase 4.2 例文生成 完了**
+
+### 次回セッションでやること
+1. **Supabaseで手動実行**: `supabase/migrations/005_generated_content.sql`
+2. **環境変数設定**: `.env.local` に `ANTHROPIC_API_KEY=sk-ant-...` を追加
+3. **動作確認**: デッキ詳細ページで「例文を一括生成」ボタンをテスト
+4. **動作確認**: 学習画面で生成された例文が表示されることを確認
+
+### 今回追加したファイル
+- `src/app/api/generate-examples/route.ts` - Claude API例文生成エンドポイント
+- `src/components/ai/ExampleGenerator.tsx` - 個別・一括生成UIコンポーネント
+- `supabase/migrations/005_generated_content.sql` - notes.generated_content列追加
+
+### 今回変更したファイル
+- `src/types/database.ts` - GeneratedContent型追加
+- `src/app/(student)/decks/[id]/DeckDetailClient.tsx` - 一括生成ボタン追加
+- `src/components/card/StudyCard.tsx` - 例文表示追加
+- `src/components/card/StudySession.tsx` - generatedContent対応
 
 ## 参照ドキュメント
 

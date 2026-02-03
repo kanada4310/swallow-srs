@@ -122,10 +122,20 @@
 **最終更新**: 2026-02-03
 **次のタスク**: Phase 4.3 OCR機能、または Phase 5 拡張機能
 
-### 次回セッションで最初にやること
-1. Supabaseで `005_generated_content.sql` を実行（手動）
-2. `.env.local` に `ANTHROPIC_API_KEY` を設定
-3. Phase 4.3: OCR機能（Claude Vision統合）
+### 次回セッションで最初にやること（Phase 4.2 動作確認）
+
+**手動設定（ユーザー側）:**
+1. Supabaseダッシュボードで `supabase/migrations/005_generated_content.sql` を実行
+2. `.env.local` に `ANTHROPIC_API_KEY=sk-ant-api03-...` を追加
+
+**動作確認手順:**
+1. `npm run dev` で開発サーバー起動
+2. 講師アカウントでログイン
+3. デッキ詳細ページ `/decks/[id]` を開く
+4. 「例文を一括生成」ボタン（紫色）をクリック
+5. 生成完了後、学習画面 `/study?deck=[id]` で例文表示を確認
+
+**次のフェーズ:** Phase 4.3 OCR機能 または Phase 5 拡張機能
 
 ### 既知の問題
 - 学習開始前からオフラインだと学習画面に入れない（カードデータの事前キャッシュが必要）
