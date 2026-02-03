@@ -62,24 +62,17 @@ npm run test:watch   # Vitest 監視モード
 
 ## 現在の進捗（2026-02-03更新）
 
-**Phase 4.2 例文生成 完了**
+**Phase 4.2 例文生成 完了・動作確認済み**
 
 ### 次回セッションでやること
-1. **Supabaseで手動実行**: `supabase/migrations/005_generated_content.sql`
-2. **環境変数設定**: `.env.local` に `ANTHROPIC_API_KEY=sk-ant-...` を追加
-3. **動作確認**: デッキ詳細ページで「例文を一括生成」ボタンをテスト
-4. **動作確認**: 学習画面で生成された例文が表示されることを確認
+次のフェーズを選択して開発を進める：
+- **Phase 4.3 OCR機能**: 単語帳写真からテキスト抽出（Claude Vision）
+- **Phase 5.1 統計ページ**: 学習統計・グラフ表示
+- **Phase 5.2 ノートタイプ拡張**: カスタムノートタイプ作成UI
+- **既知の問題修正**: オフライン時のカードデータ事前キャッシュ
 
-### 今回追加したファイル
-- `src/app/api/generate-examples/route.ts` - Claude API例文生成エンドポイント
-- `src/components/ai/ExampleGenerator.tsx` - 個別・一括生成UIコンポーネント
-- `supabase/migrations/005_generated_content.sql` - notes.generated_content列追加
-
-### 今回変更したファイル
-- `src/types/database.ts` - GeneratedContent型追加
-- `src/app/(student)/decks/[id]/DeckDetailClient.tsx` - 一括生成ボタン追加
-- `src/components/card/StudyCard.tsx` - 例文表示追加
-- `src/components/card/StudySession.tsx` - generatedContent対応
+### 既知の問題
+- 学習開始前からオフラインだと学習画面に入れない（カードデータの事前キャッシュが必要）
 
 ## 参照ドキュメント
 

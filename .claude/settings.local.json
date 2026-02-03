@@ -22,7 +22,11 @@
       "Bash(ls:*)",
       "Bash(find:*)",
       "Bash(netstat:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(timeout:*)",
+      "Bash(xargs:*)",
+      "Bash(node scripts/generate-icons.mjs:*)",
+      "Bash(npm test)"
     ]
   }
 }
