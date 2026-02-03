@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { StudySession } from '@/components/card/StudySession'
 import Link from 'next/link'
-import type { Profile, GeneratedContent } from '@/types/database'
+import type { Profile, GeneratedContent, FieldDefinition } from '@/types/database'
 import type { CardSchedule } from '@/lib/srs/scheduler'
 
 interface CardData {
@@ -16,6 +16,7 @@ interface CardData {
     back: string
     css: string
   }
+  fields?: FieldDefinition[]
   clozeNumber?: number
   schedule: CardSchedule
 }
@@ -54,6 +55,18 @@ async function getStudyCards(userId: string, deckId: string): Promise<CardData[]
     const noteData = c.notes as unknown as { id: string; field_values: Record<string, string>; audio_urls: Record<string, string> | null; generated_content: GeneratedContent | null; note_type_id: string }
     return noteData.note_type_id
   })))
+
+  // Get note types with their fields
+  const { data: noteTypes } = await supabase
+    .from('note_types')
+    .select('id, fields')
+    .in('id', noteTypeIds)
+
+  // Create a map of note_type_id -> fields
+  const fieldsMap = new Map<string, FieldDefinition[]>()
+  for (const nt of noteTypes || []) {
+    fieldsMap.set(nt.id, nt.fields as FieldDefinition[])
+  }
 
   // Get card templates for these note types
   const { data: templates } = await supabase
@@ -139,6 +152,7 @@ async function getStudyCards(userId: string, deckId: string): Promise<CardData[]
       audioUrls,
       generatedContent,
       template,
+      fields: fieldsMap.get(noteTypeId),
       schedule: state ? {
         due: new Date(state.due),
         interval: state.interval,

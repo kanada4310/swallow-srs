@@ -12,7 +12,7 @@ import type { FieldValues } from '@/lib/template'
 import { saveAnswerLocally, pushToServer, getSyncStatus } from '@/lib/db/sync'
 import { isOnline as checkOnline } from '@/lib/db/utils'
 import { SyncStatusBadge } from '@/components/ui/SyncStatusBadge'
-import type { GeneratedContent } from '@/types/database'
+import type { GeneratedContent, FieldDefinition } from '@/types/database'
 
 interface CardData {
   id: string
@@ -25,6 +25,7 @@ interface CardData {
     back: string
     css: string
   }
+  fields?: FieldDefinition[]
   clozeNumber?: number
   schedule: CardSchedule
 }
@@ -245,6 +246,7 @@ export function StudySession({ deckName, initialCards, userId }: StudySessionPro
         audioUrls={currentCard.audioUrls}
         generatedContent={currentCard.generatedContent}
         template={currentCard.template}
+        fields={currentCard.fields}
         clozeNumber={currentCard.clozeNumber}
         intervalPreviews={intervalPreviews}
         onAnswer={handleAnswer}

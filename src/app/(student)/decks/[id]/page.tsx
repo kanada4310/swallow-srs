@@ -88,13 +88,15 @@ async function getDeckWithNotes(deckId: string, userId: string) {
   }
 }
 
-async function getNoteTypes() {
+async function getNoteTypes(userId: string) {
   const supabase = await createClient()
 
+  // Get system note types and custom note types owned by the user
   const { data: noteTypes } = await supabase
     .from('note_types')
     .select('id, name, fields')
-    .eq('is_system', true)
+    .or(`is_system.eq.true,owner_id.eq.${userId}`)
+    .order('is_system', { ascending: false })
     .order('name')
 
   return noteTypes || []
@@ -121,7 +123,7 @@ export default async function DeckDetailPage({ params }: PageProps) {
     notFound()
   }
 
-  const noteTypes = await getNoteTypes()
+  const noteTypes = await getNoteTypes(profile.id)
   const canEdit = deckData.isOwner && profile.role !== 'student'
 
   return (
