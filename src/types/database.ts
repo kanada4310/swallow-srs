@@ -69,12 +69,21 @@ export interface DeckAssignment {
   assigned_at: string
 }
 
+// Generated content from AI (examples, collocations)
+export interface GeneratedContent {
+  examples: string[]
+  collocations?: string[]
+  generated_at: string
+  model: string
+}
+
 export interface Note {
   id: string
   deck_id: string
   note_type_id: string
   field_values: Record<string, string>
   audio_urls: Record<string, string> | null
+  generated_content: GeneratedContent | null
   source_info: {
     book?: string
     unit?: number
@@ -134,6 +143,7 @@ export interface StudyCardData {
   noteId: string
   fieldValues: Record<string, string>
   audioUrls: Record<string, string> | null
+  generatedContent: GeneratedContent | null
   template: {
     front: string
     back: string

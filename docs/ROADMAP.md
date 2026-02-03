@@ -89,9 +89,10 @@
 - [x] オフラインキャッシュ対応
 
 ### 4.2 例文生成
-- [ ] Claude / GPT-4 API統合
-- [ ] 単語から例文・コロケーション自動生成
-- [ ] 生成結果の編集UI
+- [x] Claude API統合（Anthropic SDK）
+- [x] 単語から例文・コロケーション自動生成
+- [x] 一括生成機能（デッキ詳細ページから）
+- [x] 学習画面での例文表示
 
 ### 4.3 OCR（画像→テキスト）
 - [ ] Claude Vision / GPT-4 Vision 統合
@@ -117,15 +118,14 @@
 
 ## 現在の進捗
 
-**Phase**: Phase 4.1 TTS完了、Phase 4.2 例文生成準備中
+**Phase**: Phase 4.2 例文生成完了、Phase 4.3 OCR準備中
 **最終更新**: 2026-02-03
-**次のタスク**: Phase 4.2 例文生成
+**次のタスク**: Phase 4.3 OCR機能、または Phase 5 拡張機能
 
 ### 次回セッションで最初にやること
-1. Supabaseで `audio` バケットを作成（手動）
-2. `.env.local` に `OPENAI_API_KEY` を設定
-3. `supabase/migrations/004_tts_audio.sql` をSupabaseで実行
-4. Phase 4.2: 例文生成（Claude API統合）
+1. Supabaseで `005_generated_content.sql` を実行（手動）
+2. `.env.local` に `ANTHROPIC_API_KEY` を設定
+3. Phase 4.3: OCR機能（Claude Vision統合）
 
 ### 既知の問題
 - 学習開始前からオフラインだと学習画面に入れない（カードデータの事前キャッシュが必要）
@@ -161,3 +161,4 @@
 - [x] Phase 3.3 PWA対応（Service Worker、オフラインページ、インストール促進UI）
 - [x] Phase 3 動作確認完了・Dexieスキーマバグ修正（syncQueueにattemptsインデックス追加）
 - [x] Phase 4.1 TTS音声生成（OpenAI TTS統合、音声再生ボタン、設定UI、オフラインキャッシュ）
+- [x] Phase 4.2 例文生成（Claude API統合、一括生成機能、学習画面表示）

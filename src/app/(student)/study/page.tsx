@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { StudySession } from '@/components/card/StudySession'
 import Link from 'next/link'
-import type { Profile } from '@/types/database'
+import type { Profile, GeneratedContent } from '@/types/database'
 import type { CardSchedule } from '@/lib/srs/scheduler'
 
 interface CardData {
@@ -10,6 +10,7 @@ interface CardData {
   noteId: string
   fieldValues: Record<string, string>
   audioUrls: Record<string, string> | null
+  generatedContent: GeneratedContent | null
   template: {
     front: string
     back: string
@@ -38,6 +39,7 @@ async function getStudyCards(userId: string, deckId: string): Promise<CardData[]
         id,
         field_values,
         audio_urls,
+        generated_content,
         note_type_id
       )
     `)
@@ -49,7 +51,7 @@ async function getStudyCards(userId: string, deckId: string): Promise<CardData[]
 
   // Get unique note type IDs
   const noteTypeIds = Array.from(new Set(cards.map(c => {
-    const noteData = c.notes as unknown as { id: string; field_values: Record<string, string>; audio_urls: Record<string, string> | null; note_type_id: string }
+    const noteData = c.notes as unknown as { id: string; field_values: Record<string, string>; audio_urls: Record<string, string> | null; generated_content: GeneratedContent | null; note_type_id: string }
     return noteData.note_type_id
   })))
 
@@ -114,10 +116,11 @@ async function getStudyCards(userId: string, deckId: string): Promise<CardData[]
 
   for (const card of cards) {
     const state = stateMap.get(card.id)
-    const noteData = card.notes as unknown as { id: string; field_values: Record<string, string>; audio_urls: Record<string, string> | null; note_type_id: string }
+    const noteData = card.notes as unknown as { id: string; field_values: Record<string, string>; audio_urls: Record<string, string> | null; generated_content: GeneratedContent | null; note_type_id: string }
     const noteId = noteData.id
     const fieldValues = noteData.field_values
     const audioUrls = noteData.audio_urls
+    const generatedContent = noteData.generated_content
     const noteTypeId = noteData.note_type_id
 
     // Get template for this card
@@ -134,6 +137,7 @@ async function getStudyCards(userId: string, deckId: string): Promise<CardData[]
       noteId,
       fieldValues,
       audioUrls,
+      generatedContent,
       template,
       schedule: state ? {
         due: new Date(state.due),

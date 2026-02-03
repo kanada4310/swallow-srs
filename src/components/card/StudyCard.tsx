@@ -4,11 +4,13 @@ import { useState, useMemo } from 'react'
 import { Ease } from '@/lib/srs/scheduler'
 import { renderTemplate, type FieldValues } from '@/lib/template'
 import { AudioButton } from '@/components/audio/AudioButton'
+import type { GeneratedContent } from '@/types/database'
 
 interface StudyCardProps {
   noteId: string
   fieldValues: FieldValues
   audioUrls: Record<string, string> | null
+  generatedContent: GeneratedContent | null
   template: {
     front: string
     back: string
@@ -23,6 +25,7 @@ export function StudyCard({
   noteId,
   fieldValues,
   audioUrls,
+  generatedContent,
   template,
   clozeNumber,
   intervalPreviews,
@@ -107,6 +110,25 @@ export function StudyCard({
                     audioUrl={audioUrls?.[backFieldName]}
                     size="md"
                   />
+                </div>
+              )}
+
+              {/* Generated Examples */}
+              {generatedContent && generatedContent.examples && generatedContent.examples.length > 0 && (
+                <div className="mt-6 w-full max-w-md">
+                  <p className="text-xs font-medium text-purple-600 mb-2 flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    例文
+                  </p>
+                  <ul className="space-y-2">
+                    {generatedContent.examples.map((example, idx) => (
+                      <li key={idx} className="text-sm text-gray-600 pl-3 border-l-2 border-purple-300">
+                        {example}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>

@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { NoteEditor } from '@/components/deck/NoteEditor'
 import { CSVImporter } from '@/components/deck/CSVImporter'
-import type { NoteType } from '@/types/database'
+import { BulkExampleGenerator } from '@/components/ai/ExampleGenerator'
+import type { NoteType, GeneratedContent } from '@/types/database'
 
 interface Note {
   id: string
   field_values: Record<string, string>
   note_type_id: string
+  generated_content: GeneratedContent | null
   created_at: string
   cards: Array<{ id: string }>
 }
@@ -49,6 +51,7 @@ export function DeckDetailClient({ deckId, notes, noteTypes, canEdit }: DeckDeta
   const [isAddingNote, setIsAddingNote] = useState(false)
   const [showDistributeModal, setShowDistributeModal] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
+  const [showBulkGenerateModal, setShowBulkGenerateModal] = useState(false)
 
   const handleNoteAdded = () => {
     setIsAddingNote(false)
@@ -58,6 +61,11 @@ export function DeckDetailClient({ deckId, notes, noteTypes, canEdit }: DeckDeta
   const handleImportComplete = () => {
     setShowImportModal(false)
     router.refresh() // Refresh to show imported notes
+  }
+
+  const handleBulkGenerateComplete = () => {
+    setShowBulkGenerateModal(false)
+    router.refresh() // Refresh to show generated content
   }
 
   // Note type name lookup
@@ -70,10 +78,10 @@ export function DeckDetailClient({ deckId, notes, noteTypes, canEdit }: DeckDeta
     <div>
       {/* Action Buttons for Teachers */}
       {canEdit && (
-        <div className="mb-6 flex gap-3">
+        <div className="mb-6 flex flex-wrap gap-3">
           <button
             onClick={() => setShowImportModal(true)}
-            className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2"
+            className="flex-1 min-w-[140px] py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -82,12 +90,22 @@ export function DeckDetailClient({ deckId, notes, noteTypes, canEdit }: DeckDeta
           </button>
           <button
             onClick={() => setShowDistributeModal(true)}
-            className="flex-1 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2"
+            className="flex-1 min-w-[140px] py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
             配布設定
+          </button>
+          <button
+            onClick={() => setShowBulkGenerateModal(true)}
+            disabled={notes.length === 0}
+            className="flex-1 min-w-[140px] py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            例文を一括生成
           </button>
         </div>
       )}
@@ -190,6 +208,16 @@ export function DeckDetailClient({ deckId, notes, noteTypes, canEdit }: DeckDeta
           </div>
         </div>
       )}
+
+      {/* Bulk Example Generation Modal */}
+      {showBulkGenerateModal && (
+        <BulkExampleGenerator
+          deckId={deckId}
+          notes={notes}
+          onComplete={handleBulkGenerateComplete}
+          onClose={() => setShowBulkGenerateModal(false)}
+        />
+      )}
     </div>
   )
 }
@@ -198,6 +226,7 @@ function NoteCard({ note, noteTypeName }: { note: Note; noteTypeName: string }) 
   // Get first two fields for display
   const fieldEntries = Object.entries(note.field_values).slice(0, 2)
   const cardCount = note.cards?.length || 0
+  const hasGeneratedContent = note.generated_content && note.generated_content.examples?.length > 0
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
@@ -211,7 +240,16 @@ function NoteCard({ note, noteTypeName }: { note: Note; noteTypeName: string }) 
         </div>
         <div className="ml-4 flex-shrink-0 text-right">
           <span className="text-xs text-gray-400 block">{noteTypeName}</span>
-          <span className="text-xs text-gray-500">{cardCount}枚</span>
+          <div className="flex items-center gap-2 mt-1">
+            {hasGeneratedContent && (
+              <span className="text-xs text-purple-600 flex items-center gap-0.5" title="例文生成済み">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </span>
+            )}
+            <span className="text-xs text-gray-500">{cardCount}枚</span>
+          </div>
         </div>
       </div>
     </div>

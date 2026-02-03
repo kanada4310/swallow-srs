@@ -28,6 +28,7 @@ async function getDeckWithNotes(deckId: string, userId: string) {
       id,
       field_values,
       note_type_id,
+      generated_content,
       created_at,
       cards (id)
     `)
