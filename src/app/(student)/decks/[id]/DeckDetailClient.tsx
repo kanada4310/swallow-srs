@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { NoteEditor } from '@/components/deck/NoteEditor'
 import { CSVImporter } from '@/components/deck/CSVImporter'
 import { BulkExampleGenerator } from '@/components/ai/ExampleGenerator'
+import { OCRImporter } from '@/components/ai/OCRImporter'
 import type { NoteType, GeneratedContent } from '@/types/database'
 
 interface Note {
@@ -52,6 +53,7 @@ export function DeckDetailClient({ deckId, notes, noteTypes, canEdit }: DeckDeta
   const [showDistributeModal, setShowDistributeModal] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
   const [showBulkGenerateModal, setShowBulkGenerateModal] = useState(false)
+  const [showOCRModal, setShowOCRModal] = useState(false)
 
   const handleNoteAdded = () => {
     setIsAddingNote(false)
@@ -66,6 +68,11 @@ export function DeckDetailClient({ deckId, notes, noteTypes, canEdit }: DeckDeta
   const handleBulkGenerateComplete = () => {
     setShowBulkGenerateModal(false)
     router.refresh() // Refresh to show generated content
+  }
+
+  const handleOCRComplete = () => {
+    setShowOCRModal(false)
+    router.refresh() // Refresh to show imported notes
   }
 
   // Note type name lookup
@@ -96,6 +103,16 @@ export function DeckDetailClient({ deckId, notes, noteTypes, canEdit }: DeckDeta
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
             配布設定
+          </button>
+          <button
+            onClick={() => setShowOCRModal(true)}
+            className="flex-1 min-w-[140px] py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            写真から読み取り
           </button>
           <button
             onClick={() => setShowBulkGenerateModal(true)}
@@ -217,6 +234,34 @@ export function DeckDetailClient({ deckId, notes, noteTypes, canEdit }: DeckDeta
           onComplete={handleBulkGenerateComplete}
           onClose={() => setShowBulkGenerateModal(false)}
         />
+      )}
+
+      {/* OCR Import Modal */}
+      {showOCRModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">写真から単語を読み取り</h2>
+                <button
+                  onClick={() => setShowOCRModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              <OCRImporter
+                deckId={deckId}
+                onImportComplete={handleOCRComplete}
+                onCancel={() => setShowOCRModal(false)}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
