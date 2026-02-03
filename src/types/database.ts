@@ -26,11 +26,27 @@ export interface ClassMember {
   joined_at: string
 }
 
+// Field settings for note type fields
+export interface FieldSettings {
+  tts_enabled?: boolean       // TTS音声生成対象
+  example_source?: boolean    // 例文生成のソース単語
+  example_context?: boolean   // 例文生成のコンテキスト（意味）
+  required?: boolean          // 必須フィールド（デフォルト: true）
+  placeholder?: string        // 入力時プレースホルダー
+}
+
+// Field definition with settings
+export interface FieldDefinition {
+  name: string
+  ord: number
+  settings?: FieldSettings
+}
+
 export interface NoteType {
   id: string
   name: string
   owner_id: string | null
-  fields: Array<{ name: string; ord: number }>
+  fields: FieldDefinition[]
   is_system: boolean
   created_at: string
   updated_at: string
@@ -215,4 +231,18 @@ export interface DetailedStats {
   streak: number
   totalReviews: number
   overallAccuracy: number
+}
+
+// Note type with templates for UI
+export interface NoteTypeWithTemplates extends NoteType {
+  card_templates: CardTemplate[]
+}
+
+// Template input for creating note types
+export interface TemplateInput {
+  name: string
+  ordinal: number
+  front_template: string
+  back_template: string
+  css: string
 }

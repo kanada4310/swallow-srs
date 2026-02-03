@@ -1,15 +1,16 @@
 'use client'
 
 import { useState } from 'react'
+import type { FieldDefinition } from '@/types/database'
 
-// Note type IDs
+// Note type IDs for special handling
 const BASIC_NOTE_TYPE_ID = '00000000-0000-0000-0000-000000000001'
 const CLOZE_NOTE_TYPE_ID = '00000000-0000-0000-0000-000000000002'
 
 interface NoteType {
   id: string
   name: string
-  fields: Array<{ name: string; ord: number }>
+  fields: FieldDefinition[]
 }
 
 interface NoteEditorProps {
@@ -46,7 +47,10 @@ export function NoteEditor({ deckId, noteTypes, onNoteAdded, onCancel }: NoteEdi
 
     // Validate that required fields are filled
     const hasEmptyFields = selectedNoteType.fields.some(
-      field => !fieldValues[field.name]?.trim()
+      field => {
+        const isRequired = field.settings?.required !== false
+        return isRequired && !fieldValues[field.name]?.trim()
+      }
     )
     if (hasEmptyFields) {
       setError('全てのフィールドを入力してください')
@@ -117,21 +121,27 @@ export function NoteEditor({ deckId, noteTypes, onNoteAdded, onCancel }: NoteEdi
       )}
 
       {/* Fields */}
-      {selectedNoteType.fields.map((field) => (
-        <div key={field.name}>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {field.name}
-            {field.ord === 0 && <span className="text-red-500 ml-1">*</span>}
-          </label>
-          <textarea
-            value={fieldValues[field.name] || ''}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            placeholder={getPlaceholder(selectedNoteType.id, field.name)}
-            rows={field.name === 'Text' || field.name === 'Extra' ? 4 : 2}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
-          />
-        </div>
-      ))}
+      {selectedNoteType.fields.map((field) => {
+        const isRequired = field.settings?.required !== false
+        const placeholder = field.settings?.placeholder || getPlaceholder(selectedNoteType.id, field.name)
+        const isLargeField = field.name === 'Text' || field.name === 'Extra' || field.name.toLowerCase().includes('text')
+
+        return (
+          <div key={field.name}>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {field.name}
+              {isRequired && <span className="text-red-500 ml-1">*</span>}
+            </label>
+            <textarea
+              value={fieldValues[field.name] || ''}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              placeholder={placeholder}
+              rows={isLargeField ? 4 : 2}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
+            />
+          </div>
+        )
+      })}
 
       {/* Actions */}
       <div className="flex gap-3 pt-2">

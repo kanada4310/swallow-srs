@@ -115,15 +115,52 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get note and verify access
+    // Get note and verify access, including note type for field settings
     const { data: note, error: noteError } = await supabase
       .from('notes')
-      .select('id, deck_id, generated_content')
+      .select(`
+        id,
+        deck_id,
+        generated_content,
+        field_values,
+        note_type:note_types (
+          fields
+        )
+      `)
       .eq('id', noteId)
       .single()
 
     if (noteError || !note) {
       return NextResponse.json({ error: 'Note not found' }, { status: 404 })
+    }
+
+    // Determine word and meaning from field settings or fallback to provided values
+    let effectiveWord = word
+    let effectiveMeaning = meaning
+
+    const noteType = note.note_type as unknown as { fields: Array<{ name: string; settings?: { example_source?: boolean; example_context?: boolean } }> } | null
+    const fieldValues = note.field_values as Record<string, string> | null
+
+    if (noteType?.fields && fieldValues) {
+      // Find example_source field (the word to generate examples for)
+      const sourceField = noteType.fields.find(f => f.settings?.example_source)
+      if (sourceField && fieldValues[sourceField.name]) {
+        effectiveWord = fieldValues[sourceField.name]
+      }
+
+      // Find example_context field (the meaning/context)
+      const contextField = noteType.fields.find(f => f.settings?.example_context)
+      if (contextField && fieldValues[contextField.name]) {
+        effectiveMeaning = fieldValues[contextField.name]
+      }
+
+      // Fallback to Front/Back or Text/Extra if no fields are marked
+      if (!sourceField) {
+        effectiveWord = effectiveWord || fieldValues['Front'] || fieldValues['Text'] || word
+      }
+      if (!contextField) {
+        effectiveMeaning = effectiveMeaning || fieldValues['Back'] || fieldValues['Extra'] || meaning
+      }
     }
 
     // Check if content already exists and regenerate is not requested
@@ -195,7 +232,7 @@ export async function POST(request: NextRequest) {
 
     // Generate examples using Claude
     const anthropic = getAnthropic()
-    const userPrompt = buildUserPrompt(word, meaning, includeCollocations)
+    const userPrompt = buildUserPrompt(effectiveWord, effectiveMeaning, includeCollocations)
 
     const message = await anthropic.messages.create({
       model: 'claude-3-haiku-20240307',

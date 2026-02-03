@@ -82,15 +82,37 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get note and verify access
+    // Get note and verify access, including note type for field settings
     const { data: note, error: noteError } = await supabase
       .from('notes')
-      .select('id, deck_id, audio_urls')
+      .select(`
+        id,
+        deck_id,
+        audio_urls,
+        note_type:note_types (
+          fields
+        )
+      `)
       .eq('id', noteId)
       .single()
 
     if (noteError || !note) {
       return NextResponse.json({ error: 'Note not found' }, { status: 404 })
+    }
+
+    // Check if field has TTS enabled in note type settings
+    // If note type has field settings, validate that TTS is enabled for this field
+    const noteType = note.note_type as unknown as { fields: Array<{ name: string; settings?: { tts_enabled?: boolean } }> } | null
+    if (noteType?.fields) {
+      const fieldDef = noteType.fields.find(f => f.name === fieldName)
+      // Only block if field is explicitly defined and tts_enabled is explicitly false
+      // Allow if field is not found or if settings are not defined (backward compatibility)
+      if (fieldDef && fieldDef.settings && fieldDef.settings.tts_enabled === false) {
+        return NextResponse.json(
+          { error: 'TTS is not enabled for this field' },
+          { status: 400 }
+        )
+      }
     }
 
     // Check if audio already exists for this field

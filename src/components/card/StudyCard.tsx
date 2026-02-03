@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import { Ease } from '@/lib/srs/scheduler'
 import { renderTemplate, type FieldValues } from '@/lib/template'
 import { AudioButton } from '@/components/audio/AudioButton'
-import type { GeneratedContent } from '@/types/database'
+import type { GeneratedContent, FieldDefinition } from '@/types/database'
 
 interface StudyCardProps {
   noteId: string
@@ -16,6 +16,7 @@ interface StudyCardProps {
     back: string
     css: string
   }
+  fields?: FieldDefinition[]
   clozeNumber?: number
   intervalPreviews: Record<Ease, string>
   onAnswer: (ease: Ease) => void
@@ -27,6 +28,7 @@ export function StudyCard({
   audioUrls,
   generatedContent,
   template,
+  fields,
   clozeNumber,
   intervalPreviews,
   onAnswer,
@@ -52,13 +54,42 @@ export function StudyCard({
     )
   }, [template.back, template.css, fieldValues, clozeNumber])
 
-  // Determine which fields to show audio buttons for
-  const frontField = fieldValues['Front'] || fieldValues['Text'] || ''
-  const backField = fieldValues['Back'] || fieldValues['Extra'] || ''
+  // Determine which fields to show audio buttons for based on field settings
+  const ttsEnabledFields = useMemo(() => {
+    if (fields) {
+      return fields
+        .filter(f => f.settings?.tts_enabled)
+        .map(f => f.name)
+    }
+    // Fallback for legacy: Front/Text on front, Back/Extra on back
+    return null
+  }, [fields])
 
-  // Get field name for audio button (Front/Text for front side, Back/Extra for back side)
-  const frontFieldName = fieldValues['Front'] ? 'Front' : fieldValues['Text'] ? 'Text' : null
-  const backFieldName = fieldValues['Back'] ? 'Back' : fieldValues['Extra'] ? 'Extra' : null
+  // Get TTS fields for front side
+  const frontTtsFields = useMemo(() => {
+    if (ttsEnabledFields) {
+      // Return first TTS-enabled field that has a value
+      return ttsEnabledFields
+        .filter(name => fieldValues[name])
+        .slice(0, 1) // Show max 1 audio button on front
+    }
+    // Legacy fallback
+    if (fieldValues['Front']) return ['Front']
+    if (fieldValues['Text']) return ['Text']
+    return []
+  }, [ttsEnabledFields, fieldValues])
+
+  // Get TTS fields for back side (all TTS-enabled fields except those shown on front)
+  const backTtsFields = useMemo(() => {
+    if (ttsEnabledFields) {
+      return ttsEnabledFields
+        .filter(name => fieldValues[name] && !frontTtsFields.includes(name))
+    }
+    // Legacy fallback
+    if (fieldValues['Back']) return ['Back']
+    if (fieldValues['Extra']) return ['Extra']
+    return []
+  }, [ttsEnabledFields, fieldValues, frontTtsFields])
 
   const handleFlip = () => {
     setIsFlipped(true)
@@ -79,15 +110,18 @@ export function StudyCard({
             className="text-xl text-center w-full"
             dangerouslySetInnerHTML={{ __html: renderedFront }}
           />
-          {frontFieldName && frontField && (
-            <div className="mt-4">
-              <AudioButton
-                noteId={noteId}
-                fieldName={frontFieldName}
-                text={frontField}
-                audioUrl={audioUrls?.[frontFieldName]}
-                size="md"
-              />
+          {frontTtsFields.length > 0 && (
+            <div className="mt-4 flex gap-2">
+              {frontTtsFields.map(fieldName => (
+                <AudioButton
+                  key={fieldName}
+                  noteId={noteId}
+                  fieldName={fieldName}
+                  text={fieldValues[fieldName] || ''}
+                  audioUrl={audioUrls?.[fieldName]}
+                  size="md"
+                />
+              ))}
             </div>
           )}
         </div>
@@ -101,15 +135,18 @@ export function StudyCard({
                 className="text-xl text-center w-full"
                 dangerouslySetInnerHTML={{ __html: renderedBack }}
               />
-              {backFieldName && backField && (
-                <div className="mt-4">
-                  <AudioButton
-                    noteId={noteId}
-                    fieldName={backFieldName}
-                    text={backField}
-                    audioUrl={audioUrls?.[backFieldName]}
-                    size="md"
-                  />
+              {backTtsFields.length > 0 && (
+                <div className="mt-4 flex gap-2">
+                  {backTtsFields.map(fieldName => (
+                    <AudioButton
+                      key={fieldName}
+                      noteId={noteId}
+                      fieldName={fieldName}
+                      text={fieldValues[fieldName] || ''}
+                      audioUrl={audioUrls?.[fieldName]}
+                      size="md"
+                    />
+                  ))}
                 </div>
               )}
 
