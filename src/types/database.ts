@@ -171,3 +171,48 @@ export interface UserTTSSettings {
   created_at: string
   updated_at: string
 }
+
+// Statistics types
+export interface DailyReviewData {
+  date: string
+  total: number
+  correct: number
+  incorrect: number
+}
+
+export interface CardDistribution {
+  new: number
+  learning: number
+  review: number
+  relearning: number
+}
+
+export interface AccuracyData {
+  date: string
+  accuracy: number
+}
+
+export interface DeckProgressData {
+  deckId: string
+  deckName: string
+  totalCards: number
+  masteredCards: number
+  learningCards: number
+  newCards: number
+}
+
+export interface TimeStats {
+  totalReviewTime: number
+  averageTimePerCard: number
+}
+
+export interface DetailedStats {
+  dailyReviews: DailyReviewData[]
+  cardDistribution: CardDistribution
+  accuracyTrend: AccuracyData[]
+  deckProgress: DeckProgressData[]
+  timeStats: TimeStats
+  streak: number
+  totalReviews: number
+  overallAccuracy: number
+}

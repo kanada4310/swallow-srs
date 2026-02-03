@@ -363,3 +363,184 @@ export async function cleanupOldAudioCache(): Promise<number> {
 
   return ids.length
 }
+
+// Offline statistics helper functions
+
+export interface OfflineStats {
+  dailyReviews: Array<{ date: string; total: number; correct: number; incorrect: number }>
+  cardDistribution: { new: number; learning: number; review: number; relearning: number }
+  accuracyTrend: Array<{ date: string; accuracy: number }>
+  totalReviews: number
+  overallAccuracy: number
+  streak: number
+}
+
+/**
+ * Calculate statistics from local IndexedDB data
+ */
+export async function getOfflineStats(
+  userId: string,
+  days: number = 30
+): Promise<OfflineStats> {
+  const startDate = new Date()
+  startDate.setDate(startDate.getDate() - days)
+  startDate.setHours(0, 0, 0, 0)
+
+  // Get all review logs in the period
+  const allReviewLogs = await db.reviewLogs
+    .where('user_id')
+    .equals(userId)
+    .filter((log) => log.reviewed_at >= startDate)
+    .toArray()
+
+  // Get all card states
+  const allCardStates = await db.cardStates
+    .where('user_id')
+    .equals(userId)
+    .toArray()
+
+  // Get all cards count
+  const allCards = await db.cards.toArray()
+  const totalCards = allCards.length
+
+  // Calculate daily reviews
+  const dailyReviews = calculateLocalDailyReviews(allReviewLogs, days)
+
+  // Calculate card distribution
+  const cardDistribution = calculateLocalCardDistribution(allCardStates, totalCards)
+
+  // Calculate accuracy trend
+  const accuracyTrend = calculateLocalAccuracyTrend(allReviewLogs, days)
+
+  // Calculate overall stats
+  const totalReviews = allReviewLogs.length
+  const correctReviews = allReviewLogs.filter((r) => r.ease >= 3).length
+  const overallAccuracy = totalReviews > 0 ? Math.round((correctReviews / totalReviews) * 100) : 0
+
+  // Calculate streak
+  const streak = calculateLocalStreak(allReviewLogs)
+
+  return {
+    dailyReviews,
+    cardDistribution,
+    accuracyTrend,
+    totalReviews,
+    overallAccuracy,
+    streak,
+  }
+}
+
+function calculateLocalDailyReviews(
+  reviewLogs: LocalReviewLog[],
+  days: number
+): Array<{ date: string; total: number; correct: number; incorrect: number }> {
+  const dailyMap = new Map<string, { total: number; correct: number; incorrect: number }>()
+
+  // Initialize all days
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date()
+    date.setDate(date.getDate() - i)
+    const dateStr = date.toISOString().split('T')[0]
+    dailyMap.set(dateStr, { total: 0, correct: 0, incorrect: 0 })
+  }
+
+  // Aggregate reviews
+  for (const log of reviewLogs) {
+    const dateStr = log.reviewed_at.toISOString().split('T')[0]
+    const entry = dailyMap.get(dateStr)
+    if (entry) {
+      entry.total++
+      if (log.ease >= 3) {
+        entry.correct++
+      } else {
+        entry.incorrect++
+      }
+    }
+  }
+
+  return Array.from(dailyMap.entries()).map(([date, data]) => ({
+    date,
+    ...data,
+  }))
+}
+
+function calculateLocalCardDistribution(
+  cardStates: LocalCardState[],
+  totalCards: number
+): { new: number; learning: number; review: number; relearning: number } {
+  const stateCount = {
+    new: 0,
+    learning: 0,
+    review: 0,
+    relearning: 0,
+  }
+
+  for (const cs of cardStates) {
+    if (cs.state === 'learning') stateCount.learning++
+    else if (cs.state === 'review') stateCount.review++
+    else if (cs.state === 'relearning') stateCount.relearning++
+  }
+
+  // Cards without state are "new"
+  stateCount.new = Math.max(0, totalCards - cardStates.length)
+
+  return stateCount
+}
+
+function calculateLocalAccuracyTrend(
+  reviewLogs: LocalReviewLog[],
+  days: number
+): Array<{ date: string; accuracy: number }> {
+  const dailyMap = new Map<string, { correct: number; total: number }>()
+
+  // Initialize all days
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date()
+    date.setDate(date.getDate() - i)
+    const dateStr = date.toISOString().split('T')[0]
+    dailyMap.set(dateStr, { correct: 0, total: 0 })
+  }
+
+  // Aggregate reviews
+  for (const log of reviewLogs) {
+    const dateStr = log.reviewed_at.toISOString().split('T')[0]
+    const entry = dailyMap.get(dateStr)
+    if (entry) {
+      entry.total++
+      if (log.ease >= 3) {
+        entry.correct++
+      }
+    }
+  }
+
+  return Array.from(dailyMap.entries()).map(([date, data]) => ({
+    date,
+    accuracy: data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0,
+  }))
+}
+
+function calculateLocalStreak(reviewLogs: LocalReviewLog[]): number {
+  const reviewDates = new Set(
+    reviewLogs.map((r) => {
+      const d = r.reviewed_at
+      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+    })
+  )
+
+  let streak = 0
+  const checkDate = new Date()
+  while (streak < 365) {
+    const dateStr = `${checkDate.getFullYear()}-${checkDate.getMonth()}-${checkDate.getDate()}`
+    if (reviewDates.has(dateStr)) {
+      streak++
+      checkDate.setDate(checkDate.getDate() - 1)
+    } else if (streak === 0 && checkDate.toDateString() === new Date().toDateString()) {
+      // Today might not have reviews yet, check yesterday
+      checkDate.setDate(checkDate.getDate() - 1)
+    } else {
+      break
+    }
+  }
+
+  return streak
+}
