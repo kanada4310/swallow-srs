@@ -81,10 +81,12 @@
 ## Phase 4: LLM連携
 
 ### 4.1 音声生成（TTS）
-- [ ] OpenAI TTS / Google Cloud TTS 統合
-- [ ] 単語の発音音声生成
-- [ ] 例文の読み上げ音声生成
-- [ ] Supabase Storageへの音声保存
+- [x] OpenAI TTS 統合
+- [x] 単語の発音音声生成
+- [x] 例文の読み上げ音声生成
+- [x] Supabase Storageへの音声保存
+- [x] TTS設定UI（ボイス選択、速度調整）
+- [x] オフラインキャッシュ対応
 
 ### 4.2 例文生成
 - [ ] Claude / GPT-4 API統合
@@ -115,12 +117,15 @@
 
 ## 現在の進捗
 
-**Phase**: Phase 3 オフライン対応完了、Phase 4 LLM連携準備中
-**最終更新**: 2026-02-02
-**次のタスク**: Phase 4.1 音声生成（TTS）
+**Phase**: Phase 4.1 TTS完了、Phase 4.2 例文生成準備中
+**最終更新**: 2026-02-03
+**次のタスク**: Phase 4.2 例文生成
 
 ### 次回セッションで最初にやること
-1. Phase 4.1: TTS統合（OpenAI TTS / Google Cloud TTS）
+1. Supabaseで `audio` バケットを作成（手動）
+2. `.env.local` に `OPENAI_API_KEY` を設定
+3. `supabase/migrations/004_tts_audio.sql` をSupabaseで実行
+4. Phase 4.2: 例文生成（Claude API統合）
 
 ### 既知の問題
 - 学習開始前からオフラインだと学習画面に入れない（カードデータの事前キャッシュが必要）
@@ -155,3 +160,4 @@
 - [x] Phase 3.2 同期（sync_queue実装、オンライン検知、競合検知・解決UI）
 - [x] Phase 3.3 PWA対応（Service Worker、オフラインページ、インストール促進UI）
 - [x] Phase 3 動作確認完了・Dexieスキーマバグ修正（syncQueueにattemptsインデックス追加）
+- [x] Phase 4.1 TTS音声生成（OpenAI TTS統合、音声再生ボタン、設定UI、オフラインキャッシュ）

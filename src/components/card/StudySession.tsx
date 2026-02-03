@@ -15,7 +15,9 @@ import { SyncStatusBadge } from '@/components/ui/SyncStatusBadge'
 
 interface CardData {
   id: string
+  noteId: string
   fieldValues: FieldValues
+  audioUrls: Record<string, string> | null
   template: {
     front: string
     back: string
@@ -236,7 +238,9 @@ export function StudySession({ deckName, initialCards, userId }: StudySessionPro
 
       {/* Card */}
       <StudyCard
+        noteId={currentCard.noteId}
         fieldValues={currentCard.fieldValues}
+        audioUrls={currentCard.audioUrls}
         template={currentCard.template}
         clozeNumber={currentCard.clozeNumber}
         intervalPreviews={intervalPreviews}

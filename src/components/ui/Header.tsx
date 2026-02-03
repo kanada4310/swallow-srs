@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Settings } from 'lucide-react'
 
 interface HeaderProps {
   userName?: string
@@ -28,7 +29,7 @@ export function Header({ userName, userRole }: HeaderProps) {
           </Link>
 
           {/* User Info & Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {userName && (
               <div className="hidden sm:flex items-center gap-2 text-sm text-gray-600">
                 <span>{userName}</span>
@@ -39,6 +40,13 @@ export function Header({ userName, userRole }: HeaderProps) {
                 )}
               </div>
             )}
+            <Link
+              href="/settings"
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+              title="設定"
+            >
+              <Settings className="w-5 h-5" />
+            </Link>
             <button
               onClick={handleLogout}
               className="text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors"

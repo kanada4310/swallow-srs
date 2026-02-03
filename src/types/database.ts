@@ -74,6 +74,7 @@ export interface Note {
   deck_id: string
   note_type_id: string
   field_values: Record<string, string>
+  audio_urls: Record<string, string> | null
   source_info: {
     book?: string
     unit?: number
@@ -130,7 +131,9 @@ export interface DeckWithStats extends Deck {
 // Study session types
 export interface StudyCardData {
   id: string
+  noteId: string
   fieldValues: Record<string, string>
+  audioUrls: Record<string, string> | null
   template: {
     front: string
     back: string
@@ -145,4 +148,16 @@ export interface StudyCardData {
     state: CardState
     learningStep: number
   }
+}
+
+// TTS types
+export type TTSVoice = 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer'
+
+export interface UserTTSSettings {
+  user_id: string
+  enabled_fields: string[]
+  voice: TTSVoice
+  speed: number
+  created_at: string
+  updated_at: string
 }

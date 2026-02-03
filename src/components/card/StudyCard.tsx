@@ -3,9 +3,12 @@
 import { useState, useMemo } from 'react'
 import { Ease } from '@/lib/srs/scheduler'
 import { renderTemplate, type FieldValues } from '@/lib/template'
+import { AudioButton } from '@/components/audio/AudioButton'
 
 interface StudyCardProps {
+  noteId: string
   fieldValues: FieldValues
+  audioUrls: Record<string, string> | null
   template: {
     front: string
     back: string
@@ -17,7 +20,9 @@ interface StudyCardProps {
 }
 
 export function StudyCard({
+  noteId,
   fieldValues,
+  audioUrls,
   template,
   clozeNumber,
   intervalPreviews,
@@ -44,6 +49,14 @@ export function StudyCard({
     )
   }, [template.back, template.css, fieldValues, clozeNumber])
 
+  // Determine which fields to show audio buttons for
+  const frontField = fieldValues['Front'] || fieldValues['Text'] || ''
+  const backField = fieldValues['Back'] || fieldValues['Extra'] || ''
+
+  // Get field name for audio button (Front/Text for front side, Back/Extra for back side)
+  const frontFieldName = fieldValues['Front'] ? 'Front' : fieldValues['Text'] ? 'Text' : null
+  const backFieldName = fieldValues['Back'] ? 'Back' : fieldValues['Extra'] ? 'Extra' : null
+
   const handleFlip = () => {
     setIsFlipped(true)
   }
@@ -58,22 +71,44 @@ export function StudyCard({
       {/* Card */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 min-h-[300px] flex flex-col">
         {/* Front */}
-        <div className="flex-1 p-8 flex items-center justify-center">
+        <div className="flex-1 p-8 flex flex-col items-center justify-center relative">
           <div
             className="text-xl text-center w-full"
             dangerouslySetInnerHTML={{ __html: renderedFront }}
           />
+          {frontFieldName && frontField && (
+            <div className="mt-4">
+              <AudioButton
+                noteId={noteId}
+                fieldName={frontFieldName}
+                text={frontField}
+                audioUrl={audioUrls?.[frontFieldName]}
+                size="md"
+              />
+            </div>
+          )}
         </div>
 
         {/* Divider and Back (when flipped) */}
         {isFlipped && (
           <>
             <hr className="border-gray-200" />
-            <div className="flex-1 p-8 flex items-center justify-center bg-gray-50">
+            <div className="flex-1 p-8 flex flex-col items-center justify-center bg-gray-50">
               <div
                 className="text-xl text-center w-full"
                 dangerouslySetInnerHTML={{ __html: renderedBack }}
               />
+              {backFieldName && backField && (
+                <div className="mt-4">
+                  <AudioButton
+                    noteId={noteId}
+                    fieldName={backFieldName}
+                    text={backField}
+                    audioUrl={audioUrls?.[backFieldName]}
+                    size="md"
+                  />
+                </div>
+              )}
             </div>
           </>
         )}

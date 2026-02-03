@@ -7,7 +7,9 @@ import type { CardSchedule } from '@/lib/srs/scheduler'
 
 interface CardData {
   id: string
+  noteId: string
   fieldValues: Record<string, string>
+  audioUrls: Record<string, string> | null
   template: {
     front: string
     back: string
@@ -31,8 +33,11 @@ async function getStudyCards(userId: string, deckId: string): Promise<CardData[]
     .select(`
       id,
       template_index,
+      note_id,
       notes!inner (
+        id,
         field_values,
+        audio_urls,
         note_type_id
       )
     `)
@@ -44,7 +49,7 @@ async function getStudyCards(userId: string, deckId: string): Promise<CardData[]
 
   // Get unique note type IDs
   const noteTypeIds = Array.from(new Set(cards.map(c => {
-    const noteData = c.notes as unknown as { field_values: Record<string, string>; note_type_id: string }
+    const noteData = c.notes as unknown as { id: string; field_values: Record<string, string>; audio_urls: Record<string, string> | null; note_type_id: string }
     return noteData.note_type_id
   })))
 
@@ -109,8 +114,10 @@ async function getStudyCards(userId: string, deckId: string): Promise<CardData[]
 
   for (const card of cards) {
     const state = stateMap.get(card.id)
-    const noteData = card.notes as unknown as { field_values: Record<string, string>; note_type_id: string }
+    const noteData = card.notes as unknown as { id: string; field_values: Record<string, string>; audio_urls: Record<string, string> | null; note_type_id: string }
+    const noteId = noteData.id
     const fieldValues = noteData.field_values
+    const audioUrls = noteData.audio_urls
     const noteTypeId = noteData.note_type_id
 
     // Get template for this card
@@ -124,7 +131,9 @@ async function getStudyCards(userId: string, deckId: string): Promise<CardData[]
 
     const cardData: CardData = {
       id: card.id,
+      noteId,
       fieldValues,
+      audioUrls,
       template,
       schedule: state ? {
         due: new Date(state.due),

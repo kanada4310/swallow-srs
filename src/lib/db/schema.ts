@@ -59,6 +59,16 @@ export interface SyncMetadata {
   value: string | number | Date
 }
 
+// Audio cache entry for TTS
+export interface AudioCacheEntry {
+  id: string // composite key: `${noteId}:${fieldName}`
+  noteId: string
+  fieldName: string
+  audioBlob: Blob
+  audioUrl: string
+  cachedAt: Date
+}
+
 class TsubameSRSDatabase extends Dexie {
   // Tables
   profiles!: Table<Profile>
@@ -71,6 +81,7 @@ class TsubameSRSDatabase extends Dexie {
   reviewLogs!: Table<LocalReviewLog>
   syncQueue!: Table<SyncQueueEntry>
   syncMetadata!: Table<SyncMetadata>
+  audioCache!: Table<AudioCacheEntry>
 
   constructor() {
     super('tsubame-srs')
@@ -106,6 +117,21 @@ class TsubameSRSDatabase extends Dexie {
       reviewLogs: 'id, user_id, card_id, synced_at',
       syncQueue: '++id, table, created_at, attempts',
       syncMetadata: 'key',
+    })
+
+    // Version 3: Add audio cache for TTS
+    this.version(3).stores({
+      profiles: 'id',
+      noteTypes: 'id',
+      cardTemplates: 'id, note_type_id',
+      decks: 'id, owner_id',
+      notes: 'id, deck_id',
+      cards: 'id, note_id, deck_id',
+      cardStates: 'id, user_id, card_id, due, [user_id+card_id]',
+      reviewLogs: 'id, user_id, card_id, synced_at',
+      syncQueue: '++id, table, created_at, attempts',
+      syncMetadata: 'key',
+      audioCache: 'id, noteId, cachedAt',
     })
   }
 }
@@ -222,6 +248,7 @@ export async function clearAllData(): Promise<void> {
       db.reviewLogs,
       db.syncQueue,
       db.syncMetadata,
+      db.audioCache,
     ],
     async () => {
       await Promise.all([
@@ -235,6 +262,7 @@ export async function clearAllData(): Promise<void> {
         db.reviewLogs.clear(),
         db.syncQueue.clear(),
         db.syncMetadata.clear(),
+        db.audioCache.clear(),
       ])
     }
   )
@@ -268,6 +296,70 @@ export async function cleanupOldReviewLogs(): Promise<number> {
 
   const ids = oldLogs.map((log) => log.id)
   await db.reviewLogs.bulkDelete(ids)
+
+  return ids.length
+}
+
+// Audio cache helper functions
+
+/**
+ * Create composite key for audio cache
+ */
+export function createAudioCacheId(noteId: string, fieldName: string): string {
+  return `${noteId}:${fieldName}`
+}
+
+/**
+ * Get cached audio for a note field
+ */
+export async function getCachedAudio(
+  noteId: string,
+  fieldName: string
+): Promise<AudioCacheEntry | undefined> {
+  const id = createAudioCacheId(noteId, fieldName)
+  return db.audioCache.get(id)
+}
+
+/**
+ * Save audio to cache
+ */
+export async function saveAudioCache(
+  noteId: string,
+  fieldName: string,
+  audioBlob: Blob,
+  audioUrl: string
+): Promise<void> {
+  const id = createAudioCacheId(noteId, fieldName)
+  await db.audioCache.put({
+    id,
+    noteId,
+    fieldName,
+    audioBlob,
+    audioUrl,
+    cachedAt: new Date(),
+  })
+}
+
+/**
+ * Delete cached audio for a note
+ */
+export async function deleteCachedAudioForNote(noteId: string): Promise<void> {
+  await db.audioCache.where('noteId').equals(noteId).delete()
+}
+
+/**
+ * Cleanup old audio cache entries (older than 30 days)
+ */
+export async function cleanupOldAudioCache(): Promise<number> {
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+  const oldEntries = await db.audioCache
+    .filter((entry) => entry.cachedAt < thirtyDaysAgo)
+    .toArray()
+
+  const ids = oldEntries.map((entry) => entry.id)
+  await db.audioCache.bulkDelete(ids)
 
   return ids.length
 }
