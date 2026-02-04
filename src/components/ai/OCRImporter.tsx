@@ -325,6 +325,7 @@ export function OCRImporter({
           {/* Preview if image exists */}
           {imagePreview && (
             <div className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={imagePreview}
                 alt="プレビュー"
@@ -376,6 +377,7 @@ export function OCRImporter({
             単語と意味を抽出しています
           </p>
           {imagePreview && (
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imagePreview}
               alt="解析中"
