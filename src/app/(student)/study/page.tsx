@@ -1,7 +1,7 @@
+import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { StudySession } from '@/components/card/StudySession'
-import Link from 'next/link'
+import { StudyPageClient } from './StudyPageClient'
 import type { Profile, GeneratedContent, FieldDefinition } from '@/types/database'
 import type { CardSchedule } from '@/lib/srs/scheduler'
 
@@ -195,7 +195,7 @@ export default async function StudyPage({
   searchParams: Promise<SearchParams>
 }) {
   const params = await searchParams
-  const deckId = params.deck
+  const deckId = params.deck || null
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -206,8 +206,14 @@ export default async function StudyPage({
     .eq('id', user?.id)
     .single() as { data: Profile | null }
 
+  // Offline or unauthenticated - render client-only fallback
+  // StudyPageClient will load userId and cards from IndexedDB
   if (!profile) {
-    return null
+    return (
+      <Suspense>
+        <StudyPageClient deckId={deckId} />
+      </Suspense>
+    )
   }
 
   // If no deck specified, show deck selection
@@ -215,25 +221,11 @@ export default async function StudyPage({
     return (
       <AppLayout userName={profile.name} userRole={profile.role}>
         <div className="max-w-4xl mx-auto px-4 py-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">学習</h1>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-            <div className="text-gray-400 mb-4">
-              <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-            </div>
-            <h2 className="text-lg font-medium text-gray-900 mb-2">デッキを選択してください</h2>
-            <p className="text-gray-500 mb-4">
-              学習するデッキを選んで学習を始めましょう。
-            </p>
-            <Link
-              href="/decks"
-              className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              デッキ一覧へ
-            </Link>
-          </div>
+          <StudyPageClient
+            deckId={null}
+            userId={profile.id}
+            userProfile={{ name: profile.name, role: profile.role }}
+          />
         </div>
       </AppLayout>
     )
@@ -264,10 +256,12 @@ export default async function StudyPage({
   return (
     <AppLayout userName={profile.name} userRole={profile.role}>
       <div className="max-w-4xl mx-auto px-4">
-        <StudySession
+        <StudyPageClient
+          deckId={deckId}
           deckName={deck.name}
           initialCards={studyCards}
           userId={profile.id}
+          userProfile={{ name: profile.name, role: profile.role }}
         />
       </div>
     </AppLayout>

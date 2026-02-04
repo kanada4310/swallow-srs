@@ -12,7 +12,10 @@ import type {
   Note,
   Card,
   CardState,
+  FieldDefinition,
+  GeneratedContent,
 } from '@/types/database'
+import type { CardSchedule } from '@/lib/srs/scheduler'
 
 // Local version of CardStateRecord (with Date instead of string)
 export interface LocalCardState {
@@ -517,6 +520,225 @@ function calculateLocalAccuracyTrend(
     date,
     accuracy: data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0,
   }))
+}
+
+// Offline study card data type (matches server-side CardData)
+export interface OfflineCardData {
+  id: string
+  noteId: string
+  fieldValues: Record<string, string>
+  audioUrls: Record<string, string> | null
+  generatedContent: GeneratedContent | null
+  template: {
+    front: string
+    back: string
+    css: string
+  }
+  fields?: FieldDefinition[]
+  clozeNumber?: number
+  schedule: CardSchedule
+}
+
+/**
+ * Get study cards from IndexedDB (offline equivalent of server getStudyCards)
+ */
+export async function getStudyCardsOffline(
+  userId: string,
+  deckId: string
+): Promise<OfflineCardData[]> {
+  const now = new Date()
+
+  // Get all cards in the deck
+  const deckCards = await db.cards.where('deck_id').equals(deckId).toArray()
+  if (deckCards.length === 0) return []
+
+  // Get notes for these cards
+  const noteIds = Array.from(new Set(deckCards.map(c => c.note_id)))
+  const notes = await db.notes.where('id').anyOf(noteIds).toArray()
+  const noteMap = new Map(notes.map(n => [n.id, n]))
+
+  // Get note types
+  const noteTypeIds = Array.from(new Set(notes.map(n => n.note_type_id)))
+  const noteTypes = await db.noteTypes.where('id').anyOf(noteTypeIds).toArray()
+  const fieldsMap = new Map<string, FieldDefinition[]>()
+  for (const nt of noteTypes) {
+    fieldsMap.set(nt.id, nt.fields as FieldDefinition[])
+  }
+
+  // Get card templates
+  const templates = await db.cardTemplates.where('note_type_id').anyOf(noteTypeIds).toArray()
+  const templateMap = new Map<string, Array<{ front: string; back: string; css: string }>>()
+  for (const t of templates.sort((a, b) => a.ordinal - b.ordinal)) {
+    const existing = templateMap.get(t.note_type_id) || []
+    existing.push({
+      front: t.front_template,
+      back: t.back_template,
+      css: t.css || '',
+    })
+    templateMap.set(t.note_type_id, existing)
+  }
+
+  // Get card states for this user
+  const cardIds = deckCards.map(c => c.id)
+  const states = await db.cardStates
+    .where('user_id')
+    .equals(userId)
+    .filter(s => cardIds.includes(s.card_id))
+    .toArray()
+  const stateMap = new Map(states.map(s => [s.card_id, s]))
+
+  // Get deck settings for new cards per day
+  const deck = await db.decks.get(deckId)
+  const newCardsPerDay = deck?.settings?.new_cards_per_day ?? 20
+
+  // Count new cards introduced today
+  const todayStart = new Date()
+  todayStart.setHours(4, 0, 0, 0)
+  if (now.getHours() < 4) {
+    todayStart.setDate(todayStart.getDate() - 1)
+  }
+
+  const todayLogs = await db.reviewLogs
+    .where('user_id')
+    .equals(userId)
+    .filter(log =>
+      cardIds.includes(log.card_id) &&
+      log.last_interval === 0 &&
+      log.reviewed_at >= todayStart
+    )
+    .toArray()
+
+  const remainingNewCards = Math.max(0, newCardsPerDay - todayLogs.length)
+
+  // Categorize cards
+  const dueCards: OfflineCardData[] = []
+  const newCards: OfflineCardData[] = []
+
+  for (const card of deckCards) {
+    const note = noteMap.get(card.note_id)
+    if (!note) continue
+
+    const state = stateMap.get(card.id)
+    const cardTemplates = templateMap.get(note.note_type_id) || []
+    const template = cardTemplates[card.template_index] || {
+      front: '<div>{{Front}}</div>',
+      back: '<div>{{Front}}</div><hr><div>{{Back}}</div>',
+      css: '',
+    }
+
+    const cardData: OfflineCardData = {
+      id: card.id,
+      noteId: note.id,
+      fieldValues: note.field_values,
+      audioUrls: note.audio_urls || null,
+      generatedContent: note.generated_content || null,
+      template,
+      fields: fieldsMap.get(note.note_type_id),
+      schedule: state ? {
+        due: state.due,
+        interval: state.interval,
+        easeFactor: state.ease_factor,
+        repetitions: state.repetitions,
+        state: state.state as CardSchedule['state'],
+        learningStep: state.learning_step,
+      } : {
+        due: now,
+        interval: 0,
+        easeFactor: 2.5,
+        repetitions: 0,
+        state: 'new' as const,
+        learningStep: 0,
+      },
+    }
+
+    if (!state || state.state === 'new') {
+      newCards.push(cardData)
+    } else if (state.due <= now) {
+      dueCards.push(cardData)
+    }
+  }
+
+  // Sort due cards by due date (oldest first)
+  dueCards.sort((a, b) => a.schedule.due.getTime() - b.schedule.due.getTime())
+
+  return [...dueCards, ...newCards.slice(0, remainingNewCards)]
+}
+
+// Offline deck with stats type
+export interface OfflineDeckWithStats {
+  id: string
+  name: string
+  owner_id: string
+  is_distributed: boolean
+  is_own: boolean
+  total_cards: number
+  new_count: number
+  learning_count: number
+  review_count: number
+}
+
+/**
+ * Get decks with stats from IndexedDB (offline equivalent of server getDecksWithStats)
+ */
+export async function getDecksWithStatsOffline(
+  userId: string
+): Promise<OfflineDeckWithStats[]> {
+  const allDecks = await db.decks.toArray()
+  if (allDecks.length === 0) return []
+
+  const deckIds = allDecks.map(d => d.id)
+
+  // Get all cards
+  const allCards = await db.cards.where('deck_id').anyOf(deckIds).toArray()
+
+  // Get card states for this user
+  const allCardStates = await db.cardStates
+    .where('user_id')
+    .equals(userId)
+    .toArray()
+
+  // Build lookup maps
+  const cardsByDeck = new Map<string, string[]>()
+  for (const card of allCards) {
+    const list = cardsByDeck.get(card.deck_id) || []
+    list.push(card.id)
+    cardsByDeck.set(card.deck_id, list)
+  }
+
+  const stateByCard = new Map<string, string>()
+  for (const cs of allCardStates) {
+    stateByCard.set(cs.card_id, cs.state)
+  }
+
+  return allDecks.map(deck => {
+    const cardIds = cardsByDeck.get(deck.id) || []
+    let newCount = 0
+    let learningCount = 0
+    let reviewCount = 0
+
+    for (const cardId of cardIds) {
+      const state = stateByCard.get(cardId)
+      if (!state || state === 'new') {
+        newCount++
+      } else if (state === 'learning' || state === 'relearning') {
+        learningCount++
+      } else if (state === 'review') {
+        reviewCount++
+      }
+    }
+
+    return {
+      id: deck.id,
+      name: deck.name,
+      owner_id: deck.owner_id,
+      is_distributed: deck.is_distributed,
+      is_own: deck.owner_id === userId,
+      total_cards: cardIds.length,
+      new_count: newCount,
+      learning_count: learningCount,
+      review_count: reviewCount,
+    }
+  })
 }
 
 function calculateLocalStreak(reviewLogs: LocalReviewLog[]): number {

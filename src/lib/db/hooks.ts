@@ -4,7 +4,7 @@
 
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { isOnline, registerOnlineListener } from './utils'
 import {
   getSyncStatus,
@@ -232,13 +232,31 @@ export function usePrefetchDeck(deckId: string | null) {
 
         await db.transaction(
           'rw',
-          [db.decks, db.notes, db.cards, db.noteTypes, db.cardTemplates],
+          [db.decks, db.notes, db.cards, db.noteTypes, db.cardTemplates, db.cardStates],
           async () => {
             if (data.deck) await db.decks.put(data.deck)
             if (data.notes) await db.notes.bulkPut(data.notes)
             if (data.cards) await db.cards.bulkPut(data.cards)
             if (data.noteTypes) await db.noteTypes.bulkPut(data.noteTypes)
             if (data.cardTemplates) await db.cardTemplates.bulkPut(data.cardTemplates)
+            if (data.cardStates) {
+              // Convert server card states to local format
+              for (const cs of data.cardStates) {
+                const id = `${cs.user_id}:${cs.card_id}`
+                await db.cardStates.put({
+                  id,
+                  user_id: cs.user_id,
+                  card_id: cs.card_id,
+                  due: new Date(cs.due),
+                  interval: cs.interval,
+                  ease_factor: cs.ease_factor,
+                  repetitions: cs.repetitions,
+                  state: cs.state,
+                  learning_step: cs.learning_step,
+                  updated_at: new Date(cs.updated_at),
+                })
+              }
+            }
           }
         )
       } catch (error) {
@@ -248,4 +266,66 @@ export function usePrefetchDeck(deckId: string | null) {
 
     prefetch()
   }, [deckId, online])
+}
+
+/**
+ * Hook to prefetch multiple decks for offline use (batch)
+ */
+export function usePrefetchAllDecks(deckIds: string[]) {
+  const online = useOnlineStatus()
+  const prefetchedRef = useRef<Set<string>>(new Set())
+
+  useEffect(() => {
+    if (!online || deckIds.length === 0) return
+
+    // Only prefetch decks we haven't prefetched yet in this session
+    const newDeckIds = deckIds.filter(id => !prefetchedRef.current.has(id))
+    if (newDeckIds.length === 0) return
+
+    const prefetchAll = async () => {
+      for (const deckId of newDeckIds) {
+        try {
+          const response = await fetch(`/api/decks/${deckId}/offline-data`)
+          if (!response.ok) continue
+
+          const data = await response.json()
+
+          await db.transaction(
+            'rw',
+            [db.decks, db.notes, db.cards, db.noteTypes, db.cardTemplates, db.cardStates],
+            async () => {
+              if (data.deck) await db.decks.put(data.deck)
+              if (data.notes) await db.notes.bulkPut(data.notes)
+              if (data.cards) await db.cards.bulkPut(data.cards)
+              if (data.noteTypes) await db.noteTypes.bulkPut(data.noteTypes)
+              if (data.cardTemplates) await db.cardTemplates.bulkPut(data.cardTemplates)
+              if (data.cardStates) {
+                for (const cs of data.cardStates) {
+                  const id = `${cs.user_id}:${cs.card_id}`
+                  await db.cardStates.put({
+                    id,
+                    user_id: cs.user_id,
+                    card_id: cs.card_id,
+                    due: new Date(cs.due),
+                    interval: cs.interval,
+                    ease_factor: cs.ease_factor,
+                    repetitions: cs.repetitions,
+                    state: cs.state,
+                    learning_step: cs.learning_step,
+                    updated_at: new Date(cs.updated_at),
+                  })
+                }
+              }
+            }
+          )
+
+          prefetchedRef.current.add(deckId)
+        } catch (error) {
+          console.error(`Failed to prefetch deck ${deckId}:`, error)
+        }
+      }
+    }
+
+    prefetchAll()
+  }, [deckIds.join(','), online]) // eslint-disable-line react-hooks/exhaustive-deps
 }

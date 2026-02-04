@@ -156,21 +156,22 @@ N+1クエリ解消とページ遷移時の体感速度向上。
   - DeckDetailClient.tsx: Supabaseクライアントからノートのみ部分更新
 - [x] デッキ一覧・ダッシュボードにローディングスケルトン追加
 
-### 6.3 オフライン完全対応 ★高優先
+### 6.3 オフライン完全対応 ★高優先 ✅ 完了
 オフライン時でもホーム→デッキ一覧→学習の全フローが動作するようにする。
 Webアプリでも、Service Workerによるページキャッシュ + IndexedDBのローカルデータで実現可能。
 
-- [ ] 学習ページのクライアントサイドフォールバック
-  - 現状: Server Componentでサーバーfetch必須 → オフラインで表示不可
-  - 修正: オフライン検知時にDexie.jsからカードデータを取得するClient Component版を用意
-- [ ] デッキデータ事前キャッシュの実装
-  - `usePrefetchDeck()` フックが未使用 → 呼び出しを追加
-  - `/api/decks/[id]/offline-data` APIエンドポイントを作成
-  - デッキ一覧表示時にバックグラウンドでプリフェッチ
-- [ ] オフライン時のデッキ一覧表示
-  - Dexie.jsからデッキ一覧 + 学習状態を取得して表示
-- [ ] Service Workerのルートキャッシュ強化
-  - `/decks`, `/study` 等のHTMLページをプリキャッシュ
+- [x] 学習ページのクライアントサイドフォールバック
+  - StudyPageClient: initialCards有無でオンライン/オフライン自動切替
+  - getStudyCardsOffline() でIndexedDBからカードデータ取得
+- [x] デッキデータ事前キャッシュの実装
+  - `/api/decks/[id]/offline-data` APIエンドポイント作成
+  - `usePrefetchAllDecks()` フックでデッキ一覧表示時にバックグラウンドプリフェッチ
+  - `usePrefetchDeck()` でcardStatesも保存するよう強化
+- [x] オフライン時のデッキ一覧表示
+  - DecksPageClient: initialDecks有無で自動切替
+  - getDecksWithStatsOffline() でIndexedDBから集計
+- [x] Service Workerのルートキャッシュ強化
+  - `/decks`, `/study` ページをNetworkFirst（10秒タイムアウト、1日キャッシュ）
 
 ### 6.4 OCRカスタムノートタイプ対応
 OCR読み取り結果をカスタムノートタイプのフィールドに動的マッピング。
@@ -205,22 +206,20 @@ OCR読み取り結果をカスタムノートタイプのフィールドに動�
 
 ## 現在の進捗
 
-**Phase**: Phase 6.2 ページ遷移パフォーマンス改善 動作確認完了
+**Phase**: Phase 6.3 オフライン完全対応 動作確認待ち
 **最終更新**: 2026-02-04
-**次のタスク**: Phase 6.3 オフライン完全対応
+**次のタスク**: Phase 6.3 動作確認 → Phase 6.4 OCRカスタムノートタイプ対応
 
 ### 次回セッションでやること
 
 Phase 6 を以下の優先順で実装：
 1. ~~**Phase 6.1**: 学習体験の高速化（カード切り替え遅延解消）~~ ✅ 完了
 2. ~~**Phase 6.2**: ページ遷移パフォーマンス改善（N+1クエリ解消）~~ ✅ 完了
-3. **Phase 6.3**: オフライン完全対応
+3. ~~**Phase 6.3**: オフライン完全対応~~ ✅ 実装完了（動作確認待ち）
 4. **Phase 6.4**: OCRカスタムノートタイプ対応
 5. **Phase 6.5**: 例文生成フィールド対応
 
 ### 既知の問題（技術的詳細）
-- **オフライン学習不可**: 学習ページがServer Component依存（study/page.tsx）
-- **プリフェッチ未使用**: usePrefetchDeck() + APIが未完成（hooks.ts）
 - **OCR Basic固定**: OCRImporter.tsx:6 でハードコード
 - **例文生成Front固定**: ExampleGenerator.tsx:217 でハードコード
 
@@ -269,3 +268,4 @@ Phase 6 を以下の優先順で実装：
 - [x] Phase 6.1 動作確認完了
 - [x] Phase 6.2 ページ遷移パフォーマンス改善（N+1クエリ解消、ミドルウェア最適化、楽観的UI、スケルトン）
 - [x] Phase 6.2 動作確認完了
+- [x] Phase 6.3 オフライン完全対応（StudyPageClient、DecksPageClient、offline-data API、usePrefetchAllDecks、SW強化）

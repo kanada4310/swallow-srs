@@ -14,6 +14,19 @@ const config = withPWA({
   workboxOptions: {
     runtimeCaching: [
       {
+        // Page navigation caching for offline support (/decks, /study pages)
+        urlPattern: /^\/(decks|study)(\/.*)?$/,
+        handler: 'NetworkFirst',
+        options: {
+          cacheName: 'page-navigation',
+          expiration: {
+            maxEntries: 50,
+            maxAgeSeconds: 60 * 60 * 24, // 1 day
+          },
+          networkTimeoutSeconds: 10,
+        },
+      },
+      {
         urlPattern: /^https:\/\/.*\.supabase\.co\/.*$/,
         handler: 'NetworkFirst',
         options: {
