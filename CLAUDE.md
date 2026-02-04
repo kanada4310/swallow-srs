@@ -113,22 +113,22 @@ npm run test:watch   # Vitest 監視モード
 - **DecksPageClient**: `src/app/(student)/decks/DecksPageClient.tsx` - initialDecks有無で切替
 - **offline-data API**: `GET /api/decks/[id]/offline-data` - デッキの全データを1回で取得
 - **プリフェッチ**: `usePrefetchAllDecks()` でデッキ一覧表示時に全デッキをバックグラウンドキャッシュ
-- **Service Worker**: `/decks`, `/study` ページをNetworkFirstでキャッシュ
+- **Service Worker**: 静的アセットのキャッシュ（ページナビゲーションキャッシュはRSC競合のため削除）
 - **Server Componentフォールバック**: `!profile` 時に `return null` せず Client Component を描画
 - **error.tsx**: `study/error.tsx`, `decks/error.tsx` でLink遷移時のRSCフェッチ失敗をキャッチ
 - **IndexedDBプロフィール取得**: Client ComponentがuserId未提供時にIndexedDBからprofile取得
 
 ## 現在の進捗（2026-02-04更新）
 
-**Phase 6.3 オフライン完全対応 動作確認待ち**
+**Phase 6.3 オフライン完全対応 ✅ 完了**
 
 ### 次回セッションでやること
-- **Phase 6.3**: 動作確認（オフラインでデッキ一覧→カード学習の全フロー）→ 完了
 - **Phase 6.4**: OCRカスタムノートタイプ対応から着手
 
 ### 既知の問題（技術的詳細）
 - **OCR Basic固定**: OCRImporter.tsx:6 でハードコード
 - **例文生成Front固定**: ExampleGenerator.tsx:217 でハードコード
+- **オフライン時のページリロード**: SWのページナビゲーションキャッシュはNext.js RSCと競合するため削除。オフライン学習はアプリ内Link遷移（error.tsx → IndexedDB）で対応。フルリロードはオフライン不可。
 
 ## 参照ドキュメント
 

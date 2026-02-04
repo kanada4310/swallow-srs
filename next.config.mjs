@@ -13,19 +13,11 @@ const config = withPWA({
   },
   workboxOptions: {
     runtimeCaching: [
-      {
-        // Page navigation caching for offline support (/decks, /study pages)
-        urlPattern: /^\/(decks|study)(\/.*)?$/,
-        handler: 'NetworkFirst',
-        options: {
-          cacheName: 'page-navigation',
-          expiration: {
-            maxEntries: 50,
-            maxAgeSeconds: 60 * 60 * 24, // 1 day
-          },
-          networkTimeoutSeconds: 10,
-        },
-      },
+      // NOTE: Page navigation caching for /decks, /study was removed.
+      // SW's NetworkFirst handler intercepted RSC (React Server Components) payload
+      // requests and returned /offline HTML as fallback, which Next.js couldn't parse.
+      // Instead, RSC fetch failures are caught by error.tsx boundaries, which render
+      // client components that load data from IndexedDB (offline-first).
       {
         urlPattern: /^https:\/\/.*\.supabase\.co\/.*$/,
         handler: 'NetworkFirst',

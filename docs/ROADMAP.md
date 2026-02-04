@@ -171,7 +171,9 @@ Webアプリでも、Service Workerによるページキャッシュ + IndexedDB
   - DecksPageClient: initialDecks有無で自動切替
   - getDecksWithStatsOffline() でIndexedDBから集計
 - [x] Service Workerのルートキャッシュ強化
-  - `/decks`, `/study` ページをNetworkFirst（10秒タイムアウト、1日キャッシュ）
+  - ページナビゲーションキャッシュはNext.js RSCペイロードと競合するため削除
+  - オフライン学習はerror.tsx境界 + IndexedDBフォールバックで実現
+  - 静的アセット（JS/CSS/画像）のキャッシュは維持
 
 ### 6.4 OCRカスタムノートタイプ対応
 OCR読み取り結果をカスタムノートタイプのフィールドに動的マッピング。
@@ -206,16 +208,16 @@ OCR読み取り結果をカスタムノートタイプのフィールドに動�
 
 ## 現在の進捗
 
-**Phase**: Phase 6.3 オフライン完全対応 動作確認待ち
+**Phase**: Phase 6.3 オフライン完全対応 ✅ 完了
 **最終更新**: 2026-02-04
-**次のタスク**: Phase 6.3 動作確認 → Phase 6.4 OCRカスタムノートタイプ対応
+**次のタスク**: Phase 6.4 OCRカスタムノートタイプ対応
 
 ### 次回セッションでやること
 
 Phase 6 を以下の優先順で実装：
 1. ~~**Phase 6.1**: 学習体験の高速化（カード切り替え遅延解消）~~ ✅ 完了
 2. ~~**Phase 6.2**: ページ遷移パフォーマンス改善（N+1クエリ解消）~~ ✅ 完了
-3. ~~**Phase 6.3**: オフライン完全対応~~ ✅ 実装完了（動作確認待ち）
+3. ~~**Phase 6.3**: オフライン完全対応~~ ✅ 完了（動作確認済み）
 4. **Phase 6.4**: OCRカスタムノートタイプ対応
 5. **Phase 6.5**: 例文生成フィールド対応
 
@@ -269,3 +271,4 @@ Phase 6 を以下の優先順で実装：
 - [x] Phase 6.2 ページ遷移パフォーマンス改善（N+1クエリ解消、ミドルウェア最適化、楽観的UI、スケルトン）
 - [x] Phase 6.2 動作確認完了
 - [x] Phase 6.3 オフライン完全対応（StudyPageClient、DecksPageClient、offline-data API、usePrefetchAllDecks、SW強化）
+- [x] Phase 6.3 動作確認完了（SW→RSC競合修正、error.tsx境界によるオフラインLink遷移確認）
