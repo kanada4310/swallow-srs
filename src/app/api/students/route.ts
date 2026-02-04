@@ -1,26 +1,13 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { requireTeacher } from '@/lib/api/auth'
 
 // GET /api/students - List all students (for teachers only)
 export async function GET() {
   try {
     const supabase = await createClient()
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Check if user is teacher or admin
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile || profile.role === 'student') {
-      return NextResponse.json({ error: 'Only teachers can access student list' }, { status: 403 })
-    }
+    const { error: authError } = await requireTeacher(supabase)
+    if (authError) return authError
 
     // Get all students
     const { data: students, error } = await supabase

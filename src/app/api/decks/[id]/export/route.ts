@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { requireTeacher } from '@/lib/api/auth'
 import { generateCSV, NoteForExport } from '@/lib/csv/exporter'
 import type { FieldDefinition } from '@/types/database'
 
@@ -11,22 +12,8 @@ export async function GET(
     const { id: deckId } = await params
     const supabase = await createClient()
 
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Check role (teacher or admin only)
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile || profile.role === 'student') {
-      return NextResponse.json({ error: '講師のみエクスポートできます' }, { status: 403 })
-    }
+    const { user, profile, error: authError } = await requireTeacher(supabase)
+    if (authError) return authError
 
     // Verify deck ownership
     const { data: deck, error: deckError } = await supabase

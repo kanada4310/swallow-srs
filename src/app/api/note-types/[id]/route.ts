@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { requireAuth } from '@/lib/api/auth'
 import type { FieldDefinition, TemplateInput } from '@/types/database'
 
 // GET /api/note-types/[id] - Get a note type with templates
@@ -11,11 +12,8 @@ export async function GET(
     const { id } = await params
     const supabase = await createClient()
 
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const { user, error: authError } = await requireAuth(supabase)
+    if (authError) return authError
 
     // Get note type with templates
     const { data: noteType, error } = await supabase
@@ -53,11 +51,8 @@ export async function PUT(
     const { id } = await params
     const supabase = await createClient()
 
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const { user, error: authError } = await requireAuth(supabase)
+    if (authError) return authError
 
     // Get existing note type
     const { data: existingNoteType, error: fetchError } = await supabase
@@ -203,11 +198,8 @@ export async function DELETE(
     const { id } = await params
     const supabase = await createClient()
 
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const { user, error: authError } = await requireAuth(supabase)
+    if (authError) return authError
 
     // Get existing note type
     const { data: existingNoteType, error: fetchError } = await supabase

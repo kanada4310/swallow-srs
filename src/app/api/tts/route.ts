@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { requireAuth } from '@/lib/api/auth'
 import OpenAI from 'openai'
 import type { TTSVoice } from '@/types/database'
 
@@ -48,11 +49,8 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient()
 
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const { user, error: authError } = await requireAuth(supabase)
+    if (authError) return authError
 
     const body = await request.json()
     const { noteId, fieldName, text, voice = 'alloy', speed = 1.0 } = body

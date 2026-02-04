@@ -1,26 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { requireAuth, requireTeacher } from '@/lib/api/auth'
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
-
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Check if user is teacher or admin
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile || profile.role === 'student') {
-      return NextResponse.json({ error: 'Only teachers can create decks' }, { status: 403 })
-    }
+    const { user, error } = await requireTeacher(supabase)
+    if (error) return error
 
     const body = await request.json()
     const { name, newCardsPerDay = 20 } = body
@@ -61,11 +47,8 @@ export async function GET() {
   try {
     const supabase = await createClient()
 
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const { user, error: authError } = await requireAuth(supabase)
+    if (authError) return authError
 
     // Get user's own decks
     const { data: decks, error } = await supabase

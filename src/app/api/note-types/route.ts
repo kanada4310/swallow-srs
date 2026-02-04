@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { requireAuth, requireTeacher } from '@/lib/api/auth'
 import type { FieldDefinition, TemplateInput } from '@/types/database'
 
 // GET /api/note-types - Get all note types
@@ -7,11 +8,8 @@ export async function GET() {
   try {
     const supabase = await createClient()
 
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const { user, error: authError } = await requireAuth(supabase)
+    if (authError) return authError
 
     // Get note types with template count
     // System note types + user's own note types
@@ -49,26 +47,8 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Check if user is a teacher
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profileError || !profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
-    }
-
-    if (profile.role !== 'teacher' && profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Only teachers can create note types' }, { status: 403 })
-    }
+    const { user, error: authError } = await requireTeacher(supabase)
+    if (authError) return authError
 
     const body = await request.json()
     const { name, fields, templates } = body as {
