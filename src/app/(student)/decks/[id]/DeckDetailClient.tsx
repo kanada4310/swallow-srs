@@ -54,6 +54,7 @@ export function DeckDetailClient({ deckId, notes, noteTypes, canEdit }: DeckDeta
   const [showImportModal, setShowImportModal] = useState(false)
   const [showBulkGenerateModal, setShowBulkGenerateModal] = useState(false)
   const [showOCRModal, setShowOCRModal] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
 
   const handleNoteAdded = () => {
     setIsAddingNote(false)
@@ -73,6 +74,37 @@ export function DeckDetailClient({ deckId, notes, noteTypes, canEdit }: DeckDeta
   const handleOCRComplete = () => {
     setShowOCRModal(false)
     router.refresh() // Refresh to show imported notes
+  }
+
+  const handleExport = async () => {
+    setIsExporting(true)
+    try {
+      const response = await fetch(`/api/decks/${deckId}/export`)
+      if (!response.ok) {
+        const data = await response.json()
+        alert(data.error || 'エクスポートに失敗しました')
+        return
+      }
+      const blob = await response.blob()
+      const contentDisposition = response.headers.get('Content-Disposition') || ''
+      const filenameMatch = contentDisposition.match(/filename\*=UTF-8''(.+?)(?:;|$)/)
+      const filename = filenameMatch
+        ? decodeURIComponent(filenameMatch[1])
+        : `export_${new Date().toISOString().split('T')[0]}.csv`
+
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch {
+      alert('エクスポートに失敗しました')
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   // Note type name lookup
@@ -123,6 +155,16 @@ export function DeckDetailClient({ deckId, notes, noteTypes, canEdit }: DeckDeta
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
             例文を一括生成
+          </button>
+          <button
+            onClick={handleExport}
+            disabled={notes.length === 0 || isExporting}
+            className="flex-1 min-w-[140px] py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            {isExporting ? 'エクスポート中...' : 'CSVエクスポート'}
           </button>
         </div>
       )}
