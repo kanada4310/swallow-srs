@@ -37,105 +37,136 @@ interface StudentStats {
 async function getTeacherStats(teacherId: string): Promise<{ stats: TeacherStats; students: StudentProgress[] }> {
   const supabase = await createClient()
 
-  // Get class count
-  const { count: classCount } = await supabase
-    .from('classes')
-    .select('*', { count: 'exact', head: true })
-    .eq('teacher_id', teacherId)
+  // Parallel batch 1: Get classes, class members, decks
+  const [
+    { count: classCount },
+    { data: classMembers },
+    { count: deckCount },
+    { data: decks },
+  ] = await Promise.all([
+    supabase
+      .from('classes')
+      .select('*', { count: 'exact', head: true })
+      .eq('teacher_id', teacherId),
+    supabase
+      .from('class_members')
+      .select('user_id, classes!inner(teacher_id)')
+      .eq('classes.teacher_id', teacherId),
+    supabase
+      .from('decks')
+      .select('*', { count: 'exact', head: true })
+      .eq('owner_id', teacherId),
+    supabase
+      .from('decks')
+      .select('id')
+      .eq('owner_id', teacherId),
+  ])
 
-  // Get student count (unique students in teacher's classes)
-  const { data: classMembers } = await supabase
-    .from('class_members')
-    .select('user_id, classes!inner(teacher_id)')
-    .eq('classes.teacher_id', teacherId)
-
-  const uniqueStudentIds = new Set(classMembers?.map(m => m.user_id) || [])
-  const studentCount = uniqueStudentIds.size
-
-  // Get deck count
-  const { count: deckCount } = await supabase
-    .from('decks')
-    .select('*', { count: 'exact', head: true })
-    .eq('owner_id', teacherId)
-
-  // Get total card count
-  const { data: decks } = await supabase
-    .from('decks')
-    .select('id')
-    .eq('owner_id', teacherId)
-
+  const uniqueStudentIds = Array.from(new Set(classMembers?.map(m => m.user_id) || []))
   const deckIds = decks?.map(d => d.id) || []
 
-  let cardCount = 0
-  if (deckIds.length > 0) {
-    const { count } = await supabase
-      .from('cards')
-      .select('*', { count: 'exact', head: true })
-      .in('deck_id', deckIds)
-    cardCount = count || 0
+  // Parallel batch 2: Card count + student data (all batched)
+  const today = new Date()
+  today.setHours(4, 0, 0, 0)
+  if (new Date().getHours() < 4) {
+    today.setDate(today.getDate() - 1)
   }
 
-  // Get students with progress
-  const studentsWithProgress: StudentProgress[] = []
+  const cardCountPromise = deckIds.length > 0
+    ? supabase.from('cards').select('*', { count: 'exact', head: true }).in('deck_id', deckIds)
+    : Promise.resolve({ count: 0 })
 
-  if (uniqueStudentIds.size > 0) {
-    const today = new Date()
-    today.setHours(4, 0, 0, 0)
-    if (new Date().getHours() < 4) {
-      today.setDate(today.getDate() - 1)
-    }
+  const studentProfilesPromise = uniqueStudentIds.length > 0
+    ? supabase.from('profiles').select('id, name, email').in('id', uniqueStudentIds)
+    : Promise.resolve({ data: [] })
 
-    for (const studentId of Array.from(uniqueStudentIds)) {
-      const { data: studentProfile } = await supabase
-        .from('profiles')
-        .select('id, name, email')
-        .eq('id', studentId)
-        .single()
+  const reviewLogsTodayPromise = uniqueStudentIds.length > 0
+    ? supabase
+        .from('review_logs')
+        .select('user_id')
+        .in('user_id', uniqueStudentIds)
+        .gte('reviewed_at', today.toISOString())
+    : Promise.resolve({ data: [] })
 
-      if (studentProfile) {
-        const { count: reviewsToday } = await supabase
-          .from('review_logs')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', studentId)
-          .gte('reviewed_at', today.toISOString())
+  const totalReviewsPromise = uniqueStudentIds.length > 0
+    ? supabase
+        .from('review_logs')
+        .select('user_id')
+        .in('user_id', uniqueStudentIds)
+    : Promise.resolve({ data: [] })
 
-        const { count: totalReviews } = await supabase
-          .from('review_logs')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', studentId)
+  const dueCardsPromise = uniqueStudentIds.length > 0
+    ? supabase
+        .from('card_states')
+        .select('user_id')
+        .in('user_id', uniqueStudentIds)
+        .lte('due', new Date().toISOString())
+    : Promise.resolve({ data: [] })
 
-        const { count: dueCards } = await supabase
-          .from('card_states')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', studentId)
-          .lte('due', new Date().toISOString())
+  const lastReviewsPromise = uniqueStudentIds.length > 0
+    ? supabase
+        .from('review_logs')
+        .select('user_id, reviewed_at')
+        .in('user_id', uniqueStudentIds)
+        .order('reviewed_at', { ascending: false })
+    : Promise.resolve({ data: [] })
 
-        const { data: lastReview } = await supabase
-          .from('review_logs')
-          .select('reviewed_at')
-          .eq('user_id', studentId)
-          .order('reviewed_at', { ascending: false })
-          .limit(1)
-          .single()
+  const [
+    cardCountResult,
+    { data: studentProfiles },
+    { data: reviewLogsToday },
+    { data: totalReviewLogs },
+    { data: dueCardStates },
+    { data: lastReviewLogs },
+  ] = await Promise.all([
+    cardCountPromise,
+    studentProfilesPromise,
+    reviewLogsTodayPromise,
+    totalReviewsPromise,
+    dueCardsPromise,
+    lastReviewsPromise,
+  ])
 
-        studentsWithProgress.push({
-          id: studentProfile.id,
-          name: studentProfile.name,
-          email: studentProfile.email,
-          reviewsToday: reviewsToday || 0,
-          totalReviews: totalReviews || 0,
-          dueCards: dueCards || 0,
-          lastActivity: lastReview?.reviewed_at || null,
-        })
-      }
-    }
+  const cardCount = ('count' in cardCountResult ? cardCountResult.count : 0) || 0
 
-    studentsWithProgress.sort((a, b) => b.reviewsToday - a.reviewsToday)
+  // Aggregate student stats from batch results
+  const reviewsTodayByUser = new Map<string, number>()
+  for (const log of reviewLogsToday || []) {
+    reviewsTodayByUser.set(log.user_id, (reviewsTodayByUser.get(log.user_id) || 0) + 1)
   }
+
+  const totalReviewsByUser = new Map<string, number>()
+  for (const log of totalReviewLogs || []) {
+    totalReviewsByUser.set(log.user_id, (totalReviewsByUser.get(log.user_id) || 0) + 1)
+  }
+
+  const dueCardsByUser = new Map<string, number>()
+  for (const cs of dueCardStates || []) {
+    dueCardsByUser.set(cs.user_id, (dueCardsByUser.get(cs.user_id) || 0) + 1)
+  }
+
+  const lastActivityByUser = new Map<string, string>()
+  for (const log of lastReviewLogs || []) {
+    if (!lastActivityByUser.has(log.user_id)) {
+      lastActivityByUser.set(log.user_id, log.reviewed_at)
+    }
+  }
+
+  const studentsWithProgress: StudentProgress[] = (studentProfiles || []).map(profile => ({
+    id: profile.id,
+    name: profile.name,
+    email: profile.email,
+    reviewsToday: reviewsTodayByUser.get(profile.id) || 0,
+    totalReviews: totalReviewsByUser.get(profile.id) || 0,
+    dueCards: dueCardsByUser.get(profile.id) || 0,
+    lastActivity: lastActivityByUser.get(profile.id) || null,
+  }))
+
+  studentsWithProgress.sort((a, b) => b.reviewsToday - a.reviewsToday)
 
   return {
     stats: {
-      studentCount,
+      studentCount: uniqueStudentIds.length,
       classCount: classCount || 0,
       deckCount: deckCount || 0,
       cardCount,
@@ -153,36 +184,42 @@ async function getStudentStats(studentId: string): Promise<StudentStats> {
     today.setDate(today.getDate() - 1)
   }
 
-  // Get due cards (review state)
-  const { count: dueCards } = await supabase
-    .from('card_states')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', studentId)
-    .eq('state', 'review')
-    .lte('due', new Date().toISOString())
-
-  // Get reviews done today
-  const { count: reviewsToday } = await supabase
-    .from('review_logs')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', studentId)
-    .gte('reviewed_at', today.toISOString())
-
-  // Get learning cards
-  const { count: learningCards } = await supabase
-    .from('card_states')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', studentId)
-    .in('state', ['learning', 'relearning'])
-
-  // Get new cards count (cards in accessible decks without card_state)
-  // For simplicity, count cards in own decks without state
-  const { data: ownDecks } = await supabase
-    .from('decks')
-    .select('id')
-    .eq('owner_id', studentId)
+  // Parallel batch: all stats queries at once
+  const [
+    { count: dueCards },
+    { count: reviewsToday },
+    { count: learningCards },
+    { data: ownDecks },
+    { data: allCardStates },
+  ] = await Promise.all([
+    supabase
+      .from('card_states')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', studentId)
+      .eq('state', 'review')
+      .lte('due', new Date().toISOString()),
+    supabase
+      .from('review_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', studentId)
+      .gte('reviewed_at', today.toISOString()),
+    supabase
+      .from('card_states')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', studentId)
+      .in('state', ['learning', 'relearning']),
+    supabase
+      .from('decks')
+      .select('id')
+      .eq('owner_id', studentId),
+    supabase
+      .from('card_states')
+      .select('card_id')
+      .eq('user_id', studentId),
+  ])
 
   const deckIds = ownDecks?.map(d => d.id) || []
+  const studiedCardIds = new Set(allCardStates?.map(cs => cs.card_id) || [])
 
   let newCards = 0
   if (deckIds.length > 0) {
@@ -191,18 +228,7 @@ async function getStudentStats(studentId: string): Promise<StudentStats> {
       .select('id')
       .in('deck_id', deckIds)
 
-    const allCardIds = allCards?.map(c => c.id) || []
-
-    if (allCardIds.length > 0) {
-      const { data: cardStates } = await supabase
-        .from('card_states')
-        .select('card_id')
-        .eq('user_id', studentId)
-        .in('card_id', allCardIds)
-
-      const studiedCardIds = new Set(cardStates?.map(cs => cs.card_id) || [])
-      newCards = allCardIds.filter(id => !studiedCardIds.has(id)).length
-    }
+    newCards = (allCards || []).filter(c => !studiedCardIds.has(c.id)).length
   }
 
   return {
@@ -210,7 +236,7 @@ async function getStudentStats(studentId: string): Promise<StudentStats> {
     newCards,
     learningCards: learningCards || 0,
     reviewsToday: reviewsToday || 0,
-    streak: 0, // Simplified for now
+    streak: 0,
   }
 }
 

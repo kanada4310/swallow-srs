@@ -108,15 +108,12 @@ npm run test:watch   # Vitest 監視モード
 
 ## 現在の進捗（2026-02-04更新）
 
-**Phase 6.1 学習体験の高速化 動作確認完了**
+**Phase 6.2 ページ遷移パフォーマンス改善 動作確認完了**
 
 ### 次回セッションでやること
-- **Phase 6.2**: ページ遷移パフォーマンス改善（N+1クエリ解消）から着手
+- **Phase 6.3**: オフライン完全対応から着手
 
 ### 既知の問題（技術的詳細）
-- **デッキ一覧N+1**: デッキ毎に3クエリ実行（decks/page.tsx）
-- **講師ダッシュボードN+1**: 生徒毎に5クエリ実行（page.tsx）
-- **ミドルウェア遅延**: 毎リクエストでprofile DB問い合わせ（middleware.ts）
 - **オフライン学習不可**: 学習ページがServer Component依存（study/page.tsx）
 - **OCR Basic固定**: OCRImporter.tsx:6 でハードコード
 - **例文生成Front固定**: ExampleGenerator.tsx:217 でハードコード

@@ -18,60 +18,61 @@ interface DeckWithStats {
 async function getDecksWithStats(userId: string): Promise<DeckWithStats[]> {
   const supabase = await createClient()
 
-  // Get own decks
-  const { data: ownDecks } = await supabase
-    .from('decks')
-    .select('id, name, owner_id, is_distributed')
-    .eq('owner_id', userId)
-
-  // Get assigned decks (via deck_assignments)
-  const { data: assignedDecks } = await supabase
-    .from('decks')
-    .select('id, name, owner_id, is_distributed')
-    .neq('owner_id', userId)
+  // Get own decks and assigned decks in parallel
+  const [{ data: ownDecks }, { data: assignedDecks }] = await Promise.all([
+    supabase
+      .from('decks')
+      .select('id, name, owner_id, is_distributed')
+      .eq('owner_id', userId),
+    supabase
+      .from('decks')
+      .select('id, name, owner_id, is_distributed')
+      .neq('owner_id', userId),
+  ])
 
   const allDecks = [
     ...(ownDecks || []).map(d => ({ ...d, is_own: true })),
     ...(assignedDecks || []).map(d => ({ ...d, is_own: false })),
   ]
 
-  // Get card counts for each deck
-  const decksWithStats: DeckWithStats[] = []
+  if (allDecks.length === 0) return []
 
-  for (const deck of allDecks) {
-    // Get total cards in deck
-    const { count: totalCards } = await supabase
+  const deckIds = allDecks.map(d => d.id)
+
+  // Batch: get all cards for all decks + all card_states for this user in 2 queries
+  const [{ data: allCards }, { data: allCardStates }] = await Promise.all([
+    supabase
       .from('cards')
-      .select('*', { count: 'exact', head: true })
-      .eq('deck_id', deck.id)
-
-    // Get card states for this user
-    const { data: cardStates } = await supabase
+      .select('id, deck_id')
+      .in('deck_id', deckIds),
+    supabase
       .from('card_states')
-      .select('state, card_id')
-      .eq('user_id', userId)
-      .in('card_id', (
-        await supabase
-          .from('cards')
-          .select('id')
-          .eq('deck_id', deck.id)
-      ).data?.map(c => c.id) || [])
+      .select('card_id, state')
+      .eq('user_id', userId),
+  ])
 
-    const stateMap = new Map(cardStates?.map(cs => [cs.card_id, cs.state]) || [])
+  // Build lookup maps
+  const cardsByDeck = new Map<string, string[]>()
+  for (const card of allCards || []) {
+    const list = cardsByDeck.get(card.deck_id) || []
+    list.push(card.id)
+    cardsByDeck.set(card.deck_id, list)
+  }
 
-    // Count by state
+  const stateByCard = new Map<string, string>()
+  for (const cs of allCardStates || []) {
+    stateByCard.set(cs.card_id, cs.state)
+  }
+
+  // Aggregate stats per deck
+  return allDecks.map(deck => {
+    const cardIds = cardsByDeck.get(deck.id) || []
     let newCount = 0
     let learningCount = 0
     let reviewCount = 0
 
-    // Get all cards for this deck
-    const { data: deckCards } = await supabase
-      .from('cards')
-      .select('id')
-      .eq('deck_id', deck.id)
-
-    for (const card of deckCards || []) {
-      const state = stateMap.get(card.id)
+    for (const cardId of cardIds) {
+      const state = stateByCard.get(cardId)
       if (!state || state === 'new') {
         newCount++
       } else if (state === 'learning' || state === 'relearning') {
@@ -81,16 +82,14 @@ async function getDecksWithStats(userId: string): Promise<DeckWithStats[]> {
       }
     }
 
-    decksWithStats.push({
+    return {
       ...deck,
-      total_cards: totalCards || 0,
+      total_cards: cardIds.length,
       new_count: newCount,
       learning_count: learningCount,
       review_count: reviewCount,
-    })
-  }
-
-  return decksWithStats
+    }
+  })
 }
 
 export default async function DecksPage() {

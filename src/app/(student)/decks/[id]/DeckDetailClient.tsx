@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback } from 'react'
 import { NoteEditor } from '@/components/deck/NoteEditor'
 import { CSVImporter } from '@/components/deck/CSVImporter'
 import { BulkExampleGenerator } from '@/components/ai/ExampleGenerator'
 import { OCRImporter } from '@/components/ai/OCRImporter'
+import { createClient } from '@/lib/supabase/client'
 import type { NoteType, GeneratedContent } from '@/types/database'
 
 interface Note {
@@ -47,8 +47,8 @@ interface DeckDetailClientProps {
   canEdit: boolean
 }
 
-export function DeckDetailClient({ deckId, notes, noteTypes, canEdit }: DeckDetailClientProps) {
-  const router = useRouter()
+export function DeckDetailClient({ deckId, notes: initialNotes, noteTypes, canEdit }: DeckDetailClientProps) {
+  const [notes, setNotes] = useState<Note[]>(initialNotes)
   const [isAddingNote, setIsAddingNote] = useState(false)
   const [showDistributeModal, setShowDistributeModal] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
@@ -56,24 +56,41 @@ export function DeckDetailClient({ deckId, notes, noteTypes, canEdit }: DeckDeta
   const [showOCRModal, setShowOCRModal] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
 
+  const refreshNotes = useCallback(async () => {
+    const supabase = createClient()
+    const { data } = await supabase
+      .from('notes')
+      .select(`
+        id,
+        field_values,
+        note_type_id,
+        generated_content,
+        created_at,
+        cards (id)
+      `)
+      .eq('deck_id', deckId)
+      .order('created_at', { ascending: false })
+    if (data) setNotes(data as Note[])
+  }, [deckId])
+
   const handleNoteAdded = () => {
     setIsAddingNote(false)
-    router.refresh() // Refresh to show new note
+    refreshNotes()
   }
 
   const handleImportComplete = () => {
     setShowImportModal(false)
-    router.refresh() // Refresh to show imported notes
+    refreshNotes()
   }
 
   const handleBulkGenerateComplete = () => {
     setShowBulkGenerateModal(false)
-    router.refresh() // Refresh to show generated content
+    refreshNotes()
   }
 
   const handleOCRComplete = () => {
     setShowOCRModal(false)
-    router.refresh() // Refresh to show imported notes
+    refreshNotes()
   }
 
   const handleExport = async () => {

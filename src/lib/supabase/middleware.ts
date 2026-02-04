@@ -63,7 +63,13 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse
   }
 
-  // プロフィールが存在するかチェック
+  // Cookieにプロフィール確認済みフラグがあればDBクエリをスキップ
+  const hasProfileCookie = request.cookies.get('has_profile')?.value
+  if (hasProfileCookie === user.id) {
+    return supabaseResponse
+  }
+
+  // プロフィールが存在するかチェック（初回のみ）
   const { data: profile } = await supabase
     .from('profiles')
     .select('id')
@@ -76,6 +82,15 @@ export async function updateSession(request: NextRequest) {
     url.pathname = '/setup'
     return NextResponse.redirect(url)
   }
+
+  // プロフィール確認済みフラグをCookieにセット（24時間有効）
+  supabaseResponse.cookies.set('has_profile', user.id, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24, // 24 hours
+    path: '/',
+  })
 
   return supabaseResponse
 }
