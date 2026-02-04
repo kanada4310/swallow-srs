@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { NoteTypeEditorClient } from './NoteTypeEditorClient'
+import { NoteTypeEditorClient } from '@/components/note-type/NoteTypeEditorClient'
 import type { NoteTypeWithTemplates, CardTemplate } from '@/types/database'
 
 interface PageProps {

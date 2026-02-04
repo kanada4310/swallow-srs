@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { NoteTypeEditorClient } from './NoteTypeEditorClient'
+import { NoteTypeEditorClient } from '@/components/note-type/NoteTypeEditorClient'
 
 export default async function NewNoteTypePage() {
   const supabase = await createClient()
