@@ -1,9 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
-
-// Note type IDs
-const BASIC_NOTE_TYPE_ID = '00000000-0000-0000-0000-000000000001'
+import { BASIC_NOTE_TYPE_ID, SUPPORTED_IMAGE_TYPES, MAX_IMAGE_SIZE } from '@/lib/constants'
 
 // Format hints for common vocabulary books
 const FORMAT_HINTS = [
@@ -15,11 +13,6 @@ const FORMAT_HINTS = [
   { value: 'その他の単語帳', label: 'その他の単語帳' },
 ]
 
-// Maximum file size: 10MB
-const MAX_FILE_SIZE = 10 * 1024 * 1024
-
-// Supported image types
-const SUPPORTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 
 interface OCREntry {
   word: string
@@ -67,13 +60,13 @@ export function OCRImporter({
     setError(null)
 
     // Check file type
-    if (!SUPPORTED_TYPES.includes(file.type)) {
+    if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) {
       setError(`対応していない画像形式です。対応形式: JPEG, PNG, WebP, GIF`)
       return
     }
 
     // Check file size
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size > MAX_IMAGE_SIZE) {
       setError('画像サイズが大きすぎます（最大10MB）')
       return
     }

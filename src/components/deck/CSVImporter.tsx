@@ -8,10 +8,7 @@ import {
   validateMapping,
   type CSVParseResult,
 } from '@/lib/csv/parser'
-
-// Note type IDs
-const BASIC_NOTE_TYPE_ID = '00000000-0000-0000-0000-000000000001'
-const CLOZE_NOTE_TYPE_ID = '00000000-0000-0000-0000-000000000002'
+import { BASIC_NOTE_TYPE_ID, CLOZE_NOTE_TYPE_ID } from '@/lib/constants'
 
 interface NoteType {
   id: string

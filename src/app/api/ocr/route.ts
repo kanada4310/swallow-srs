@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { MAX_IMAGE_SIZE, SUPPORTED_IMAGE_TYPES } from '@/lib/constants'
 
 // Lazy initialization of Anthropic client
 let anthropicClient: Anthropic | null = null
@@ -13,12 +14,6 @@ function getAnthropic(): Anthropic {
   }
   return anthropicClient
 }
-
-// Maximum image size: 10MB
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024
-
-// Supported image types
-const SUPPORTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 
 // OCR extraction entry type
 interface OCREntry {
@@ -148,9 +143,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate image type
-    if (!SUPPORTED_TYPES.includes(imageType)) {
+    if (!SUPPORTED_IMAGE_TYPES.includes(imageType)) {
       return NextResponse.json(
-        { error: `Unsupported image type. Supported: ${SUPPORTED_TYPES.join(', ')}` },
+        { error: `Unsupported image type. Supported: ${SUPPORTED_IMAGE_TYPES.join(', ')}` },
         { status: 400 }
       )
     }

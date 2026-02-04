@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-
-// Note type IDs (system note types)
-const CLOZE_NOTE_TYPE_ID = '00000000-0000-0000-0000-000000000002'
+import { CLOZE_NOTE_TYPE_ID } from '@/lib/constants'
 
 // Count cloze deletions in text (e.g., {{c1::answer}} -> 1)
 function countClozeDeletions(text: string): number[] {
