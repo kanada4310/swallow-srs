@@ -235,17 +235,15 @@ describe('Async utilities', () => {
 
       const promise = retryWithBackoff(fn, { maxRetries: 2, initialDelay: 100 })
 
-      // Advance through all retry delays and handle the rejection
-      await vi.advanceTimersByTimeAsync(100) // First retry
-      await vi.advanceTimersByTimeAsync(200) // Second retry (exponential)
+      // Attach rejection handler immediately to prevent unhandled rejection
+      const resultPromise = promise.catch((e: Error) => e)
 
-      // Catch the rejection to prevent unhandled rejection warning
-      try {
-        await promise
-        expect.fail('Should have thrown')
-      } catch (error) {
-        expect((error as Error).message).toBe('always fail')
-      }
+      // Advance through all retry delays
+      await vi.runAllTimersAsync()
+
+      const error = await resultPromise
+      expect(error).toBeInstanceOf(Error)
+      expect((error as Error).message).toBe('always fail')
       expect(fn).toHaveBeenCalledTimes(3) // Initial + 2 retries
     })
 
