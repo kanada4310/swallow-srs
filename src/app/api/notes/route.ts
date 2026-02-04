@@ -1,17 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { CLOZE_NOTE_TYPE_ID } from '@/lib/constants'
-
-// Count cloze deletions in text (e.g., {{c1::answer}} -> 1)
-function countClozeDeletions(text: string): number[] {
-  const regex = /\{\{c(\d+)::/g
-  const numbers = new Set<number>()
-  let match
-  while ((match = regex.exec(text)) !== null) {
-    numbers.add(parseInt(match[1], 10))
-  }
-  return Array.from(numbers).sort((a, b) => a - b)
-}
+import { countClozeDeletions } from '@/lib/srs/cloze'
 
 export async function POST(request: NextRequest) {
   try {
