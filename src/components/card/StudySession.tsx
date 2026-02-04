@@ -12,6 +12,7 @@ import type { FieldValues } from '@/lib/template'
 import { saveAnswerLocally, pushToServer, getSyncStatus } from '@/lib/db/sync'
 import { isOnline as checkOnline } from '@/lib/db/utils'
 import { SyncStatusBadge } from '@/components/ui/SyncStatusBadge'
+import Link from 'next/link'
 import type { GeneratedContent, FieldDefinition } from '@/types/database'
 
 interface CardData {
@@ -83,15 +84,33 @@ export function StudySession({ deckName, initialCards, userId }: StudySessionPro
     setIsSubmitting(true)
     const timeMs = Date.now() - cardStartTime.current
     const now = new Date()
+    const cardId = currentCard.id
+    const lastInterval = currentCard.schedule.interval
 
     try {
-      // Calculate new schedule locally
+      // Calculate new schedule locally (synchronous, <1ms)
       const newSchedule = calculateNextReview(currentCard.schedule, ease, now)
 
-      // Save locally first (offline-first)
-      await saveAnswerLocally(
+      // Update UI immediately - don't wait for any I/O
+      setCards(prevCards => {
+        const updated = [...prevCards]
+        updated[currentIndex] = {
+          ...updated[currentIndex],
+          schedule: newSchedule,
+        }
+        return updated
+      })
+      setStats(prev => ({
+        reviewed: prev.reviewed + 1,
+        correct: ease >= Ease.Good ? prev.correct + 1 : prev.correct,
+      }))
+      setCurrentIndex(prev => prev + 1)
+      setIsSubmitting(false)
+
+      // Save locally and sync in background (non-blocking)
+      saveAnswerLocally(
         userId,
-        currentCard.id,
+        cardId,
         ease,
         {
           due: newSchedule.due,
@@ -101,49 +120,24 @@ export function StudySession({ deckName, initialCards, userId }: StudySessionPro
           state: newSchedule.state,
           learningStep: newSchedule.learningStep,
         },
-        currentCard.schedule.interval,
+        lastInterval,
         timeMs
-      )
-
-      // Update card schedule in state for interval preview
-      setCards(prevCards => {
-        const updated = [...prevCards]
-        updated[currentIndex] = {
-          ...updated[currentIndex],
-          schedule: newSchedule,
-        }
-        return updated
-      })
-
-      // Try to sync with server if online
-      if (isOnline) {
-        try {
-          await fetch('/api/study/answer', {
+      ).then(() => {
+        // After local save, try server sync (fire-and-forget)
+        if (isOnline) {
+          fetch('/api/study/answer', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              cardId: currentCard.id,
-              ease,
-              timeMs,
-            }),
+            body: JSON.stringify({ cardId, ease, timeMs }),
+          }).catch(syncError => {
+            console.warn('Server sync failed, will retry later:', syncError)
           })
-        } catch (syncError) {
-          // Sync failed, but local save succeeded - will retry later
-          console.warn('Server sync failed, will retry later:', syncError)
         }
-      }
-
-      // Update stats
-      setStats(prev => ({
-        reviewed: prev.reviewed + 1,
-        correct: ease >= Ease.Good ? prev.correct + 1 : prev.correct,
-      }))
-
-      // Move to next card
-      setCurrentIndex(prev => prev + 1)
+      }).catch(error => {
+        console.error('Error saving answer locally:', error)
+      })
     } catch (error) {
-      console.error('Error saving answer:', error)
-    } finally {
+      console.error('Error processing answer:', error)
       setIsSubmitting(false)
     }
   }
@@ -176,12 +170,12 @@ export function StudySession({ deckName, initialCards, userId }: StudySessionPro
           </div>
         </div>
         <div className="flex flex-col items-center gap-3">
-          <a
+          <Link
             href="/decks"
             className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             デッキ一覧に戻る
-          </a>
+          </Link>
           <SyncStatusBadge />
         </div>
       </div>
@@ -201,12 +195,12 @@ export function StudySession({ deckName, initialCards, userId }: StudySessionPro
         <p className="text-gray-600 mb-6">
           今日の学習は完了しています。また明日来てください!
         </p>
-        <a
+        <Link
           href="/decks"
           className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           デッキ一覧に戻る
-        </a>
+        </Link>
       </div>
     )
   }
