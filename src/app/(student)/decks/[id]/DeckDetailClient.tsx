@@ -37,6 +37,7 @@ interface Assignment {
 
 interface DeckDetailClientProps {
   deckId: string
+  allDeckIds?: string[]
   notes: BrowsableNote[]
   totalNoteCount: number
   noteTypes: NoteType[]
@@ -44,7 +45,7 @@ interface DeckDetailClientProps {
   canEdit: boolean
 }
 
-export function DeckDetailClient({ deckId, notes: initialNotes, totalNoteCount: initialTotal, noteTypes, deckTags, canEdit }: DeckDetailClientProps) {
+export function DeckDetailClient({ deckId, allDeckIds, notes: initialNotes, totalNoteCount: initialTotal, noteTypes, deckTags, canEdit }: DeckDetailClientProps) {
   const router = useRouter()
   const [notes, setNotes] = useState<BrowsableNote[]>(initialNotes)
   const [totalNoteCount, setTotalNoteCount] = useState(initialTotal)
@@ -62,6 +63,8 @@ export function DeckDetailClient({ deckId, notes: initialNotes, totalNoteCount: 
 
   const refreshNotes = useCallback(async () => {
     const supabase = createClient()
+    const queryDeckIds = allDeckIds && allDeckIds.length > 1 ? allDeckIds : [deckId]
+
     // Try with tags column first; fall back without if migration 008 hasn't been run
     const withTags = await supabase
       .from('notes')
@@ -74,7 +77,7 @@ export function DeckDetailClient({ deckId, notes: initialNotes, totalNoteCount: 
         created_at,
         cards (id)
       `, { count: 'exact' })
-      .eq('deck_id', deckId)
+      .in('deck_id', queryDeckIds)
       .order('created_at', { ascending: false })
       .range(0, 49)
 
@@ -89,7 +92,7 @@ export function DeckDetailClient({ deckId, notes: initialNotes, totalNoteCount: 
           created_at,
           cards (id)
         `, { count: 'exact' })
-        .eq('deck_id', deckId)
+        .in('deck_id', queryDeckIds)
         .order('created_at', { ascending: false })
         .range(0, 49)
 
@@ -101,7 +104,7 @@ export function DeckDetailClient({ deckId, notes: initialNotes, totalNoteCount: 
       setNotes(withTags.data as BrowsableNote[])
       setTotalNoteCount(withTags.count || 0)
     }
-  }, [deckId])
+  }, [deckId, allDeckIds])
 
   const handleNoteAdded = () => {
     setIsAddingNote(false)
@@ -303,6 +306,7 @@ export function DeckDetailClient({ deckId, notes: initialNotes, totalNoteCount: 
         <h2 className="text-lg font-semibold text-gray-900 mb-4">ノート一覧</h2>
         <NoteBrowser
           deckId={deckId}
+          allDeckIds={allDeckIds}
           initialNotes={notes}
           initialTotal={totalNoteCount}
           noteTypes={noteTypes}

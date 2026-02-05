@@ -47,7 +47,8 @@ CREATE INDEX IF NOT EXISTS idx_notes_tags ON notes USING GIN (tags);
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION search_notes(
-  p_deck_id UUID,
+  p_deck_id UUID DEFAULT NULL,
+  p_deck_ids UUID[] DEFAULT NULL,
   p_query TEXT DEFAULT '',
   p_note_type_id UUID DEFAULT NULL,
   p_tag TEXT DEFAULT NULL,
@@ -57,6 +58,7 @@ CREATE OR REPLACE FUNCTION search_notes(
 )
 RETURNS TABLE (
   id UUID,
+  deck_id UUID,
   field_values JSONB,
   note_type_id UUID,
   generated_content JSONB,
@@ -73,7 +75,11 @@ BEGIN
   -- Count total matching rows
   SELECT COUNT(*) INTO v_total
   FROM notes n
-  WHERE n.deck_id = p_deck_id
+  WHERE (
+    (p_deck_ids IS NOT NULL AND n.deck_id = ANY(p_deck_ids))
+    OR (p_deck_ids IS NULL AND p_deck_id IS NOT NULL AND n.deck_id = p_deck_id)
+    OR (p_deck_ids IS NULL AND p_deck_id IS NULL)
+  )
     AND (p_note_type_id IS NULL OR n.note_type_id = p_note_type_id)
     AND (p_query = '' OR n.field_values::text ILIKE '%' || p_query || '%')
     AND (p_tag IS NULL OR n.tags @> ARRAY[p_tag]);
@@ -82,6 +88,7 @@ BEGIN
   RETURN QUERY
   SELECT
     n.id,
+    n.deck_id,
     n.field_values,
     n.note_type_id,
     n.generated_content,
@@ -89,7 +96,11 @@ BEGIN
     n.created_at,
     v_total AS total_count
   FROM notes n
-  WHERE n.deck_id = p_deck_id
+  WHERE (
+    (p_deck_ids IS NOT NULL AND n.deck_id = ANY(p_deck_ids))
+    OR (p_deck_ids IS NULL AND p_deck_id IS NOT NULL AND n.deck_id = p_deck_id)
+    OR (p_deck_ids IS NULL AND p_deck_id IS NULL)
+  )
     AND (p_note_type_id IS NULL OR n.note_type_id = p_note_type_id)
     AND (p_query = '' OR n.field_values::text ILIKE '%' || p_query || '%')
     AND (p_tag IS NULL OR n.tags @> ARRAY[p_tag])

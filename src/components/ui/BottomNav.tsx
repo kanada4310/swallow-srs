@@ -61,7 +61,7 @@ const teacherNavItems: NavItem[] = [
   { href: '/', label: 'ホーム', icon: <HomeIcon /> },
   { href: '/decks', label: 'デッキ', icon: <DecksIcon /> },
   { href: '/students', label: '生徒', icon: <StudentsIcon /> },
-  { href: '/note-types', label: 'ノート', icon: <NoteTypesIcon /> },
+  { href: '/note-types', label: 'テンプレート', icon: <NoteTypesIcon /> },
   { href: '/stats', label: '統計', icon: <StatsIcon /> },
 ]
 

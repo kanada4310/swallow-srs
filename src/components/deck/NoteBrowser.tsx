@@ -7,6 +7,7 @@ import type { NoteType } from '@/types/database'
 
 interface NoteBrowserProps {
   deckId: string
+  allDeckIds?: string[]
   initialNotes: BrowsableNote[]
   initialTotal: number
   noteTypes: NoteType[]
@@ -22,6 +23,7 @@ const PAGE_SIZE = 50
 
 export function NoteBrowser({
   deckId,
+  allDeckIds,
   initialNotes,
   initialTotal,
   noteTypes,
@@ -46,6 +48,7 @@ export function NoteBrowser({
   const [isBulkDeleting, setIsBulkDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [showBulkTagModal, setShowBulkTagModal] = useState(false)
+  const [showBulkTagRemoveModal, setShowBulkTagRemoveModal] = useState(false)
   const [bulkTagInput, setBulkTagInput] = useState('')
   const [isBulkTagging, setIsBulkTagging] = useState(false)
   const [localDeckTags, setLocalDeckTags] = useState<string[]>(deckTags || [])
@@ -76,13 +79,17 @@ export function NoteBrowser({
     if (tag) {
       params.set('tag', tag)
     }
+    // Include subdeck IDs for search
+    if (allDeckIds && allDeckIds.length > 1) {
+      params.set('deckIds', allDeckIds.join(','))
+    }
 
     const response = await fetch(`/api/notes/search?${params}`)
     if (!response.ok) {
       throw new Error('検索に失敗しました')
     }
     return response.json() as Promise<{ notes: BrowsableNote[]; total: number }>
-  }, [deckId])
+  }, [deckId, allDeckIds])
 
   // Search with debounce
   const triggerSearch = useCallback((query: string, noteTypeId: string, order: string, tag?: string) => {
@@ -229,6 +236,39 @@ export function NoteBrowser({
     }
   }
 
+  const handleBulkTagRemove = async (removeTags: string[]) => {
+    const noteIds = Array.from(selectedNotes)
+    if (noteIds.length === 0 || removeTags.length === 0) return
+
+    setIsBulkTagging(true)
+    try {
+      const response = await fetch('/api/notes/bulk-tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ noteIds, deckId, removeTags }),
+      })
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'タグの削除に失敗しました')
+      }
+      // Update local notes state
+      const removeSet = new Set(removeTags)
+      setNotes(prev => prev.map(n => {
+        if (selectedNotes.has(n.id)) {
+          const filtered = (n.tags || []).filter(t => !removeSet.has(t))
+          return { ...n, tags: filtered }
+        }
+        return n
+      }))
+      setShowBulkTagRemoveModal(false)
+      setBulkTagInput('')
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'タグの削除に失敗しました')
+    } finally {
+      setIsBulkTagging(false)
+    }
+  }
+
   // Refresh a single note after generation (re-fetch its field_values)
   const handleNoteGenerated = async (noteId: string) => {
     try {
@@ -334,12 +374,12 @@ export function NoteBrowser({
                 setIsSelectMode(true)
                 setSelectedNotes(new Set())
               }}
-              className="text-sm text-red-500 hover:text-red-700 transition-colors flex items-center gap-1"
+              className="text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
               </svg>
-              選択して削除
+              選択して操作
             </button>
           )}
         </div>
@@ -387,6 +427,13 @@ export function NoteBrowser({
               className="px-3 py-1.5 text-sm text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors"
             >
               タグ追加
+            </button>
+            <button
+              onClick={() => setShowBulkTagRemoveModal(true)}
+              disabled={selectedNotes.size === 0}
+              className="px-3 py-1.5 text-sm text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors"
+            >
+              タグ削除
             </button>
             <button
               onClick={() => setShowDeleteConfirm(true)}
@@ -550,6 +597,68 @@ export function NoteBrowser({
                 className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
                 {isBulkTagging ? '追加中...' : 'タグを追加'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Tag Remove Modal */}
+      {showBulkTagRemoveModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">タグを削除</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              {selectedNotes.size}件のノートからタグを削除します。
+            </p>
+            <div className="mb-4">
+              <input
+                type="text"
+                value={bulkTagInput}
+                onChange={(e) => setBulkTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && bulkTagInput.trim()) {
+                    e.preventDefault()
+                    handleBulkTagRemove([bulkTagInput.trim()])
+                  }
+                }}
+                placeholder="削除するタグ名を入力..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm"
+                autoFocus
+              />
+              {localDeckTags.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {localDeckTags.map(tag => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => handleBulkTagRemove([tag])}
+                      disabled={isBulkTagging}
+                      className="px-2 py-1 text-xs border border-gray-200 rounded-lg hover:bg-orange-50 hover:border-orange-300 text-gray-600 hover:text-orange-700 transition-colors disabled:opacity-50"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowBulkTagRemoveModal(false)
+                  setBulkTagInput('')
+                }}
+                disabled={isBulkTagging}
+                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={() => bulkTagInput.trim() && handleBulkTagRemove([bulkTagInput.trim()])}
+                disabled={isBulkTagging || !bulkTagInput.trim()}
+                className="px-4 py-2 text-sm text-white bg-orange-600 rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors"
+              >
+                {isBulkTagging ? '削除中...' : 'タグを削除'}
               </button>
             </div>
           </div>

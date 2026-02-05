@@ -22,6 +22,17 @@ async function getDeckWithNotes(deckId: string, userId: string) {
 
   if (!deck) return null
 
+  // Get all descendant deck IDs for subdeck note inclusion
+  let allDeckIds = [deckId]
+  try {
+    const { data: descendantIds } = await supabase.rpc('get_descendant_deck_ids', { p_deck_id: deckId })
+    if (descendantIds && Array.isArray(descendantIds) && descendantIds.length > 0) {
+      allDeckIds = [deckId, ...descendantIds]
+    }
+  } catch {
+    // RPC doesn't exist yet - subdeck feature not available
+  }
+
   // Get notes with their cards (first page + total count)
   // Try with tags column first; if migration 008 hasn't been run, fall back without
   let notes: Array<Record<string, unknown>> | null = null
@@ -38,7 +49,7 @@ async function getDeckWithNotes(deckId: string, userId: string) {
       created_at,
       cards (id)
     `, { count: 'exact' })
-    .eq('deck_id', deckId)
+    .in('deck_id', allDeckIds)
     .order('created_at', { ascending: false })
     .range(0, 49)
 
@@ -53,7 +64,7 @@ async function getDeckWithNotes(deckId: string, userId: string) {
         created_at,
         cards (id)
       `, { count: 'exact' })
-      .eq('deck_id', deckId)
+      .in('deck_id', allDeckIds)
       .order('created_at', { ascending: false })
       .range(0, 49)
     notes = fallback.data
@@ -132,6 +143,7 @@ async function getDeckWithNotes(deckId: string, userId: string) {
     isOwner: deck.owner_id === userId,
     deckTags,
     childDecks: childDecks || [],
+    allDeckIds,
   }
 }
 
@@ -261,6 +273,7 @@ export default async function DeckDetailPage({ params }: PageProps) {
         {/* Client Component for Note Management */}
         <DeckDetailClient
           deckId={id}
+          allDeckIds={deckData.allDeckIds}
           notes={deckData.notes as unknown as BrowsableNote[]}
           totalNoteCount={deckData.totalNoteCount}
           noteTypes={noteTypes as NoteType[]}

@@ -11,7 +11,8 @@ export async function GET(request: NextRequest) {
     if (authError) return authError
 
     const { searchParams } = new URL(request.url)
-    const deckId = searchParams.get('deckId')
+    const deckId = searchParams.get('deckId') || ''
+    const deckIdsParam = searchParams.get('deckIds') || ''
     const q = searchParams.get('q') || ''
     const noteTypeId = searchParams.get('noteTypeId') || ''
     const tag = searchParams.get('tag') || ''
@@ -19,42 +20,60 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0', 10)
     const limit = parseInt(searchParams.get('limit') || '50', 10)
 
-    if (!deckId) {
-      return NextResponse.json({ error: 'deckId is required' }, { status: 400 })
+    // Determine which deck IDs to search
+    let searchDeckIds: string[] = []
+    if (deckIdsParam) {
+      // Multiple deck IDs (subdeck search)
+      searchDeckIds = deckIdsParam.split(',').filter(Boolean)
+    } else if (deckId) {
+      searchDeckIds = [deckId]
     }
 
-    // Verify deck access (owner or assigned)
-    const { data: deck } = await supabase
-      .from('decks')
-      .select('id, owner_id')
-      .eq('id', deckId)
-      .single()
-
-    if (!deck) {
-      return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
-    }
-
-    // Check ownership or assignment
-    if (deck.owner_id !== user.id) {
-      const { data: assignment } = await supabase
-        .from('deck_assignments')
+    // If no deckId at all, search all decks owned by user
+    if (searchDeckIds.length === 0) {
+      const { data: userDecks } = await supabase
+        .from('decks')
         .select('id')
-        .eq('deck_id', deckId)
-        .eq('user_id', user.id)
-        .maybeSingle()
+        .eq('owner_id', user.id)
+      searchDeckIds = (userDecks || []).map(d => d.id)
+      if (searchDeckIds.length === 0) {
+        return NextResponse.json({ notes: [], total: 0 })
+      }
+    } else {
+      // Verify deck access for first deck (owner or assigned)
+      const primaryDeckId = deckId || searchDeckIds[0]
+      const { data: deck } = await supabase
+        .from('decks')
+        .select('id, owner_id')
+        .eq('id', primaryDeckId)
+        .single()
 
-      if (!assignment) {
-        return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+      if (!deck) {
+        return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
+      }
+
+      if (deck.owner_id !== user.id) {
+        const { data: assignment } = await supabase
+          .from('deck_assignments')
+          .select('id')
+          .eq('deck_id', primaryDeckId)
+          .eq('user_id', user.id)
+          .maybeSingle()
+
+        if (!assignment) {
+          return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+        }
       }
     }
 
     // Call RPC function for JSONB text search
-    // Try with p_tag parameter first; fall back to old RPC signature if migration 008 hasn't been run
+    // Try with p_deck_ids array first; fall back to p_deck_id for single deck
     let rpcRows: unknown[] | null = null
     let rpcError: { message: string } | null = null
 
     const rpcResult = await supabase.rpc('search_notes', {
-      p_deck_id: deckId,
+      p_deck_id: searchDeckIds.length === 1 ? searchDeckIds[0] : null,
+      p_deck_ids: searchDeckIds.length > 1 ? searchDeckIds : null,
       p_query: q.trim(),
       p_note_type_id: noteTypeId || null,
       p_tag: tag || null,
@@ -63,10 +82,37 @@ export async function GET(request: NextRequest) {
       p_limit: limit,
     })
 
-    if (rpcResult.error && rpcResult.error.message?.includes('p_tag')) {
-      // Old RPC doesn't have p_tag parameter - retry without it
+    if (rpcResult.error && rpcResult.error.message?.includes('p_deck_ids')) {
+      // Old RPC doesn't have p_deck_ids - fall back to p_deck_id only
       const fallback = await supabase.rpc('search_notes', {
-        p_deck_id: deckId,
+        p_deck_id: searchDeckIds[0] || null,
+        p_query: q.trim(),
+        p_note_type_id: noteTypeId || null,
+        p_tag: tag || null,
+        p_sort_order: order,
+        p_offset: offset,
+        p_limit: limit,
+      } as Record<string, unknown>)
+      if (fallback.error && fallback.error.message?.includes('p_tag')) {
+        // Even older RPC without p_tag
+        const fallback2 = await supabase.rpc('search_notes', {
+          p_deck_id: searchDeckIds[0] || null,
+          p_query: q.trim(),
+          p_note_type_id: noteTypeId || null,
+          p_sort_order: order,
+          p_offset: offset,
+          p_limit: limit,
+        } as Record<string, unknown>)
+        rpcRows = fallback2.data
+        rpcError = fallback2.error
+      } else {
+        rpcRows = fallback.data
+        rpcError = fallback.error
+      }
+    } else if (rpcResult.error && rpcResult.error.message?.includes('p_tag')) {
+      // Has p_deck_ids but not p_tag - shouldn't happen but handle it
+      const fallback = await supabase.rpc('search_notes', {
+        p_deck_id: searchDeckIds.length === 1 ? searchDeckIds[0] : null,
         p_query: q.trim(),
         p_note_type_id: noteTypeId || null,
         p_sort_order: order,
@@ -87,6 +133,7 @@ export async function GET(request: NextRequest) {
 
     const rows = (rpcRows || []) as Array<{
       id: string
+      deck_id?: string
       field_values: Record<string, string>
       note_type_id: string
       generated_content: unknown
@@ -120,6 +167,7 @@ export async function GET(request: NextRequest) {
     // Compose response matching the Note shape
     const notes = rows.map(row => ({
       id: row.id,
+      deck_id: row.deck_id || null,
       field_values: row.field_values,
       note_type_id: row.note_type_id,
       generated_content: row.generated_content,
