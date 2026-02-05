@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
 
     // Get cards for these notes
     const noteIds = rows.map(r => r.id)
-    let cardsMap: Record<string, Array<{ id: string }>> = {}
+    const cardsMap: Record<string, Array<{ id: string }>> = {}
 
     if (noteIds.length > 0) {
       const { data: cards } = await supabase

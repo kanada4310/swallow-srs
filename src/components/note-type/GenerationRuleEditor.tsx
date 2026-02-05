@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { GenerationRule, FieldDefinition } from '@/types/database'
+import { TAGGING_PRESETS } from '@/lib/tagging/presets'
 
 interface GenerationRuleEditorProps {
   rules: GenerationRule[]
@@ -15,10 +16,24 @@ function generateId(): string {
 
 export function GenerationRuleEditor({ rules, fields, onChange }: GenerationRuleEditorProps) {
   const [expandedRule, setExpandedRule] = useState<number | null>(null)
+  const [showPresetMenu, setShowPresetMenu] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   const fieldNames = fields.map(f => f.name)
 
-  const addRule = () => {
+  // Close preset menu when clicking outside
+  useEffect(() => {
+    if (!showPresetMenu) return
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowPresetMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [showPresetMenu])
+
+  const addEmptyRule = () => {
     const newRule: GenerationRule = {
       id: generateId(),
       name: `生成ルール ${rules.length + 1}`,
@@ -28,6 +43,38 @@ export function GenerationRuleEditor({ rules, fields, onChange }: GenerationRule
     }
     onChange([...rules, newRule])
     setExpandedRule(rules.length)
+    setShowPresetMenu(false)
+  }
+
+  const addPresetRule = (presetId: string) => {
+    const preset = TAGGING_PRESETS.find(p => p.id === presetId)
+    if (!preset) return
+
+    // Auto-select source fields based on preset roles (pick first N fields matching roles)
+    const sourceFields: string[] = []
+    const minFields = Math.min(preset.sourceRoles.length, fieldNames.length)
+    for (let i = 0; i < minFields; i++) {
+      sourceFields.push(fieldNames[i])
+    }
+
+    // Find or suggest target field
+    let targetField = ''
+    // Look for an existing field that ends with the suffix
+    const suffixField = fieldNames.find(n => n.endsWith(preset.suggestedTargetSuffix))
+    if (suffixField) {
+      targetField = suffixField
+    }
+
+    const newRule: GenerationRule = {
+      id: generateId(),
+      name: preset.suggestedRuleName,
+      source_fields: sourceFields,
+      instruction: preset.buildInstruction(fieldNames),
+      target_field: targetField,
+    }
+    onChange([...rules, newRule])
+    setExpandedRule(rules.length)
+    setShowPresetMenu(false)
   }
 
   const removeRule = (index: number) => {
@@ -59,16 +106,51 @@ export function GenerationRuleEditor({ rules, fields, onChange }: GenerationRule
             フィールドの内容を参照してAIで自動生成するルールを定義します
           </p>
         </div>
-        <button
-          type="button"
-          onClick={addRule}
-          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-purple-600 hover:text-purple-700 border border-purple-200 rounded-lg hover:bg-purple-50 transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          ルール追加
-        </button>
+        <div className="relative" ref={menuRef}>
+          <button
+            type="button"
+            onClick={() => setShowPresetMenu(!showPresetMenu)}
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-purple-600 hover:text-purple-700 border border-purple-200 rounded-lg hover:bg-purple-50 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            ルール追加
+            <svg className="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {showPresetMenu && (
+            <div className="absolute right-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+              <div className="py-1">
+                <button
+                  type="button"
+                  onClick={addEmptyRule}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <span className="font-medium">空のルール</span>
+                  <p className="text-xs text-gray-400 mt-0.5">ゼロからルールを作成</p>
+                </button>
+                <div className="border-t border-gray-100 my-1" />
+                <div className="px-4 py-1.5">
+                  <span className="text-xs font-medium text-gray-400 uppercase">プリセット</span>
+                </div>
+                {TAGGING_PRESETS.map(preset => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => addPresetRule(preset.id)}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 transition-colors"
+                  >
+                    <span className="font-medium text-purple-700">{preset.name}</span>
+                    <p className="text-xs text-gray-400 mt-0.5">{preset.description}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {rules.length === 0 ? (

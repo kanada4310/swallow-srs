@@ -1,6 +1,7 @@
 'use client'
 
-import type { NoteType, GeneratedContent } from '@/types/database'
+import { useState } from 'react'
+import type { NoteType, GeneratedContent, GenerationRule } from '@/types/database'
 
 export interface BrowsableNote {
   id: string
@@ -21,6 +22,7 @@ interface NoteCardProps {
   onEdit: () => void
   onDelete: () => void
   isDeleting: boolean
+  onGenerate?: (noteId: string) => void
 }
 
 export function NoteCard({
@@ -33,12 +35,47 @@ export function NoteCard({
   onEdit,
   onDelete,
   isDeleting,
+  onGenerate,
 }: NoteCardProps) {
+  const [isGenerating, setIsGenerating] = useState(false)
+
   const fieldEntries = Object.entries(note.field_values)
   const displayEntries = fieldEntries.slice(0, 2)
   const cardCount = note.cards?.length || 0
   const hasGeneratedContent = note.generated_content && note.generated_content.examples && note.generated_content.examples.length > 0
   const noteTypeName = noteType?.name || 'Unknown'
+  const generationRules: GenerationRule[] = noteType?.generation_rules || []
+  const hasRules = generationRules.length > 0
+
+  const handleGenerate = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!hasRules || isGenerating) return
+
+    setIsGenerating(true)
+    try {
+      for (const rule of generationRules) {
+        if (!rule.target_field || !rule.instruction.trim()) continue
+
+        const response = await fetch('/api/generate-examples', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            noteId: note.id,
+            ruleId: rule.id,
+            regenerate: true,
+          }),
+        })
+
+        if (!response.ok) continue
+      }
+
+      onGenerate?.(note.id)
+    } catch {
+      // Silent failure for one-touch
+    } finally {
+      setIsGenerating(false)
+    }
+  }
 
   return (
     <div
@@ -84,6 +121,22 @@ export function NoteCard({
           </div>
           {!isSelectMode && canEdit && (
             <div className="flex items-center gap-1">
+              {hasRules && (
+                <button
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                  className="p-1 text-gray-400 hover:text-purple-600 transition-colors disabled:opacity-50"
+                  title="AI生成（全ルール実行）"
+                >
+                  {isGenerating ? (
+                    <div className="w-4 h-4 animate-spin rounded-full border-2 border-gray-300 border-t-purple-600" />
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  )}
+                </button>
+              )}
               <button
                 onClick={(e) => {
                   e.stopPropagation()

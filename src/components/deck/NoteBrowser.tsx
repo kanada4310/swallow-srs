@@ -184,6 +184,21 @@ export function NoteBrowser({
     }
   }
 
+  // Refresh a single note after generation (re-fetch its field_values)
+  const handleNoteGenerated = async (noteId: string) => {
+    try {
+      const result = await fetchNotes('', '', 'desc', 0)
+      const updatedNote = result.notes.find(n => n.id === noteId)
+      if (updatedNote) {
+        setNotes(prev => prev.map(n =>
+          n.id === noteId ? updatedNote : n
+        ))
+      }
+    } catch {
+      // Silent - note will show stale data until page refresh
+    }
+  }
+
   const hasMore = notes.length < total
 
   return (
@@ -358,6 +373,7 @@ export function NoteBrowser({
               onEdit={() => onEditNote(note)}
               onDelete={() => handleDeleteNote(note.id)}
               isDeleting={deletingNoteId === note.id}
+              onGenerate={handleNoteGenerated}
             />
           ))}
 

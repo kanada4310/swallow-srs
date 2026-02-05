@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { NoteType, FieldDefinition } from '@/types/database'
+import type { NoteType, FieldDefinition, GenerationRule } from '@/types/database'
 import { CLOZE_NOTE_TYPE_ID } from '@/lib/constants'
 import type { BrowsableNote } from './NoteCard'
 
@@ -17,8 +17,14 @@ export function NoteEditModal({ note, noteType, onSave, onClose }: NoteEditModal
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [clozeWarning, setClozeWarning] = useState<string | null>(null)
+  const [showAiSection, setShowAiSection] = useState(false)
+  const [generatingRuleId, setGeneratingRuleId] = useState<string | null>(null)
+  const [generatingAll, setGeneratingAll] = useState(false)
+  const [generatedRuleIds, setGeneratedRuleIds] = useState<Set<string>>(new Set())
+  const [genError, setGenError] = useState<string | null>(null)
 
   const isCloze = note.note_type_id === CLOZE_NOTE_TYPE_ID
+  const generationRules: GenerationRule[] = noteType.generation_rules || []
 
   const handleFieldChange = (fieldName: string, value: string) => {
     setFieldValues(prev => ({ ...prev, [fieldName]: value }))
@@ -36,6 +42,85 @@ export function NoteEditModal({ note, noteType, onSave, onClose }: NoteEditModal
         setClozeWarning(null)
       }
     }
+  }
+
+  const handleGenerateRule = async (rule: GenerationRule) => {
+    setGeneratingRuleId(rule.id)
+    setGenError(null)
+
+    try {
+      const response = await fetch('/api/generate-examples', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          noteId: note.id,
+          ruleId: rule.id,
+          regenerate: true,
+          fieldValuesOverride: fieldValues,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || '生成に失敗しました')
+      }
+
+      if (data.content && data.target_field) {
+        setFieldValues(prev => ({ ...prev, [data.target_field]: data.content }))
+        setGeneratedRuleIds(prev => {
+          const next = new Set(prev)
+          next.add(rule.id)
+          return next
+        })
+      }
+    } catch (err) {
+      setGenError(err instanceof Error ? err.message : '生成に失敗しました')
+    } finally {
+      setGeneratingRuleId(null)
+    }
+  }
+
+  const handleGenerateAll = async () => {
+    setGeneratingAll(true)
+    setGenError(null)
+
+    let currentValues = { ...fieldValues }
+
+    for (const rule of generationRules) {
+      if (!rule.target_field || !rule.instruction.trim()) continue
+
+      setGeneratingRuleId(rule.id)
+      try {
+        const response = await fetch('/api/generate-examples', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            noteId: note.id,
+            ruleId: rule.id,
+            regenerate: true,
+            fieldValuesOverride: currentValues,
+          }),
+        })
+
+        const data = await response.json()
+
+        if (response.ok && data.content && data.target_field) {
+          currentValues = { ...currentValues, [data.target_field]: data.content }
+          setFieldValues(currentValues)
+          setGeneratedRuleIds(prev => {
+            const next = new Set(prev)
+            next.add(rule.id)
+            return next
+          })
+        }
+      } catch {
+        // Continue with remaining rules
+      }
+    }
+
+    setGeneratingRuleId(null)
+    setGeneratingAll(false)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -145,6 +230,98 @@ export function NoteEditModal({ note, noteType, onSave, onClose }: NoteEditModal
               </div>
             )
           })}
+
+          {/* AI Generation Section */}
+          {generationRules.length > 0 && (
+            <div className="border border-purple-200 rounded-lg overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setShowAiSection(!showAiSection)}
+                className="w-full flex items-center justify-between p-3 bg-purple-50 text-left hover:bg-purple-100 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span className="text-sm font-medium text-purple-700">AI生成</span>
+                  <span className="text-xs text-purple-400">({generationRules.length}ルール)</span>
+                </div>
+                <svg
+                  className={`w-4 h-4 text-purple-400 transition-transform ${showAiSection ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {showAiSection && (
+                <div className="p-3 space-y-2 border-t border-purple-200">
+                  {genError && (
+                    <div className="p-2 bg-red-50 border border-red-200 rounded text-red-700 text-xs">
+                      {genError}
+                    </div>
+                  )}
+
+                  {generationRules.map(rule => {
+                    const isGenerating = generatingRuleId === rule.id
+                    const isGenerated = generatedRuleIds.has(rule.id)
+                    const hasExistingValue = !!fieldValues[rule.target_field]?.trim()
+
+                    return (
+                      <div key={rule.id} className="flex items-center justify-between py-1.5">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-sm text-gray-700 truncate">{rule.name}</span>
+                          {rule.target_field && (
+                            <span className="text-xs text-gray-400 flex-shrink-0">
+                              → {rule.target_field}
+                            </span>
+                          )}
+                          {(isGenerated || hasExistingValue) && !isGenerating && (
+                            <svg className="w-3.5 h-3.5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleGenerateRule(rule)}
+                          disabled={isGenerating || generatingAll}
+                          className="px-3 py-1 text-xs text-purple-600 border border-purple-200 rounded hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+                        >
+                          {isGenerating ? (
+                            <span className="flex items-center gap-1">
+                              <div className="w-3 h-3 animate-spin rounded-full border-2 border-purple-200 border-t-purple-600" />
+                              生成中
+                            </span>
+                          ) : hasExistingValue ? '再生成' : '生成'}
+                        </button>
+                      </div>
+                    )
+                  })}
+
+                  {generationRules.length > 1 && (
+                    <div className="pt-2 border-t border-purple-100">
+                      <button
+                        type="button"
+                        onClick={handleGenerateAll}
+                        disabled={generatingAll || generatingRuleId !== null}
+                        className="w-full px-3 py-1.5 text-xs text-white bg-purple-600 rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {generatingAll ? (
+                          <span className="flex items-center justify-center gap-1">
+                            <div className="w-3 h-3 animate-spin rounded-full border-2 border-purple-200 border-t-white" />
+                            すべて生成中...
+                          </span>
+                        ) : 'すべて生成'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex gap-3 pt-2">

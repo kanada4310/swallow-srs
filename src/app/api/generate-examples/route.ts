@@ -137,7 +137,16 @@ export async function POST(request: NextRequest) {
       includeCollocations = true,
       regenerate = false,
       ruleId,
-    } = body
+      fieldValuesOverride,
+    } = body as {
+      noteId?: string
+      word?: string
+      meaning?: string
+      includeCollocations?: boolean
+      regenerate?: boolean
+      ruleId?: string
+      fieldValuesOverride?: Record<string, string>
+    }
 
     // Validate required fields
     if (!noteId) {
@@ -231,15 +240,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Generation rule not found' }, { status: 404 })
       }
 
-      if (!fieldValues) {
+      // Use override values if provided, otherwise use DB values
+      const effectiveFieldValues = fieldValuesOverride || fieldValues
+      if (!effectiveFieldValues) {
         return NextResponse.json({ error: 'Note has no field values' }, { status: 400 })
       }
 
       // Check if target field already has content and regenerate is not requested
-      if (fieldValues[rule.target_field] && !regenerate) {
+      if (effectiveFieldValues[rule.target_field] && !regenerate) {
         return NextResponse.json({
           success: true,
-          content: fieldValues[rule.target_field],
+          content: effectiveFieldValues[rule.target_field],
           target_field: rule.target_field,
           cached: true,
         })
@@ -247,7 +258,7 @@ export async function POST(request: NextRequest) {
 
       // Generate using the rule
       const anthropic = getAnthropic()
-      const userPrompt = buildRuleUserPrompt(rule, fieldValues)
+      const userPrompt = buildRuleUserPrompt(rule, effectiveFieldValues)
 
       const message = await anthropic.messages.create({
         model: 'claude-3-haiku-20240307',
@@ -266,15 +277,17 @@ export async function POST(request: NextRequest) {
 
       const generatedText = textContent.text.trim()
 
-      // Save to field_values
-      const updatedFieldValues = { ...fieldValues, [rule.target_field]: generatedText }
-      const { error: updateError } = await supabase
-        .from('notes')
-        .update({ field_values: updatedFieldValues })
-        .eq('id', noteId)
+      // Save to field_values (skip if override was provided - caller handles saving)
+      if (!fieldValuesOverride) {
+        const updatedFieldValues = { ...(fieldValues || {}), [rule.target_field]: generatedText }
+        const { error: updateError } = await supabase
+          .from('notes')
+          .update({ field_values: updatedFieldValues })
+          .eq('id', noteId)
 
-      if (updateError) {
-        console.error('Error updating note field_values:', updateError)
+        if (updateError) {
+          console.error('Error updating note field_values:', updateError)
+        }
       }
 
       return NextResponse.json({
