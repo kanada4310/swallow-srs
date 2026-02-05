@@ -94,7 +94,7 @@ async function getNoteTypes(userId: string) {
   // Get system note types and custom note types owned by the user
   const { data: noteTypes } = await supabase
     .from('note_types')
-    .select('id, name, fields')
+    .select('id, name, fields, generation_rules')
     .or(`is_system.eq.true,owner_id.eq.${userId}`)
     .order('is_system', { ascending: false })
     .order('name')

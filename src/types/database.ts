@@ -29,10 +29,19 @@ export interface ClassMember {
 // Field settings for note type fields
 export interface FieldSettings {
   tts_enabled?: boolean       // TTS音声生成対象
-  example_source?: boolean    // 例文生成のソース単語
-  example_context?: boolean   // 例文生成のコンテキスト（意味）
+  example_source?: boolean    // 例文生成のソース単語（レガシー）
+  example_context?: boolean   // 例文生成のコンテキスト（レガシー）
   required?: boolean          // 必須フィールド（デフォルト: true）
   placeholder?: string        // 入力時プレースホルダー
+}
+
+// Generation rule for AI-powered field generation
+export interface GenerationRule {
+  id: string
+  name: string                    // e.g., "例文生成", "コロケーション"
+  source_fields: string[]         // e.g., ["Front", "Back"]
+  instruction: string             // e.g., "この単語を使った例文を2つ生成してください"
+  target_field: string            // e.g., "Examples"
 }
 
 // Field definition with settings
@@ -47,6 +56,7 @@ export interface NoteType {
   name: string
   owner_id: string | null
   fields: FieldDefinition[]
+  generation_rules?: GenerationRule[]
   is_system: boolean
   created_at: string
   updated_at: string

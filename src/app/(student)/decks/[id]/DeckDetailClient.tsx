@@ -171,7 +171,7 @@ export function DeckDetailClient({ deckId, notes: initialNotes, noteTypes, canEd
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            例文を一括生成
+            AI生成
           </button>
           <button
             onClick={handleExport}
@@ -290,6 +290,7 @@ export function DeckDetailClient({ deckId, notes: initialNotes, noteTypes, canEd
         <BulkExampleGenerator
           deckId={deckId}
           notes={notes}
+          noteTypes={noteTypes}
           onComplete={handleBulkGenerateComplete}
           onClose={() => setShowBulkGenerateModal(false)}
         />

@@ -3,20 +3,21 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { FieldEditor, TemplateEditor, TemplatePreview, type TemplateData } from '@/components/note-type'
-import type { FieldDefinition, NoteTypeWithTemplates } from '@/types/database'
+import { FieldEditor, TemplateEditor, TemplatePreview, GenerationRuleEditor, type TemplateData } from '@/components/note-type'
+import type { FieldDefinition, GenerationRule, NoteTypeWithTemplates } from '@/types/database'
 
 interface NoteTypeEditorClientProps {
   mode: 'create' | 'edit'
   noteType?: NoteTypeWithTemplates
 }
 
-type Step = 'basic' | 'fields' | 'templates' | 'confirm'
+type Step = 'basic' | 'fields' | 'generation' | 'templates' | 'confirm'
 
-const STEPS: Step[] = ['basic', 'fields', 'templates', 'confirm']
+const STEPS: Step[] = ['basic', 'fields', 'generation', 'templates', 'confirm']
 const STEP_LABELS: Record<Step, string> = {
   basic: '基本情報',
   fields: 'フィールド',
+  generation: 'AI生成',
   templates: 'テンプレート',
   confirm: '確認',
 }
@@ -36,6 +37,9 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
       { name: 'Front', ord: 0, settings: { required: true, tts_enabled: true, example_source: true } },
       { name: 'Back', ord: 1, settings: { required: true, example_context: true } },
     ]
+  )
+  const [generationRules, setGenerationRules] = useState<GenerationRule[]>(
+    noteType?.generation_rules || []
   )
   const [templates, setTemplates] = useState<TemplateData[]>(
     noteType?.card_templates?.map(t => ({
@@ -66,6 +70,13 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
         return name.trim().length > 0
       case 'fields':
         return fields.length > 0 && fields.every(f => f.name.trim().length > 0)
+      case 'generation':
+        return generationRules.every(r =>
+          r.name.trim().length > 0 &&
+          r.source_fields.length > 0 &&
+          r.instruction.trim().length > 0 &&
+          r.target_field.length > 0
+        )
       case 'templates':
         return templates.length > 0 && templates.every(t =>
           t.name.trim().length > 0 &&
@@ -107,6 +118,7 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
         body: JSON.stringify({
           name,
           fields,
+          generation_rules: generationRules,
           templates,
         }),
       })
@@ -311,12 +323,6 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
                           {field.settings.tts_enabled && (
                             <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded">TTS</span>
                           )}
-                          {field.settings.example_source && (
-                            <span className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded">例文ソース</span>
-                          )}
-                          {field.settings.example_context && (
-                            <span className="px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded">例文コンテキスト</span>
-                          )}
                         </div>
                       )}
                     </div>
@@ -325,6 +331,39 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
               </div>
             ) : (
               <FieldEditor fields={fields} onChange={setFields} />
+            )}
+          </div>
+        )}
+
+        {currentStep === 'generation' && (
+          <div>
+            {isReadOnly ? (
+              <div>
+                <h2 className="text-lg font-medium text-gray-900 mb-4">AI生成ルール</h2>
+                {generationRules.length === 0 ? (
+                  <p className="text-sm text-gray-500">AI生成ルールはありません</p>
+                ) : (
+                  <div className="space-y-2">
+                    {generationRules.map((rule) => (
+                      <div key={rule.id} className="p-3 bg-purple-50 rounded-lg">
+                        <span className="font-medium text-purple-800">{rule.name}</span>
+                        <div className="mt-1 text-sm text-gray-600">
+                          <span className="text-purple-600">{rule.source_fields.join(', ')}</span>
+                          {' → '}
+                          <span className="text-purple-600">{rule.target_field}</span>
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500 line-clamp-2">{rule.instruction}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <GenerationRuleEditor
+                rules={generationRules}
+                fields={fields}
+                onChange={setGenerationRules}
+              />
             )}
           </div>
         )}
@@ -397,6 +436,27 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
                   ))}
                 </div>
               </div>
+
+              {generationRules.length > 0 && (
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">AI生成ルール</h3>
+                  <div className="space-y-2">
+                    {generationRules.map((rule) => (
+                      <div key={rule.id} className="flex items-center gap-2 text-sm">
+                        <svg className="w-4 h-4 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <span>
+                          <span className="font-medium">{rule.name}</span>
+                          <span className="text-gray-500">
+                            {' '}({rule.source_fields.join(', ')} → {rule.target_field})
+                          </span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="p-4 bg-gray-50 rounded-lg">
                 <h3 className="text-sm font-medium text-gray-500 mb-2">テンプレート</h3>

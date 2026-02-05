@@ -195,25 +195,6 @@ export function FieldEditor({ fields, onChange }: FieldEditorProps) {
                     <span className="text-sm text-gray-700">TTS音声生成対象</span>
                   </label>
 
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={field.settings?.example_source || false}
-                      onChange={(e) => updateFieldSettings(index, { example_source: e.target.checked })}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">例文生成のソース（単語）</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={field.settings?.example_context || false}
-                      onChange={(e) => updateFieldSettings(index, { example_context: e.target.checked })}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">例文生成のコンテキスト（意味）</span>
-                  </label>
                 </div>
               </div>
             )}

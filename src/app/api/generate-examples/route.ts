@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/api/auth'
 import Anthropic from '@anthropic-ai/sdk'
-import type { GeneratedContent } from '@/types/database'
+import type { GeneratedContent, GenerationRule } from '@/types/database'
 
 // Lazy initialization of Anthropic client
 let anthropicClient: Anthropic | null = null
@@ -16,8 +16,8 @@ function getAnthropic(): Anthropic {
   return anthropicClient
 }
 
-// System prompt for example generation
-const SYSTEM_PROMPT = `You are an English vocabulary assistant for Japanese learners.
+// Legacy system prompt (for notes without generation rules)
+const LEGACY_SYSTEM_PROMPT = `You are an English vocabulary assistant for Japanese learners.
 Generate natural example sentences using common collocations.
 
 Guidelines:
@@ -26,8 +26,38 @@ Guidelines:
 - Collocations should be frequently used combinations
 - Return valid JSON only, no markdown or extra text`
 
-// Build user prompt
-function buildUserPrompt(word: string, meaning?: string, includeCollocations: boolean = true): string {
+// Build system prompt for generation rules
+function buildRuleSystemPrompt(): string {
+  return `You are an AI assistant for a Japanese learning application.
+Generate content based on the user's instruction.
+
+Guidelines:
+- Follow the instruction precisely
+- Return ONLY the generated text content, no JSON, no markdown code blocks
+- If multiple items are requested, separate them with newlines
+- Be concise and practical`
+}
+
+// Build user prompt for a generation rule
+function buildRuleUserPrompt(rule: GenerationRule, fieldValues: Record<string, string>): string {
+  const sourceData = rule.source_fields
+    .map(f => {
+      const val = fieldValues[f]
+      return val ? `${f}: "${val}"` : null
+    })
+    .filter(Boolean)
+    .join('\n')
+
+  return `${rule.instruction}
+
+参照データ:
+${sourceData}
+
+生成結果のみを返してください。説明やマークダウンは不要です。`
+}
+
+// Legacy: Build user prompt for old-style generation
+function buildLegacyUserPrompt(word: string, meaning?: string, includeCollocations: boolean = true): string {
   let prompt = `Generate example sentences for: "${word}"`
   if (meaning) {
     prompt += `\nMeaning: "${meaning}"`
@@ -58,20 +88,17 @@ Use common collocations in the example sentences. Generate 2 examples`
   return prompt
 }
 
-// Parse JSON response from Claude
-function parseGeneratedContent(response: string): { examples: string[], collocations?: string[] } | null {
+// Parse JSON response from Claude (legacy mode)
+function parseLegacyContent(response: string): { examples: string[], collocations?: string[] } | null {
   try {
-    // Try to extract JSON from the response (in case there's extra text)
     const jsonMatch = response.match(/\{[\s\S]*\}/)
     if (!jsonMatch) return null
 
     const parsed = JSON.parse(jsonMatch[0])
 
-    // Validate structure
     if (!parsed.examples || !Array.isArray(parsed.examples)) return null
     if (parsed.examples.length === 0) return null
 
-    // Ensure examples are strings
     const examples = parsed.examples.filter((e: unknown) => typeof e === 'string')
     if (examples.length === 0) return null
 
@@ -103,17 +130,24 @@ export async function POST(request: NextRequest) {
     if (authError) return authError
 
     const body = await request.json()
-    const { noteId, word, meaning, includeCollocations = true, regenerate = false } = body
+    const {
+      noteId,
+      word,
+      meaning,
+      includeCollocations = true,
+      regenerate = false,
+      ruleId,
+    } = body
 
     // Validate required fields
-    if (!noteId || !word) {
+    if (!noteId) {
       return NextResponse.json(
-        { error: 'Missing required fields: noteId, word' },
+        { error: 'Missing required field: noteId' },
         { status: 400 }
       )
     }
 
-    // Get note and verify access, including note type for field settings
+    // Get note and verify access, including note type for field settings and generation rules
     const { data: note, error: noteError } = await supabase
       .from('notes')
       .select(`
@@ -122,7 +156,8 @@ export async function POST(request: NextRequest) {
         generated_content,
         field_values,
         note_type:note_types (
-          fields
+          fields,
+          generation_rules
         )
       `)
       .eq('id', noteId)
@@ -132,49 +167,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Note not found' }, { status: 404 })
     }
 
-    // Determine word and meaning from field settings or fallback to provided values
-    let effectiveWord = word
-    let effectiveMeaning = meaning
-
-    const noteType = note.note_type as unknown as { fields: Array<{ name: string; settings?: { example_source?: boolean; example_context?: boolean } }> } | null
-    const fieldValues = note.field_values as Record<string, string> | null
-
-    if (noteType?.fields && fieldValues) {
-      // Find example_source field (the word to generate examples for)
-      const sourceField = noteType.fields.find(f => f.settings?.example_source)
-      if (sourceField && fieldValues[sourceField.name]) {
-        effectiveWord = fieldValues[sourceField.name]
-      }
-
-      // Find example_context field (the meaning/context)
-      const contextField = noteType.fields.find(f => f.settings?.example_context)
-      if (contextField && fieldValues[contextField.name]) {
-        effectiveMeaning = fieldValues[contextField.name]
-      }
-
-      // Fallback to Front/Back or Text/Extra if no fields are marked
-      if (!sourceField) {
-        effectiveWord = effectiveWord || fieldValues['Front'] || fieldValues['Text'] || word
-      }
-      if (!contextField) {
-        effectiveMeaning = effectiveMeaning || fieldValues['Back'] || fieldValues['Extra'] || meaning
-      }
-    }
-
-    // Check if content already exists and regenerate is not requested
-    const existingContent = note.generated_content as GeneratedContent | null
-    if (existingContent && !regenerate) {
-      return NextResponse.json({
-        success: true,
-        content: {
-          examples: existingContent.examples,
-          collocations: existingContent.collocations,
-        },
-        cached: true,
-      })
-    }
-
-    // Verify deck access (user owns it or it's assigned to them)
+    // Verify deck access
     const { data: deck } = await supabase
       .from('decks')
       .select('id, owner_id')
@@ -185,11 +178,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
     }
 
-    // Check access - owner or assigned
     let hasAccess = deck.owner_id === user.id
 
     if (!hasAccess) {
-      // Check deck assignments
       const { data: assignment } = await supabase
         .from('deck_assignments')
         .select('id')
@@ -201,7 +192,6 @@ export async function POST(request: NextRequest) {
       if (assignment) {
         hasAccess = true
       } else {
-        // Check class-based assignment
         const { data: classMembership } = await supabase
           .from('class_members')
           .select('class_id')
@@ -228,23 +218,129 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
-    // Generate examples using Claude
+    const noteType = note.note_type as unknown as {
+      fields: Array<{ name: string; settings?: { example_source?: boolean; example_context?: boolean } }>
+      generation_rules?: GenerationRule[]
+    } | null
+    const fieldValues = note.field_values as Record<string, string> | null
+
+    // If a ruleId is specified, use the generation rule
+    if (ruleId && noteType?.generation_rules) {
+      const rule = noteType.generation_rules.find(r => r.id === ruleId)
+      if (!rule) {
+        return NextResponse.json({ error: 'Generation rule not found' }, { status: 404 })
+      }
+
+      if (!fieldValues) {
+        return NextResponse.json({ error: 'Note has no field values' }, { status: 400 })
+      }
+
+      // Check if target field already has content and regenerate is not requested
+      if (fieldValues[rule.target_field] && !regenerate) {
+        return NextResponse.json({
+          success: true,
+          content: fieldValues[rule.target_field],
+          target_field: rule.target_field,
+          cached: true,
+        })
+      }
+
+      // Generate using the rule
+      const anthropic = getAnthropic()
+      const userPrompt = buildRuleUserPrompt(rule, fieldValues)
+
+      const message = await anthropic.messages.create({
+        model: 'claude-3-haiku-20240307',
+        max_tokens: 500,
+        messages: [{ role: 'user', content: userPrompt }],
+        system: buildRuleSystemPrompt(),
+      })
+
+      const textContent = message.content.find(c => c.type === 'text')
+      if (!textContent || textContent.type !== 'text') {
+        return NextResponse.json(
+          { error: 'Failed to generate content: empty response' },
+          { status: 500 }
+        )
+      }
+
+      const generatedText = textContent.text.trim()
+
+      // Save to field_values
+      const updatedFieldValues = { ...fieldValues, [rule.target_field]: generatedText }
+      const { error: updateError } = await supabase
+        .from('notes')
+        .update({ field_values: updatedFieldValues })
+        .eq('id', noteId)
+
+      if (updateError) {
+        console.error('Error updating note field_values:', updateError)
+      }
+
+      return NextResponse.json({
+        success: true,
+        content: generatedText,
+        target_field: rule.target_field,
+        cached: false,
+      })
+    }
+
+    // ---- Legacy mode (for notes without generation rules) ----
+
+    if (!word) {
+      return NextResponse.json(
+        { error: 'Missing required field: word (legacy mode)' },
+        { status: 400 }
+      )
+    }
+
+    // Determine word and meaning from field settings or fallback
+    let effectiveWord = word
+    let effectiveMeaning = meaning
+
+    if (noteType?.fields && fieldValues) {
+      const sourceField = noteType.fields.find(f => f.settings?.example_source)
+      if (sourceField && fieldValues[sourceField.name]) {
+        effectiveWord = fieldValues[sourceField.name]
+      }
+
+      const contextField = noteType.fields.find(f => f.settings?.example_context)
+      if (contextField && fieldValues[contextField.name]) {
+        effectiveMeaning = fieldValues[contextField.name]
+      }
+
+      if (!sourceField) {
+        effectiveWord = effectiveWord || fieldValues['Front'] || fieldValues['Text'] || word
+      }
+      if (!contextField) {
+        effectiveMeaning = effectiveMeaning || fieldValues['Back'] || fieldValues['Extra'] || meaning
+      }
+    }
+
+    // Check if content already exists and regenerate is not requested
+    const existingContent = note.generated_content as GeneratedContent | null
+    if (existingContent && !regenerate) {
+      return NextResponse.json({
+        success: true,
+        content: {
+          examples: existingContent.examples,
+          collocations: existingContent.collocations,
+        },
+        cached: true,
+      })
+    }
+
+    // Generate examples using Claude (legacy)
     const anthropic = getAnthropic()
-    const userPrompt = buildUserPrompt(effectiveWord, effectiveMeaning, includeCollocations)
+    const userPrompt = buildLegacyUserPrompt(effectiveWord, effectiveMeaning, includeCollocations)
 
     const message = await anthropic.messages.create({
       model: 'claude-3-haiku-20240307',
       max_tokens: 500,
-      messages: [
-        {
-          role: 'user',
-          content: userPrompt,
-        },
-      ],
-      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userPrompt }],
+      system: LEGACY_SYSTEM_PROMPT,
     })
 
-    // Extract text content
     const textContent = message.content.find(c => c.type === 'text')
     if (!textContent || textContent.type !== 'text') {
       return NextResponse.json(
@@ -253,8 +349,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Parse response
-    const generatedData = parseGeneratedContent(textContent.text)
+    const generatedData = parseLegacyContent(textContent.text)
     if (!generatedData) {
       console.error('Failed to parse Claude response:', textContent.text)
       return NextResponse.json(
@@ -263,7 +358,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Prepare content to save
+    // Prepare content to save (legacy: generated_content column)
     const contentToSave: GeneratedContent = {
       examples: generatedData.examples,
       collocations: generatedData.collocations,
@@ -271,7 +366,6 @@ export async function POST(request: NextRequest) {
       model: 'claude-3-haiku-20240307',
     }
 
-    // Update note with generated content
     const { error: updateError } = await supabase
       .from('notes')
       .update({ generated_content: contentToSave })
@@ -279,7 +373,6 @@ export async function POST(request: NextRequest) {
 
     if (updateError) {
       console.error('Error updating note:', updateError)
-      // Content was generated but save failed - still return success
     }
 
     return NextResponse.json({

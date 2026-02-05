@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { requireAuth, requireTeacher } from '@/lib/api/auth'
-import type { FieldDefinition, TemplateInput } from '@/types/database'
+import type { FieldDefinition, GenerationRule, TemplateInput } from '@/types/database'
 
 // GET /api/note-types - Get all note types
 export async function GET() {
@@ -51,9 +51,10 @@ export async function POST(request: NextRequest) {
     if (authError) return authError
 
     const body = await request.json()
-    const { name, fields, templates } = body as {
+    const { name, fields, generation_rules, templates } = body as {
       name: string
       fields: FieldDefinition[]
+      generation_rules?: GenerationRule[]
       templates: TemplateInput[]
     }
 
@@ -90,6 +91,7 @@ export async function POST(request: NextRequest) {
         name: name.trim(),
         owner_id: user.id,
         fields: processedFields,
+        generation_rules: generation_rules || [],
         is_system: false,
       })
       .select()
