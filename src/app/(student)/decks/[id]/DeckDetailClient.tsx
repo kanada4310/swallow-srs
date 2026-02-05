@@ -3,20 +3,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { NoteEditor } from '@/components/deck/NoteEditor'
+import { NoteBrowser } from '@/components/deck/NoteBrowser'
+import { NoteEditModal } from '@/components/deck/NoteEditModal'
 import { CSVImporter } from '@/components/deck/CSVImporter'
 import { BulkExampleGenerator } from '@/components/ai/ExampleGenerator'
 import { OCRImporter } from '@/components/ai/OCRImporter'
 import { createClient } from '@/lib/supabase/client'
-import type { NoteType, GeneratedContent } from '@/types/database'
-
-interface Note {
-  id: string
-  field_values: Record<string, string>
-  note_type_id: string
-  generated_content: GeneratedContent | null
-  created_at: string
-  cards: Array<{ id: string }>
-}
+import type { NoteType } from '@/types/database'
+import type { BrowsableNote } from '@/components/deck/NoteCard'
 
 interface ClassInfo {
   id: string
@@ -43,33 +37,31 @@ interface Assignment {
 
 interface DeckDetailClientProps {
   deckId: string
-  notes: Note[]
+  notes: BrowsableNote[]
+  totalNoteCount: number
   noteTypes: NoteType[]
   canEdit: boolean
 }
 
-export function DeckDetailClient({ deckId, notes: initialNotes, noteTypes, canEdit }: DeckDetailClientProps) {
+export function DeckDetailClient({ deckId, notes: initialNotes, totalNoteCount: initialTotal, noteTypes, canEdit }: DeckDetailClientProps) {
   const router = useRouter()
-  const [notes, setNotes] = useState<Note[]>(initialNotes)
+  const [notes, setNotes] = useState<BrowsableNote[]>(initialNotes)
+  const [totalNoteCount, setTotalNoteCount] = useState(initialTotal)
   const [isAddingNote, setIsAddingNote] = useState(false)
   const [showDistributeModal, setShowDistributeModal] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
   const [showBulkGenerateModal, setShowBulkGenerateModal] = useState(false)
   const [showOCRModal, setShowOCRModal] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
-  const [selectedNotes, setSelectedNotes] = useState<Set<string>>(new Set())
-  const [isSelectMode, setIsSelectMode] = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [editingNote, setEditingNote] = useState<BrowsableNote | null>(null)
   const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [showDeckDeleteConfirm, setShowDeckDeleteConfirm] = useState(false)
   const [isDeletingDeck, setIsDeletingDeck] = useState(false)
   const [deckDeleteError, setDeckDeleteError] = useState<string | null>(null)
 
   const refreshNotes = useCallback(async () => {
     const supabase = createClient()
-    const { data } = await supabase
+    const { data, count } = await supabase
       .from('notes')
       .select(`
         id,
@@ -78,10 +70,14 @@ export function DeckDetailClient({ deckId, notes: initialNotes, noteTypes, canEd
         generated_content,
         created_at,
         cards (id)
-      `)
+      `, { count: 'exact' })
       .eq('deck_id', deckId)
       .order('created_at', { ascending: false })
-    if (data) setNotes(data as Note[])
+      .range(0, 49)
+    if (data) {
+      setNotes(data as BrowsableNote[])
+      setTotalNoteCount(count || 0)
+    }
   }, [deckId])
 
   const handleNoteAdded = () => {
@@ -106,77 +102,42 @@ export function DeckDetailClient({ deckId, notes: initialNotes, noteTypes, canEd
 
   const handleDeleteNote = async (noteId: string) => {
     setDeletingNoteId(noteId)
-    setDeleteError(null)
     try {
       const response = await fetch(`/api/notes/${noteId}`, { method: 'DELETE' })
       if (!response.ok) {
         const data = await response.json()
         throw new Error(data.error || '削除に失敗しました')
       }
-      // Optimistic update
-      setNotes(prev => prev.filter(n => n.id !== noteId))
       // Clean up IndexedDB in background
       import('@/lib/db/schema').then(({ deleteNoteLocally }) => {
         deleteNoteLocally(noteId).catch(console.error)
       })
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : '削除に失敗しました')
+      throw err
     } finally {
       setDeletingNoteId(null)
     }
   }
 
-  const handleBulkDelete = async () => {
-    const noteIds = Array.from(selectedNotes)
-    if (noteIds.length === 0) return
-
-    setIsDeleting(true)
-    setDeleteError(null)
-    try {
-      const response = await fetch('/api/notes/bulk-delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ noteIds, deckId }),
-      })
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || '削除に失敗しました')
-      }
-      // Optimistic update
-      const deletedSet = new Set(noteIds)
-      setNotes(prev => prev.filter(n => !deletedSet.has(n.id)))
-      setSelectedNotes(new Set())
-      setIsSelectMode(false)
-      setShowDeleteConfirm(false)
-      // Clean up IndexedDB in background
-      import('@/lib/db/schema').then(({ deleteNotesLocally }) => {
-        deleteNotesLocally(noteIds).catch(console.error)
-      })
-    } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : '削除に失敗しました')
-    } finally {
-      setIsDeleting(false)
+  const handleBulkDelete = async (noteIds: string[]) => {
+    const response = await fetch('/api/notes/bulk-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ noteIds, deckId }),
+    })
+    if (!response.ok) {
+      const data = await response.json()
+      throw new Error(data.error || '削除に失敗しました')
     }
-  }
-
-  const toggleNoteSelection = (noteId: string) => {
-    setSelectedNotes(prev => {
-      const next = new Set(prev)
-      if (next.has(noteId)) {
-        next.delete(noteId)
-      } else {
-        next.add(noteId)
-      }
-      return next
+    // Clean up IndexedDB in background
+    import('@/lib/db/schema').then(({ deleteNotesLocally }) => {
+      deleteNotesLocally(noteIds).catch(console.error)
     })
   }
 
-  const toggleSelectAll = () => {
-    if (selectedNotes.size === notes.length) {
-      setSelectedNotes(new Set())
-    } else {
-      setSelectedNotes(new Set(notes.map(n => n.id)))
-    }
+  const handleEditNoteSave = (updatedNote: BrowsableNote) => {
+    setNotes(prev => prev.map(n => n.id === updatedNote.id ? updatedNote : n))
+    setEditingNote(null)
   }
 
   const handleDeleteDeck = async () => {
@@ -229,12 +190,6 @@ export function DeckDetailClient({ deckId, notes: initialNotes, noteTypes, canEd
     } finally {
       setIsExporting(false)
     }
-  }
-
-  // Note type name lookup
-  const noteTypeNames: Record<string, string> = {}
-  for (const nt of noteTypes) {
-    noteTypeNames[nt.id] = nt.name
   }
 
   return (
@@ -290,19 +245,6 @@ export function DeckDetailClient({ deckId, notes: initialNotes, noteTypes, canEd
             </svg>
             {isExporting ? 'エクスポート中...' : 'CSVエクスポート'}
           </button>
-          <button
-            onClick={() => {
-              setIsSelectMode(true)
-              setSelectedNotes(new Set())
-            }}
-            disabled={notes.length === 0}
-            className="flex-1 min-w-[140px] py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            選択して削除
-          </button>
         </div>
       )}
 
@@ -333,93 +275,31 @@ export function DeckDetailClient({ deckId, notes: initialNotes, noteTypes, canEd
         </div>
       )}
 
-      {/* Delete Error */}
-      {deleteError && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center justify-between">
-          <span>{deleteError}</span>
-          <button onClick={() => setDeleteError(null)} className="text-red-500 hover:text-red-700 ml-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      )}
-
-      {/* Select Mode Bulk Action Bar */}
-      {isSelectMode && (
-        <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={toggleSelectAll}
-              className="text-sm text-blue-700 hover:text-blue-900 font-medium"
-            >
-              {selectedNotes.size === notes.length ? 'すべて解除' : 'すべて選択'}
-            </button>
-            <span className="text-sm text-blue-600">
-              {selectedNotes.size}件選択中
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                setIsSelectMode(false)
-                setSelectedNotes(new Set())
-              }}
-              className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              キャンセル
-            </button>
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              disabled={selectedNotes.size === 0}
-              className="px-3 py-1.5 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-            >
-              {selectedNotes.size}件を削除
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Notes List */}
+      {/* Notes Browser (search, filter, sort, pagination, select/delete) */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          ノート一覧
-          <span className="text-sm font-normal text-gray-500 ml-2">
-            ({notes.length}件)
-          </span>
-        </h2>
-
-        {notes.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-            <div className="text-gray-400 mb-4">
-              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <p className="text-gray-500">
-              {canEdit
-                ? 'ノートがありません。上のボタンから追加してください。'
-                : 'まだノートがありません。'}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {notes.map((note) => (
-              <NoteCard
-                key={note.id}
-                note={note}
-                noteTypeName={noteTypeNames[note.note_type_id] || 'Unknown'}
-                canEdit={canEdit}
-                isSelectMode={isSelectMode}
-                isSelected={selectedNotes.has(note.id)}
-                onToggleSelect={() => toggleNoteSelection(note.id)}
-                onDelete={() => handleDeleteNote(note.id)}
-                isDeleting={deletingNoteId === note.id}
-              />
-            ))}
-          </div>
-        )}
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">ノート一覧</h2>
+        <NoteBrowser
+          deckId={deckId}
+          initialNotes={notes}
+          initialTotal={totalNoteCount}
+          noteTypes={noteTypes}
+          canEdit={canEdit}
+          onEditNote={(note) => setEditingNote(note)}
+          onDeleteNote={handleDeleteNote}
+          onBulkDelete={handleBulkDelete}
+          deletingNoteId={deletingNoteId}
+        />
       </div>
+
+      {/* Note Edit Modal */}
+      {editingNote && (
+        <NoteEditModal
+          note={editingNote}
+          noteType={noteTypes.find(nt => nt.id === editingNote.note_type_id) || noteTypes[0]}
+          onSave={handleEditNoteSave}
+          onClose={() => setEditingNote(null)}
+        />
+      )}
 
       {/* Distribution Modal */}
       {showDistributeModal && (
@@ -467,42 +347,6 @@ export function DeckDetailClient({ deckId, notes: initialNotes, noteTypes, canEd
           onComplete={handleBulkGenerateComplete}
           onClose={() => setShowBulkGenerateModal(false)}
         />
-      )}
-
-      {/* Bulk Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">ノートを削除</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              {selectedNotes.size}件のノートを削除しますか？関連するカード・学習記録もすべて削除されます。この操作は元に戻せません。
-            </p>
-            {deleteError && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                {deleteError}
-              </div>
-            )}
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setShowDeleteConfirm(false)
-                  setDeleteError(null)
-                }}
-                disabled={isDeleting}
-                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={handleBulkDelete}
-                disabled={isDeleting}
-                className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
-              >
-                {isDeleting ? '削除中...' : `${selectedNotes.size}件を削除`}
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* OCR Import Modal */}
@@ -586,102 +430,6 @@ export function DeckDetailClient({ deckId, notes: initialNotes, noteTypes, canEd
       )}
     </div>
   )
-}
-
-interface NoteCardProps {
-  note: Note
-  noteTypeName: string
-  canEdit: boolean
-  isSelectMode: boolean
-  isSelected: boolean
-  onToggleSelect: () => void
-  onDelete: () => void
-  isDeleting: boolean
-}
-
-function NoteCard({ note, noteTypeName, canEdit, isSelectMode, isSelected, onToggleSelect, onDelete, isDeleting }: NoteCardProps) {
-  // Get first two fields for display
-  const fieldEntries = Object.entries(note.field_values).slice(0, 2)
-  const cardCount = note.cards?.length || 0
-  const hasGeneratedContent = note.generated_content && note.generated_content.examples?.length > 0
-
-  return (
-    <div
-      className={`bg-white rounded-lg shadow-sm border p-4 transition-colors ${
-        isSelectMode && isSelected
-          ? 'border-blue-400 bg-blue-50'
-          : 'border-gray-200'
-      } ${isSelectMode ? 'cursor-pointer' : ''}`}
-      onClick={isSelectMode ? onToggleSelect : undefined}
-    >
-      <div className="flex items-start justify-between">
-        {isSelectMode && (
-          <div className="mr-3 flex-shrink-0 pt-0.5">
-            <input
-              type="checkbox"
-              checked={isSelected}
-              onChange={onToggleSelect}
-              onClick={e => e.stopPropagation()}
-              className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-            />
-          </div>
-        )}
-        <div className="flex-1 min-w-0">
-          {fieldEntries.map(([key, value], idx) => (
-            <div key={key} className={idx === 0 ? 'font-medium text-gray-900 truncate' : 'text-sm text-gray-500 truncate mt-1'}>
-              {truncateText(value, 100)}
-            </div>
-          ))}
-        </div>
-        <div className="ml-4 flex-shrink-0 text-right flex items-start gap-2">
-          <div>
-            <span className="text-xs text-gray-400 block">{noteTypeName}</span>
-            <div className="flex items-center gap-2 mt-1">
-              {hasGeneratedContent && (
-                <span className="text-xs text-purple-600 flex items-center gap-0.5" title="例文生成済み">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </span>
-              )}
-              <span className="text-xs text-gray-500">{cardCount}枚</span>
-            </div>
-          </div>
-          {!isSelectMode && canEdit && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                if (confirm('このノートを削除しますか？関連するカード・学習記録も削除されます。')) {
-                  onDelete()
-                }
-              }}
-              disabled={isDeleting}
-              className="p-1 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
-              title="ノートを削除"
-            >
-              {isDeleting ? (
-                <div className="w-4 h-4 animate-spin rounded-full border-2 border-gray-300 border-t-red-600" />
-              ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              )}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function truncateText(text: string, maxLength: number): string {
-  // Remove HTML tags and cloze markers for display
-  const cleanText = text
-    .replace(/<[^>]*>/g, '')
-    .replace(/\{\{c\d+::(.*?)(?:::[^}]*)?\}\}/g, '[$1]')
-
-  if (cleanText.length <= maxLength) return cleanText
-  return cleanText.slice(0, maxLength) + '...'
 }
 
 function DistributeModal({ deckId, onClose }: { deckId: string; onClose: () => void }) {

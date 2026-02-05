@@ -21,8 +21,8 @@ async function getDeckWithNotes(deckId: string, userId: string) {
 
   if (!deck) return null
 
-  // Get notes with their cards
-  const { data: notes } = await supabase
+  // Get notes with their cards (first page + total count)
+  const { data: notes, count: totalNoteCount } = await supabase
     .from('notes')
     .select(`
       id,
@@ -31,9 +31,10 @@ async function getDeckWithNotes(deckId: string, userId: string) {
       generated_content,
       created_at,
       cards (id)
-    `)
+    `, { count: 'exact' })
     .eq('deck_id', deckId)
     .order('created_at', { ascending: false })
+    .range(0, 49)
 
   // Get card count
   const { count: totalCards } = await supabase
@@ -81,6 +82,7 @@ async function getDeckWithNotes(deckId: string, userId: string) {
   return {
     deck,
     notes: notes || [],
+    totalNoteCount: totalNoteCount || 0,
     totalCards: totalCards || 0,
     dueCount,
     newCount,
@@ -177,6 +179,7 @@ export default async function DeckDetailPage({ params }: PageProps) {
         <DeckDetailClient
           deckId={id}
           notes={deckData.notes}
+          totalNoteCount={deckData.totalNoteCount}
           noteTypes={noteTypes as NoteType[]}
           canEdit={canEdit}
         />

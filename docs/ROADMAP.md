@@ -232,18 +232,42 @@ OCR読み取り結果をカスタムノートタイプのフィールドに動�
 - [x] IndexedDBクリーンアップヘルパー（deleteNoteLocally, deleteNotesLocally, deleteDeckLocally）
 - [x] カードテンプレート削除は既存のノートタイプ編集内で対応済み
 
+### 7.2 ノートブラウズ・編集機能 ✅ 完了
+デッキ詳細ページにノートの検索・フィルタ・ソート・ページネーション機能と、ノート編集モーダルを実装。
+
+- [x] ノート更新API（PUT /api/notes/[id]）
+  - field_values更新、Clozeカード数の自動調整（追加/削除）
+- [x] ノート検索API（GET /api/notes/search）
+  - Postgres RPC関数 `search_notes` でJSONBテキスト検索
+  - deckId, q, noteTypeId, sort/order, offset/limit対応
+- [x] NoteCardコンポーネント抽出（src/components/deck/NoteCard.tsx）
+  - 編集ボタン（鉛筆アイコン）追加
+  - BrowsableNote型をexport
+- [x] NoteEditModalコンポーネント（src/components/deck/NoteEditModal.tsx）
+  - フィールド編集、Clozeカード数変更の警告表示
+  - 保存後IndexedDB同期
+- [x] NoteBrowserコンポーネント（src/components/deck/NoteBrowser.tsx）
+  - テキスト検索（300msデバウンス）
+  - ノートタイプフィルタ、作成日ソート切替
+  - 50件ずつページネーション（「もっと読み込む」）
+  - 選択モード＋一括削除
+- [x] DeckDetailClient.tsxリファクタリング
+  - インラインNoteCard/削除ロジックをNoteBrowser+NoteEditModalに置換
+- [x] page.tsxにページネーション追加（.range(0, 49) + count: 'exact'）
+- [x] IndexedDBヘルパー追加（updateNoteLocally）
+- [x] DBマイグレーション（007_search_notes_function.sql）
+
 ---
 
 ## 現在の進捗
 
-**Phase**: Phase 7.1 削除機能 ✅ 完了
+**Phase**: Phase 7.2 ノートブラウズ・編集機能 ✅ 完了
 **最終更新**: 2026-02-05
-**次のタスク**: Phase 7.2
+**次のタスク**: Phase 7.3
 
 ### 次回セッションでやること
 
 1. **Phase 7**（ユーザー要望、続き）:
-   - ノートのブラウズ・編集機能（作成後のノート編集）
    - HTMLタグのワンタッチ付与・一括付与（例文中の見出し語強調、和訳中の対応語強調）
    - Anki互換機能強化（サブデッキ、フィルターデッキ、ノートタグ、カードタイプ一括変更）
    - 学習カスタマイズ（出題間隔、出題順序: 登録順/ランダム）
@@ -304,3 +328,5 @@ OCR読み取り結果をカスタムノートタイプのフィールドに動�
 - [x] Phase 6.5 動作確認完了
 - [x] Phase 7.1 削除機能（ノート単体/一括削除、デッキ削除、ノートタイプ削除UI、IndexedDBクリーンアップ）
 - [x] Phase 7.1 動作確認完了
+- [x] Phase 7.2 ノートブラウズ・編集機能（検索/フィルタ/ソート/ページネーション、NoteEditModal、RPC検索関数）
+- [x] Phase 7.2 動作確認完了

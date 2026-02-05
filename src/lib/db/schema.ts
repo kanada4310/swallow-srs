@@ -742,6 +742,13 @@ export async function getDecksWithStatsOffline(
 }
 
 /**
+ * Update a note's field_values locally in IndexedDB
+ */
+export async function updateNoteLocally(noteId: string, fieldValues: Record<string, string>): Promise<void> {
+  await db.notes.update(noteId, { field_values: fieldValues })
+}
+
+/**
  * Delete a note and all related local data (cards, card_states, review_logs, audioCache)
  */
 export async function deleteNoteLocally(noteId: string): Promise<void> {
