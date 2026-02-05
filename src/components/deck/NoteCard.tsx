@@ -8,6 +8,7 @@ export interface BrowsableNote {
   field_values: Record<string, string>
   note_type_id: string
   generated_content: GeneratedContent | null
+  tags?: string[]
   created_at: string
   cards: Array<{ id: string }>
 }
@@ -46,6 +47,7 @@ export function NoteCard({
   const noteTypeName = noteType?.name || 'Unknown'
   const generationRules: GenerationRule[] = noteType?.generation_rules || []
   const hasRules = generationRules.length > 0
+  const noteTags = note.tags || []
 
   const handleGenerate = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -104,6 +106,15 @@ export function NoteCard({
               {truncateText(value, 100)}
             </div>
           ))}
+          {noteTags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {noteTags.map(tag => (
+                <span key={tag} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-600">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <div className="ml-4 flex-shrink-0 text-right flex items-start gap-2">
           <div>

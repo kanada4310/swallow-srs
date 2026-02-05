@@ -17,7 +17,7 @@ export async function PUT(
     if (authError) return authError
 
     const body = await request.json()
-    const { field_values } = body
+    const { field_values, tags } = body
 
     if (!field_values || typeof field_values !== 'object') {
       return NextResponse.json({ error: 'field_values is required' }, { status: 400 })
@@ -39,13 +39,31 @@ export async function PUT(
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
-    // Update the note's field_values
-    const { data: updatedNote, error: updateError } = await supabase
+    // Update the note's field_values (and tags if provided)
+    const updatePayload: Record<string, unknown> = { field_values }
+    if (Array.isArray(tags)) {
+      updatePayload.tags = tags
+    }
+
+    let { data: updatedNote, error: updateError } = await supabase
       .from('notes')
-      .update({ field_values })
+      .update(updatePayload)
       .eq('id', id)
-      .select('id, field_values, note_type_id, generated_content, created_at, cards(id)')
+      .select('id, field_values, note_type_id, generated_content, tags, created_at, cards(id)')
       .single()
+
+    // Fallback: if tags column doesn't exist, retry without it
+    if (updateError && updateError.code === 'PGRST204') {
+      delete updatePayload.tags
+      const retry = await supabase
+        .from('notes')
+        .update(updatePayload)
+        .eq('id', id)
+        .select('id, field_values, note_type_id, generated_content, created_at, cards(id)')
+        .single()
+      updatedNote = retry.data as typeof updatedNote
+      updateError = retry.error
+    }
 
     if (updateError) {
       console.error('Error updating note:', updateError)

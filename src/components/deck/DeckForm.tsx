@@ -3,6 +3,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
+interface ParentDeckOption {
+  id: string
+  name: string
+}
+
 interface DeckFormProps {
   mode: 'create' | 'edit'
   initialData?: {
@@ -10,12 +15,15 @@ interface DeckFormProps {
     name: string
     newCardsPerDay: number
   }
+  parentDecks?: ParentDeckOption[]
+  defaultParentId?: string
 }
 
-export function DeckForm({ mode, initialData }: DeckFormProps) {
+export function DeckForm({ mode, initialData, parentDecks, defaultParentId }: DeckFormProps) {
   const router = useRouter()
   const [name, setName] = useState(initialData?.name || '')
   const [newCardsPerDay, setNewCardsPerDay] = useState(initialData?.newCardsPerDay || 20)
+  const [parentDeckId, setParentDeckId] = useState(defaultParentId || '')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -28,7 +36,11 @@ export function DeckForm({ mode, initialData }: DeckFormProps) {
       const response = await fetch('/api/decks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, newCardsPerDay }),
+        body: JSON.stringify({
+          name,
+          newCardsPerDay,
+          parentDeckId: parentDeckId || undefined,
+        }),
       })
 
       const data = await response.json()
@@ -69,6 +81,29 @@ export function DeckForm({ mode, initialData }: DeckFormProps) {
           autoFocus
         />
       </div>
+
+      {/* Parent Deck Selector */}
+      {parentDecks && parentDecks.length > 0 && (
+        <div>
+          <label htmlFor="parentDeckId" className="block text-sm font-medium text-gray-700 mb-2">
+            親デッキ
+          </label>
+          <select
+            id="parentDeckId"
+            value={parentDeckId}
+            onChange={(e) => setParentDeckId(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+          >
+            <option value="">なし（トップレベル）</option>
+            {parentDecks.map(d => (
+              <option key={d.id} value={d.id}>{d.name}</option>
+            ))}
+          </select>
+          <p className="mt-1 text-sm text-gray-500">
+            サブデッキとして作成する場合は親デッキを選択（最大3段）
+          </p>
+        </div>
+      )}
 
       <div>
         <label htmlFor="newCardsPerDay" className="block text-sm font-medium text-gray-700 mb-2">

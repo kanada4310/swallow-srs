@@ -278,18 +278,44 @@ OCR読み取り結果をカスタムノートタイプのフィールドに動�
   - generation_rulesがあるノートタイプのみ表示
   - 全ルールを順次実行、完了後にノートデータ再取得
 
+### 7.4 Anki互換機能強化（サブデッキ + ノートタグ） ✅ 完了
+サブデッキ（デッキ階層構造）とノートタグ機能を実装。
+
+- [x] DBマイグレーション（008_subdecks_and_tags.sql）
+  - `get_descendant_deck_ids` RPC関数（再帰CTE）
+  - notes.tags TEXT[]カラム + GINインデックス
+  - `search_notes` RPC更新（p_tag, tags返却）
+  - `get_deck_tags` / `bulk_update_tags` RPC関数
+- [x] サブデッキ
+  - POST /api/decks: parentDeckId対応、深度3制限バリデーション
+  - DELETE /api/decks/[id]: 子デッキ存在時は削除ブロック
+  - 学習ページ: RPC get_descendant_deck_idsで全子孫デッキのカードを取得
+  - デッキ一覧: ツリー構造表示（インデント+集計カード数）
+  - デッキ作成UI: 親デッキ選択ドロップダウン、?parent=IDクエリパラメータ
+  - デッキ詳細: サブデッキ一覧セクション、「サブデッキを作成」ボタン
+  - Dexie.js: parent_deck_idインデックス、getDescendantDeckIds()、オフライン学習対応
+- [x] ノートタグ
+  - POST /api/notes: tags対応
+  - PUT /api/notes/[id]: tags対応
+  - GET /api/notes/search: tag filter対応
+  - POST /api/notes/bulk-tags: 一括タグ追加/削除API
+  - NoteCard: タグピルバッジ表示
+  - NoteEditModal: タグ編集セクション（入力+オートコンプリート）
+  - NoteBrowser: タグフィルタドロップダウン、選択モードで一括タグ操作
+  - Dexie.js: *tags MultiEntryインデックス、updateNoteTagsLocally()
+
 ---
 
 ## 現在の進捗
 
-**Phase**: Phase 7.3 LLMベース テキストタグ付け機能 ✅ 完了
+**Phase**: Phase 7.4 Anki互換機能強化（サブデッキ + ノートタグ） ✅ 完了
 **最終更新**: 2026-02-05
-**次のタスク**: Phase 7.4
+**次のタスク**: Phase 7.5
 
 ### 次回セッションでやること
 
 1. **Phase 7**（ユーザー要望、続き）:
-   - Anki互換機能強化（サブデッキ、フィルターデッキ、ノートタグ、カードタイプ一括変更）
+   - Anki互換機能強化（フィルターデッキ、カードタイプ一括変更）
    - 学習カスタマイズ（出題間隔、出題順序: 登録順/ランダム）
    - デッキごとの学習リマインダー通知機能
    - カスタムノートタイプでのCloze対応（テンプレートに`{{cloze:Field}}`があれば自動認識）
@@ -353,3 +379,4 @@ OCR読み取り結果をカスタムノートタイプのフィールドに動�
 - [x] Phase 7.2 動作確認完了
 - [x] Phase 7.3 LLMベース テキストタグ付け機能（プリセット3種、NoteEditModal AI生成セクション、NoteCardワンタッチ生成）
 - [x] Phase 7.3 動作確認完了
+- [x] Phase 7.4 Anki互換機能強化（サブデッキ + ノートタグ）

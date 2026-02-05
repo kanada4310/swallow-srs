@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     const deckId = searchParams.get('deckId')
     const q = searchParams.get('q') || ''
     const noteTypeId = searchParams.get('noteTypeId') || ''
+    const tag = searchParams.get('tag') || ''
     const order = searchParams.get('order') || 'desc'
     const offset = parseInt(searchParams.get('offset') || '0', 10)
     const limit = parseInt(searchParams.get('limit') || '50', 10)
@@ -48,14 +49,36 @@ export async function GET(request: NextRequest) {
     }
 
     // Call RPC function for JSONB text search
-    const { data: rpcRows, error: rpcError } = await supabase.rpc('search_notes', {
+    // Try with p_tag parameter first; fall back to old RPC signature if migration 008 hasn't been run
+    let rpcRows: unknown[] | null = null
+    let rpcError: { message: string } | null = null
+
+    const rpcResult = await supabase.rpc('search_notes', {
       p_deck_id: deckId,
       p_query: q.trim(),
       p_note_type_id: noteTypeId || null,
+      p_tag: tag || null,
       p_sort_order: order,
       p_offset: offset,
       p_limit: limit,
     })
+
+    if (rpcResult.error && rpcResult.error.message?.includes('p_tag')) {
+      // Old RPC doesn't have p_tag parameter - retry without it
+      const fallback = await supabase.rpc('search_notes', {
+        p_deck_id: deckId,
+        p_query: q.trim(),
+        p_note_type_id: noteTypeId || null,
+        p_sort_order: order,
+        p_offset: offset,
+        p_limit: limit,
+      } as Record<string, unknown>)
+      rpcRows = fallback.data
+      rpcError = fallback.error
+    } else {
+      rpcRows = rpcResult.data
+      rpcError = rpcResult.error
+    }
 
     if (rpcError) {
       console.error('Error searching notes:', rpcError)
@@ -67,6 +90,7 @@ export async function GET(request: NextRequest) {
       field_values: Record<string, string>
       note_type_id: string
       generated_content: unknown
+      tags?: string[]
       created_at: string
       total_count: number
     }>
@@ -99,6 +123,7 @@ export async function GET(request: NextRequest) {
       field_values: row.field_values,
       note_type_id: row.note_type_id,
       generated_content: row.generated_content,
+      tags: row.tags || [],
       created_at: row.created_at,
       cards: cardsMap[row.id] || [],
     }))

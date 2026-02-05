@@ -3,6 +3,7 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Profile, NoteType } from '@/types/database'
+import type { BrowsableNote } from '@/components/deck/NoteCard'
 import { DeckDetailClient } from './DeckDetailClient'
 
 interface PageProps {
@@ -22,19 +23,45 @@ async function getDeckWithNotes(deckId: string, userId: string) {
   if (!deck) return null
 
   // Get notes with their cards (first page + total count)
-  const { data: notes, count: totalNoteCount } = await supabase
+  // Try with tags column first; if migration 008 hasn't been run, fall back without
+  let notes: Array<Record<string, unknown>> | null = null
+  let totalNoteCount: number | null = null
+
+  const notesResult = await supabase
     .from('notes')
     .select(`
       id,
       field_values,
       note_type_id,
       generated_content,
+      tags,
       created_at,
       cards (id)
     `, { count: 'exact' })
     .eq('deck_id', deckId)
     .order('created_at', { ascending: false })
     .range(0, 49)
+
+  if (notesResult.error && notesResult.error.message?.includes('tags')) {
+    const fallback = await supabase
+      .from('notes')
+      .select(`
+        id,
+        field_values,
+        note_type_id,
+        generated_content,
+        created_at,
+        cards (id)
+      `, { count: 'exact' })
+      .eq('deck_id', deckId)
+      .order('created_at', { ascending: false })
+      .range(0, 49)
+    notes = fallback.data
+    totalNoteCount = fallback.count
+  } else {
+    notes = notesResult.data
+    totalNoteCount = notesResult.count
+  }
 
   // Get card count
   const { count: totalCards } = await supabase
@@ -79,6 +106,22 @@ async function getDeckWithNotes(deckId: string, userId: string) {
     }
   }
 
+  // Get unique tags for this deck (may fail if migration 008 hasn't been run)
+  let deckTags: string[] = []
+  try {
+    const { data: deckTagsData } = await supabase.rpc('get_deck_tags', { p_deck_id: deckId })
+    deckTags = (deckTagsData as string[] | null) || []
+  } catch {
+    // RPC doesn't exist yet - tags feature not available
+  }
+
+  // Get child decks
+  const { data: childDecks } = await supabase
+    .from('decks')
+    .select('id, name, parent_deck_id')
+    .eq('parent_deck_id', deckId)
+    .order('name')
+
   return {
     deck,
     notes: notes || [],
@@ -87,6 +130,8 @@ async function getDeckWithNotes(deckId: string, userId: string) {
     dueCount,
     newCount,
     isOwner: deck.owner_id === userId,
+    deckTags,
+    childDecks: childDecks || [],
   }
 }
 
@@ -175,12 +220,51 @@ export default async function DeckDetailPage({ params }: PageProps) {
           </Link>
         )}
 
+        {/* Child Decks */}
+        {deckData.childDecks.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">サブデッキ</h2>
+            <div className="space-y-2">
+              {deckData.childDecks.map((child: { id: string; name: string }) => (
+                <Link
+                  key={child.id}
+                  href={`/decks/${child.id}`}
+                  className="block bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md hover:border-gray-300 transition-all"
+                >
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                    </svg>
+                    <span className="text-sm font-medium text-gray-900">{child.name}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Create Sub-deck Button */}
+        {canEdit && (
+          <div className="mb-6">
+            <Link
+              href={`/decks/new?parent=${id}`}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-600 border border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              サブデッキを作成
+            </Link>
+          </div>
+        )}
+
         {/* Client Component for Note Management */}
         <DeckDetailClient
           deckId={id}
-          notes={deckData.notes}
+          notes={deckData.notes as unknown as BrowsableNote[]}
           totalNoteCount={deckData.totalNoteCount}
           noteTypes={noteTypes as NoteType[]}
+          deckTags={deckData.deckTags}
           canEdit={canEdit}
         />
       </div>

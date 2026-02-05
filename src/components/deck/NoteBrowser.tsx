@@ -10,6 +10,7 @@ interface NoteBrowserProps {
   initialNotes: BrowsableNote[]
   initialTotal: number
   noteTypes: NoteType[]
+  deckTags?: string[]
   canEdit: boolean
   onEditNote: (note: BrowsableNote) => void
   onDeleteNote: (noteId: string) => Promise<void>
@@ -24,6 +25,7 @@ export function NoteBrowser({
   initialNotes,
   initialTotal,
   noteTypes,
+  deckTags,
   canEdit,
   onEditNote,
   onDeleteNote,
@@ -34,6 +36,7 @@ export function NoteBrowser({
   const [total, setTotal] = useState(initialTotal)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterNoteTypeId, setFilterNoteTypeId] = useState('')
+  const [filterTag, setFilterTag] = useState('')
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc')
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
@@ -42,9 +45,13 @@ export function NoteBrowser({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isBulkDeleting, setIsBulkDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [showBulkTagModal, setShowBulkTagModal] = useState(false)
+  const [bulkTagInput, setBulkTagInput] = useState('')
+  const [isBulkTagging, setIsBulkTagging] = useState(false)
+  const [localDeckTags, setLocalDeckTags] = useState<string[]>(deckTags || [])
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const isSearchActive = searchQuery.trim() !== '' || filterNoteTypeId !== '' || sortOrder !== 'desc'
+  const isSearchActive = searchQuery.trim() !== '' || filterNoteTypeId !== '' || filterTag !== '' || sortOrder !== 'desc'
 
   // Build note type lookup
   const noteTypeMap = new Map<string, NoteType>()
@@ -56,7 +63,7 @@ export function NoteBrowser({
   const usedNoteTypeIds = new Set(initialNotes.map(n => n.note_type_id))
   const filterableNoteTypes = noteTypes.filter(nt => usedNoteTypeIds.has(nt.id))
 
-  const fetchNotes = useCallback(async (query: string, noteTypeId: string, order: string, offset: number) => {
+  const fetchNotes = useCallback(async (query: string, noteTypeId: string, order: string, offset: number, tag?: string) => {
     const params = new URLSearchParams({
       deckId,
       q: query,
@@ -66,6 +73,9 @@ export function NoteBrowser({
       offset: String(offset),
       limit: String(PAGE_SIZE),
     })
+    if (tag) {
+      params.set('tag', tag)
+    }
 
     const response = await fetch(`/api/notes/search?${params}`)
     if (!response.ok) {
@@ -75,7 +85,7 @@ export function NoteBrowser({
   }, [deckId])
 
   // Search with debounce
-  const triggerSearch = useCallback((query: string, noteTypeId: string, order: string) => {
+  const triggerSearch = useCallback((query: string, noteTypeId: string, order: string, tag?: string) => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current)
     }
@@ -83,7 +93,7 @@ export function NoteBrowser({
     debounceRef.current = setTimeout(async () => {
       setIsLoading(true)
       try {
-        const result = await fetchNotes(query, noteTypeId, order, 0)
+        const result = await fetchNotes(query, noteTypeId, order, 0, tag)
         setNotes(result.notes)
         setTotal(result.total)
       } catch (err) {
@@ -102,9 +112,9 @@ export function NoteBrowser({
       setTotal(initialTotal)
       return
     }
-    triggerSearch(searchQuery, filterNoteTypeId, sortOrder)
+    triggerSearch(searchQuery, filterNoteTypeId, sortOrder, filterTag)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, filterNoteTypeId, sortOrder])
+  }, [searchQuery, filterNoteTypeId, filterTag, sortOrder])
 
   // Sync with parent when initialNotes changes (e.g., after note add/edit/delete)
   useEffect(() => {
@@ -117,7 +127,7 @@ export function NoteBrowser({
   const handleLoadMore = async () => {
     setIsLoadingMore(true)
     try {
-      const result = await fetchNotes(searchQuery, filterNoteTypeId, sortOrder, notes.length)
+      const result = await fetchNotes(searchQuery, filterNoteTypeId, sortOrder, notes.length, filterTag)
       setNotes(prev => [...prev, ...result.notes])
       setTotal(result.total)
     } catch (err) {
@@ -184,6 +194,41 @@ export function NoteBrowser({
     }
   }
 
+  const handleBulkTag = async (addTags: string[]) => {
+    const noteIds = Array.from(selectedNotes)
+    if (noteIds.length === 0 || addTags.length === 0) return
+
+    setIsBulkTagging(true)
+    try {
+      const response = await fetch('/api/notes/bulk-tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ noteIds, deckId, addTags }),
+      })
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'タグの更新に失敗しました')
+      }
+      // Update local notes state
+      setNotes(prev => prev.map(n => {
+        if (selectedNotes.has(n.id)) {
+          const existingTags = n.tags || []
+          const merged = Array.from(new Set([...existingTags, ...addTags])).sort()
+          return { ...n, tags: merged }
+        }
+        return n
+      }))
+      // Update local deck tags
+      setLocalDeckTags(prev => Array.from(new Set([...prev, ...addTags])).sort())
+      setShowBulkTagModal(false)
+      setBulkTagInput('')
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'タグの更新に失敗しました')
+    } finally {
+      setIsBulkTagging(false)
+    }
+  }
+
   // Refresh a single note after generation (re-fetch its field_values)
   const handleNoteGenerated = async (noteId: string) => {
     try {
@@ -240,6 +285,20 @@ export function NoteBrowser({
               <option value="">全タイプ</option>
               {filterableNoteTypes.map(nt => (
                 <option key={nt.id} value={nt.id}>{nt.name}</option>
+              ))}
+            </select>
+          )}
+
+          {/* Tag Filter */}
+          {localDeckTags.length > 0 && (
+            <select
+              value={filterTag}
+              onChange={(e) => setFilterTag(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+            >
+              <option value="">全タグ</option>
+              {localDeckTags.map(tag => (
+                <option key={tag} value={tag}>{tag}</option>
               ))}
             </select>
           )}
@@ -321,6 +380,13 @@ export function NoteBrowser({
               className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               キャンセル
+            </button>
+            <button
+              onClick={() => setShowBulkTagModal(true)}
+              disabled={selectedNotes.size === 0}
+              className="px-3 py-1.5 text-sm text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors"
+            >
+              タグ追加
             </button>
             <button
               onClick={() => setShowDeleteConfirm(true)}
@@ -422,6 +488,68 @@ export function NoteBrowser({
                 className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
               >
                 {isBulkDeleting ? '削除中...' : `${selectedNotes.size}件を削除`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Tag Modal */}
+      {showBulkTagModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">タグを追加</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              {selectedNotes.size}件のノートにタグを追加します。
+            </p>
+            <div className="mb-4">
+              <input
+                type="text"
+                value={bulkTagInput}
+                onChange={(e) => setBulkTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && bulkTagInput.trim()) {
+                    e.preventDefault()
+                    handleBulkTag([bulkTagInput.trim()])
+                  }
+                }}
+                placeholder="タグ名を入力..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                autoFocus
+              />
+              {localDeckTags.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {localDeckTags.map(tag => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => handleBulkTag([tag])}
+                      disabled={isBulkTagging}
+                      className="px-2 py-1 text-xs border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 text-gray-600 hover:text-blue-700 transition-colors disabled:opacity-50"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowBulkTagModal(false)
+                  setBulkTagInput('')
+                }}
+                disabled={isBulkTagging}
+                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={() => bulkTagInput.trim() && handleBulkTag([bulkTagInput.trim()])}
+                disabled={isBulkTagging || !bulkTagInput.trim()}
+                className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
+                {isBulkTagging ? '追加中...' : 'タグを追加'}
               </button>
             </div>
           </div>

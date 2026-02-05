@@ -29,6 +29,18 @@ export async function DELETE(
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
+    // Check for child decks
+    const { count: childCount } = await supabase
+      .from('decks')
+      .select('id', { count: 'exact', head: true })
+      .eq('parent_deck_id', deckId)
+
+    if (childCount && childCount > 0) {
+      return NextResponse.json({
+        error: `このデッキには${childCount}個のサブデッキがあります。先にサブデッキを削除してください。`,
+      }, { status: 400 })
+    }
+
     // Check for active assignments
     const { count: assignmentCount } = await supabase
       .from('deck_assignments')

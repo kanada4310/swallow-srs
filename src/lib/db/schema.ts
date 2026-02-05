@@ -136,6 +136,21 @@ class TsubameSRSDatabase extends Dexie {
       syncMetadata: 'key',
       audioCache: 'id, noteId, cachedAt',
     })
+
+    // Version 4: Add parent_deck_id index on decks, *tags MultiEntry index on notes
+    this.version(4).stores({
+      profiles: 'id',
+      noteTypes: 'id',
+      cardTemplates: 'id, note_type_id',
+      decks: 'id, owner_id, parent_deck_id',
+      notes: 'id, deck_id, *tags',
+      cards: 'id, note_id, deck_id',
+      cardStates: 'id, user_id, card_id, due, [user_id+card_id]',
+      reviewLogs: 'id, user_id, card_id, synced_at',
+      syncQueue: '++id, table, created_at, attempts',
+      syncMetadata: 'key',
+      audioCache: 'id, noteId, cachedAt',
+    })
   }
 }
 
@@ -548,8 +563,12 @@ export async function getStudyCardsOffline(
 ): Promise<OfflineCardData[]> {
   const now = new Date()
 
-  // Get all cards in the deck
-  const deckCards = await db.cards.where('deck_id').equals(deckId).toArray()
+  // Get all descendant deck IDs (for subdeck support)
+  const descendantIds = await getDescendantDeckIds(deckId)
+  const allDeckIds = [deckId, ...descendantIds]
+
+  // Get all cards in the deck and its subdecks
+  const deckCards = await db.cards.where('deck_id').anyOf(allDeckIds).toArray()
   if (deckCards.length === 0) return []
 
   // Get notes for these cards
@@ -670,6 +689,7 @@ export interface OfflineDeckWithStats {
   name: string
   owner_id: string
   is_distributed: boolean
+  parent_deck_id: string | null
   is_own: boolean
   total_cards: number
   new_count: number
@@ -732,6 +752,7 @@ export async function getDecksWithStatsOffline(
       name: deck.name,
       owner_id: deck.owner_id,
       is_distributed: deck.is_distributed,
+      parent_deck_id: deck.parent_deck_id || null,
       is_own: deck.owner_id === userId,
       total_cards: cardIds.length,
       new_count: newCount,
@@ -834,6 +855,32 @@ export async function deleteDeckLocally(deckId: string): Promise<void> {
       await db.decks.delete(deckId)
     }
   )
+}
+
+/**
+ * Get all descendant deck IDs from IndexedDB (recursive local search)
+ */
+export async function getDescendantDeckIds(deckId: string): Promise<string[]> {
+  const result: string[] = []
+  const queue = [deckId]
+
+  while (queue.length > 0) {
+    const currentId = queue.shift()!
+    const children = await db.decks.where('parent_deck_id').equals(currentId).toArray()
+    for (const child of children) {
+      result.push(child.id)
+      queue.push(child.id)
+    }
+  }
+
+  return result
+}
+
+/**
+ * Update a note's tags locally in IndexedDB
+ */
+export async function updateNoteTagsLocally(noteId: string, tags: string[]): Promise<void> {
+  await db.notes.update(noteId, { tags })
 }
 
 function calculateLocalStreak(reviewLogs: LocalReviewLog[]): number {

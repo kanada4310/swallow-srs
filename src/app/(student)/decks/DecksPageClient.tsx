@@ -11,11 +11,79 @@ interface DeckWithStats {
   name: string
   owner_id: string
   is_distributed: boolean
+  parent_deck_id: string | null
   is_own: boolean
   total_cards: number
   new_count: number
   learning_count: number
   review_count: number
+}
+
+interface DeckTreeNode extends DeckWithStats {
+  children: DeckTreeNode[]
+  depth: number
+  aggregated_total_cards: number
+  aggregated_new_count: number
+  aggregated_learning_count: number
+  aggregated_review_count: number
+}
+
+function buildDeckTree(decks: DeckWithStats[]): DeckTreeNode[] {
+  const deckMap = new Map<string, DeckTreeNode>()
+  const rootNodes: DeckTreeNode[] = []
+
+  // Create nodes
+  for (const deck of decks) {
+    deckMap.set(deck.id, {
+      ...deck,
+      children: [],
+      depth: 0,
+      aggregated_total_cards: deck.total_cards,
+      aggregated_new_count: deck.new_count,
+      aggregated_learning_count: deck.learning_count,
+      aggregated_review_count: deck.review_count,
+    })
+  }
+
+  // Build tree
+  for (const deck of decks) {
+    const node = deckMap.get(deck.id)!
+    if (deck.parent_deck_id && deckMap.has(deck.parent_deck_id)) {
+      const parent = deckMap.get(deck.parent_deck_id)!
+      parent.children.push(node)
+    } else {
+      rootNodes.push(node)
+    }
+  }
+
+  // Calculate depth and aggregate counts
+  function setDepthAndAggregate(node: DeckTreeNode, depth: number) {
+    node.depth = depth
+    for (const child of node.children) {
+      setDepthAndAggregate(child, depth + 1)
+      node.aggregated_total_cards += child.aggregated_total_cards
+      node.aggregated_new_count += child.aggregated_new_count
+      node.aggregated_learning_count += child.aggregated_learning_count
+      node.aggregated_review_count += child.aggregated_review_count
+    }
+  }
+
+  for (const root of rootNodes) {
+    setDepthAndAggregate(root, 0)
+  }
+
+  return rootNodes
+}
+
+function flattenTree(nodes: DeckTreeNode[]): DeckTreeNode[] {
+  const result: DeckTreeNode[] = []
+  for (const node of nodes) {
+    result.push(node)
+    if (node.children.length > 0) {
+      result.push(...flattenTree(node.children))
+    }
+  }
+  return result
 }
 
 interface DecksPageClientProps {
@@ -134,6 +202,10 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
   const ownDecks = decks.filter(d => d.is_own)
   const assignedDecks = decks.filter(d => !d.is_own)
 
+  // Build tree for own decks
+  const ownDeckTree = buildDeckTree(ownDecks)
+  const flatOwnDecks = flattenTree(ownDeckTree)
+
   return wrapInLayout(
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
@@ -158,14 +230,21 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
       )}
 
       {/* 自分のデッキ */}
-      {ownDecks.length > 0 && (
+      {flatOwnDecks.length > 0 && (
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-gray-700 mb-4">マイデッキ</h2>
           <div className="space-y-3">
-            {ownDecks.map((deck) => (
+            {flatOwnDecks.map((deck) => (
               <DeckCard
                 key={deck.id}
                 deck={deck}
+                depth={deck.depth}
+                aggregatedStats={deck.children.length > 0 ? {
+                  total_cards: deck.aggregated_total_cards,
+                  new_count: deck.aggregated_new_count,
+                  learning_count: deck.aggregated_learning_count,
+                  review_count: deck.aggregated_review_count,
+                } : undefined}
                 canDelete={userProfile?.role !== 'student'}
                 onDelete={() => setShowDeleteConfirm(deck.id)}
               />
@@ -249,16 +328,35 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
   )
 }
 
-function DeckCard({ deck, canDelete, onDelete }: { deck: DeckWithStats; canDelete?: boolean; onDelete?: () => void }) {
-  const hasDueCards = deck.review_count > 0 || deck.learning_count > 0 || deck.new_count > 0
+function DeckCard({ deck, depth = 0, aggregatedStats, canDelete, onDelete }: {
+  deck: DeckWithStats
+  depth?: number
+  aggregatedStats?: { total_cards: number; new_count: number; learning_count: number; review_count: number }
+  canDelete?: boolean
+  onDelete?: () => void
+}) {
+  const stats = aggregatedStats || deck
+  const hasDueCards = stats.review_count > 0 || stats.learning_count > 0 || stats.new_count > 0
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md hover:border-gray-300 transition-all">
+    <div
+      className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md hover:border-gray-300 transition-all"
+      style={depth > 0 ? { marginLeft: depth * 24 } : undefined}
+    >
       <div className="flex items-center justify-between">
         <Link href={`/decks/${deck.id}`} className="flex-1 min-w-0">
-          <h3 className="font-medium text-gray-900">{deck.name}</h3>
+          <div className="flex items-center gap-1.5">
+            {depth > 0 && (
+              <svg className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+              </svg>
+            )}
+            <h3 className="font-medium text-gray-900">{deck.name}</h3>
+          </div>
           <p className="text-sm text-gray-500 mt-1">
-            {deck.total_cards} 枚のカード
+            {aggregatedStats
+              ? `${deck.total_cards} 枚 (計 ${aggregatedStats.total_cards} 枚)`
+              : `${deck.total_cards} 枚のカード`}
             {!deck.is_own && <span className="ml-2 text-blue-600">（配布）</span>}
           </p>
         </Link>
@@ -266,22 +364,22 @@ function DeckCard({ deck, canDelete, onDelete }: { deck: DeckWithStats; canDelet
         <div className="flex items-center gap-3">
           {/* 学習状況バッジ */}
           <div className="flex items-center gap-2 text-sm">
-            {deck.new_count > 0 && (
+            {stats.new_count > 0 && (
               <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded font-medium">
-                新規 {deck.new_count}
+                新規 {stats.new_count}
               </span>
             )}
-            {deck.learning_count > 0 && (
+            {stats.learning_count > 0 && (
               <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded font-medium">
-                学習中 {deck.learning_count}
+                学習中 {stats.learning_count}
               </span>
             )}
-            {deck.review_count > 0 && (
+            {stats.review_count > 0 && (
               <span className="px-2 py-1 bg-green-100 text-green-700 rounded font-medium">
-                復習 {deck.review_count}
+                復習 {stats.review_count}
               </span>
             )}
-            {!hasDueCards && deck.total_cards > 0 && (
+            {!hasDueCards && stats.total_cards > 0 && (
               <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded">
                 完了
               </span>

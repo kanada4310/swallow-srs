@@ -110,6 +110,7 @@ export interface Note {
   field_values: Record<string, string>
   audio_urls: Record<string, string> | null
   generated_content: GeneratedContent | null
+  tags: string[]
   source_info: {
     book?: string
     unit?: number
@@ -161,6 +162,13 @@ export interface DeckWithStats extends Deck {
   owner?: {
     name: string
   }
+}
+
+// Deck tree types
+export interface DeckWithChildren extends DeckWithStats {
+  parent_deck_id: string | null
+  children: DeckWithChildren[]
+  depth: number
 }
 
 // Study session types

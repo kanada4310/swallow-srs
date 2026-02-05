@@ -8,12 +8,16 @@ import type { BrowsableNote } from './NoteCard'
 interface NoteEditModalProps {
   note: BrowsableNote
   noteType: NoteType
+  deckTags?: string[]
   onSave: (updatedNote: BrowsableNote) => void
   onClose: () => void
 }
 
-export function NoteEditModal({ note, noteType, onSave, onClose }: NoteEditModalProps) {
+export function NoteEditModal({ note, noteType, deckTags, onSave, onClose }: NoteEditModalProps) {
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({ ...note.field_values })
+  const [tags, setTags] = useState<string[]>(note.tags || [])
+  const [tagInput, setTagInput] = useState('')
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [clozeWarning, setClozeWarning] = useState<string | null>(null)
@@ -22,6 +26,35 @@ export function NoteEditModal({ note, noteType, onSave, onClose }: NoteEditModal
   const [generatingAll, setGeneratingAll] = useState(false)
   const [generatedRuleIds, setGeneratedRuleIds] = useState<Set<string>>(new Set())
   const [genError, setGenError] = useState<string | null>(null)
+
+  // Tag autocomplete suggestions
+  const tagSuggestions = (deckTags || []).filter(
+    t => !tags.includes(t) && t.toLowerCase().includes(tagInput.toLowerCase())
+  )
+
+  const handleAddTag = (tag: string) => {
+    const trimmed = tag.trim()
+    if (trimmed && !tags.includes(trimmed)) {
+      setTags(prev => [...prev, trimmed])
+    }
+    setTagInput('')
+    setShowTagSuggestions(false)
+  }
+
+  const handleRemoveTag = (tag: string) => {
+    setTags(prev => prev.filter(t => t !== tag))
+  }
+
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      if (tagInput.trim()) {
+        handleAddTag(tagInput)
+      }
+    } else if (e.key === 'Backspace' && !tagInput && tags.length > 0) {
+      setTags(prev => prev.slice(0, -1))
+    }
+  }
 
   const isCloze = note.note_type_id === CLOZE_NOTE_TYPE_ID
   const generationRules: GenerationRule[] = noteType.generation_rules || []
@@ -143,7 +176,7 @@ export function NoteEditModal({ note, noteType, onSave, onClose }: NoteEditModal
       const response = await fetch(`/api/notes/${note.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ field_values: fieldValues }),
+        body: JSON.stringify({ field_values: fieldValues, tags }),
       })
 
       const data = await response.json()
@@ -160,6 +193,7 @@ export function NoteEditModal({ note, noteType, onSave, onClose }: NoteEditModal
       onSave({
         ...note,
         field_values: fieldValues,
+        tags,
         cards: data.note?.cards || note.cards,
       })
     } catch (err) {
@@ -230,6 +264,60 @@ export function NoteEditModal({ note, noteType, onSave, onClose }: NoteEditModal
               </div>
             )
           })}
+
+          {/* Tags Section */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              タグ
+            </label>
+            <div className="flex flex-wrap gap-1.5 min-h-[36px] p-2 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
+              {tags.map(tag => (
+                <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-xs">
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTag(tag)}
+                    className="text-blue-400 hover:text-blue-700"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </span>
+              ))}
+              <div className="relative flex-1 min-w-[80px]">
+                <input
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => {
+                    setTagInput(e.target.value)
+                    setShowTagSuggestions(true)
+                  }}
+                  onKeyDown={handleTagKeyDown}
+                  onFocus={() => setShowTagSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowTagSuggestions(false), 200)}
+                  placeholder={tags.length === 0 ? 'タグを追加...' : ''}
+                  className="w-full outline-none text-sm py-0.5"
+                />
+                {showTagSuggestions && tagSuggestions.length > 0 && (
+                  <div className="absolute left-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-32 overflow-y-auto">
+                    {tagSuggestions.slice(0, 8).map(suggestion => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleAddTag(suggestion)}
+                        className="w-full text-left px-3 py-1.5 text-sm hover:bg-blue-50 text-gray-700"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            <p className="mt-1 text-xs text-gray-400">Enterで追加、Backspaceで削除</p>
+          </div>
 
           {/* AI Generation Section */}
           {generationRules.length > 0 && (

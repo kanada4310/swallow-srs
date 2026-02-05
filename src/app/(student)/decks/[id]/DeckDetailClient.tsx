@@ -40,10 +40,11 @@ interface DeckDetailClientProps {
   notes: BrowsableNote[]
   totalNoteCount: number
   noteTypes: NoteType[]
+  deckTags?: string[]
   canEdit: boolean
 }
 
-export function DeckDetailClient({ deckId, notes: initialNotes, totalNoteCount: initialTotal, noteTypes, canEdit }: DeckDetailClientProps) {
+export function DeckDetailClient({ deckId, notes: initialNotes, totalNoteCount: initialTotal, noteTypes, deckTags, canEdit }: DeckDetailClientProps) {
   const router = useRouter()
   const [notes, setNotes] = useState<BrowsableNote[]>(initialNotes)
   const [totalNoteCount, setTotalNoteCount] = useState(initialTotal)
@@ -61,22 +62,44 @@ export function DeckDetailClient({ deckId, notes: initialNotes, totalNoteCount: 
 
   const refreshNotes = useCallback(async () => {
     const supabase = createClient()
-    const { data, count } = await supabase
+    // Try with tags column first; fall back without if migration 008 hasn't been run
+    const withTags = await supabase
       .from('notes')
       .select(`
         id,
         field_values,
         note_type_id,
         generated_content,
+        tags,
         created_at,
         cards (id)
       `, { count: 'exact' })
       .eq('deck_id', deckId)
       .order('created_at', { ascending: false })
       .range(0, 49)
-    if (data) {
-      setNotes(data as BrowsableNote[])
-      setTotalNoteCount(count || 0)
+
+    if (withTags.error && withTags.error.message?.includes('tags')) {
+      const fallback = await supabase
+        .from('notes')
+        .select(`
+          id,
+          field_values,
+          note_type_id,
+          generated_content,
+          created_at,
+          cards (id)
+        `, { count: 'exact' })
+        .eq('deck_id', deckId)
+        .order('created_at', { ascending: false })
+        .range(0, 49)
+
+      if (fallback.data) {
+        setNotes(fallback.data as unknown as BrowsableNote[])
+        setTotalNoteCount(fallback.count || 0)
+      }
+    } else if (withTags.data) {
+      setNotes(withTags.data as BrowsableNote[])
+      setTotalNoteCount(withTags.count || 0)
     }
   }, [deckId])
 
@@ -283,6 +306,7 @@ export function DeckDetailClient({ deckId, notes: initialNotes, totalNoteCount: 
           initialNotes={notes}
           initialTotal={totalNoteCount}
           noteTypes={noteTypes}
+          deckTags={deckTags}
           canEdit={canEdit}
           onEditNote={(note) => setEditingNote(note)}
           onDeleteNote={handleDeleteNote}
@@ -296,6 +320,7 @@ export function DeckDetailClient({ deckId, notes: initialNotes, totalNoteCount: 
         <NoteEditModal
           note={editingNote}
           noteType={noteTypes.find(nt => nt.id === editingNote.note_type_id) || noteTypes[0]}
+          deckTags={deckTags}
           onSave={handleEditNoteSave}
           onClose={() => setEditingNote(null)}
         />

@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     if (error) return error
 
     const body = await request.json()
-    const { name, newCardsPerDay = 20 } = body
+    const { name, newCardsPerDay = 20, parentDeckId } = body
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json({ error: 'Deck name is required' }, { status: 400 })
@@ -19,6 +19,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid newCardsPerDay value' }, { status: 400 })
     }
 
+    // Validate parent deck if specified
+    if (parentDeckId) {
+      const { data: parentDeck } = await supabase
+        .from('decks')
+        .select('id, owner_id, parent_deck_id')
+        .eq('id', parentDeckId)
+        .single()
+
+      if (!parentDeck) {
+        return NextResponse.json({ error: '親デッキが見つかりません' }, { status: 404 })
+      }
+
+      if (parentDeck.owner_id !== user.id) {
+        return NextResponse.json({ error: '親デッキへのアクセス権がありません' }, { status: 403 })
+      }
+
+      // Check depth limit (max 3 levels)
+      let depth = 1
+      let currentParentId = parentDeck.parent_deck_id
+      while (currentParentId && depth < 4) {
+        const { data: ancestor } = await supabase
+          .from('decks')
+          .select('parent_deck_id')
+          .eq('id', currentParentId)
+          .single()
+        if (!ancestor) break
+        depth++
+        currentParentId = ancestor.parent_deck_id
+      }
+
+      if (depth >= 3) {
+        return NextResponse.json({ error: 'デッキの階層は最大3段までです' }, { status: 400 })
+      }
+    }
+
     // Create deck
     const { data: deck, error: createError } = await supabase
       .from('decks')
@@ -26,6 +61,7 @@ export async function POST(request: NextRequest) {
         name: name.trim(),
         owner_id: user.id,
         is_distributed: false,
+        parent_deck_id: parentDeckId || null,
         settings: { new_cards_per_day: newCardsPerDay },
       })
       .select()

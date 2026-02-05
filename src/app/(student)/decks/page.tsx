@@ -8,6 +8,7 @@ interface DeckWithStats {
   name: string
   owner_id: string
   is_distributed: boolean
+  parent_deck_id: string | null
   is_own: boolean
   total_cards: number
   new_count: number
@@ -22,11 +23,11 @@ async function getDecksWithStats(userId: string): Promise<DeckWithStats[]> {
   const [{ data: ownDecks }, { data: assignedDecks }] = await Promise.all([
     supabase
       .from('decks')
-      .select('id, name, owner_id, is_distributed')
+      .select('id, name, owner_id, is_distributed, parent_deck_id')
       .eq('owner_id', userId),
     supabase
       .from('decks')
-      .select('id, name, owner_id, is_distributed')
+      .select('id, name, owner_id, is_distributed, parent_deck_id')
       .neq('owner_id', userId),
   ])
 
@@ -84,6 +85,7 @@ async function getDecksWithStats(userId: string): Promise<DeckWithStats[]> {
 
     return {
       ...deck,
+      parent_deck_id: deck.parent_deck_id || null,
       total_cards: cardIds.length,
       new_count: newCount,
       learning_count: learningCount,

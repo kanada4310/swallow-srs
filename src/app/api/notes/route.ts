@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     if (authError) return authError
 
     const body = await request.json()
-    const { deckId, noteTypeId, fieldValues, sourceInfo } = body
+    const { deckId, noteTypeId, fieldValues, sourceInfo, tags } = body
 
     // Validate required fields
     if (!deckId || !noteTypeId || !fieldValues) {
@@ -55,17 +55,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No templates found for note type' }, { status: 500 })
     }
 
-    // Create note
-    const { data: note, error: noteError } = await supabase
+    // Create note (tags column may not exist if migration 008 hasn't been run)
+    const insertPayload: Record<string, unknown> = {
+      deck_id: deckId,
+      note_type_id: noteTypeId,
+      field_values: fieldValues,
+      source_info: sourceInfo || null,
+    }
+    if (Array.isArray(tags) && tags.length > 0) {
+      insertPayload.tags = tags
+    }
+
+    let { data: note, error: noteError } = await supabase
       .from('notes')
-      .insert({
-        deck_id: deckId,
-        note_type_id: noteTypeId,
-        field_values: fieldValues,
-        source_info: sourceInfo || null,
-      })
+      .insert(insertPayload)
       .select()
       .single()
+
+    // Fallback: if tags column doesn't exist, retry without it
+    if (noteError && noteError.code === 'PGRST204' && insertPayload.tags) {
+      delete insertPayload.tags
+      const retry = await supabase
+        .from('notes')
+        .insert(insertPayload)
+        .select()
+        .single()
+      note = retry.data
+      noteError = retry.error
+    }
 
     if (noteError) {
       console.error('Error creating note:', noteError)

@@ -29,7 +29,18 @@ async function getStudyCards(userId: string, deckId: string): Promise<CardData[]
   const supabase = await createClient()
   const now = new Date()
 
-  // Get all cards in the deck with their notes and note types
+  // Get all descendant deck IDs for subdeck support (may fail if migration 008 hasn't been run)
+  let allDeckIds = [deckId]
+  try {
+    const { data: descendantIds } = await supabase.rpc('get_descendant_deck_ids', { p_deck_id: deckId })
+    if (descendantIds && Array.isArray(descendantIds) && descendantIds.length > 0) {
+      allDeckIds = [deckId, ...descendantIds]
+    }
+  } catch {
+    // RPC doesn't exist yet - subdeck feature not available
+  }
+
+  // Get all cards in the deck and its subdecks with their notes and note types
   const { data: cards } = await supabase
     .from('cards')
     .select(`
@@ -44,7 +55,7 @@ async function getStudyCards(userId: string, deckId: string): Promise<CardData[]
         note_type_id
       )
     `)
-    .eq('deck_id', deckId)
+    .in('deck_id', allDeckIds)
 
   if (!cards || cards.length === 0) {
     return []
