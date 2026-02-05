@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { NoteEditor } from '@/components/deck/NoteEditor'
 import { CSVImporter } from '@/components/deck/CSVImporter'
 import { BulkExampleGenerator } from '@/components/ai/ExampleGenerator'
@@ -48,6 +49,7 @@ interface DeckDetailClientProps {
 }
 
 export function DeckDetailClient({ deckId, notes: initialNotes, noteTypes, canEdit }: DeckDetailClientProps) {
+  const router = useRouter()
   const [notes, setNotes] = useState<Note[]>(initialNotes)
   const [isAddingNote, setIsAddingNote] = useState(false)
   const [showDistributeModal, setShowDistributeModal] = useState(false)
@@ -55,6 +57,15 @@ export function DeckDetailClient({ deckId, notes: initialNotes, noteTypes, canEd
   const [showBulkGenerateModal, setShowBulkGenerateModal] = useState(false)
   const [showOCRModal, setShowOCRModal] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [selectedNotes, setSelectedNotes] = useState<Set<string>>(new Set())
+  const [isSelectMode, setIsSelectMode] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [showDeckDeleteConfirm, setShowDeckDeleteConfirm] = useState(false)
+  const [isDeletingDeck, setIsDeletingDeck] = useState(false)
+  const [deckDeleteError, setDeckDeleteError] = useState<string | null>(null)
 
   const refreshNotes = useCallback(async () => {
     const supabase = createClient()
@@ -91,6 +102,102 @@ export function DeckDetailClient({ deckId, notes: initialNotes, noteTypes, canEd
   const handleOCRComplete = () => {
     setShowOCRModal(false)
     refreshNotes()
+  }
+
+  const handleDeleteNote = async (noteId: string) => {
+    setDeletingNoteId(noteId)
+    setDeleteError(null)
+    try {
+      const response = await fetch(`/api/notes/${noteId}`, { method: 'DELETE' })
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || '削除に失敗しました')
+      }
+      // Optimistic update
+      setNotes(prev => prev.filter(n => n.id !== noteId))
+      // Clean up IndexedDB in background
+      import('@/lib/db/schema').then(({ deleteNoteLocally }) => {
+        deleteNoteLocally(noteId).catch(console.error)
+      })
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : '削除に失敗しました')
+    } finally {
+      setDeletingNoteId(null)
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    const noteIds = Array.from(selectedNotes)
+    if (noteIds.length === 0) return
+
+    setIsDeleting(true)
+    setDeleteError(null)
+    try {
+      const response = await fetch('/api/notes/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ noteIds, deckId }),
+      })
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || '削除に失敗しました')
+      }
+      // Optimistic update
+      const deletedSet = new Set(noteIds)
+      setNotes(prev => prev.filter(n => !deletedSet.has(n.id)))
+      setSelectedNotes(new Set())
+      setIsSelectMode(false)
+      setShowDeleteConfirm(false)
+      // Clean up IndexedDB in background
+      import('@/lib/db/schema').then(({ deleteNotesLocally }) => {
+        deleteNotesLocally(noteIds).catch(console.error)
+      })
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : '削除に失敗しました')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const toggleNoteSelection = (noteId: string) => {
+    setSelectedNotes(prev => {
+      const next = new Set(prev)
+      if (next.has(noteId)) {
+        next.delete(noteId)
+      } else {
+        next.add(noteId)
+      }
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedNotes.size === notes.length) {
+      setSelectedNotes(new Set())
+    } else {
+      setSelectedNotes(new Set(notes.map(n => n.id)))
+    }
+  }
+
+  const handleDeleteDeck = async () => {
+    setIsDeletingDeck(true)
+    setDeckDeleteError(null)
+    try {
+      const response = await fetch(`/api/decks/${deckId}`, { method: 'DELETE' })
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'デッキの削除に失敗しました')
+      }
+      // Clean up IndexedDB in background
+      import('@/lib/db/schema').then(({ deleteDeckLocally }) => {
+        deleteDeckLocally(deckId).catch(console.error)
+      })
+      // Navigate to deck list
+      router.push('/decks')
+    } catch (err) {
+      setDeckDeleteError(err instanceof Error ? err.message : 'デッキの削除に失敗しました')
+      setIsDeletingDeck(false)
+    }
   }
 
   const handleExport = async () => {
@@ -183,6 +290,19 @@ export function DeckDetailClient({ deckId, notes: initialNotes, noteTypes, canEd
             </svg>
             {isExporting ? 'エクスポート中...' : 'CSVエクスポート'}
           </button>
+          <button
+            onClick={() => {
+              setIsSelectMode(true)
+              setSelectedNotes(new Set())
+            }}
+            disabled={notes.length === 0}
+            className="flex-1 min-w-[140px] py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            選択して削除
+          </button>
         </div>
       )}
 
@@ -210,6 +330,53 @@ export function DeckDetailClient({ deckId, notes: initialNotes, noteTypes, canEd
               ノートを追加
             </button>
           )}
+        </div>
+      )}
+
+      {/* Delete Error */}
+      {deleteError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center justify-between">
+          <span>{deleteError}</span>
+          <button onClick={() => setDeleteError(null)} className="text-red-500 hover:text-red-700 ml-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* Select Mode Bulk Action Bar */}
+      {isSelectMode && (
+        <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleSelectAll}
+              className="text-sm text-blue-700 hover:text-blue-900 font-medium"
+            >
+              {selectedNotes.size === notes.length ? 'すべて解除' : 'すべて選択'}
+            </button>
+            <span className="text-sm text-blue-600">
+              {selectedNotes.size}件選択中
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setIsSelectMode(false)
+                setSelectedNotes(new Set())
+              }}
+              className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              キャンセル
+            </button>
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={selectedNotes.size === 0}
+              className="px-3 py-1.5 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            >
+              {selectedNotes.size}件を削除
+            </button>
+          </div>
         </div>
       )}
 
@@ -242,6 +409,12 @@ export function DeckDetailClient({ deckId, notes: initialNotes, noteTypes, canEd
                 key={note.id}
                 note={note}
                 noteTypeName={noteTypeNames[note.note_type_id] || 'Unknown'}
+                canEdit={canEdit}
+                isSelectMode={isSelectMode}
+                isSelected={selectedNotes.has(note.id)}
+                onToggleSelect={() => toggleNoteSelection(note.id)}
+                onDelete={() => handleDeleteNote(note.id)}
+                isDeleting={deletingNoteId === note.id}
               />
             ))}
           </div>
@@ -296,6 +469,42 @@ export function DeckDetailClient({ deckId, notes: initialNotes, noteTypes, canEd
         />
       )}
 
+      {/* Bulk Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">ノートを削除</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              {selectedNotes.size}件のノートを削除しますか？関連するカード・学習記録もすべて削除されます。この操作は元に戻せません。
+            </p>
+            {deleteError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {deleteError}
+              </div>
+            )}
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false)
+                  setDeleteError(null)
+                }}
+                disabled={isDeleting}
+                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                disabled={isDeleting}
+                className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+              >
+                {isDeleting ? '削除中...' : `${selectedNotes.size}件を削除`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* OCR Import Modal */}
       {showOCRModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -324,19 +533,99 @@ export function DeckDetailClient({ deckId, notes: initialNotes, noteTypes, canEd
           </div>
         </div>
       )}
+
+      {/* Deck Delete Section */}
+      {canEdit && (
+        <div className="mt-10 pt-6 border-t border-gray-200">
+          <button
+            onClick={() => setShowDeckDeleteConfirm(true)}
+            className="text-sm text-red-500 hover:text-red-700 transition-colors"
+          >
+            このデッキを削除
+          </button>
+        </div>
+      )}
+
+      {/* Deck Delete Confirmation Modal */}
+      {showDeckDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">デッキを削除</h3>
+            <p className="text-sm text-gray-600 mb-1">
+              このデッキを削除しますか？
+            </p>
+            <p className="text-sm text-red-600 mb-4">
+              デッキ内のすべてのノート・カード・学習記録が完全に削除されます。この操作は元に戻せません。
+            </p>
+            {deckDeleteError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {deckDeleteError}
+              </div>
+            )}
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowDeckDeleteConfirm(false)
+                  setDeckDeleteError(null)
+                }}
+                disabled={isDeletingDeck}
+                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleDeleteDeck}
+                disabled={isDeletingDeck}
+                className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+              >
+                {isDeletingDeck ? '削除中...' : 'デッキを削除'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-function NoteCard({ note, noteTypeName }: { note: Note; noteTypeName: string }) {
+interface NoteCardProps {
+  note: Note
+  noteTypeName: string
+  canEdit: boolean
+  isSelectMode: boolean
+  isSelected: boolean
+  onToggleSelect: () => void
+  onDelete: () => void
+  isDeleting: boolean
+}
+
+function NoteCard({ note, noteTypeName, canEdit, isSelectMode, isSelected, onToggleSelect, onDelete, isDeleting }: NoteCardProps) {
   // Get first two fields for display
   const fieldEntries = Object.entries(note.field_values).slice(0, 2)
   const cardCount = note.cards?.length || 0
   const hasGeneratedContent = note.generated_content && note.generated_content.examples?.length > 0
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+    <div
+      className={`bg-white rounded-lg shadow-sm border p-4 transition-colors ${
+        isSelectMode && isSelected
+          ? 'border-blue-400 bg-blue-50'
+          : 'border-gray-200'
+      } ${isSelectMode ? 'cursor-pointer' : ''}`}
+      onClick={isSelectMode ? onToggleSelect : undefined}
+    >
       <div className="flex items-start justify-between">
+        {isSelectMode && (
+          <div className="mr-3 flex-shrink-0 pt-0.5">
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={onToggleSelect}
+              onClick={e => e.stopPropagation()}
+              className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+            />
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           {fieldEntries.map(([key, value], idx) => (
             <div key={key} className={idx === 0 ? 'font-medium text-gray-900 truncate' : 'text-sm text-gray-500 truncate mt-1'}>
@@ -344,18 +633,41 @@ function NoteCard({ note, noteTypeName }: { note: Note; noteTypeName: string }) 
             </div>
           ))}
         </div>
-        <div className="ml-4 flex-shrink-0 text-right">
-          <span className="text-xs text-gray-400 block">{noteTypeName}</span>
-          <div className="flex items-center gap-2 mt-1">
-            {hasGeneratedContent && (
-              <span className="text-xs text-purple-600 flex items-center gap-0.5" title="例文生成済み">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </span>
-            )}
-            <span className="text-xs text-gray-500">{cardCount}枚</span>
+        <div className="ml-4 flex-shrink-0 text-right flex items-start gap-2">
+          <div>
+            <span className="text-xs text-gray-400 block">{noteTypeName}</span>
+            <div className="flex items-center gap-2 mt-1">
+              {hasGeneratedContent && (
+                <span className="text-xs text-purple-600 flex items-center gap-0.5" title="例文生成済み">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </span>
+              )}
+              <span className="text-xs text-gray-500">{cardCount}枚</span>
+            </div>
           </div>
+          {!isSelectMode && canEdit && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                if (confirm('このノートを削除しますか？関連するカード・学習記録も削除されます。')) {
+                  onDelete()
+                }
+              }}
+              disabled={isDeleting}
+              className="p-1 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
+              title="ノートを削除"
+            >
+              {isDeleting ? (
+                <div className="w-4 h-4 animate-spin rounded-full border-2 border-gray-300 border-t-red-600" />
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>

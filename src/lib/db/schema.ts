@@ -741,6 +741,94 @@ export async function getDecksWithStatsOffline(
   })
 }
 
+/**
+ * Delete a note and all related local data (cards, card_states, review_logs, audioCache)
+ */
+export async function deleteNoteLocally(noteId: string): Promise<void> {
+  await db.transaction(
+    'rw',
+    [db.notes, db.cards, db.cardStates, db.reviewLogs, db.audioCache],
+    async () => {
+      // Get cards for this note
+      const cards = await db.cards.where('note_id').equals(noteId).toArray()
+      const cardIds = cards.map(c => c.id)
+
+      if (cardIds.length > 0) {
+        // Delete card_states and review_logs for these cards
+        await db.cardStates.where('card_id').anyOf(cardIds).delete()
+        await db.reviewLogs.where('card_id').anyOf(cardIds).delete()
+        // Delete cards
+        await db.cards.where('note_id').equals(noteId).delete()
+      }
+
+      // Delete audio cache for this note
+      await db.audioCache.where('noteId').equals(noteId).delete()
+      // Delete the note itself
+      await db.notes.delete(noteId)
+    }
+  )
+}
+
+/**
+ * Delete multiple notes and all related local data
+ */
+export async function deleteNotesLocally(noteIds: string[]): Promise<void> {
+  if (noteIds.length === 0) return
+
+  await db.transaction(
+    'rw',
+    [db.notes, db.cards, db.cardStates, db.reviewLogs, db.audioCache],
+    async () => {
+      // Get all cards for these notes
+      const cards = await db.cards.where('note_id').anyOf(noteIds).toArray()
+      const cardIds = cards.map(c => c.id)
+
+      if (cardIds.length > 0) {
+        await db.cardStates.where('card_id').anyOf(cardIds).delete()
+        await db.reviewLogs.where('card_id').anyOf(cardIds).delete()
+        await db.cards.where('note_id').anyOf(noteIds).delete()
+      }
+
+      // Delete audio cache for these notes
+      await db.audioCache.where('noteId').anyOf(noteIds).delete()
+      // Delete the notes
+      await db.notes.bulkDelete(noteIds)
+    }
+  )
+}
+
+/**
+ * Delete a deck and all related local data (notes, cards, card_states, review_logs, audioCache)
+ */
+export async function deleteDeckLocally(deckId: string): Promise<void> {
+  await db.transaction(
+    'rw',
+    [db.decks, db.notes, db.cards, db.cardStates, db.reviewLogs, db.audioCache],
+    async () => {
+      // Get all notes in the deck
+      const notes = await db.notes.where('deck_id').equals(deckId).toArray()
+      const noteIds = notes.map(n => n.id)
+
+      // Get all cards in the deck
+      const cards = await db.cards.where('deck_id').equals(deckId).toArray()
+      const cardIds = cards.map(c => c.id)
+
+      if (cardIds.length > 0) {
+        await db.cardStates.where('card_id').anyOf(cardIds).delete()
+        await db.reviewLogs.where('card_id').anyOf(cardIds).delete()
+        await db.cards.where('deck_id').equals(deckId).delete()
+      }
+
+      if (noteIds.length > 0) {
+        await db.audioCache.where('noteId').anyOf(noteIds).delete()
+        await db.notes.where('deck_id').equals(deckId).delete()
+      }
+
+      await db.decks.delete(deckId)
+    }
+  )
+}
+
 function calculateLocalStreak(reviewLogs: LocalReviewLog[]): number {
   const reviewDates = new Set(
     reviewLogs.map((r) => {

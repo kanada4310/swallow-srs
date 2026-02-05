@@ -28,6 +28,9 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
   const [offlineDecks, setOfflineDecks] = useState<DeckWithStats[] | null>(null)
   const [offlineProfile, setOfflineProfile] = useState<{ id: string; name: string; role: string } | null>(null)
   const [isLoadingOffline, setIsLoadingOffline] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
+  const [isDeletingDeck, setIsDeletingDeck] = useState(false)
+  const [deckDeleteError, setDeckDeleteError] = useState<string | null>(null)
 
   const hasServerData = initialDecks !== undefined && userProfileProp !== undefined
 
@@ -71,7 +74,41 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
     loadOfflineData()
   }, [hasServerData, userProfileProp?.id])
 
-  const decks = hasServerData ? initialDecks : offlineDecks
+  const [localDecks, setLocalDecks] = useState<DeckWithStats[] | null>(null)
+  const sourceDecks = hasServerData ? initialDecks : offlineDecks
+  const decks = localDecks ?? sourceDecks
+
+  // Sync localDecks when source changes
+  useEffect(() => {
+    setLocalDecks(null)
+  }, [sourceDecks])
+
+  const handleDeleteDeck = async (deckId: string) => {
+    setIsDeletingDeck(true)
+    setDeckDeleteError(null)
+    try {
+      const response = await fetch(`/api/decks/${deckId}`, { method: 'DELETE' })
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'デッキの削除に失敗しました')
+      }
+      // Optimistic update
+      setLocalDecks(prev => (prev ?? sourceDecks ?? []).filter(d => d.id !== deckId))
+      setShowDeleteConfirm(null)
+      // Clean up IndexedDB in background
+      import('@/lib/db/schema').then(({ deleteDeckLocally }) => {
+        deleteDeckLocally(deckId).catch(console.error)
+      })
+    } catch (err) {
+      setDeckDeleteError(err instanceof Error ? err.message : 'デッキの削除に失敗しました')
+    } finally {
+      setIsDeletingDeck(false)
+    }
+  }
+
+  const deletingDeckName = showDeleteConfirm
+    ? decks?.find(d => d.id === showDeleteConfirm)?.name || ''
+    : ''
 
   // Wrap in AppLayout when in standalone mode (no server-side layout)
   const needsLayout = !userProfileProp
@@ -126,7 +163,12 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
           <h2 className="text-lg font-semibold text-gray-700 mb-4">マイデッキ</h2>
           <div className="space-y-3">
             {ownDecks.map((deck) => (
-              <DeckCard key={deck.id} deck={deck} />
+              <DeckCard
+                key={deck.id}
+                deck={deck}
+                canDelete={userProfile?.role !== 'student'}
+                onDelete={() => setShowDeleteConfirm(deck.id)}
+              />
             ))}
           </div>
         </section>
@@ -164,26 +206,62 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
           </p>
         </div>
       )}
+
+      {/* Deck Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">デッキを削除</h3>
+            <p className="text-sm text-gray-600 mb-1">
+              「{deletingDeckName}」を削除しますか？
+            </p>
+            <p className="text-sm text-red-600 mb-4">
+              デッキ内のすべてのノート・カード・学習記録が完全に削除されます。この操作は元に戻せません。
+            </p>
+            {deckDeleteError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {deckDeleteError}
+              </div>
+            )}
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(null)
+                  setDeckDeleteError(null)
+                }}
+                disabled={isDeletingDeck}
+                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={() => handleDeleteDeck(showDeleteConfirm)}
+                disabled={isDeletingDeck}
+                className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+              >
+                {isDeletingDeck ? '削除中...' : 'デッキを削除'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-function DeckCard({ deck }: { deck: DeckWithStats }) {
+function DeckCard({ deck, canDelete, onDelete }: { deck: DeckWithStats; canDelete?: boolean; onDelete?: () => void }) {
   const hasDueCards = deck.review_count > 0 || deck.learning_count > 0 || deck.new_count > 0
 
   return (
-    <Link
-      href={`/decks/${deck.id}`}
-      className="block bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md hover:border-gray-300 transition-all"
-    >
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md hover:border-gray-300 transition-all">
       <div className="flex items-center justify-between">
-        <div className="flex-1">
+        <Link href={`/decks/${deck.id}`} className="flex-1 min-w-0">
           <h3 className="font-medium text-gray-900">{deck.name}</h3>
           <p className="text-sm text-gray-500 mt-1">
             {deck.total_cards} 枚のカード
             {!deck.is_own && <span className="ml-2 text-blue-600">（配布）</span>}
           </p>
-        </div>
+        </Link>
 
         <div className="flex items-center gap-3">
           {/* 学習状況バッジ */}
@@ -210,12 +288,27 @@ function DeckCard({ deck }: { deck: DeckWithStats }) {
             )}
           </div>
 
-          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
+          {canDelete && onDelete ? (
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                onDelete()
+              }}
+              className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
+              title="デッキを削除"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          ) : (
+            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          )}
         </div>
       </div>
-    </Link>
+    </div>
   )
 }
 
