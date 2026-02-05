@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/api/auth'
 import Anthropic from '@anthropic-ai/sdk'
 import { MAX_IMAGE_SIZE, SUPPORTED_IMAGE_TYPES } from '@/lib/constants'
+import type { FieldDefinition } from '@/types/database'
 
 // Lazy initialization of Anthropic client
 let anthropicClient: Anthropic | null = null
@@ -16,16 +17,25 @@ function getAnthropic(): Anthropic {
   return anthropicClient
 }
 
-// OCR extraction entry type
-interface OCREntry {
+// Field-based OCR entry
+interface OCREntryFields {
+  fields: Record<string, string>
+  confidence: 'high' | 'medium' | 'low'
+}
+
+// Legacy OCR entry (for backward compatibility)
+interface OCREntryLegacy {
   word: string
   meaning: string
   extra?: string
   confidence: 'high' | 'medium' | 'low'
 }
 
-// System prompt for OCR
-const OCR_SYSTEM_PROMPT = `あなたは日本の学習者向け英単語帳のOCRアシスタントです。
+// Build system prompt dynamically based on fields
+function buildSystemPrompt(fields?: FieldDefinition[]): string {
+  if (!fields || fields.length === 0) {
+    // Legacy prompt for Basic note type
+    return `あなたは日本の学習者向け英単語帳のOCRアシスタントです。
 
 タスク:
 1. 画像内のすべての単語/意味のペアを特定
@@ -47,16 +57,55 @@ JSON形式:
   ],
   "warnings": ["検出された問題（あれば）"]
 }`
-
-// Build user prompt based on format hint
-function buildUserPrompt(formatHint?: string): string {
-  let prompt = `この画像から英単語と意味のペアを抽出してください。`
-
-  if (formatHint) {
-    prompt += `\n\nフォーマットヒント: この画像は「${formatHint}」の形式に似ています。`
   }
 
-  prompt += `
+  // Dynamic prompt based on field definitions
+  const sortedFields = [...fields].sort((a, b) => a.ord - b.ord)
+  const fieldList = sortedFields.map(f => `- ${f.name}`).join('\n')
+  const exampleFields: Record<string, string> = {}
+  for (const f of sortedFields) {
+    exampleFields[f.name] = `(${f.name}の値)`
+  }
+
+  return `あなたは日本の学習者向け単語帳・教材のOCRアシスタントです。
+
+タスク:
+1. 画像内のすべてのエントリを特定
+2. 各エントリのデータを、指定されたフィールドに分けて抽出
+3. 各抽出の信頼度を評価
+
+フィールド構成:
+${fieldList}
+
+ガイドライン:
+- エントリは番号付きリスト、表形式、箇条書き等の形式が多い
+- ヘッダー、ページ番号、装飾要素はスキップ
+- 画像がぼやけている、または読みにくい部分があれば、confidenceをlow/mediumに設定
+- 該当する情報がないフィールドは空文字""にする
+- フィールド名から抽出すべき内容を推測する
+- JSONのみを返す（マークダウンや余分なテキストなし）
+
+JSON形式:
+{
+  "entries": [
+    {"fields": ${JSON.stringify(exampleFields)}, "confidence": "high"},
+    ...
+  ],
+  "warnings": ["検出された問題（あれば）"]
+}`
+}
+
+// Build user prompt based on format hint and fields
+function buildUserPrompt(formatHint?: string, fields?: FieldDefinition[]): string {
+  if (!fields || fields.length === 0) {
+    // Legacy prompt
+    let prompt = `この画像から英単語と意味のペアを抽出してください。`
+
+    if (formatHint) {
+      prompt += `\n\nフォーマットヒント: この画像は「${formatHint}」の形式に似ています。`
+    }
+
+    prompt += `
 
 以下のJSON形式で返してください（マークダウンやコードブロックなし）:
 {
@@ -72,23 +121,94 @@ function buildUserPrompt(formatHint?: string): string {
 - 読み取れない部分はスキップしてwarningsに記載
 - 各エントリのconfidenceを適切に設定`
 
+    return prompt
+  }
+
+  // Dynamic prompt with fields
+  const sortedFields = [...fields].sort((a, b) => a.ord - b.ord)
+  const fieldNames = sortedFields.map(f => f.name)
+  const exampleFields: Record<string, string> = {}
+  for (const f of sortedFields) {
+    exampleFields[f.name] = `(${f.name}の値)`
+  }
+
+  let prompt = `この画像からデータを抽出してください。各エントリは以下のフィールドを持ちます: ${fieldNames.join('、')}`
+
+  if (formatHint) {
+    prompt += `\n\nフォーマットヒント: この画像は「${formatHint}」の形式に似ています。`
+  }
+
+  prompt += `
+
+以下のJSON形式で返してください（マークダウンやコードブロックなし）:
+{
+  "entries": [
+    {"fields": ${JSON.stringify(exampleFields)}, "confidence": "high/medium/low"}
+  ],
+  "warnings": ["問題があれば記載"]
+}
+
+注意:
+- すべてのエントリを抽出
+- 番号、ページ番号、ヘッダーは除外
+- 読み取れない部分はスキップしてwarningsに記載
+- 該当する情報がないフィールドは空文字""にする
+- 各エントリのconfidenceを適切に設定`
+
   return prompt
 }
 
-// Parse JSON response from Claude
-function parseOCRResponse(response: string): { entries: OCREntry[], warnings?: string[] } | null {
+// Parse JSON response for field-based format
+function parseOCRResponseFields(response: string, fields: FieldDefinition[]): { entries: OCREntryFields[], warnings?: string[] } | null {
   try {
-    // Try to extract JSON from the response (in case there's extra text)
     const jsonMatch = response.match(/\{[\s\S]*\}/)
     if (!jsonMatch) return null
 
     const parsed = JSON.parse(jsonMatch[0])
-
-    // Validate structure
     if (!parsed.entries || !Array.isArray(parsed.entries)) return null
 
-    // Validate and clean entries
-    const entries: OCREntry[] = parsed.entries
+    const firstFieldName = [...fields].sort((a, b) => a.ord - b.ord)[0]?.name
+
+    const entries: OCREntryFields[] = parsed.entries
+      .filter((e: { fields?: Record<string, string> }) => {
+        if (!e || !e.fields || typeof e.fields !== 'object') return false
+        // Require first field (ord=0) to be non-empty
+        if (firstFieldName && (!e.fields[firstFieldName] || e.fields[firstFieldName].trim() === '')) return false
+        return true
+      })
+      .map((e: { fields: Record<string, string>; confidence?: string }) => {
+        const cleanedFields: Record<string, string> = {}
+        for (const f of fields) {
+          cleanedFields[f.name] = (e.fields[f.name] || '').trim()
+        }
+        return {
+          fields: cleanedFields,
+          confidence: (['high', 'medium', 'low'].includes(e.confidence || '')
+            ? e.confidence
+            : 'medium') as 'high' | 'medium' | 'low',
+        }
+      })
+
+    const result: { entries: OCREntryFields[], warnings?: string[] } = { entries }
+    if (parsed.warnings && Array.isArray(parsed.warnings)) {
+      result.warnings = parsed.warnings.filter((w: unknown) => typeof w === 'string')
+    }
+    return result
+  } catch {
+    return null
+  }
+}
+
+// Parse JSON response for legacy format (word/meaning/extra)
+function parseOCRResponseLegacy(response: string): { entries: OCREntryLegacy[], warnings?: string[] } | null {
+  try {
+    const jsonMatch = response.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) return null
+
+    const parsed = JSON.parse(jsonMatch[0])
+    if (!parsed.entries || !Array.isArray(parsed.entries)) return null
+
+    const entries: OCREntryLegacy[] = parsed.entries
       .filter((e: { word?: string; meaning?: string }) =>
         e && typeof e.word === 'string' && typeof e.meaning === 'string' &&
         e.word.trim() !== '' && e.meaning.trim() !== ''
@@ -102,12 +222,10 @@ function parseOCRResponse(response: string): { entries: OCREntry[], warnings?: s
           : 'medium') as 'high' | 'medium' | 'low',
       }))
 
-    const result: { entries: OCREntry[], warnings?: string[] } = { entries }
-
+    const result: { entries: OCREntryLegacy[], warnings?: string[] } = { entries }
     if (parsed.warnings && Array.isArray(parsed.warnings)) {
       result.warnings = parsed.warnings.filter((w: unknown) => typeof w === 'string')
     }
-
     return result
   } catch {
     return null
@@ -130,7 +248,13 @@ export async function POST(request: NextRequest) {
     if (authError) return authError
 
     const body = await request.json()
-    const { image, imageType, deckId, formatHint } = body
+    const { image, imageType, deckId, formatHint, fields } = body as {
+      image: string
+      imageType: string
+      deckId: string
+      formatHint?: string
+      fields?: FieldDefinition[]
+    }
 
     // Validate required fields
     if (!image || !imageType || !deckId) {
@@ -211,9 +335,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
+    const useFieldMode = fields && fields.length > 0
+
     // Call Claude Vision API
     const anthropic = getAnthropic()
-    const userPrompt = buildUserPrompt(formatHint)
+    const systemPrompt = buildSystemPrompt(useFieldMode ? fields : undefined)
+    const userPrompt = buildUserPrompt(formatHint, useFieldMode ? fields : undefined)
 
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
@@ -237,7 +364,7 @@ export async function POST(request: NextRequest) {
           ],
         },
       ],
-      system: OCR_SYSTEM_PROMPT,
+      system: systemPrompt,
     })
 
     // Extract text content
@@ -249,30 +376,59 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Parse response
-    const ocrResult = parseOCRResponse(textContent.text)
-    if (!ocrResult) {
-      console.error('Failed to parse Claude OCR response:', textContent.text)
-      return NextResponse.json(
-        { error: 'Failed to parse OCR results' },
-        { status: 500 }
-      )
-    }
+    // Parse response based on mode
+    if (useFieldMode) {
+      const ocrResult = parseOCRResponseFields(textContent.text, fields!)
+      if (!ocrResult) {
+        console.error('Failed to parse Claude OCR response:', textContent.text)
+        return NextResponse.json(
+          { error: 'Failed to parse OCR results' },
+          { status: 500 }
+        )
+      }
 
-    // Check if any entries were found
-    if (ocrResult.entries.length === 0) {
+      if (ocrResult.entries.length === 0) {
+        return NextResponse.json({
+          success: true,
+          entries: [],
+          warnings: ['画像からテキストを検出できませんでした。別の画像をお試しください。'],
+          mode: 'fields',
+        })
+      }
+
       return NextResponse.json({
         success: true,
-        entries: [],
-        warnings: ['画像からテキストを検出できませんでした。別の画像をお試しください。'],
+        entries: ocrResult.entries,
+        warnings: ocrResult.warnings,
+        mode: 'fields',
+      })
+    } else {
+      // Legacy mode
+      const ocrResult = parseOCRResponseLegacy(textContent.text)
+      if (!ocrResult) {
+        console.error('Failed to parse Claude OCR response:', textContent.text)
+        return NextResponse.json(
+          { error: 'Failed to parse OCR results' },
+          { status: 500 }
+        )
+      }
+
+      if (ocrResult.entries.length === 0) {
+        return NextResponse.json({
+          success: true,
+          entries: [],
+          warnings: ['画像からテキストを検出できませんでした。別の画像をお試しください。'],
+          mode: 'legacy',
+        })
+      }
+
+      return NextResponse.json({
+        success: true,
+        entries: ocrResult.entries,
+        warnings: ocrResult.warnings,
+        mode: 'legacy',
       })
     }
-
-    return NextResponse.json({
-      success: true,
-      entries: ocrResult.entries,
-      warnings: ocrResult.warnings,
-    })
   } catch (error) {
     console.error('Error in OCR API:', error)
     return NextResponse.json(

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useMemo } from 'react'
 import { BASIC_NOTE_TYPE_ID, SUPPORTED_IMAGE_TYPES, MAX_IMAGE_SIZE } from '@/lib/constants'
+import type { NoteType } from '@/types/database'
 
 // Format hints for common vocabulary books
 const FORMAT_HINTS = [
@@ -13,17 +14,15 @@ const FORMAT_HINTS = [
   { value: 'その他の単語帳', label: 'その他の単語帳' },
 ]
 
-
 interface OCREntry {
-  word: string
-  meaning: string
-  extra?: string
+  fields: Record<string, string>
   confidence: 'high' | 'medium' | 'low'
   selected: boolean
 }
 
 interface OCRImporterProps {
   deckId: string
+  noteTypes: NoteType[]
   onImportComplete: () => void
   onCancel: () => void
 }
@@ -40,10 +39,12 @@ type ImportStep = 'upload' | 'processing' | 'review' | 'importing' | 'result'
 
 export function OCRImporter({
   deckId,
+  noteTypes,
   onImportComplete,
   onCancel,
 }: OCRImporterProps) {
   const [step, setStep] = useState<ImportStep>('upload')
+  const [selectedNoteTypeId, setSelectedNoteTypeId] = useState(BASIC_NOTE_TYPE_ID)
   const [formatHint, setFormatHint] = useState('')
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [entries, setEntries] = useState<OCREntry[]>([])
@@ -52,6 +53,15 @@ export function OCRImporter({
   const [error, setError] = useState<string | null>(null)
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const selectedNoteType = noteTypes.find(nt => nt.id === selectedNoteTypeId) || noteTypes[0]
+  const sortedFields = useMemo(
+    () => selectedNoteType
+      ? [...selectedNoteType.fields].sort((a, b) => a.ord - b.ord)
+      : [],
+    [selectedNoteType]
+  )
+  const firstFieldName = sortedFields[0]?.name
 
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -92,6 +102,7 @@ export function OCRImporter({
             imageType: file.type,
             deckId,
             formatHint: formatHint || undefined,
+            fields: sortedFields,
           }),
         })
 
@@ -108,11 +119,32 @@ export function OCRImporter({
           return
         }
 
-        // Add selected flag to entries
-        const entriesWithSelection = result.entries.map((entry: Omit<OCREntry, 'selected'>) => ({
-          ...entry,
-          selected: true,
-        }))
+        // Convert entries to field-based format with selection
+        let entriesWithSelection: OCREntry[]
+
+        if (result.mode === 'fields') {
+          entriesWithSelection = result.entries.map((entry: { fields: Record<string, string>; confidence: string }) => ({
+            fields: entry.fields,
+            confidence: entry.confidence,
+            selected: true,
+          }))
+        } else {
+          // Legacy mode: convert word/meaning/extra to field-based
+          entriesWithSelection = result.entries.map((entry: { word: string; meaning: string; extra?: string; confidence: string }) => {
+            const fields: Record<string, string> = {}
+            if (sortedFields[0]) fields[sortedFields[0].name] = entry.word
+            if (sortedFields[1]) fields[sortedFields[1].name] = entry.meaning + (entry.extra ? ` (${entry.extra})` : '')
+            // Fill remaining fields with empty strings
+            for (const f of sortedFields.slice(2)) {
+              fields[f.name] = ''
+            }
+            return {
+              fields,
+              confidence: entry.confidence as 'high' | 'medium' | 'low',
+              selected: true,
+            }
+          })
+        }
 
         setEntries(entriesWithSelection)
         setWarnings(result.warnings || [])
@@ -125,7 +157,7 @@ export function OCRImporter({
     }
 
     reader.readAsDataURL(file)
-  }, [deckId, formatHint])
+  }, [deckId, formatHint, sortedFields])
 
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -159,9 +191,9 @@ export function OCRImporter({
     setEntries(prev => prev.map(entry => ({ ...entry, selected })))
   }
 
-  const updateEntry = (index: number, field: 'word' | 'meaning' | 'extra', value: string) => {
+  const updateEntryField = (index: number, fieldName: string, value: string) => {
     setEntries(prev => prev.map((entry, i) =>
-      i === index ? { ...entry, [field]: value } : entry
+      i === index ? { ...entry, fields: { ...entry.fields, [fieldName]: value } } : entry
     ))
   }
 
@@ -170,10 +202,12 @@ export function OCRImporter({
   }
 
   const addEntry = () => {
+    const emptyFields: Record<string, string> = {}
+    for (const f of sortedFields) {
+      emptyFields[f.name] = ''
+    }
     setEntries(prev => [...prev, {
-      word: '',
-      meaning: '',
-      extra: undefined,
+      fields: emptyFields,
       confidence: 'high' as const,
       selected: true,
     }])
@@ -183,10 +217,13 @@ export function OCRImporter({
   const selectedCount = entries.filter(e => e.selected).length
 
   const handleImport = async () => {
-    const selectedEntries = entries.filter(e => e.selected && e.word && e.meaning)
+    // Filter: selected AND first field non-empty
+    const selectedEntries = entries.filter(e =>
+      e.selected && firstFieldName && e.fields[firstFieldName]?.trim()
+    )
 
     if (selectedEntries.length === 0) {
-      setError('インポートする項目を選択してください')
+      setError('インポートする項目を選択してください（第1フィールドは必須です）')
       return
     }
 
@@ -194,12 +231,8 @@ export function OCRImporter({
     setStep('importing')
 
     try {
-      // Convert OCR entries to notes format
       const notes = selectedEntries.map(entry => ({
-        fieldValues: {
-          Front: entry.word,
-          Back: entry.meaning + (entry.extra ? ` (${entry.extra})` : ''),
-        },
+        fieldValues: entry.fields,
       }))
 
       const response = await fetch('/api/notes/import', {
@@ -207,7 +240,7 @@ export function OCRImporter({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           deckId,
-          noteTypeId: BASIC_NOTE_TYPE_ID,
+          noteTypeId: selectedNoteTypeId,
           notes,
         }),
       })
@@ -260,6 +293,27 @@ export function OCRImporter({
       {/* Step: Upload */}
       {step === 'upload' && (
         <>
+          {/* Note Type Selector */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              ノートタイプ
+            </label>
+            <select
+              value={selectedNoteTypeId}
+              onChange={e => setSelectedNoteTypeId(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            >
+              {noteTypes.map(nt => (
+                <option key={nt.id} value={nt.id}>
+                  {nt.name} ({nt.fields.length}フィールド)
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              フィールド: {sortedFields.map(f => f.name).join('、')}
+            </p>
+          </div>
+
           {/* Format Hint Selector */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -374,10 +428,10 @@ export function OCRImporter({
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600 font-medium">画像を解析中...</p>
           <p className="text-sm text-gray-400 mt-2">
-            単語と意味を抽出しています
+            {selectedNoteType?.name || 'Basic'}のフィールドに合わせて抽出しています
           </p>
           {imagePreview && (
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={imagePreview}
               alt="解析中"
@@ -393,6 +447,7 @@ export function OCRImporter({
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-600">
               {entries.length}件のデータを検出しました（{selectedCount}件選択中）
+              <span className="text-xs text-gray-400 ml-2">ノートタイプ: {selectedNoteType?.name}</span>
             </div>
             <div className="flex gap-2">
               <button
@@ -432,12 +487,11 @@ export function OCRImporter({
                   <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 w-10">
                     <span className="sr-only">選択</span>
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                    単語
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                    意味
-                  </th>
+                  {sortedFields.map(field => (
+                    <th key={field.name} className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                      {field.name}
+                    </th>
+                  ))}
                   <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 w-16">
                     確度
                   </th>
@@ -460,44 +514,26 @@ export function OCRImporter({
                         className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                       />
                     </td>
-                    <td className="px-3 py-2">
-                      {editingIndex === index ? (
-                        <input
-                          type="text"
-                          value={entry.word}
-                          onChange={e => updateEntry(index, 'word', e.target.value)}
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                          autoFocus
-                        />
-                      ) : (
-                        <span
-                          className="text-sm cursor-pointer hover:bg-gray-100 px-1 rounded"
-                          onClick={() => setEditingIndex(index)}
-                        >
-                          {entry.word || <span className="text-gray-400">（空）</span>}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2">
-                      {editingIndex === index ? (
-                        <input
-                          type="text"
-                          value={entry.meaning}
-                          onChange={e => updateEntry(index, 'meaning', e.target.value)}
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                      ) : (
-                        <span
-                          className="text-sm cursor-pointer hover:bg-gray-100 px-1 rounded"
-                          onClick={() => setEditingIndex(index)}
-                        >
-                          {entry.meaning || <span className="text-gray-400">（空）</span>}
-                          {entry.extra && (
-                            <span className="text-gray-500 text-xs ml-1">({entry.extra})</span>
-                          )}
-                        </span>
-                      )}
-                    </td>
+                    {sortedFields.map(field => (
+                      <td key={field.name} className="px-3 py-2">
+                        {editingIndex === index ? (
+                          <input
+                            type="text"
+                            value={entry.fields[field.name] || ''}
+                            onChange={e => updateEntryField(index, field.name, e.target.value)}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            autoFocus={field.ord === 0}
+                          />
+                        ) : (
+                          <span
+                            className="text-sm cursor-pointer hover:bg-gray-100 px-1 rounded"
+                            onClick={() => setEditingIndex(index)}
+                          >
+                            {entry.fields[field.name] || <span className="text-gray-400">（空）</span>}
+                          </span>
+                        )}
+                      </td>
+                    ))}
                     <td className="px-2 py-2 text-center">
                       <span className={`text-xs px-1.5 py-0.5 rounded ${getConfidenceColor(entry.confidence)}`}>
                         {entry.confidence === 'high' ? '高' : entry.confidence === 'medium' ? '中' : '低'}

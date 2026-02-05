@@ -26,7 +26,25 @@
       "Bash(timeout:*)",
       "Bash(xargs:*)",
       "Bash(node scripts/generate-icons.mjs:*)",
-      "Bash(npm test)"
+      "Bash(npm test)",
+      "Bash(taskkill:*)",
+      "Bash(npx vitest:*)",
+      "Bash(cmd.exe /c \"taskkill /PID 23228 /F\")",
+      "Bash(cmd.exe /c \"taskkill /PID 23228 /T /F\")",
+      "Bash(cmd.exe /c \"taskkill /IM node.exe /F\")",
+      "Bash(cmd.exe /c \"tasklist /FI \"\"PID eq 23228\"\"\")",
+      "Bash(wmic process where \"ProcessId=23228\" get Name,ProcessId,CommandLine:*)",
+      "Bash(cmd.exe /c \"wmic process where ProcessId=23228 get Name,ProcessId\")",
+      "Bash(wmic process where \"ProcessId=23228\" call terminate)",
+      "Bash(wmic process where \"ProcessId=22036\" call terminate)",
+      "Bash(powershell -Command:*)",
+      "Bash(node -e:*)",
+      "Bash(npx next start)",
+      "Bash(ping:*)",
+      "Bash(npx next start -p 3002)",
+      "Bash(dir:*)",
+      "Bash(npx next start -p 3003)",
+      "Bash(npx kill-port:*)"
     ]
   }
 }

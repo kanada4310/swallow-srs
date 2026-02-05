@@ -315,6 +315,7 @@ export function DeckDetailClient({ deckId, notes: initialNotes, noteTypes, canEd
             <div className="flex-1 overflow-y-auto p-6">
               <OCRImporter
                 deckId={deckId}
+                noteTypes={noteTypes}
                 onImportComplete={handleOCRComplete}
                 onCancel={() => setShowOCRModal(false)}
               />
