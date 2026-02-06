@@ -2,20 +2,24 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { NoteCard } from './NoteCard'
+import { DeckSelectorModal } from './DeckSelectorModal'
 import type { BrowsableNote } from './NoteCard'
 import type { NoteType } from '@/types/database'
 
 interface NoteBrowserProps {
-  deckId: string
+  deckId?: string
   allDeckIds?: string[]
   initialNotes: BrowsableNote[]
   initialTotal: number
   noteTypes: NoteType[]
   deckTags?: string[]
+  deckNameMap?: Map<string, string>
   canEdit: boolean
   onEditNote: (note: BrowsableNote) => void
   onDeleteNote: (noteId: string) => Promise<void>
   onBulkDelete: (noteIds: string[]) => Promise<void>
+  onCopyNotes?: (noteIds: string[], targetDeckId: string) => Promise<void>
+  onMoveNotes?: (noteIds: string[], targetDeckId: string) => Promise<void>
   deletingNoteId: string | null
 }
 
@@ -28,10 +32,13 @@ export function NoteBrowser({
   initialTotal,
   noteTypes,
   deckTags,
+  deckNameMap,
   canEdit,
   onEditNote,
   onDeleteNote,
   onBulkDelete,
+  onCopyNotes,
+  onMoveNotes,
   deletingNoteId,
 }: NoteBrowserProps) {
   const [notes, setNotes] = useState<BrowsableNote[]>(initialNotes)
@@ -52,6 +59,8 @@ export function NoteBrowser({
   const [bulkTagInput, setBulkTagInput] = useState('')
   const [isBulkTagging, setIsBulkTagging] = useState(false)
   const [localDeckTags, setLocalDeckTags] = useState<string[]>(deckTags || [])
+  const [showCopyModal, setShowCopyModal] = useState(false)
+  const [showMoveModal, setShowMoveModal] = useState(false)
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isSearchActive = searchQuery.trim() !== '' || filterNoteTypeId !== '' || filterTag !== '' || sortOrder !== 'desc'
@@ -68,7 +77,6 @@ export function NoteBrowser({
 
   const fetchNotes = useCallback(async (query: string, noteTypeId: string, order: string, offset: number, tag?: string) => {
     const params = new URLSearchParams({
-      deckId,
       q: query,
       noteTypeId,
       sort: 'created_at',
@@ -76,6 +84,9 @@ export function NoteBrowser({
       offset: String(offset),
       limit: String(PAGE_SIZE),
     })
+    if (deckId) {
+      params.set('deckId', deckId)
+    }
     if (tag) {
       params.set('tag', tag)
     }
@@ -207,10 +218,12 @@ export function NoteBrowser({
 
     setIsBulkTagging(true)
     try {
+      const body: Record<string, unknown> = { noteIds, addTags }
+      if (deckId) body.deckId = deckId
       const response = await fetch('/api/notes/bulk-tags', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ noteIds, deckId, addTags }),
+        body: JSON.stringify(body),
       })
       if (!response.ok) {
         const data = await response.json()
@@ -242,10 +255,12 @@ export function NoteBrowser({
 
     setIsBulkTagging(true)
     try {
+      const body: Record<string, unknown> = { noteIds, removeTags }
+      if (deckId) body.deckId = deckId
       const response = await fetch('/api/notes/bulk-tags', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ noteIds, deckId, removeTags }),
+        body: JSON.stringify(body),
       })
       if (!response.ok) {
         const data = await response.json()
@@ -269,6 +284,26 @@ export function NoteBrowser({
     }
   }
 
+  const handleCopyToTarget = async (targetDeckId: string) => {
+    const noteIds = Array.from(selectedNotes)
+    if (noteIds.length === 0 || !onCopyNotes) return
+    await onCopyNotes(noteIds, targetDeckId)
+    setSelectedNotes(new Set())
+    setIsSelectMode(false)
+  }
+
+  const handleMoveToTarget = async (targetDeckId: string) => {
+    const noteIds = Array.from(selectedNotes)
+    if (noteIds.length === 0 || !onMoveNotes) return
+    await onMoveNotes(noteIds, targetDeckId)
+    // Remove moved notes from local state
+    const movedSet = new Set(noteIds)
+    setNotes(prev => prev.filter(n => !movedSet.has(n.id)))
+    setTotal(prev => prev - noteIds.length)
+    setSelectedNotes(new Set())
+    setIsSelectMode(false)
+  }
+
   // Refresh a single note after generation (re-fetch its field_values)
   const handleNoteGenerated = async (noteId: string) => {
     try {
@@ -283,6 +318,9 @@ export function NoteBrowser({
       // Silent - note will show stale data until page refresh
     }
   }
+
+  // Determine which deck IDs to exclude from the deck selector (current deck context)
+  const excludeDeckIds = deckId ? [deckId] : []
 
   const hasMore = notes.length < total
 
@@ -300,7 +338,7 @@ export function NoteBrowser({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="ノートを検索..."
+              placeholder={deckId ? 'ノートを検索...' : '全デッキからノートを検索...'}
               className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
             />
             {searchQuery && (
@@ -411,7 +449,7 @@ export function NoteBrowser({
               {selectedNotes.size}件選択中
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => {
                 setIsSelectMode(false)
@@ -421,6 +459,24 @@ export function NoteBrowser({
             >
               キャンセル
             </button>
+            {onCopyNotes && (
+              <button
+                onClick={() => setShowCopyModal(true)}
+                disabled={selectedNotes.size === 0}
+                className="px-3 py-1.5 text-sm text-green-600 border border-green-300 rounded-lg hover:bg-green-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors"
+              >
+                コピー
+              </button>
+            )}
+            {onMoveNotes && (
+              <button
+                onClick={() => setShowMoveModal(true)}
+                disabled={selectedNotes.size === 0}
+                className="px-3 py-1.5 text-sm text-indigo-600 border border-indigo-300 rounded-lg hover:bg-indigo-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors"
+              >
+                移動
+              </button>
+            )}
             <button
               onClick={() => setShowBulkTagModal(true)}
               disabled={selectedNotes.size === 0}
@@ -479,6 +535,7 @@ export function NoteBrowser({
               key={note.id}
               note={note}
               noteType={noteTypeMap.get(note.note_type_id)}
+              deckName={!deckId && deckNameMap && note.deck_id ? deckNameMap.get(note.deck_id) : undefined}
               canEdit={canEdit}
               isSelectMode={isSelectMode}
               isSelected={selectedNotes.has(note.id)}
@@ -663,6 +720,30 @@ export function NoteBrowser({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Copy to Deck Modal */}
+      {showCopyModal && (
+        <DeckSelectorModal
+          title="ノートをコピー"
+          description={`${selectedNotes.size}件のノートをコピー先デッキを選択してください。`}
+          confirmLabel="コピー"
+          excludeDeckIds={excludeDeckIds}
+          onSelect={handleCopyToTarget}
+          onClose={() => setShowCopyModal(false)}
+        />
+      )}
+
+      {/* Move to Deck Modal */}
+      {showMoveModal && (
+        <DeckSelectorModal
+          title="ノートを移動"
+          description={`${selectedNotes.size}件のノートを移動先デッキを選択してください。学習記録は保持されます。`}
+          confirmLabel="移動"
+          excludeDeckIds={excludeDeckIds}
+          onSelect={handleMoveToTarget}
+          onClose={() => setShowMoveModal(false)}
+        />
       )}
     </div>
   )

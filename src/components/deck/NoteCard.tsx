@@ -5,6 +5,7 @@ import type { NoteType, GeneratedContent, GenerationRule } from '@/types/databas
 
 export interface BrowsableNote {
   id: string
+  deck_id?: string
   field_values: Record<string, string>
   note_type_id: string
   generated_content: GeneratedContent | null
@@ -16,6 +17,7 @@ export interface BrowsableNote {
 interface NoteCardProps {
   note: BrowsableNote
   noteType: NoteType | undefined
+  deckName?: string
   canEdit: boolean
   isSelectMode: boolean
   isSelected: boolean
@@ -29,6 +31,7 @@ interface NoteCardProps {
 export function NoteCard({
   note,
   noteType,
+  deckName,
   canEdit,
   isSelectMode,
   isSelected,
@@ -119,6 +122,11 @@ export function NoteCard({
         <div className="ml-4 flex-shrink-0 text-right flex items-start gap-2">
           <div>
             <span className="text-xs text-gray-400 block">{noteTypeName}</span>
+            {deckName && (
+              <span className="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded block mt-0.5 truncate max-w-[120px]">
+                {deckName}
+              </span>
+            )}
             <div className="flex items-center gap-2 mt-1">
               {hasGeneratedContent && (
                 <span className="text-xs text-purple-600 flex items-center gap-0.5" title="例文生成済み">

@@ -17,10 +17,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'noteIds is required' }, { status: 400 })
     }
 
-    if (!deckId) {
-      return NextResponse.json({ error: 'deckId is required' }, { status: 400 })
-    }
-
     const hasAddTags = Array.isArray(addTags) && addTags.length > 0
     const hasRemoveTags = Array.isArray(removeTags) && removeTags.length > 0
 
@@ -28,19 +24,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'addTags or removeTags is required' }, { status: 400 })
     }
 
-    // Verify deck ownership
-    const { data: deck } = await supabase
-      .from('decks')
-      .select('id, owner_id')
-      .eq('id', deckId)
-      .single()
+    if (deckId) {
+      // Single-deck mode: verify deck ownership
+      const { data: deck } = await supabase
+        .from('decks')
+        .select('id, owner_id')
+        .eq('id', deckId)
+        .single()
 
-    if (!deck) {
-      return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
-    }
+      if (!deck) {
+        return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
+      }
 
-    if (deck.owner_id !== user.id) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+      if (deck.owner_id !== user.id) {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+      }
+    } else {
+      // Cross-deck mode: get deck_ids from notes, verify ownership
+      const { data: notes } = await supabase
+        .from('notes')
+        .select('id, deck_id')
+        .in('id', noteIds)
+
+      if (!notes || notes.length === 0) {
+        return NextResponse.json({ error: 'Notes not found' }, { status: 404 })
+      }
+
+      const deckIds = Array.from(new Set(notes.map(n => n.deck_id)))
+      const { data: decks } = await supabase
+        .from('decks')
+        .select('id, owner_id')
+        .in('id', deckIds)
+
+      for (const deck of decks || []) {
+        if (deck.owner_id !== user.id) {
+          return NextResponse.json({ error: 'Access denied: you do not own all involved decks' }, { status: 403 })
+        }
+      }
     }
 
     // Call the RPC function

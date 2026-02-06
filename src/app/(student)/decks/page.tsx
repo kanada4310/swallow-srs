@@ -112,10 +112,18 @@ export default async function DecksPage() {
 
   const decks = await getDecksWithStats(profile.id)
 
+  // Fetch note types for the full note browser
+  const { data: noteTypes } = await supabase
+    .from('note_types')
+    .select('*')
+    .or(`owner_id.eq.${profile.id},is_system.eq.true`)
+    .order('name')
+
   return (
     <AppLayout userName={profile.name} userRole={profile.role}>
       <DecksPageClient
         initialDecks={decks}
+        noteTypes={noteTypes || []}
         userProfile={{ id: profile.id, name: profile.name, role: profile.role }}
       />
     </AppLayout>

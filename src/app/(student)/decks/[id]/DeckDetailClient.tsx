@@ -168,6 +168,36 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
     })
   }
 
+  const handleCopyNotes = async (noteIds: string[], targetDeckId: string) => {
+    const response = await fetch('/api/notes/copy-move', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ noteIds, targetDeckId, action: 'copy' }),
+    })
+    if (!response.ok) {
+      const data = await response.json()
+      throw new Error(data.error || 'コピーに失敗しました')
+    }
+  }
+
+  const handleMoveNotes = async (noteIds: string[], targetDeckId: string) => {
+    const response = await fetch('/api/notes/copy-move', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ noteIds, targetDeckId, action: 'move' }),
+    })
+    if (!response.ok) {
+      const data = await response.json()
+      throw new Error(data.error || '移動に失敗しました')
+    }
+    // Refresh notes list after move
+    refreshNotes()
+    // Clean up IndexedDB in background
+    import('@/lib/db/schema').then(({ deleteNotesLocally }) => {
+      deleteNotesLocally(noteIds).catch(console.error)
+    })
+  }
+
   const handleEditNoteSave = (updatedNote: BrowsableNote) => {
     setNotes(prev => prev.map(n => n.id === updatedNote.id ? updatedNote : n))
     setEditingNote(null)
@@ -332,6 +362,8 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
           onEditNote={(note) => setEditingNote(note)}
           onDeleteNote={handleDeleteNote}
           onBulkDelete={handleBulkDelete}
+          onCopyNotes={canEdit ? handleCopyNotes : undefined}
+          onMoveNotes={canEdit ? handleMoveNotes : undefined}
           deletingNoteId={deletingNoteId}
         />
       </div>

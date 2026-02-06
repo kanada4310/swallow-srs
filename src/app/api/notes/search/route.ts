@@ -29,13 +29,29 @@ export async function GET(request: NextRequest) {
       searchDeckIds = [deckId]
     }
 
-    // If no deckId at all, search all decks owned by user
+    // If no deckId at all, search all decks the user can access (owned + assigned)
     if (searchDeckIds.length === 0) {
-      const { data: userDecks } = await supabase
-        .from('decks')
-        .select('id')
-        .eq('owner_id', user.id)
-      searchDeckIds = (userDecks || []).map(d => d.id)
+      const [{ data: userDecks }, { data: directAssignments }, { data: classMembers }] = await Promise.all([
+        supabase.from('decks').select('id').eq('owner_id', user.id),
+        supabase.from('deck_assignments').select('deck_id').eq('user_id', user.id),
+        supabase.from('class_members').select('class_id').eq('user_id', user.id),
+      ])
+
+      const deckIdSet = new Set<string>()
+      for (const d of userDecks || []) deckIdSet.add(d.id)
+      for (const a of directAssignments || []) deckIdSet.add(a.deck_id)
+
+      // Get decks assigned via class membership
+      const classIds = (classMembers || []).map(cm => cm.class_id)
+      if (classIds.length > 0) {
+        const { data: classAssignments } = await supabase
+          .from('deck_assignments')
+          .select('deck_id')
+          .in('class_id', classIds)
+        for (const a of classAssignments || []) deckIdSet.add(a.deck_id)
+      }
+
+      searchDeckIds = Array.from(deckIdSet)
       if (searchDeckIds.length === 0) {
         return NextResponse.json({ notes: [], total: 0 })
       }

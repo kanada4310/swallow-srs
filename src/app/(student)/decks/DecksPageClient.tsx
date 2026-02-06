@@ -1,10 +1,14 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { NoteBrowser } from '@/components/deck/NoteBrowser'
+import { NoteEditModal } from '@/components/deck/NoteEditModal'
 import { useOnlineStatus, usePrefetchAllDecks } from '@/lib/db/hooks'
 import { getDecksWithStatsOffline, db } from '@/lib/db/schema'
+import type { NoteType } from '@/types/database'
+import type { BrowsableNote } from '@/components/deck/NoteCard'
 
 interface DeckWithStats {
   id: string
@@ -88,10 +92,11 @@ function flattenTree(nodes: DeckTreeNode[]): DeckTreeNode[] {
 
 interface DecksPageClientProps {
   initialDecks?: DeckWithStats[]
+  noteTypes?: NoteType[]
   userProfile?: { id: string; name: string; role: string }
 }
 
-export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: DecksPageClientProps) {
+export function DecksPageClient({ initialDecks, noteTypes: noteTypesProp, userProfile: userProfileProp }: DecksPageClientProps) {
   const isOnline = useOnlineStatus()
   const [offlineDecks, setOfflineDecks] = useState<DeckWithStats[] | null>(null)
   const [offlineProfile, setOfflineProfile] = useState<{ id: string; name: string; role: string } | null>(null)
@@ -100,12 +105,15 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
   const [isDeletingDeck, setIsDeletingDeck] = useState(false)
   const [deckDeleteError, setDeckDeleteError] = useState<string | null>(null)
 
-  // Cross-deck note search (hooks must be before any early returns)
-  const [noteSearchQuery, setNoteSearchQuery] = useState('')
-  const [noteSearchResults, setNoteSearchResults] = useState<Array<{ id: string; deck_id?: string; field_values: Record<string, string>; note_type_id: string; tags?: string[]; created_at: string }>>([])
-  const [isSearchingNotes, setIsSearchingNotes] = useState(false)
-  const [noteSearchTotal, setNoteSearchTotal] = useState(0)
-  const noteSearchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Full note browser state
+  const [showNoteBrowser, setShowNoteBrowser] = useState(false)
+  const [browserNotes, setBrowserNotes] = useState<BrowsableNote[]>([])
+  const [browserTotal, setBrowserTotal] = useState(0)
+  const [isBrowserLoading, setIsBrowserLoading] = useState(false)
+  const [editingNote, setEditingNote] = useState<BrowsableNote | null>(null)
+  const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null)
+
+  const noteTypes = noteTypesProp || []
 
   const hasServerData = initialDecks !== undefined && userProfileProp !== undefined
 
@@ -206,44 +214,92 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
     }
   }
 
-  const searchNotes = useCallback(async (query: string) => {
-    if (!query.trim()) {
-      setNoteSearchResults([])
-      setNoteSearchTotal(0)
-      return
-    }
-    setIsSearchingNotes(true)
+  // Fetch initial notes when opening the browser
+  const loadBrowserNotes = useCallback(async () => {
+    setIsBrowserLoading(true)
     try {
-      const params = new URLSearchParams({ q: query.trim(), limit: '20' })
+      const params = new URLSearchParams({ limit: '50' })
       const response = await fetch(`/api/notes/search?${params}`)
       if (response.ok) {
         const data = await response.json()
-        setNoteSearchResults(data.notes || [])
-        setNoteSearchTotal(data.total || 0)
+        setBrowserNotes(data.notes || [])
+        setBrowserTotal(data.total || 0)
       }
     } catch {
-      // Silent fail
+      // Silent
     } finally {
-      setIsSearchingNotes(false)
+      setIsBrowserLoading(false)
     }
   }, [])
 
-  useEffect(() => {
-    if (noteSearchDebounceRef.current) {
-      clearTimeout(noteSearchDebounceRef.current)
+  const handleToggleBrowser = () => {
+    if (!showNoteBrowser) {
+      loadBrowserNotes()
     }
-    if (!noteSearchQuery.trim()) {
-      setNoteSearchResults([])
-      setNoteSearchTotal(0)
-      return
+    setShowNoteBrowser(prev => !prev)
+  }
+
+  const canEdit = userProfile?.role !== 'student'
+
+  const handleDeleteNote = async (noteId: string) => {
+    setDeletingNoteId(noteId)
+    try {
+      const response = await fetch(`/api/notes/${noteId}`, { method: 'DELETE' })
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || '削除に失敗しました')
+      }
+      import('@/lib/db/schema').then(({ deleteNoteLocally }) => {
+        deleteNoteLocally(noteId).catch(console.error)
+      })
+    } finally {
+      setDeletingNoteId(null)
     }
-    noteSearchDebounceRef.current = setTimeout(() => {
-      searchNotes(noteSearchQuery)
-    }, 300)
-    return () => {
-      if (noteSearchDebounceRef.current) clearTimeout(noteSearchDebounceRef.current)
+  }
+
+  const handleBulkDelete = async (noteIds: string[]) => {
+    const response = await fetch('/api/notes/bulk-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ noteIds }),
+    })
+    if (!response.ok) {
+      const data = await response.json()
+      throw new Error(data.error || '削除に失敗しました')
     }
-  }, [noteSearchQuery, searchNotes])
+    import('@/lib/db/schema').then(({ deleteNotesLocally }) => {
+      deleteNotesLocally(noteIds).catch(console.error)
+    })
+  }
+
+  const handleCopyNotes = async (noteIds: string[], targetDeckId: string) => {
+    const response = await fetch('/api/notes/copy-move', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ noteIds, targetDeckId, action: 'copy' }),
+    })
+    if (!response.ok) {
+      const data = await response.json()
+      throw new Error(data.error || 'コピーに失敗しました')
+    }
+  }
+
+  const handleMoveNotes = async (noteIds: string[], targetDeckId: string) => {
+    const response = await fetch('/api/notes/copy-move', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ noteIds, targetDeckId, action: 'move' }),
+    })
+    if (!response.ok) {
+      const data = await response.json()
+      throw new Error(data.error || '移動に失敗しました')
+    }
+  }
+
+  const handleEditNoteSave = (updatedNote: BrowsableNote) => {
+    setBrowserNotes(prev => prev.map(n => n.id === updatedNote.id ? updatedNote : n))
+    setEditingNote(null)
+  }
 
   if (!hasServerData && isLoadingOffline) {
     return wrapInLayout(<DecksLoadingSkeleton />)
@@ -274,98 +330,64 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
         )}
       </div>
 
-      {/* Cross-deck Note Search */}
+      {/* Full Note Browser Toggle */}
       <div className="mb-6">
-        <div className="relative">
-          <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button
+          onClick={handleToggleBrowser}
+          className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+            showNoteBrowser
+              ? 'bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100'
+              : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-          <input
-            type="text"
-            value={noteSearchQuery}
-            onChange={(e) => setNoteSearchQuery(e.target.value)}
-            placeholder="全デッキからノートを検索..."
-            className="w-full pl-9 pr-8 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-white"
-          />
-          {noteSearchQuery && (
-            <button
-              onClick={() => setNoteSearchQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          )}
-        </div>
+          {showNoteBrowser ? '全ノートブラウザを閉じる' : '全デッキのノートを検索・管理'}
+          <svg className={`w-4 h-4 transition-transform ${showNoteBrowser ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
-        {/* Search Results */}
-        {noteSearchQuery.trim() && (
-          <div className="mt-3">
-            {isSearchingNotes ? (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
-                  検索中...
-                </div>
-              </div>
-            ) : noteSearchResults.length === 0 ? (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-sm text-gray-500">
-                一致するノートがありません
+        {showNoteBrowser && (
+          <div className="mt-4 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            {isBrowserLoading ? (
+              <div className="space-y-2">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="bg-gray-50 rounded-lg p-4 animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                    <div className="h-3 bg-gray-100 rounded w-1/2" />
+                  </div>
+                ))}
               </div>
             ) : (
-              <div className="space-y-2">
-                <p className="text-xs text-gray-500">{noteSearchTotal}件のノートが見つかりました</p>
-                {noteSearchResults.map((note) => {
-                  const firstField = Object.entries(note.field_values)[0]
-                  const secondField = Object.entries(note.field_values)[1]
-                  const noteDeckName = note.deck_id ? deckNameMap.get(note.deck_id) : undefined
-                  const linkHref = note.deck_id ? `/decks/${note.deck_id}` : '#'
-                  return (
-                    <Link
-                      key={note.id}
-                      href={linkHref}
-                      className="block bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md hover:border-gray-300 transition-all"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {firstField ? firstField[1] : '(空)'}
-                          </p>
-                          {secondField && (
-                            <p className="text-xs text-gray-500 truncate mt-0.5">
-                              {secondField[1]}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-2 mt-1">
-                            {noteDeckName && (
-                              <span className="px-1.5 py-0.5 text-xs bg-blue-50 text-blue-600 rounded">
-                                {noteDeckName}
-                              </span>
-                            )}
-                            {note.tags && note.tags.length > 0 && (
-                              <div className="flex gap-1 flex-wrap">
-                                {note.tags.map(tag => (
-                                  <span key={tag} className="px-1.5 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
-                                    {tag}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <svg className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </div>
-                    </Link>
-                  )
-                })}
-              </div>
+              <NoteBrowser
+                initialNotes={browserNotes}
+                initialTotal={browserTotal}
+                noteTypes={noteTypes}
+                deckNameMap={deckNameMap}
+                canEdit={canEdit}
+                onEditNote={(note) => setEditingNote(note)}
+                onDeleteNote={handleDeleteNote}
+                onBulkDelete={handleBulkDelete}
+                onCopyNotes={canEdit ? handleCopyNotes : undefined}
+                onMoveNotes={canEdit ? handleMoveNotes : undefined}
+                deletingNoteId={deletingNoteId}
+              />
             )}
           </div>
         )}
       </div>
+
+      {/* Note Edit Modal */}
+      {editingNote && (
+        <NoteEditModal
+          note={editingNote}
+          noteType={noteTypes.find(nt => nt.id === editingNote.note_type_id) || noteTypes[0]}
+          onSave={handleEditNoteSave}
+          onClose={() => setEditingNote(null)}
+        />
+      )}
 
       {!isOnline && (
         <div className="mb-4 flex items-center gap-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-700">

@@ -11,48 +11,81 @@ export async function POST(request: NextRequest) {
     if (authError) return authError
 
     const body = await request.json()
-    const { noteIds, deckId } = body as { noteIds: string[]; deckId: string }
+    const { noteIds, deckId } = body as { noteIds: string[]; deckId?: string }
 
     if (!noteIds || !Array.isArray(noteIds) || noteIds.length === 0) {
       return NextResponse.json({ error: 'noteIds is required' }, { status: 400 })
-    }
-
-    if (!deckId) {
-      return NextResponse.json({ error: 'deckId is required' }, { status: 400 })
     }
 
     if (noteIds.length > 500) {
       return NextResponse.json({ error: 'Maximum 500 notes per request' }, { status: 400 })
     }
 
-    // Verify user owns the deck
-    const { data: deck, error: deckError } = await supabase
-      .from('decks')
-      .select('owner_id')
-      .eq('id', deckId)
-      .single()
+    if (deckId) {
+      // Single-deck mode: verify user owns the deck
+      const { data: deck, error: deckError } = await supabase
+        .from('decks')
+        .select('owner_id')
+        .eq('id', deckId)
+        .single()
 
-    if (deckError || !deck) {
-      return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
+      if (deckError || !deck) {
+        return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
+      }
+
+      if (deck.owner_id !== user.id) {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+      }
+
+      // Delete notes belonging to this deck
+      const { error: deleteError, count } = await supabase
+        .from('notes')
+        .delete({ count: 'exact' })
+        .in('id', noteIds)
+        .eq('deck_id', deckId)
+
+      if (deleteError) {
+        console.error('Error bulk deleting notes:', deleteError)
+        return NextResponse.json({ error: deleteError.message }, { status: 500 })
+      }
+
+      return NextResponse.json({ success: true, deletedCount: count })
+    } else {
+      // Cross-deck mode: get deck_ids from notes, verify ownership of each
+      const { data: notes } = await supabase
+        .from('notes')
+        .select('id, deck_id')
+        .in('id', noteIds)
+
+      if (!notes || notes.length === 0) {
+        return NextResponse.json({ error: 'Notes not found' }, { status: 404 })
+      }
+
+      const deckIds = Array.from(new Set(notes.map(n => n.deck_id)))
+      const { data: decks } = await supabase
+        .from('decks')
+        .select('id, owner_id')
+        .in('id', deckIds)
+
+      // Verify user owns all involved decks
+      for (const deck of decks || []) {
+        if (deck.owner_id !== user.id) {
+          return NextResponse.json({ error: 'Access denied: you do not own all involved decks' }, { status: 403 })
+        }
+      }
+
+      const { error: deleteError, count } = await supabase
+        .from('notes')
+        .delete({ count: 'exact' })
+        .in('id', noteIds)
+
+      if (deleteError) {
+        console.error('Error bulk deleting notes:', deleteError)
+        return NextResponse.json({ error: deleteError.message }, { status: 500 })
+      }
+
+      return NextResponse.json({ success: true, deletedCount: count })
     }
-
-    if (deck.owner_id !== user.id) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
-    }
-
-    // Delete notes belonging to this deck (CASCADE handles cards, card_states, review_logs)
-    const { error: deleteError, count } = await supabase
-      .from('notes')
-      .delete({ count: 'exact' })
-      .in('id', noteIds)
-      .eq('deck_id', deckId)
-
-    if (deleteError) {
-      console.error('Error bulk deleting notes:', deleteError)
-      return NextResponse.json({ error: deleteError.message }, { status: 500 })
-    }
-
-    return NextResponse.json({ success: true, deletedCount: count })
   } catch (error) {
     console.error('Error in POST /api/notes/bulk-delete:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
