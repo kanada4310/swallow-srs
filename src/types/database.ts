@@ -1,7 +1,7 @@
 // Database types for つばめSRS
 
 export type UserRole = 'student' | 'teacher' | 'admin'
-export type CardState = 'new' | 'learning' | 'review' | 'relearning'
+export type CardState = 'new' | 'learning' | 'review' | 'relearning' | 'suspended'
 
 export interface Profile {
   id: string
@@ -74,15 +74,40 @@ export interface CardTemplate {
   updated_at: string
 }
 
+export interface DeckSettings {
+  // === 新規カード ===
+  new_cards_per_day: number          // デフォルト: 20
+  learning_steps: number[]           // 学習ステップ（分）。デフォルト: [1, 10]
+  graduating_interval: number        // 卒業間隔（日）。デフォルト: 1
+  easy_interval: number              // Easy間隔（日）。デフォルト: 4
+  new_card_order: 'sequential' | 'random'  // デフォルト: 'sequential'
+
+  // === 復習 ===
+  max_reviews_per_day: number        // デフォルト: 200（0=無制限）
+  easy_bonus: number                 // Easy倍率。デフォルト: 1.3
+  interval_modifier: number          // 間隔倍率。デフォルト: 1.0
+  max_interval: number               // 最大間隔（日）。デフォルト: 36500
+  hard_interval_modifier: number     // Hard倍率。デフォルト: 1.2
+
+  // === 失念（ラプス） ===
+  relearning_steps: number[]         // 再学習ステップ（分）。デフォルト: [10]
+  lapse_new_interval: number         // ラプス時の間隔倍率（0.0-1.0）。デフォルト: 0.5
+  lapse_min_interval: number         // ラプス時の最小間隔（日）。デフォルト: 1
+  leech_threshold: number            // リーチしきい値。デフォルト: 8（0=無効）
+  leech_action: 'suspend' | 'tag'   // リーチ時のアクション。デフォルト: 'tag'
+
+  // === 表示順 ===
+  new_review_mix: 'mix' | 'new_first' | 'review_first'  // デフォルト: 'review_first'
+  review_sort: 'due_date' | 'due_date_random' | 'random' // デフォルト: 'due_date'
+}
+
 export interface Deck {
   id: string
   name: string
   owner_id: string
   is_distributed: boolean
   parent_deck_id: string | null
-  settings: {
-    new_cards_per_day: number
-  }
+  settings: Partial<DeckSettings>
   created_at: string
   updated_at: string
 }
@@ -138,6 +163,7 @@ export interface CardStateRecord {
   repetitions: number
   state: CardState
   learning_step: number
+  lapses: number
   updated_at: string
 }
 
@@ -191,6 +217,7 @@ export interface StudyCardData {
     repetitions: number
     state: CardState
     learningStep: number
+    lapses: number
   }
 }
 
@@ -219,6 +246,7 @@ export interface CardDistribution {
   learning: number
   review: number
   relearning: number
+  suspended: number
 }
 
 export interface AccuracyData {

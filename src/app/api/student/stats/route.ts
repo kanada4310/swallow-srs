@@ -294,6 +294,7 @@ async function calculateCardDistribution(
     learning: 0,
     review: 0,
     relearning: 0,
+    suspended: 0,
   }
 
   const statedCardIds = new Set<string>()
@@ -302,6 +303,7 @@ async function calculateCardDistribution(
     if (cs.state === 'learning') stateCount.learning++
     else if (cs.state === 'review') stateCount.review++
     else if (cs.state === 'relearning') stateCount.relearning++
+    else if (cs.state === 'suspended') stateCount.suspended++
   }
 
   // Cards without state are "new"

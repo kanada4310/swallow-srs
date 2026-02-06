@@ -2,8 +2,10 @@ import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { StudyPageClient } from './StudyPageClient'
-import type { Profile, GeneratedContent, FieldDefinition } from '@/types/database'
+import type { Profile, GeneratedContent, FieldDefinition, DeckSettings } from '@/types/database'
 import type { CardSchedule } from '@/lib/srs/scheduler'
+import { resolveDeckSettings } from '@/lib/srs/scheduler'
+import { orderStudyCards } from '@/lib/srs/card-ordering'
 
 interface CardData {
   id: string
@@ -25,7 +27,7 @@ interface SearchParams {
   deck?: string
 }
 
-async function getStudyCards(userId: string, deckId: string): Promise<CardData[]> {
+async function getStudyCards(userId: string, deckId: string): Promise<{ cards: CardData[]; deckSettings: Partial<DeckSettings> }> {
   const supabase = await createClient()
   const now = new Date()
 
@@ -58,7 +60,8 @@ async function getStudyCards(userId: string, deckId: string): Promise<CardData[]
     .in('deck_id', allDeckIds)
 
   if (!cards || cards.length === 0) {
-    return []
+    const { data: deck } = await supabase.from('decks').select('settings').eq('id', deckId).single()
+    return { cards: [], deckSettings: deck?.settings ?? {} }
   }
 
   // Get unique note type IDs
@@ -108,14 +111,15 @@ async function getStudyCards(userId: string, deckId: string): Promise<CardData[]
 
   const stateMap = new Map(cardStates?.map(cs => [cs.card_id, cs]) || [])
 
-  // Get deck settings for new cards per day
+  // Get deck settings (full object)
   const { data: deck } = await supabase
     .from('decks')
     .select('settings')
     .eq('id', deckId)
     .single()
 
-  const newCardsPerDay = deck?.settings?.new_cards_per_day ?? 20
+  const deckSettings: Partial<DeckSettings> = deck?.settings ?? {}
+  const settings = resolveDeckSettings(deckSettings)
 
   // Count how many new cards were introduced today
   const todayStart = new Date()
@@ -132,7 +136,16 @@ async function getStudyCards(userId: string, deckId: string): Promise<CardData[]
     .eq('last_interval', 0) // First review of a card
     .gte('reviewed_at', todayStart.toISOString())
 
-  const remainingNewCards = Math.max(0, newCardsPerDay - (newCardsToday || 0))
+  const remainingNewCards = Math.max(0, settings.new_cards_per_day - (newCardsToday || 0))
+
+  // Count today's review count (for max_reviews_per_day)
+  const { count: todayReviewCount } = await supabase
+    .from('review_logs')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .in('card_id', cardIds)
+    .gt('last_interval', 0) // Only review cards, not new
+    .gte('reviewed_at', todayStart.toISOString())
 
   // Categorize cards
   const dueCards: CardData[] = []
@@ -146,6 +159,9 @@ async function getStudyCards(userId: string, deckId: string): Promise<CardData[]
     const audioUrls = noteData.audio_urls
     const generatedContent = noteData.generated_content
     const noteTypeId = noteData.note_type_id
+
+    // Skip suspended cards
+    if (state?.state === 'suspended') continue
 
     // Get template for this card
     const cardTemplates = templateMap.get(noteTypeId) || []
@@ -171,6 +187,7 @@ async function getStudyCards(userId: string, deckId: string): Promise<CardData[]
         repetitions: state.repetitions,
         state: state.state as CardSchedule['state'],
         learningStep: state.learning_step,
+        lapses: state.lapses ?? 0,
       } : {
         due: now,
         interval: 0,
@@ -178,6 +195,7 @@ async function getStudyCards(userId: string, deckId: string): Promise<CardData[]
         repetitions: 0,
         state: 'new' as const,
         learningStep: 0,
+        lapses: 0,
       },
     }
 
@@ -188,16 +206,16 @@ async function getStudyCards(userId: string, deckId: string): Promise<CardData[]
     }
   }
 
-  // Sort due cards by due date (oldest first)
-  dueCards.sort((a, b) => a.schedule.due.getTime() - b.schedule.due.getTime())
+  // Use orderStudyCards for proper ordering
+  const studyCards = orderStudyCards(
+    dueCards,
+    newCards,
+    remainingNewCards,
+    todayReviewCount || 0,
+    settings
+  )
 
-  // Combine: due cards first, then new cards (limited)
-  const studyCards = [
-    ...dueCards,
-    ...newCards.slice(0, remainingNewCards),
-  ]
-
-  return studyCards
+  return { cards: studyCards, deckSettings }
 }
 
 export default async function StudyPage({
@@ -262,7 +280,7 @@ export default async function StudyPage({
   }
 
   // Get study cards
-  const studyCards = await getStudyCards(profile.id, deckId)
+  const { cards: studyCards, deckSettings } = await getStudyCards(profile.id, deckId)
 
   return (
     <AppLayout userName={profile.name} userRole={profile.role}>
@@ -273,6 +291,7 @@ export default async function StudyPage({
           initialCards={studyCards}
           userId={profile.id}
           userProfile={{ name: profile.name, role: profile.role }}
+          deckSettings={deckSettings}
         />
       </div>
     </AppLayout>

@@ -8,8 +8,9 @@ import { NoteEditModal } from '@/components/deck/NoteEditModal'
 import { CSVImporter } from '@/components/deck/CSVImporter'
 import { BulkExampleGenerator } from '@/components/ai/ExampleGenerator'
 import { OCRImporter } from '@/components/ai/OCRImporter'
+import { DeckAdvancedSettings } from '@/components/deck/DeckAdvancedSettings'
 import { createClient } from '@/lib/supabase/client'
-import type { NoteType } from '@/types/database'
+import type { NoteType, DeckSettings } from '@/types/database'
 import type { BrowsableNote } from '@/components/deck/NoteCard'
 
 interface ClassInfo {
@@ -37,6 +38,8 @@ interface Assignment {
 
 interface DeckDetailClientProps {
   deckId: string
+  deckName: string
+  deckSettings: Partial<DeckSettings>
   allDeckIds?: string[]
   notes: BrowsableNote[]
   totalNoteCount: number
@@ -45,7 +48,7 @@ interface DeckDetailClientProps {
   canEdit: boolean
 }
 
-export function DeckDetailClient({ deckId, allDeckIds, notes: initialNotes, totalNoteCount: initialTotal, noteTypes, deckTags, canEdit }: DeckDetailClientProps) {
+export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettings, allDeckIds, notes: initialNotes, totalNoteCount: initialTotal, noteTypes, deckTags, canEdit }: DeckDetailClientProps) {
   const router = useRouter()
   const [notes, setNotes] = useState<BrowsableNote[]>(initialNotes)
   const [totalNoteCount, setTotalNoteCount] = useState(initialTotal)
@@ -60,6 +63,10 @@ export function DeckDetailClient({ deckId, allDeckIds, notes: initialNotes, tota
   const [showDeckDeleteConfirm, setShowDeckDeleteConfirm] = useState(false)
   const [isDeletingDeck, setIsDeletingDeck] = useState(false)
   const [deckDeleteError, setDeckDeleteError] = useState<string | null>(null)
+  const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [deckSettings, setDeckSettings] = useState<Partial<DeckSettings>>(initialSettings)
+  const [isSavingSettings, setIsSavingSettings] = useState(false)
+  const [settingsError, setSettingsError] = useState<string | null>(null)
 
   const refreshNotes = useCallback(async () => {
     const supabase = createClient()
@@ -271,6 +278,16 @@ export function DeckDetailClient({ deckId, allDeckIds, notes: initialNotes, tota
             </svg>
             {isExporting ? 'エクスポート中...' : 'CSVエクスポート'}
           </button>
+          <button
+            onClick={() => setShowSettingsModal(true)}
+            className="flex-1 min-w-[140px] py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors font-medium flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            学習設定
+          </button>
         </div>
       )}
 
@@ -452,6 +469,84 @@ export function DeckDetailClient({ deckId, allDeckIds, notes: initialNotes, tota
                 className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
               >
                 {isDeletingDeck ? '削除中...' : 'デッキを削除'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Deck Settings Modal */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">学習設定 - {deckName}</h2>
+                <button
+                  onClick={() => {
+                    setShowSettingsModal(false)
+                    setSettingsError(null)
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+              <DeckAdvancedSettings
+                settings={deckSettings}
+                onChange={setDeckSettings}
+              />
+
+              {settingsError && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  {settingsError}
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowSettingsModal(false)
+                  setSettingsError(null)
+                  setDeckSettings(initialSettings)
+                }}
+                disabled={isSavingSettings}
+                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={async () => {
+                  setIsSavingSettings(true)
+                  setSettingsError(null)
+                  try {
+                    const response = await fetch(`/api/decks/${deckId}`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ settings: deckSettings }),
+                    })
+                    if (!response.ok) {
+                      const data = await response.json()
+                      throw new Error(data.error || '設定の保存に失敗しました')
+                    }
+                    setShowSettingsModal(false)
+                    router.refresh()
+                  } catch (err) {
+                    setSettingsError(err instanceof Error ? err.message : '設定の保存に失敗しました')
+                  } finally {
+                    setIsSavingSettings(false)
+                  }
+                }}
+                disabled={isSavingSettings}
+                className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
+                {isSavingSettings ? '保存中...' : '保存'}
               </button>
             </div>
           </div>

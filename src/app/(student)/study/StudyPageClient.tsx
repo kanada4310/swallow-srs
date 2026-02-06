@@ -7,7 +7,7 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { useOnlineStatus } from '@/lib/db/hooks'
 import { getStudyCardsOffline, getDecksWithStatsOffline, db } from '@/lib/db/schema'
 import Link from 'next/link'
-import type { FieldDefinition, GeneratedContent } from '@/types/database'
+import type { FieldDefinition, GeneratedContent, DeckSettings } from '@/types/database'
 import type { CardSchedule } from '@/lib/srs/scheduler'
 
 interface CardData {
@@ -32,6 +32,7 @@ interface StudyPageClientProps {
   initialCards?: CardData[]
   userId?: string
   userProfile?: { name: string; role: string }
+  deckSettings?: Partial<DeckSettings>
 }
 
 export function StudyPageClient({
@@ -40,6 +41,7 @@ export function StudyPageClient({
   initialCards,
   userId: userIdProp,
   userProfile: userProfileProp,
+  deckSettings,
 }: StudyPageClientProps) {
   const isOnline = useOnlineStatus()
   const searchParams = useSearchParams()
@@ -218,6 +220,7 @@ export function StudyPageClient({
         deckName={resolvedDeckName}
         initialCards={cards}
         userId={userId}
+        deckSettings={deckSettings}
       />
     </div>
   )

@@ -6,6 +6,8 @@ import {
   Ease,
   getNextIntervalPreview,
   calculateNextReview,
+  checkLeech,
+  resolveDeckSettings,
   type CardSchedule,
 } from '@/lib/srs/scheduler'
 import type { FieldValues } from '@/lib/template'
@@ -13,7 +15,7 @@ import { saveAnswerLocally, pushToServer, getSyncStatus } from '@/lib/db/sync'
 import { isOnline as checkOnline } from '@/lib/db/utils'
 import { SyncStatusBadge } from '@/components/ui/SyncStatusBadge'
 import Link from 'next/link'
-import type { GeneratedContent, FieldDefinition } from '@/types/database'
+import type { GeneratedContent, FieldDefinition, DeckSettings } from '@/types/database'
 
 interface CardData {
   id: string
@@ -35,14 +37,16 @@ interface StudySessionProps {
   deckName: string
   initialCards: CardData[]
   userId: string
+  deckSettings?: Partial<DeckSettings>
 }
 
-export function StudySession({ deckName, initialCards, userId }: StudySessionProps) {
+export function StudySession({ deckName, initialCards, userId, deckSettings }: StudySessionProps) {
   const [cards, setCards] = useState<CardData[]>(initialCards)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [stats, setStats] = useState({ reviewed: 0, correct: 0 })
   const [isOnline, setIsOnline] = useState(true)
+  const [leechNotification, setLeechNotification] = useState<string | null>(null)
   const cardStartTime = useRef<number>(Date.now())
 
   // Track online status
@@ -76,7 +80,16 @@ export function StudySession({ deckName, initialCards, userId }: StudySessionPro
     }
   }, [isOnline])
 
+  // Auto-dismiss leech notification
+  useEffect(() => {
+    if (leechNotification) {
+      const timer = setTimeout(() => setLeechNotification(null), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [leechNotification])
+
   const currentCard = cards[currentIndex]
+  const settings = resolveDeckSettings(deckSettings)
 
   const handleAnswer = async (ease: Ease) => {
     if (!currentCard || isSubmitting) return
@@ -89,7 +102,19 @@ export function StudySession({ deckName, initialCards, userId }: StudySessionPro
 
     try {
       // Calculate new schedule locally (synchronous, <1ms)
-      const newSchedule = calculateNextReview(currentCard.schedule, ease, now)
+      const newSchedule = calculateNextReview(currentCard.schedule, ease, now, deckSettings)
+
+      // Check for leech
+      if (ease === Ease.Again && newSchedule.lapses > (currentCard.schedule.lapses || 0)) {
+        const isLeech = checkLeech(newSchedule, settings)
+        if (isLeech) {
+          setLeechNotification(`このカードはリーチです（失念回数: ${newSchedule.lapses}回）`)
+          // If suspend action, mark as suspended locally
+          if (settings.leech_action === 'suspend') {
+            newSchedule.state = 'suspended'
+          }
+        }
+      }
 
       // Update UI immediately - don't wait for any I/O
       setCards(prevCards => {
@@ -119,6 +144,7 @@ export function StudySession({ deckName, initialCards, userId }: StudySessionPro
           repetitions: newSchedule.repetitions,
           state: newSchedule.state,
           learningStep: newSchedule.learningStep,
+          lapses: newSchedule.lapses,
         },
         lastInterval,
         timeMs
@@ -205,10 +231,30 @@ export function StudySession({ deckName, initialCards, userId }: StudySessionPro
     )
   }
 
-  const intervalPreviews = getNextIntervalPreview(currentCard.schedule)
+  const intervalPreviews = getNextIntervalPreview(currentCard.schedule, undefined, deckSettings)
 
   return (
     <div className="py-6">
+      {/* Leech notification */}
+      {leechNotification && (
+        <div className="max-w-2xl mx-auto mb-4">
+          <div className="flex items-center gap-2 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm">
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            {leechNotification}
+            <button
+              onClick={() => setLeechNotification(null)}
+              className="ml-auto text-amber-600 hover:text-amber-800"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Progress */}
       <div className="max-w-2xl mx-auto mb-6">
         <div className="flex items-center justify-between text-sm text-gray-500 mb-2">

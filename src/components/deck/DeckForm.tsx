@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import type { DeckSettings } from '@/types/database'
+import { DeckAdvancedSettings } from './DeckAdvancedSettings'
 
 interface ParentDeckOption {
   id: string
@@ -14,6 +16,7 @@ interface DeckFormProps {
     id: string
     name: string
     newCardsPerDay: number
+    settings?: Partial<DeckSettings>
   }
   parentDecks?: ParentDeckOption[]
   defaultParentId?: string
@@ -22,10 +25,18 @@ interface DeckFormProps {
 export function DeckForm({ mode, initialData, parentDecks, defaultParentId }: DeckFormProps) {
   const router = useRouter()
   const [name, setName] = useState(initialData?.name || '')
-  const [newCardsPerDay, setNewCardsPerDay] = useState(initialData?.newCardsPerDay || 20)
   const [parentDeckId, setParentDeckId] = useState(defaultParentId || '')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Initialize settings from initialData or with legacy newCardsPerDay
+  const [advancedSettings, setAdvancedSettings] = useState<Partial<DeckSettings>>(() => {
+    if (initialData?.settings) return initialData.settings
+    if (initialData?.newCardsPerDay !== undefined) {
+      return { new_cards_per_day: initialData.newCardsPerDay }
+    }
+    return {}
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,7 +49,7 @@ export function DeckForm({ mode, initialData, parentDecks, defaultParentId }: De
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
-          newCardsPerDay,
+          settings: advancedSettings,
           parentDeckId: parentDeckId || undefined,
         }),
       })
@@ -105,23 +116,11 @@ export function DeckForm({ mode, initialData, parentDecks, defaultParentId }: De
         </div>
       )}
 
-      <div>
-        <label htmlFor="newCardsPerDay" className="block text-sm font-medium text-gray-700 mb-2">
-          1日の新規カード数
-        </label>
-        <input
-          type="number"
-          id="newCardsPerDay"
-          value={newCardsPerDay}
-          onChange={(e) => setNewCardsPerDay(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
-          min="1"
-          max="100"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-        />
-        <p className="mt-1 text-sm text-gray-500">
-          生徒が1日に学習する新しいカードの最大数（1〜100）
-        </p>
-      </div>
+      {/* Advanced Settings */}
+      <DeckAdvancedSettings
+        settings={advancedSettings}
+        onChange={setAdvancedSettings}
+      />
 
       <div className="flex gap-3 pt-4">
         <button

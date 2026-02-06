@@ -16,6 +16,8 @@ import type {
   GeneratedContent,
 } from '@/types/database'
 import type { CardSchedule } from '@/lib/srs/scheduler'
+import { resolveDeckSettings } from '@/lib/srs/scheduler'
+import { orderStudyCards } from '@/lib/srs/card-ordering'
 
 // Local version of CardStateRecord (with Date instead of string)
 export interface LocalCardState {
@@ -28,6 +30,7 @@ export interface LocalCardState {
   repetitions: number
   state: CardState
   learning_step: number
+  lapses: number
   updated_at: Date
 }
 
@@ -150,6 +153,28 @@ class TsubameSRSDatabase extends Dexie {
       syncQueue: '++id, table, created_at, attempts',
       syncMetadata: 'key',
       audioCache: 'id, noteId, cachedAt',
+    })
+
+    // Version 5: Add lapses to cardStates (no index change needed)
+    this.version(5).stores({
+      profiles: 'id',
+      noteTypes: 'id',
+      cardTemplates: 'id, note_type_id',
+      decks: 'id, owner_id, parent_deck_id',
+      notes: 'id, deck_id, *tags',
+      cards: 'id, note_id, deck_id',
+      cardStates: 'id, user_id, card_id, due, [user_id+card_id]',
+      reviewLogs: 'id, user_id, card_id, synced_at',
+      syncQueue: '++id, table, created_at, attempts',
+      syncMetadata: 'key',
+      audioCache: 'id, noteId, cachedAt',
+    }).upgrade(tx => {
+      // Set lapses = 0 for existing card states
+      return tx.table('cardStates').toCollection().modify(cs => {
+        if (cs.lapses === undefined) {
+          cs.lapses = 0
+        }
+      })
     })
   }
 }
@@ -386,7 +411,7 @@ export async function cleanupOldAudioCache(): Promise<number> {
 
 export interface OfflineStats {
   dailyReviews: Array<{ date: string; total: number; correct: number; incorrect: number }>
-  cardDistribution: { new: number; learning: number; review: number; relearning: number }
+  cardDistribution: { new: number; learning: number; review: number; relearning: number; suspended: number }
   accuracyTrend: Array<{ date: string; accuracy: number }>
   totalReviews: number
   overallAccuracy: number
@@ -485,18 +510,20 @@ function calculateLocalDailyReviews(
 function calculateLocalCardDistribution(
   cardStates: LocalCardState[],
   totalCards: number
-): { new: number; learning: number; review: number; relearning: number } {
+): { new: number; learning: number; review: number; relearning: number; suspended: number } {
   const stateCount = {
     new: 0,
     learning: 0,
     review: 0,
     relearning: 0,
+    suspended: 0,
   }
 
   for (const cs of cardStates) {
     if (cs.state === 'learning') stateCount.learning++
     else if (cs.state === 'review') stateCount.review++
     else if (cs.state === 'relearning') stateCount.relearning++
+    else if (cs.state === 'suspended') stateCount.suspended++
   }
 
   // Cards without state are "new"
@@ -551,6 +578,7 @@ export interface OfflineCardData {
   }
   fields?: FieldDefinition[]
   clozeNumber?: number
+  createdAt?: string
   schedule: CardSchedule
 }
 
@@ -606,9 +634,9 @@ export async function getStudyCardsOffline(
     .toArray()
   const stateMap = new Map(states.map(s => [s.card_id, s]))
 
-  // Get deck settings for new cards per day
+  // Get deck settings
   const deck = await db.decks.get(deckId)
-  const newCardsPerDay = deck?.settings?.new_cards_per_day ?? 20
+  const settings = resolveDeckSettings(deck?.settings)
 
   // Count new cards introduced today
   const todayStart = new Date()
@@ -622,12 +650,13 @@ export async function getStudyCardsOffline(
     .equals(userId)
     .filter(log =>
       cardIds.includes(log.card_id) &&
-      log.last_interval === 0 &&
       log.reviewed_at >= todayStart
     )
     .toArray()
 
-  const remainingNewCards = Math.max(0, newCardsPerDay - todayLogs.length)
+  const newCardLogs = todayLogs.filter(l => l.last_interval === 0)
+  const reviewCardLogs = todayLogs.filter(l => l.last_interval > 0)
+  const remainingNewCards = Math.max(0, settings.new_cards_per_day - newCardLogs.length)
 
   // Categorize cards
   const dueCards: OfflineCardData[] = []
@@ -638,6 +667,10 @@ export async function getStudyCardsOffline(
     if (!note) continue
 
     const state = stateMap.get(card.id)
+
+    // Skip suspended cards
+    if (state?.state === 'suspended') continue
+
     const cardTemplates = templateMap.get(note.note_type_id) || []
     const template = cardTemplates[card.template_index] || {
       front: '<div>{{Front}}</div>',
@@ -660,6 +693,7 @@ export async function getStudyCardsOffline(
         repetitions: state.repetitions,
         state: state.state as CardSchedule['state'],
         learningStep: state.learning_step,
+        lapses: state.lapses ?? 0,
       } : {
         due: now,
         interval: 0,
@@ -667,6 +701,7 @@ export async function getStudyCardsOffline(
         repetitions: 0,
         state: 'new' as const,
         learningStep: 0,
+        lapses: 0,
       },
     }
 
@@ -677,10 +712,7 @@ export async function getStudyCardsOffline(
     }
   }
 
-  // Sort due cards by due date (oldest first)
-  dueCards.sort((a, b) => a.schedule.due.getTime() - b.schedule.due.getTime())
-
-  return [...dueCards, ...newCards.slice(0, remainingNewCards)]
+  return orderStudyCards(dueCards, newCards, remainingNewCards, reviewCardLogs.length, settings)
 }
 
 // Offline deck with stats type

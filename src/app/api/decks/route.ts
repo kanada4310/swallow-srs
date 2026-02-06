@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { requireAuth, requireTeacher } from '@/lib/api/auth'
+import { validateDeckSettings } from '@/lib/srs/settings-validation'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,14 +10,24 @@ export async function POST(request: NextRequest) {
     if (error) return error
 
     const body = await request.json()
-    const { name, newCardsPerDay = 20, parentDeckId } = body
+    const { name, parentDeckId } = body
+
+    // Support both legacy (newCardsPerDay) and new (settings) format
+    let settings = body.settings || {}
+    if (body.newCardsPerDay !== undefined && !body.settings) {
+      settings = { new_cards_per_day: body.newCardsPerDay }
+    }
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json({ error: 'Deck name is required' }, { status: 400 })
     }
 
-    if (typeof newCardsPerDay !== 'number' || newCardsPerDay < 1 || newCardsPerDay > 100) {
-      return NextResponse.json({ error: 'Invalid newCardsPerDay value' }, { status: 400 })
+    // Validate settings
+    const validationErrors = validateDeckSettings(settings)
+    if (validationErrors.length > 0) {
+      return NextResponse.json({
+        error: validationErrors.map(e => e.message).join(', '),
+      }, { status: 400 })
     }
 
     // Validate parent deck if specified
@@ -54,6 +65,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Ensure new_cards_per_day is set (backward compat)
+    if (settings.new_cards_per_day === undefined) {
+      settings.new_cards_per_day = 20
+    }
+
     // Create deck
     const { data: deck, error: createError } = await supabase
       .from('decks')
@@ -62,7 +78,7 @@ export async function POST(request: NextRequest) {
         owner_id: user.id,
         is_distributed: false,
         parent_deck_id: parentDeckId || null,
-        settings: { new_cards_per_day: newCardsPerDay },
+        settings,
       })
       .select()
       .single()

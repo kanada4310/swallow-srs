@@ -19,6 +19,7 @@ export interface ConflictInfo {
     repetitions: number
     state: string
     learning_step: number
+    lapses?: number
     updated_at: string
   }
   fieldDifferences: string[]
@@ -38,6 +39,7 @@ export function detectConflicts(
     repetitions: number
     state: string
     learning_step: number
+    lapses?: number
     updated_at: string
   }>
 ): ConflictInfo[] {
@@ -98,6 +100,7 @@ function findFieldDifferences(
     repetitions: number
     state: string
     learning_step: number
+    lapses?: number
   }
 ): string[] {
   const differences: string[] = []
@@ -130,6 +133,10 @@ function findFieldDifferences(
     differences.push('learning_step')
   }
 
+  if ((local.lapses ?? 0) !== (server.lapses ?? 0)) {
+    differences.push('lapses')
+  }
+
   return differences
 }
 
@@ -155,6 +162,7 @@ export function resolveConflict(
     repetitions: conflict.serverData.repetitions,
     state: conflict.serverData.state as LocalCardState['state'],
     learning_step: conflict.serverData.learning_step,
+    lapses: conflict.serverData.lapses ?? 0,
     updated_at: new Date(conflict.serverData.updated_at),
   }
 }
@@ -230,6 +238,7 @@ export function formatConflictForDisplay(conflict: ConflictInfo): {
     learning: '学習中',
     review: '復習',
     relearning: '再学習',
+    suspended: '一時停止',
   }
 
   return {

@@ -23,6 +23,7 @@ describe('Conflict Detection', () => {
     repetitions: 3,
     state: 'review',
     learning_step: 0,
+    lapses: 0,
     updated_at: new Date('2024-01-15T10:00:00Z'),
     ...overrides,
   })
@@ -36,6 +37,7 @@ describe('Conflict Detection', () => {
     repetitions: 3,
     state: 'review',
     learning_step: 0,
+    lapses: 0,
     updated_at: '2024-01-15T10:00:00Z',
     ...overrides,
   })

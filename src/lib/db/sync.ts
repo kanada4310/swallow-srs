@@ -192,6 +192,7 @@ async function applyServerCardStates(
     repetitions: number
     state: string
     learning_step: number
+    lapses?: number
     updated_at: string
   }>
 ): Promise<void> {
@@ -205,6 +206,7 @@ async function applyServerCardStates(
     repetitions: s.repetitions,
     state: s.state as LocalCardState['state'],
     learning_step: s.learning_step,
+    lapses: s.lapses ?? 0,
     updated_at: parseServerDate(s.updated_at),
   }))
 
@@ -323,6 +325,7 @@ export async function saveAnswerLocally(
     repetitions: number
     state: string
     learningStep: number
+    lapses?: number
   },
   lastInterval: number,
   timeMs: number | null
@@ -343,6 +346,7 @@ export async function saveAnswerLocally(
       repetitions: newSchedule.repetitions,
       state: newSchedule.state as LocalCardState['state'],
       learning_step: newSchedule.learningStep,
+      lapses: newSchedule.lapses ?? 0,
       updated_at: now,
     }
     await db.cardStates.put(cardState)
@@ -375,6 +379,7 @@ export async function saveAnswerLocally(
         repetitions: newSchedule.repetitions,
         state: newSchedule.state,
         learning_step: newSchedule.learningStep,
+        lapses: newSchedule.lapses ?? 0,
         updated_at: formatForServer(now),
       },
       created_at: now,
@@ -444,6 +449,7 @@ export async function applyConflictResolution(
       repetitions: conflict.serverData.repetitions,
       state: conflict.serverData.state as LocalCardState['state'],
       learning_step: conflict.serverData.learning_step,
+      lapses: conflict.serverData.lapses ?? 0,
       updated_at: parseServerDate(conflict.serverData.updated_at),
     })
   }

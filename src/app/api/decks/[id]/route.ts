@@ -1,6 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/api/auth'
+import { validateDeckSettings } from '@/lib/srs/settings-validation'
+
+// PUT /api/decks/[id] - Update a deck (name, settings, etc.)
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: deckId } = await params
+    const supabase = await createClient()
+
+    const { user, error: authError } = await requireAuth(supabase)
+    if (authError) return authError
+
+    const body = await request.json()
+    const { name, settings } = body
+
+    // Get deck and verify ownership
+    const { data: deck, error: deckError } = await supabase
+      .from('decks')
+      .select('id, owner_id')
+      .eq('id', deckId)
+      .single()
+
+    if (deckError || !deck) {
+      return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
+    }
+
+    if (deck.owner_id !== user.id) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+    }
+
+    // Validate settings if provided
+    if (settings) {
+      const validation = validateDeckSettings(settings)
+      if (!validation.valid) {
+        return NextResponse.json({ error: validation.errors.join(', ') }, { status: 400 })
+      }
+    }
+
+    // Build update object
+    const updateData: Record<string, unknown> = {}
+    if (name !== undefined) updateData.name = name
+    if (settings !== undefined) updateData.settings = settings
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
+    }
+
+    // Update deck
+    const { data: updatedDeck, error: updateError } = await supabase
+      .from('decks')
+      .update(updateData)
+      .eq('id', deckId)
+      .select()
+      .single()
+
+    if (updateError) {
+      console.error('Error updating deck:', updateError)
+      return NextResponse.json({ error: updateError.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ deck: updatedDeck })
+  } catch (error) {
+    console.error('Error in PUT /api/decks/[id]:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
 
 // DELETE /api/decks/[id] - Delete a deck and all its contents
 export async function DELETE(

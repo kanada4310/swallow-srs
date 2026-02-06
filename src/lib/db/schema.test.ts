@@ -46,7 +46,11 @@ vi.mock('dexie', () => {
 
   class MockDexie {
     version() {
-      return { stores: vi.fn() }
+      const versionObj = {
+        stores: vi.fn(() => versionObj),
+        upgrade: vi.fn(() => versionObj),
+      }
+      return versionObj
     }
     transaction = vi.fn(async (_mode: string, _tables: unknown[], fn: () => Promise<void>) => fn())
     profiles = mockTable

@@ -183,7 +183,7 @@ export function useLocalDeck(deckId: string | null) {
   const [deck, setDeck] = useState<{
     id: string
     name: string
-    settings: { new_cards_per_day: number }
+    settings: Partial<import('@/types/database').DeckSettings>
   } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -253,6 +253,7 @@ export function usePrefetchDeck(deckId: string | null) {
                   repetitions: cs.repetitions,
                   state: cs.state,
                   learning_step: cs.learning_step,
+                  lapses: cs.lapses ?? 0,
                   updated_at: new Date(cs.updated_at),
                 })
               }
@@ -312,6 +313,7 @@ export function usePrefetchAllDecks(deckIds: string[]) {
                     repetitions: cs.repetitions,
                     state: cs.state,
                     learning_step: cs.learning_step,
+                    lapses: cs.lapses ?? 0,
                     updated_at: new Date(cs.updated_at),
                   })
                 }

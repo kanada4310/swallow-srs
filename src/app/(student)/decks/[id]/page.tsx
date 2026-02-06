@@ -273,6 +273,8 @@ export default async function DeckDetailPage({ params }: PageProps) {
         {/* Client Component for Note Management */}
         <DeckDetailClient
           deckId={id}
+          deckName={deckData.deck.name}
+          deckSettings={deckData.deck.settings || {}}
           allDeckIds={deckData.allDeckIds}
           notes={deckData.notes as unknown as BrowsableNote[]}
           totalNoteCount={deckData.totalNoteCount}
