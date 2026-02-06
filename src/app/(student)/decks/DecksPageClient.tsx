@@ -1,14 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { NoteBrowser } from '@/components/deck/NoteBrowser'
-import { NoteEditModal } from '@/components/deck/NoteEditModal'
 import { useOnlineStatus, usePrefetchAllDecks } from '@/lib/db/hooks'
 import { getDecksWithStatsOffline, db } from '@/lib/db/schema'
-import type { NoteType } from '@/types/database'
-import type { BrowsableNote } from '@/components/deck/NoteCard'
 
 interface DeckWithStats {
   id: string
@@ -92,11 +88,10 @@ function flattenTree(nodes: DeckTreeNode[]): DeckTreeNode[] {
 
 interface DecksPageClientProps {
   initialDecks?: DeckWithStats[]
-  noteTypes?: NoteType[]
   userProfile?: { id: string; name: string; role: string }
 }
 
-export function DecksPageClient({ initialDecks, noteTypes: noteTypesProp, userProfile: userProfileProp }: DecksPageClientProps) {
+export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: DecksPageClientProps) {
   const isOnline = useOnlineStatus()
   const [offlineDecks, setOfflineDecks] = useState<DeckWithStats[] | null>(null)
   const [offlineProfile, setOfflineProfile] = useState<{ id: string; name: string; role: string } | null>(null)
@@ -104,16 +99,6 @@ export function DecksPageClient({ initialDecks, noteTypes: noteTypesProp, userPr
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [isDeletingDeck, setIsDeletingDeck] = useState(false)
   const [deckDeleteError, setDeckDeleteError] = useState<string | null>(null)
-
-  // Full note browser state
-  const [showNoteBrowser, setShowNoteBrowser] = useState(false)
-  const [browserNotes, setBrowserNotes] = useState<BrowsableNote[]>([])
-  const [browserTotal, setBrowserTotal] = useState(0)
-  const [isBrowserLoading, setIsBrowserLoading] = useState(false)
-  const [editingNote, setEditingNote] = useState<BrowsableNote | null>(null)
-  const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null)
-
-  const noteTypes = noteTypesProp || []
 
   const hasServerData = initialDecks !== undefined && userProfileProp !== undefined
 
@@ -206,101 +191,6 @@ export function DecksPageClient({ initialDecks, noteTypes: noteTypesProp, userPr
     return content
   }
 
-  // Build deck name lookup
-  const deckNameMap = new Map<string, string>()
-  if (decks) {
-    for (const d of decks) {
-      deckNameMap.set(d.id, d.name)
-    }
-  }
-
-  // Fetch initial notes when opening the browser
-  const loadBrowserNotes = useCallback(async () => {
-    setIsBrowserLoading(true)
-    try {
-      const params = new URLSearchParams({ limit: '50' })
-      const response = await fetch(`/api/notes/search?${params}`)
-      if (response.ok) {
-        const data = await response.json()
-        setBrowserNotes(data.notes || [])
-        setBrowserTotal(data.total || 0)
-      }
-    } catch {
-      // Silent
-    } finally {
-      setIsBrowserLoading(false)
-    }
-  }, [])
-
-  const handleToggleBrowser = () => {
-    if (!showNoteBrowser) {
-      loadBrowserNotes()
-    }
-    setShowNoteBrowser(prev => !prev)
-  }
-
-  const canEdit = userProfile?.role !== 'student'
-
-  const handleDeleteNote = async (noteId: string) => {
-    setDeletingNoteId(noteId)
-    try {
-      const response = await fetch(`/api/notes/${noteId}`, { method: 'DELETE' })
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || '削除に失敗しました')
-      }
-      import('@/lib/db/schema').then(({ deleteNoteLocally }) => {
-        deleteNoteLocally(noteId).catch(console.error)
-      })
-    } finally {
-      setDeletingNoteId(null)
-    }
-  }
-
-  const handleBulkDelete = async (noteIds: string[]) => {
-    const response = await fetch('/api/notes/bulk-delete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ noteIds }),
-    })
-    if (!response.ok) {
-      const data = await response.json()
-      throw new Error(data.error || '削除に失敗しました')
-    }
-    import('@/lib/db/schema').then(({ deleteNotesLocally }) => {
-      deleteNotesLocally(noteIds).catch(console.error)
-    })
-  }
-
-  const handleCopyNotes = async (noteIds: string[], targetDeckId: string) => {
-    const response = await fetch('/api/notes/copy-move', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ noteIds, targetDeckId, action: 'copy' }),
-    })
-    if (!response.ok) {
-      const data = await response.json()
-      throw new Error(data.error || 'コピーに失敗しました')
-    }
-  }
-
-  const handleMoveNotes = async (noteIds: string[], targetDeckId: string) => {
-    const response = await fetch('/api/notes/copy-move', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ noteIds, targetDeckId, action: 'move' }),
-    })
-    if (!response.ok) {
-      const data = await response.json()
-      throw new Error(data.error || '移動に失敗しました')
-    }
-  }
-
-  const handleEditNoteSave = (updatedNote: BrowsableNote) => {
-    setBrowserNotes(prev => prev.map(n => n.id === updatedNote.id ? updatedNote : n))
-    setEditingNote(null)
-  }
-
   if (!hasServerData && isLoadingOffline) {
     return wrapInLayout(<DecksLoadingSkeleton />)
   }
@@ -329,65 +219,6 @@ export function DecksPageClient({ initialDecks, noteTypes: noteTypesProp, userPr
           </Link>
         )}
       </div>
-
-      {/* Full Note Browser Toggle */}
-      <div className="mb-6">
-        <button
-          onClick={handleToggleBrowser}
-          className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-            showNoteBrowser
-              ? 'bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100'
-              : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-          }`}
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          {showNoteBrowser ? '全ノートブラウザを閉じる' : '全デッキのノートを検索・管理'}
-          <svg className={`w-4 h-4 transition-transform ${showNoteBrowser ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-
-        {showNoteBrowser && (
-          <div className="mt-4 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            {isBrowserLoading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="bg-gray-50 rounded-lg p-4 animate-pulse">
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-                    <div className="h-3 bg-gray-100 rounded w-1/2" />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <NoteBrowser
-                initialNotes={browserNotes}
-                initialTotal={browserTotal}
-                noteTypes={noteTypes}
-                deckNameMap={deckNameMap}
-                canEdit={canEdit}
-                onEditNote={(note) => setEditingNote(note)}
-                onDeleteNote={handleDeleteNote}
-                onBulkDelete={handleBulkDelete}
-                onCopyNotes={canEdit ? handleCopyNotes : undefined}
-                onMoveNotes={canEdit ? handleMoveNotes : undefined}
-                deletingNoteId={deletingNoteId}
-              />
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Note Edit Modal */}
-      {editingNote && (
-        <NoteEditModal
-          note={editingNote}
-          noteType={noteTypes.find(nt => nt.id === editingNote.note_type_id) || noteTypes[0]}
-          onSave={handleEditNoteSave}
-          onClose={() => setEditingNote(null)}
-        />
-      )}
 
       {!isOnline && (
         <div className="mb-4 flex items-center gap-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-700">

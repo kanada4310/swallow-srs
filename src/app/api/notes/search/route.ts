@@ -55,6 +55,21 @@ export async function GET(request: NextRequest) {
       if (searchDeckIds.length === 0) {
         return NextResponse.json({ notes: [], total: 0 })
       }
+
+      // Expand to include all subdeck IDs
+      const descendantPromises = searchDeckIds.map(did =>
+        supabase.rpc('get_descendant_deck_ids', { p_deck_id: did })
+      )
+      const descendantResults = await Promise.all(descendantPromises)
+      for (const result of descendantResults) {
+        if (result.data) {
+          for (const row of result.data) {
+            const subId = typeof row === 'string' ? row : (row as { id?: string }).id || String(row)
+            deckIdSet.add(subId)
+          }
+        }
+      }
+      searchDeckIds = Array.from(deckIdSet)
     } else {
       // Verify deck access for first deck (owner or assigned)
       const primaryDeckId = deckId || searchDeckIds[0]
@@ -82,64 +97,100 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Call RPC function for JSONB text search
-    // Try with p_deck_ids array first; fall back to p_deck_id for single deck
+    // Search notes: try RPC with p_deck_ids first, then direct query fallback
     let rpcRows: unknown[] | null = null
     let rpcError: { message: string } | null = null
+    const searchQuery = q.trim()
 
-    const rpcResult = await supabase.rpc('search_notes', {
-      p_deck_id: searchDeckIds.length === 1 ? searchDeckIds[0] : null,
-      p_deck_ids: searchDeckIds.length > 1 ? searchDeckIds : null,
-      p_query: q.trim(),
-      p_note_type_id: noteTypeId || null,
-      p_tag: tag || null,
-      p_sort_order: order,
-      p_offset: offset,
-      p_limit: limit,
-    })
-
-    if (rpcResult.error && rpcResult.error.message?.includes('p_deck_ids')) {
-      // Old RPC doesn't have p_deck_ids - fall back to p_deck_id only
-      const fallback = await supabase.rpc('search_notes', {
-        p_deck_id: searchDeckIds[0] || null,
-        p_query: q.trim(),
+    if (searchDeckIds.length === 1) {
+      // Single deck: use p_deck_id (works with both old and new RPC)
+      const result = await supabase.rpc('search_notes', {
+        p_deck_id: searchDeckIds[0],
+        p_query: searchQuery,
         p_note_type_id: noteTypeId || null,
         p_tag: tag || null,
         p_sort_order: order,
         p_offset: offset,
         p_limit: limit,
       } as Record<string, unknown>)
-      if (fallback.error && fallback.error.message?.includes('p_tag')) {
-        // Even older RPC without p_tag
-        const fallback2 = await supabase.rpc('search_notes', {
-          p_deck_id: searchDeckIds[0] || null,
-          p_query: q.trim(),
+
+      if (result.error && result.error.message?.includes('p_tag')) {
+        // Old RPC without p_tag
+        const fallback = await supabase.rpc('search_notes', {
+          p_deck_id: searchDeckIds[0],
+          p_query: searchQuery,
           p_note_type_id: noteTypeId || null,
           p_sort_order: order,
           p_offset: offset,
           p_limit: limit,
         } as Record<string, unknown>)
-        rpcRows = fallback2.data
-        rpcError = fallback2.error
-      } else {
         rpcRows = fallback.data
         rpcError = fallback.error
+      } else {
+        rpcRows = result.data
+        rpcError = result.error
       }
-    } else if (rpcResult.error && rpcResult.error.message?.includes('p_tag')) {
-      // Has p_deck_ids but not p_tag - shouldn't happen but handle it
-      const fallback = await supabase.rpc('search_notes', {
-        p_deck_id: searchDeckIds.length === 1 ? searchDeckIds[0] : null,
-        p_query: q.trim(),
+    } else {
+      // Multiple decks: try p_deck_ids first
+      const rpcResult = await supabase.rpc('search_notes', {
+        p_deck_id: null,
+        p_deck_ids: searchDeckIds,
+        p_query: searchQuery,
         p_note_type_id: noteTypeId || null,
+        p_tag: tag || null,
         p_sort_order: order,
         p_offset: offset,
         p_limit: limit,
-      } as Record<string, unknown>)
-      rpcRows = fallback.data
-      rpcError = fallback.error
-    } else {
-      rpcRows = rpcResult.data
-      rpcError = rpcResult.error
+      })
+
+      if (!rpcResult.error) {
+        rpcRows = rpcResult.data
+        rpcError = null
+      } else {
+        // p_deck_ids failed (function overloading issue)
+        // Fallback: call old RPC per-deck and merge results
+        console.warn('search_notes with p_deck_ids failed, using per-deck fallback:', rpcResult.error.message)
+
+        const perDeckResults = await Promise.all(
+          searchDeckIds.map(did =>
+            supabase.rpc('search_notes', {
+              p_deck_id: did,
+              p_query: searchQuery,
+              p_note_type_id: noteTypeId || null,
+              p_sort_order: order,
+              p_offset: 0,
+              p_limit: 1000,
+            } as Record<string, unknown>)
+          )
+        )
+
+        // Merge all results
+        type RpcRow = { id: string; deck_id?: string; field_values: Record<string, string>; note_type_id: string; generated_content: unknown; tags?: string[]; created_at: string; total_count: number }
+        let allRows: RpcRow[] = []
+        for (const result of perDeckResults) {
+          if (result.data) {
+            allRows.push(...(result.data as RpcRow[]))
+          }
+        }
+
+        // Apply tag filter (old RPC doesn't support p_tag)
+        if (tag) {
+          allRows = allRows.filter(r => r.tags && r.tags.includes(tag))
+        }
+
+        // Sort merged results
+        allRows.sort((a, b) => {
+          const ta = new Date(a.created_at).getTime()
+          const tb = new Date(b.created_at).getTime()
+          return order === 'asc' ? ta - tb : tb - ta
+        })
+
+        // Apply pagination on merged results
+        const totalCount = allRows.length
+        const paginatedRows = allRows.slice(offset, offset + limit)
+        rpcRows = paginatedRows.map(r => ({ ...r, total_count: totalCount }))
+        rpcError = null
+      }
     }
 
     if (rpcError) {

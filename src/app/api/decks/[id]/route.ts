@@ -35,9 +35,9 @@ export async function PUT(
 
     // Validate settings if provided
     if (settings) {
-      const validation = validateDeckSettings(settings)
-      if (!validation.valid) {
-        return NextResponse.json({ error: validation.errors.join(', ') }, { status: 400 })
+      const errors = validateDeckSettings(settings)
+      if (errors.length > 0) {
+        return NextResponse.json({ error: errors.map(e => e.message).join(', ') }, { status: 400 })
       }
     }
 

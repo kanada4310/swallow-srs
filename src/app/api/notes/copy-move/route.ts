@@ -90,8 +90,6 @@ export async function POST(request: NextRequest) {
 
     if (action === 'move') {
       // Move: update deck_id on notes and their cards
-      const noteIdList = sourceNotes.map(n => n.id)
-
       // Filter out notes already in target deck
       const notesToMove = sourceNotes.filter(n => n.deck_id !== targetDeckId)
       if (notesToMove.length === 0) {
