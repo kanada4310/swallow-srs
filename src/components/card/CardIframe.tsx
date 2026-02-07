@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useId } from 'react'
+import { useState, useEffect, useRef, useId, useCallback } from 'react'
 
 interface CardIframeProps {
   html: string
@@ -52,6 +52,8 @@ function buildSrcdoc(html: string, css: string, frameId: string): string {
     new ResizeObserver(sendHeight).observe(document.body);
   }
   sendHeight();
+  setTimeout(sendHeight, 50);
+  setTimeout(sendHeight, 200);
 })();
 </script>
 </body>
@@ -63,36 +65,45 @@ export function CardIframe({ html, css, minHeight = 60, className }: CardIframeP
   const [height, setHeight] = useState(minHeight)
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
-  useEffect(() => {
-    function handleMessage(e: MessageEvent) {
-      if (
-        e.data &&
-        e.data.type === 'card-iframe-resize' &&
-        e.data.frameId === frameId
-      ) {
-        const newHeight = Math.max(e.data.height, minHeight)
-        setHeight(newHeight)
-      }
+  const handleMessage = useCallback((e: MessageEvent) => {
+    if (
+      e.data &&
+      e.data.type === 'card-iframe-resize' &&
+      e.data.frameId === frameId
+    ) {
+      const newHeight = Math.max(e.data.height, minHeight)
+      setHeight(newHeight)
     }
+  }, [frameId, minHeight])
+
+  // Listen for resize messages - register ONCE on mount, stable via useCallback
+  useEffect(() => {
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
-  }, [frameId, minHeight])
+  }, [handleMessage])
 
   // Reset height when content changes
   useEffect(() => {
     setHeight(minHeight)
   }, [html, css, minHeight])
 
-  const srcdoc = buildSrcdoc(html, css, frameId)
+  // Programmatically set srcdoc via ref to ensure browser re-renders
+  useEffect(() => {
+    const iframe = iframeRef.current
+    if (iframe) {
+      iframe.srcdoc = buildSrcdoc(html, css, frameId)
+    }
+  }, [html, css, frameId])
 
   return (
     <iframe
       ref={iframeRef}
-      srcDoc={srcdoc}
+      srcDoc={buildSrcdoc(html, css, frameId)}
       sandbox="allow-scripts allow-popups"
       style={{ height: `${height}px`, minHeight: `${minHeight}px` }}
       className={`w-full border-0 ${className || ''}`}
       title="Card content"
+      scrolling="no"
     />
   )
 }

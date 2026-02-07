@@ -105,7 +105,7 @@ export function StudyCard({
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 min-h-[300px] flex flex-col">
         {/* Front */}
         <div className="flex-1 p-8 flex flex-col items-center justify-center relative">
-          <CardIframe html={renderedFront} css={template.css} className="text-xl" />
+          <CardIframe key="front" html={renderedFront} css={template.css} className="text-xl" />
           {frontTtsFields.length > 0 && (
             <div className="mt-4 flex gap-2">
               {frontTtsFields.map(fieldName => (
@@ -127,7 +127,7 @@ export function StudyCard({
           <>
             <hr className="border-gray-200" />
             <div className="flex-1 p-8 flex flex-col items-center justify-center bg-gray-50">
-              <CardIframe html={renderedBack} css={template.css} className="text-xl" />
+              <CardIframe key="back" html={renderedBack} css={template.css} className="text-xl" />
               {backTtsFields.length > 0 && (
                 <div className="mt-4 flex gap-2">
                   {backTtsFields.map(fieldName => (
