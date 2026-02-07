@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { renderTemplate, type FieldValues } from '@/lib/template'
+import { CardIframe } from '@/components/card/CardIframe'
 import type { FieldDefinition } from '@/types/database'
 
 interface TemplatePreviewProps {
@@ -47,12 +48,12 @@ export function TemplatePreview({ frontTemplate, backTemplate, css, fields }: Te
   const renderedContent = useMemo(() => {
     try {
       const template = side === 'front' ? debouncedFront : debouncedBack
-      return renderTemplate(template, sampleData, debouncedCss, {
+      return renderTemplate(template, sampleData, {
         side,
         clozeNumber: 1,
       })
     } catch {
-      return '<p class="text-red-500">テンプレートエラー</p>'
+      return '<p style="color: #ef4444;">テンプレートエラー</p>'
     }
   }, [debouncedFront, debouncedBack, debouncedCss, sampleData, side])
 
@@ -115,10 +116,7 @@ export function TemplatePreview({ frontTemplate, backTemplate, css, fields }: Te
           {side === 'front' ? '表面プレビュー' : '裏面プレビュー'}
         </div>
         <div className="bg-white min-h-[200px] p-6 flex items-center justify-center">
-          <div
-            className="text-center w-full"
-            dangerouslySetInnerHTML={{ __html: renderedContent }}
-          />
+          <CardIframe html={renderedContent} css={debouncedCss} minHeight={100} className="w-full" />
         </div>
       </div>
 

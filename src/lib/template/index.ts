@@ -1,4 +1,3 @@
-export { sanitizeHtml, sanitizeCss } from './sanitizer'
 export {
   renderTemplate,
   countClozeNumbers,

@@ -11,7 +11,7 @@ describe('Template Renderer', () => {
     it('should replace simple field placeholders', () => {
       const template = '<div>{{Front}}</div>'
       const fields: FieldValues = { Front: 'apple' }
-      const result = renderTemplate(template, fields, '', { side: 'front' })
+      const result = renderTemplate(template, fields, { side: 'front' })
 
       expect(result).toContain('apple')
     })
@@ -19,7 +19,7 @@ describe('Template Renderer', () => {
     it('should replace multiple fields', () => {
       const template = '<div>{{Front}}</div><hr><div>{{Back}}</div>'
       const fields: FieldValues = { Front: 'apple', Back: 'りんご' }
-      const result = renderTemplate(template, fields, '', { side: 'front' })
+      const result = renderTemplate(template, fields, { side: 'front' })
 
       expect(result).toContain('apple')
       expect(result).toContain('りんご')
@@ -28,7 +28,7 @@ describe('Template Renderer', () => {
     it('should handle missing fields gracefully', () => {
       const template = '<div>{{Front}}</div><div>{{Missing}}</div>'
       const fields: FieldValues = { Front: 'apple' }
-      const result = renderTemplate(template, fields, '', { side: 'front' })
+      const result = renderTemplate(template, fields, { side: 'front' })
 
       expect(result).toContain('apple')
       expect(result).not.toContain('{{Missing}}')
@@ -39,7 +39,7 @@ describe('Template Renderer', () => {
     it('should show content when field is not empty', () => {
       const template = '{{#Extra}}<div>{{Extra}}</div>{{/Extra}}'
       const fields: FieldValues = { Extra: 'Some extra info' }
-      const result = renderTemplate(template, fields, '', { side: 'front' })
+      const result = renderTemplate(template, fields, { side: 'front' })
 
       expect(result).toContain('Some extra info')
     })
@@ -47,7 +47,7 @@ describe('Template Renderer', () => {
     it('should hide content when field is empty', () => {
       const template = '{{#Extra}}<div>Extra: {{Extra}}</div>{{/Extra}}'
       const fields: FieldValues = { Extra: '' }
-      const result = renderTemplate(template, fields, '', { side: 'front' })
+      const result = renderTemplate(template, fields, { side: 'front' })
 
       expect(result).not.toContain('Extra:')
     })
@@ -55,7 +55,7 @@ describe('Template Renderer', () => {
     it('should handle inverse conditional sections', () => {
       const template = '{{^Extra}}<div>No extra info</div>{{/Extra}}'
       const fields: FieldValues = { Extra: '' }
-      const result = renderTemplate(template, fields, '', { side: 'front' })
+      const result = renderTemplate(template, fields, { side: 'front' })
 
       expect(result).toContain('No extra info')
     })
@@ -65,7 +65,7 @@ describe('Template Renderer', () => {
     it('should show placeholder on front side', () => {
       const template = '{{cloze:Text}}'
       const fields: FieldValues = { Text: '{{c1::apple}} is a fruit' }
-      const result = renderTemplate(template, fields, '', { side: 'front', clozeNumber: 1 })
+      const result = renderTemplate(template, fields, { side: 'front', clozeNumber: 1 })
 
       expect(result).toContain('[...]')
       expect(result).toContain('is a fruit')
@@ -75,7 +75,7 @@ describe('Template Renderer', () => {
     it('should show answer on back side', () => {
       const template = '{{cloze:Text}}'
       const fields: FieldValues = { Text: '{{c1::apple}} is a fruit' }
-      const result = renderTemplate(template, fields, '', { side: 'back', clozeNumber: 1 })
+      const result = renderTemplate(template, fields, { side: 'back', clozeNumber: 1 })
 
       expect(result).toContain('apple')
       expect(result).toContain('is a fruit')
@@ -84,7 +84,7 @@ describe('Template Renderer', () => {
     it('should show hint when provided', () => {
       const template = '{{cloze:Text}}'
       const fields: FieldValues = { Text: '{{c1::apple::fruit}} is a fruit' }
-      const result = renderTemplate(template, fields, '', { side: 'front', clozeNumber: 1 })
+      const result = renderTemplate(template, fields, { side: 'front', clozeNumber: 1 })
 
       expect(result).toContain('[fruit]')
       expect(result).not.toContain('apple')
@@ -95,35 +95,14 @@ describe('Template Renderer', () => {
       const fields: FieldValues = { Text: '{{c1::apple}} and {{c2::banana}}' }
 
       // Cloze 1 front
-      const result1 = renderTemplate(template, fields, '', { side: 'front', clozeNumber: 1 })
+      const result1 = renderTemplate(template, fields, { side: 'front', clozeNumber: 1 })
       expect(result1).toContain('[...]')
       expect(result1).toContain('banana')
 
       // Cloze 2 front
-      const result2 = renderTemplate(template, fields, '', { side: 'front', clozeNumber: 2 })
+      const result2 = renderTemplate(template, fields, { side: 'front', clozeNumber: 2 })
       expect(result2).toContain('apple')
       expect(result2).toContain('[...]')
-    })
-  })
-
-  describe('renderTemplate - CSS handling', () => {
-    it('should include CSS in style tag', () => {
-      const template = '<div>{{Front}}</div>'
-      const fields: FieldValues = { Front: 'apple' }
-      const css = '.front { color: red; }'
-      const result = renderTemplate(template, fields, css, { side: 'front' })
-
-      expect(result).toContain('<style>')
-      expect(result).toContain('color: red')
-    })
-
-    it('should wrap content in card div when CSS is provided', () => {
-      const template = '<div>{{Front}}</div>'
-      const fields: FieldValues = { Front: 'apple' }
-      const css = '.card { padding: 10px; }'
-      const result = renderTemplate(template, fields, css, { side: 'front' })
-
-      expect(result).toContain('<div class="card">')
     })
   })
 

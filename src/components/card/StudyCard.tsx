@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { Ease } from '@/lib/srs/scheduler'
 import { renderTemplate, type FieldValues } from '@/lib/template'
+import { CardIframe } from '@/components/card/CardIframe'
 import { AudioButton } from '@/components/audio/AudioButton'
 import type { GeneratedContent, FieldDefinition } from '@/types/database'
 
@@ -35,24 +36,22 @@ export function StudyCard({
 }: StudyCardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
 
-  // Render templates with sanitization
+  // Render templates (pure template processing, no sanitization)
   const renderedFront = useMemo(() => {
     return renderTemplate(
       template.front,
       fieldValues,
-      template.css,
       { side: 'front', clozeNumber }
     )
-  }, [template.front, template.css, fieldValues, clozeNumber])
+  }, [template.front, fieldValues, clozeNumber])
 
   const renderedBack = useMemo(() => {
     return renderTemplate(
       template.back,
       fieldValues,
-      template.css,
       { side: 'back', clozeNumber }
     )
-  }, [template.back, template.css, fieldValues, clozeNumber])
+  }, [template.back, fieldValues, clozeNumber])
 
   // Determine which fields to show audio buttons for based on field settings
   const ttsEnabledFields = useMemo(() => {
@@ -106,10 +105,7 @@ export function StudyCard({
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 min-h-[300px] flex flex-col">
         {/* Front */}
         <div className="flex-1 p-8 flex flex-col items-center justify-center relative">
-          <div
-            className="text-xl text-center w-full"
-            dangerouslySetInnerHTML={{ __html: renderedFront }}
-          />
+          <CardIframe html={renderedFront} css={template.css} className="text-xl" />
           {frontTtsFields.length > 0 && (
             <div className="mt-4 flex gap-2">
               {frontTtsFields.map(fieldName => (
@@ -131,10 +127,7 @@ export function StudyCard({
           <>
             <hr className="border-gray-200" />
             <div className="flex-1 p-8 flex flex-col items-center justify-center bg-gray-50">
-              <div
-                className="text-xl text-center w-full"
-                dangerouslySetInnerHTML={{ __html: renderedBack }}
-              />
+              <CardIframe html={renderedBack} css={template.css} className="text-xl" />
               {backTtsFields.length > 0 && (
                 <div className="mt-4 flex gap-2">
                   {backTtsFields.map(fieldName => (

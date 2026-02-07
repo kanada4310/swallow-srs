@@ -1,5 +1,3 @@
-import { sanitizeHtml, sanitizeCss } from './sanitizer'
-
 export interface FieldValues {
   [fieldName: string]: string
 }
@@ -14,11 +12,11 @@ export interface RenderOptions {
 /**
  * テンプレートをレンダリングする
  * Anki互換のテンプレート構文をサポート
+ * CSSやサニタイズは行わない（CardIframeのiframe srcdocで隔離される）
  */
 export function renderTemplate(
   template: string,
   fieldValues: FieldValues,
-  css: string = '',
   options: RenderOptions
 ): string {
   let html = template
@@ -34,15 +32,6 @@ export function renderTemplate(
 
   // 4. 単純なフィールド置換（{{FieldName}}）
   html = processSimpleFields(html, fieldValues)
-
-  // 5. HTMLサニタイズ
-  html = sanitizeHtml(html)
-
-  // 6. CSSサニタイズとスタイル適用
-  const sanitizedCss = sanitizeCss(css)
-  if (sanitizedCss) {
-    html = `<style>${sanitizedCss}</style><div class="card">${html}</div>`
-  }
 
   return html
 }
