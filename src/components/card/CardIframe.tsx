@@ -62,8 +62,14 @@ function buildSrcdoc(html: string, css: string, frameId: string): string {
 
 export function CardIframe({ html, css, minHeight = 60, className }: CardIframeProps) {
   const frameId = useId()
+  const [isMounted, setIsMounted] = useState(false)
   const [height, setHeight] = useState(minHeight)
   const iframeRef = useRef<HTMLIFrameElement>(null)
+
+  // Client-only: avoid SSR hydration mismatch with iframe srcDoc
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const handleMessage = useCallback((e: MessageEvent) => {
     if (
@@ -76,7 +82,7 @@ export function CardIframe({ html, css, minHeight = 60, className }: CardIframeP
     }
   }, [frameId, minHeight])
 
-  // Listen for resize messages - register ONCE on mount, stable via useCallback
+  // Listen for resize messages
   useEffect(() => {
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
@@ -94,6 +100,16 @@ export function CardIframe({ html, css, minHeight = 60, className }: CardIframeP
       iframe.srcdoc = buildSrcdoc(html, css, frameId)
     }
   }, [html, css, frameId])
+
+  // SSR placeholder - prevents hydration mismatch
+  if (!isMounted) {
+    return (
+      <div
+        style={{ minHeight: `${minHeight}px` }}
+        className={`w-full ${className || ''}`}
+      />
+    )
+  }
 
   return (
     <iframe
