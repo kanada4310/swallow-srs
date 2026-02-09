@@ -103,66 +103,63 @@ export function StudyCard({
     <div className="w-full max-w-2xl mx-auto">
       {/* Card */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 min-h-[300px] flex flex-col">
-        {/* Front */}
-        <div className="flex-1 p-8 flex flex-col items-center justify-center relative">
-          <CardIframe key="front" html={renderedFront} css={template.css} className="text-xl" />
-          {frontTtsFields.length > 0 && (
-            <div className="mt-4 flex gap-2">
-              {frontTtsFields.map(fieldName => (
-                <AudioButton
-                  key={fieldName}
-                  noteId={noteId}
-                  fieldName={fieldName}
-                  text={fieldValues[fieldName] || ''}
-                  audioUrl={audioUrls?.[fieldName]}
-                  size="md"
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {!isFlipped ? (
+          /* Front only */
+          <div className="flex-1 p-8 flex flex-col items-center justify-center relative">
+            <CardIframe key="front" html={renderedFront} css={template.css} className="text-xl" />
+            {frontTtsFields.length > 0 && (
+              <div className="mt-4 flex gap-2">
+                {frontTtsFields.map(fieldName => (
+                  <AudioButton
+                    key={fieldName}
+                    noteId={noteId}
+                    fieldName={fieldName}
+                    text={fieldValues[fieldName] || ''}
+                    audioUrl={audioUrls?.[fieldName]}
+                    size="md"
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Back only (back template is self-contained, includes front content) */
+          <div className="flex-1 p-8 flex flex-col items-center justify-center">
+            <CardIframe key="back" html={renderedBack} css={template.css} className="text-xl" />
+            {backTtsFields.length > 0 && (
+              <div className="mt-4 flex gap-2">
+                {backTtsFields.map(fieldName => (
+                  <AudioButton
+                    key={fieldName}
+                    noteId={noteId}
+                    fieldName={fieldName}
+                    text={fieldValues[fieldName] || ''}
+                    audioUrl={audioUrls?.[fieldName]}
+                    size="md"
+                  />
+                ))}
+              </div>
+            )}
 
-        {/* Divider and Back (when flipped) */}
-        {isFlipped && (
-          <>
-            <hr className="border-gray-200" />
-            <div className="flex-1 p-8 flex flex-col items-center justify-center bg-gray-50">
-              <CardIframe key="back" html={renderedBack} css={template.css} className="text-xl" />
-              {backTtsFields.length > 0 && (
-                <div className="mt-4 flex gap-2">
-                  {backTtsFields.map(fieldName => (
-                    <AudioButton
-                      key={fieldName}
-                      noteId={noteId}
-                      fieldName={fieldName}
-                      text={fieldValues[fieldName] || ''}
-                      audioUrl={audioUrls?.[fieldName]}
-                      size="md"
-                    />
+            {/* Generated Examples */}
+            {generatedContent && generatedContent.examples && generatedContent.examples.length > 0 && (
+              <div className="mt-6 w-full max-w-md">
+                <p className="text-xs font-medium text-purple-600 mb-2 flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  例文
+                </p>
+                <ul className="space-y-2">
+                  {generatedContent.examples.map((example, idx) => (
+                    <li key={idx} className="text-sm text-gray-600 pl-3 border-l-2 border-purple-300">
+                      {example}
+                    </li>
                   ))}
-                </div>
-              )}
-
-              {/* Generated Examples */}
-              {generatedContent && generatedContent.examples && generatedContent.examples.length > 0 && (
-                <div className="mt-6 w-full max-w-md">
-                  <p className="text-xs font-medium text-purple-600 mb-2 flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    例文
-                  </p>
-                  <ul className="space-y-2">
-                    {generatedContent.examples.map((example, idx) => (
-                      <li key={idx} className="text-sm text-gray-600 pl-3 border-l-2 border-purple-300">
-                        {example}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          </>
+                </ul>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
