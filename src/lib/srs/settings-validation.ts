@@ -118,5 +118,17 @@ export function validateDeckSettings(raw: Partial<DeckSettings>): ValidationErro
     }
   }
 
+  if (raw.answer_time_limit !== undefined) {
+    if (!Number.isInteger(raw.answer_time_limit) || raw.answer_time_limit < 0 || raw.answer_time_limit > 999) {
+      errors.push({ field: 'answer_time_limit', message: '回答制限時間は0〜999の整数で指定してください' })
+    }
+  }
+
+  if (raw.timer_action !== undefined) {
+    if (!['flip', 'auto_again', 'none'].includes(raw.timer_action)) {
+      errors.push({ field: 'timer_action', message: 'タイマーアクションが不正です' })
+    }
+  }
+
   return errors
 }

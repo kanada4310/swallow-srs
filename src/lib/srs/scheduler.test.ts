@@ -478,6 +478,26 @@ describe('SRS Scheduler', () => {
     })
   })
 
+  describe('Timer settings defaults', () => {
+    it('should include timer settings in defaults', () => {
+      const defaults = getDefaultDeckSettings()
+      expect(defaults.answer_time_limit).toBe(0)
+      expect(defaults.timer_action).toBe('none')
+    })
+
+    it('should resolve timer settings from partial', () => {
+      const resolved = resolveDeckSettings({ answer_time_limit: 30, timer_action: 'flip' })
+      expect(resolved.answer_time_limit).toBe(30)
+      expect(resolved.timer_action).toBe('flip')
+    })
+
+    it('should use defaults when timer settings are not provided', () => {
+      const resolved = resolveDeckSettings({})
+      expect(resolved.answer_time_limit).toBe(0)
+      expect(resolved.timer_action).toBe('none')
+    })
+  })
+
   describe('getNextIntervalPreview with settings', () => {
     it('should respect settings in preview', () => {
       const schedule: CardSchedule = {

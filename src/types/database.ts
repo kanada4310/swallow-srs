@@ -99,6 +99,10 @@ export interface DeckSettings {
   // === 表示順 ===
   new_review_mix: 'mix' | 'new_first' | 'review_first'  // デフォルト: 'review_first'
   review_sort: 'due_date' | 'due_date_random' | 'random' // デフォルト: 'due_date'
+
+  // === タイマー ===
+  answer_time_limit: number                      // 回答制限時間（秒）。デフォルト: 0（無効）
+  timer_action: 'flip' | 'auto_again' | 'none'  // 時間切れ時のアクション。デフォルト: 'none'
 }
 
 export interface Deck {

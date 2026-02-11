@@ -9,7 +9,7 @@ interface DeckAdvancedSettingsProps {
   onChange: (settings: Partial<DeckSettings>) => void
 }
 
-type TabKey = 'new' | 'review' | 'lapse' | 'order'
+type TabKey = 'new' | 'review' | 'lapse' | 'order' | 'timer'
 
 // Number input component that allows free editing and validates on blur
 function NumberInput({
@@ -92,6 +92,7 @@ export function DeckAdvancedSettings({ settings, onChange }: DeckAdvancedSetting
     { key: 'review', label: '復習' },
     { key: 'lapse', label: '失念' },
     { key: 'order', label: '表示順' },
+    { key: 'timer', label: 'タイマー' },
   ]
 
   return (
@@ -332,6 +333,33 @@ export function DeckAdvancedSettings({ settings, onChange }: DeckAdvancedSetting
                     <option value="due_date">期日順</option>
                     <option value="due_date_random">期日順（同日ランダム）</option>
                     <option value="random">ランダム</option>
+                  </select>
+                </SettingField>
+              </>
+            )}
+
+            {activeTab === 'timer' && (
+              <>
+                <SettingField label="回答制限時間（秒）" description="0でタイマー無効。カード表示からのカウントダウン秒数を設定">
+                  <NumberInput
+                    value={resolved.answer_time_limit}
+                    onChange={v => update('answer_time_limit', v)}
+                    min={0}
+                    max={999}
+                    className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  />
+                </SettingField>
+
+                <SettingField label="時間切れ時のアクション" description="表示のみ: カウントダウンのみ / 自動めくり: カードを自動でめくる / 自動「もう一度」: めくって自動回答">
+                  <select
+                    value={resolved.timer_action}
+                    onChange={e => update('timer_action', e.target.value as 'flip' | 'auto_again' | 'none')}
+                    disabled={resolved.answer_time_limit === 0}
+                    className="w-48 px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50"
+                  >
+                    <option value="none">表示のみ</option>
+                    <option value="flip">自動めくり</option>
+                    <option value="auto_again">自動「もう一度」</option>
                   </select>
                 </SettingField>
               </>

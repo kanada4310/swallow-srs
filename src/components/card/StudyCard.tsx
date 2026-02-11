@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Ease } from '@/lib/srs/scheduler'
 import { renderTemplate, type FieldValues } from '@/lib/template'
 import { CardIframe } from '@/components/card/CardIframe'
@@ -21,6 +21,9 @@ interface StudyCardProps {
   clozeNumber?: number
   intervalPreviews: Record<Ease, string>
   onAnswer: (ease: Ease) => void
+  autoFlip?: boolean
+  onFlipped?: () => void
+  autoAgainCountdown?: number | null
 }
 
 export function StudyCard({
@@ -33,6 +36,9 @@ export function StudyCard({
   clozeNumber,
   intervalPreviews,
   onAnswer,
+  autoFlip,
+  onFlipped,
+  autoAgainCountdown,
 }: StudyCardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
 
@@ -90,8 +96,17 @@ export function StudyCard({
     return []
   }, [ttsEnabledFields, fieldValues, frontTtsFields])
 
+  // Auto-flip when triggered by timer
+  useEffect(() => {
+    if (autoFlip && !isFlipped) {
+      setIsFlipped(true)
+      onFlipped?.()
+    }
+  }, [autoFlip]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleFlip = () => {
     setIsFlipped(true)
+    onFlipped?.()
   }
 
   const handleAnswer = (ease: Ease) => {
@@ -175,10 +190,11 @@ export function StudyCard({
         ) : (
           <div className="grid grid-cols-4 gap-2">
             <AnswerButton
-              label="もう一度"
+              label={autoAgainCountdown != null ? `もう一度 (${autoAgainCountdown})` : "もう一度"}
               interval={intervalPreviews[Ease.Again]}
               color="red"
               onClick={() => handleAnswer(Ease.Again)}
+              highlight={autoAgainCountdown != null}
             />
             <AnswerButton
               label="難しい"
@@ -210,9 +226,10 @@ interface AnswerButtonProps {
   interval: string
   color: 'red' | 'orange' | 'green' | 'blue'
   onClick: () => void
+  highlight?: boolean
 }
 
-function AnswerButton({ label, interval, color, onClick }: AnswerButtonProps) {
+function AnswerButton({ label, interval, color, onClick, highlight }: AnswerButtonProps) {
   const colorClasses = {
     red: 'bg-red-500 hover:bg-red-600',
     orange: 'bg-orange-500 hover:bg-orange-600',
@@ -223,7 +240,7 @@ function AnswerButton({ label, interval, color, onClick }: AnswerButtonProps) {
   return (
     <button
       onClick={onClick}
-      className={`py-3 px-2 ${colorClasses[color]} text-white rounded-lg transition-colors flex flex-col items-center`}
+      className={`py-3 px-2 ${colorClasses[color]} text-white rounded-lg transition-colors flex flex-col items-center ${highlight ? 'ring-2 ring-red-300 ring-offset-1 animate-pulse' : ''}`}
     >
       <span className="text-sm font-medium">{label}</span>
       <span className="text-xs opacity-80">{interval}</span>

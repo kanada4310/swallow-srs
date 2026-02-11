@@ -374,14 +374,18 @@ Anki本家と同様に、Again/Hardで評価したカードを同一セッショ
 - [x] StudyCard: renderedFront を renderedBack の計算時に渡す
 - [x] テスト追加（4件: Basic/Cloze/表面での空文字/未指定時の空文字）
 
-### 8.3 タイマー機能
+### 8.3 タイマー機能 ✅ 完了
 学習中のカウントダウンタイマー。時間切れ時に自動フリップまたは自動Again回答。
 
-- [ ] DeckSettings に answer_time_limit（秒）追加
-- [ ] DeckSettings に timer_action（flip / auto_again / none）追加
-- [ ] StudySession にカウントダウンUIコンポーネント追加
-- [ ] 時間切れ時の自動アクション実装
-- [ ] タイマー表示/非表示の切り替え設定
+- [x] DeckSettings に answer_time_limit（秒）/ timer_action（flip / auto_again / none）追加
+- [x] settings-validation にバリデーション追加
+- [x] DeckAdvancedSettings に「タイマー」タブ追加
+- [x] StudyCard に autoFlip / onFlipped props追加
+- [x] CountdownTimer コンポーネント（色分けプログレスバー + 残り秒数）
+- [x] 時間切れ時の自動アクション実装
+  - flip: カード自動めくり
+  - auto_again: めくり → 5秒カウントダウン → 自動Again（手動回答でキャンセル可）
+  - none: カウントダウン表示のみ
 
 ### 8.4 回答取り消し（Undo）機能
 誤タップ時に直前の回答を取り消せる。
@@ -623,15 +627,14 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 
 ## 現在の進捗
 
-**Phase**: Phase 8 学習セッション改善（進行中: 8.1, 8.2 完了）
+**Phase**: Phase 8 学習セッション改善（進行中: 8.1, 8.2, 8.3 完了）
 **最終更新**: 2026-02-11
-**次のタスク**: Phase 8.3 タイマー機能
+**次のタスク**: Phase 8.4 回答取り消し（Undo）機能
 
 ### 次回セッションでやること
 
-1. **Phase 8.3**: タイマー機能
-2. **Phase 8.4**: 回答取り消し（Undo）機能
-3. **Phase 8.5**: スワイプジェスチャー
+1. **Phase 8.4**: 回答取り消し（Undo）機能
+2. **Phase 8.5**: スワイプジェスチャー
 
 ### 完了済み
 - [x] プロジェクト設計（DB、SRS、ノートタイプ等）
@@ -696,3 +699,5 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 - [x] Phase 8.1 動作確認完了
 - [x] Phase 8.2 {{FrontSide}}プレースホルダー実装（renderer.ts、StudyCard、テスト4件）
 - [x] Phase 8.2 動作確認完了
+- [x] Phase 8.3 タイマー機能（CountdownTimer、autoFlip、auto_again 5秒カウントダウン、設定UI）
+- [x] Phase 8.3 動作確認完了

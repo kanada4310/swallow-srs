@@ -54,6 +54,8 @@ export function getDefaultDeckSettings(): DeckSettings {
     leech_action: 'tag',
     new_review_mix: 'review_first',
     review_sort: 'due_date',
+    answer_time_limit: 0,
+    timer_action: 'none',
   }
 }
 

@@ -60,8 +60,12 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
   const [isOnline, setIsOnline] = useState(true)
   const [leechNotification, setLeechNotification] = useState<string | null>(null)
   const [isWaiting, setIsWaiting] = useState(false)
+  const [autoFlipTrigger, setAutoFlipTrigger] = useState(false)
+  const [isCardFlipped, setIsCardFlipped] = useState(false)
+  const [autoAgainCountdown, setAutoAgainCountdown] = useState<number | null>(null)
   const cardStartTime = useRef<number>(Date.now())
   const waitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const handleAnswerRef = useRef<(ease: Ease) => void>(() => {})
 
   const settings = resolveDeckSettings(deckSettings)
 
@@ -110,9 +114,12 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
     }
   }, [])
 
-  // Reset timer when current card changes
+  // Reset timer and flip state when current card changes
   useEffect(() => {
     cardStartTime.current = Date.now()
+    setAutoFlipTrigger(false)
+    setIsCardFlipped(false)
+    setAutoAgainCountdown(null)
   }, [currentCard])
 
   // Try to sync when coming back online
@@ -178,6 +185,31 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
     }
   }, [learningQueue, currentCard, isWaiting, fromLearningQueue])
 
+  // Auto-again countdown: decrement every second, auto-answer at 0
+  useEffect(() => {
+    if (autoAgainCountdown === null || autoAgainCountdown <= 0) {
+      if (autoAgainCountdown === 0) {
+        handleAnswerRef.current(Ease.Again)
+      }
+      return
+    }
+    const timer = setTimeout(() => {
+      setAutoAgainCountdown(prev => prev !== null ? prev - 1 : null)
+    }, 1000)
+    return () => clearTimeout(timer)
+  }, [autoAgainCountdown])
+
+  // Timer time-up handler
+  const handleTimeUp = useCallback(() => {
+    if (settings.timer_action === 'flip') {
+      setAutoFlipTrigger(true)
+    } else if (settings.timer_action === 'auto_again') {
+      setAutoFlipTrigger(true)
+      setAutoAgainCountdown(5)
+    }
+    // timer_action === 'none': do nothing
+  }, [settings.timer_action])
+
   const handleAnswer = (ease: Ease) => {
     if (!currentCard || isSubmitting) return
 
@@ -240,6 +272,11 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
       setLearningQueue(newLearningQueue)
       setMainIndex(newMainIndex)
 
+      // Reset timer state before switching cards (must be synchronous, not in useEffect)
+      setAutoFlipTrigger(false)
+      setIsCardFlipped(false)
+      setAutoAgainCountdown(null)
+
       // Pick next card
       const next = pickNextCard(newMainIndex, newLearningQueue)
       if (next.card) {
@@ -293,6 +330,9 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
       setIsSubmitting(false)
     }
   }
+
+  // Keep handleAnswerRef in sync
+  handleAnswerRef.current = handleAnswer
 
   // Session complete (no current card and not waiting)
   const isSessionComplete = !currentCard && !isWaiting && mainIndex >= mainQueue.length && learningQueue.length === 0
@@ -457,6 +497,16 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
         </div>
       </div>
 
+      {/* Countdown Timer */}
+      {settings.answer_time_limit > 0 && (
+        <CountdownTimer
+          key={'timer-' + currentCard.id + '-' + stats.reviewed}
+          totalSeconds={settings.answer_time_limit}
+          onTimeUp={handleTimeUp}
+          isPaused={isCardFlipped || isSubmitting}
+        />
+      )}
+
       {/* Card */}
       <StudyCard
         key={currentCard.id + '-' + stats.reviewed}
@@ -469,6 +519,9 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
         clozeNumber={currentCard.clozeNumber}
         intervalPreviews={intervalPreviews}
         onAnswer={handleAnswer}
+        autoFlip={autoFlipTrigger}
+        onFlipped={() => setIsCardFlipped(true)}
+        autoAgainCountdown={autoAgainCountdown}
       />
     </div>
   )
@@ -505,6 +558,91 @@ function WaitingCountdown({ seconds, learningCount }: { seconds: number; learnin
       <p className="text-sm text-gray-500">
         残り {learningCount} 枚のカードが再提示されます
       </p>
+    </div>
+  )
+}
+
+/** Countdown timer bar for answer time limit */
+function CountdownTimer({
+  totalSeconds,
+  onTimeUp,
+  isPaused,
+}: {
+  totalSeconds: number
+  onTimeUp: () => void
+  isPaused: boolean
+}) {
+  const [remaining, setRemaining] = useState(totalSeconds * 1000) // ms
+  const [fired, setFired] = useState(false)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const lastTickRef = useRef(Date.now())
+
+  useEffect(() => {
+    if (isPaused || fired) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+      return
+    }
+
+    lastTickRef.current = Date.now()
+    intervalRef.current = setInterval(() => {
+      const now = Date.now()
+      const elapsed = now - lastTickRef.current
+      lastTickRef.current = now
+      setRemaining(prev => {
+        const next = prev - elapsed
+        if (next <= 0) {
+          return 0
+        }
+        return next
+      })
+    }, 100)
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
+  }, [isPaused, fired])
+
+  // Fire onTimeUp when remaining hits 0
+  useEffect(() => {
+    if (remaining <= 0 && !fired) {
+      setFired(true)
+      onTimeUp()
+    }
+  }, [remaining, fired, onTimeUp])
+
+  const fraction = remaining / (totalSeconds * 1000)
+  const secondsLeft = Math.ceil(remaining / 1000)
+
+  // Color based on remaining fraction
+  let barColor = 'bg-green-500'
+  let textColor = 'text-green-600'
+  if (fraction <= 0.25) {
+    barColor = 'bg-red-500'
+    textColor = 'text-red-600'
+  } else if (fraction <= 0.5) {
+    barColor = 'bg-yellow-500'
+    textColor = 'text-yellow-600'
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto mb-2">
+      <div className="flex items-center gap-2">
+        <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className={`h-full ${barColor} transition-all duration-100`}
+            style={{ width: `${Math.min(100, (1 - fraction) * 100)}%` }}
+          />
+        </div>
+        <span className={`text-xs font-medium ${textColor} w-8 text-right tabular-nums`}>
+          {secondsLeft}s
+        </span>
+      </div>
     </div>
   )
 }
