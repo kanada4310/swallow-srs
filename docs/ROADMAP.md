@@ -352,25 +352,27 @@ OCR読み取り結果をカスタムノートタイプのフィールドに動�
 
 ## Phase 8: 学習セッション改善 ★最優先
 
-### 8.1 セッション内カード再提示（learningキュー）
+### 8.1 セッション内カード再提示（learningキュー） ✅ 完了
 Anki本家と同様に、Again/Hardで評価したカードを同一セッション内で再提示する。
-現状は1回表示して終わりだが、全カードが「卒業」（Good/Easy）するまでセッション継続する。
 
-- [ ] StudySessionにセッション内キュー管理を追加
+- [x] StudySessionにセッション内キュー管理を追加
   - learning/relearning カードを learning_steps に従ってキューに再挿入
   - 例: Again → 1分後に再表示、再度Again → 10分後、Good → 卒業
-- [ ] 新規カード + 復習カード + learningカードの混合表示ロジック
-- [ ] セッション完了条件の変更（全カード卒業 or キュー空）
-- [ ] DeckSettings の learning_steps をセッション内でも活用
-- [ ] オフライン学習でも同じ挙動
+- [x] 新規カード + 復習カード + learningカードの混合表示ロジック
+  - pickNextCard: 期限切れlearningカード → mainキュー → 待機の優先順
+- [x] セッション完了条件の変更（全カード卒業 or キュー空）
+  - graduatedCount / totalCards でプログレス表示
+- [x] DeckSettings の learning_steps をセッション内でも活用
+- [x] WaitingCountdownコンポーネント（learningカード待機中のカウントダウン表示）
+- [x] オフライン学習でも同じ挙動（クライアントサイドのみの実装）
 
-### 8.2 {{FrontSide}} プレースホルダー実装
+### 8.2 {{FrontSide}} プレースホルダー実装 ✅ 完了
 裏面テンプレートの `{{FrontSide}}` でレンダリング済みの表面HTMLを表示する（Anki互換）。
 
-- [ ] renderer.ts: renderTemplate に renderedFront オプション追加
-- [ ] processSimpleFields で {{FrontSide}} を特別処理
-- [ ] StudyCard: renderedFront を renderedBack の計算時に渡す
-- [ ] テスト追加
+- [x] renderer.ts: renderTemplate に renderedFront オプション追加
+- [x] processSimpleFields で {{FrontSide}} を特別処理
+- [x] StudyCard: renderedFront を renderedBack の計算時に渡す
+- [x] テスト追加（4件: Basic/Cloze/表面での空文字/未指定時の空文字）
 
 ### 8.3 タイマー機能
 学習中のカウントダウンタイマー。時間切れ時に自動フリップまたは自動Again回答。
@@ -621,15 +623,15 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 
 ## 現在の進捗
 
-**Phase**: Phase 8 学習セッション改善（次に着手）
-**最終更新**: 2026-02-09
-**次のタスク**: Phase 8.1 セッション内カード再提示 + 8.2 {{FrontSide}} 修正
+**Phase**: Phase 8 学習セッション改善（進行中: 8.1, 8.2 完了）
+**最終更新**: 2026-02-11
+**次のタスク**: Phase 8.3 タイマー機能
 
 ### 次回セッションでやること
 
-1. **Phase 8.1**: セッション内カード再提示（learningキュー）
-2. **Phase 8.2**: {{FrontSide}} プレースホルダー実装
-3. **Phase 8.3**: タイマー機能
+1. **Phase 8.3**: タイマー機能
+2. **Phase 8.4**: 回答取り消し（Undo）機能
+3. **Phase 8.5**: スワイプジェスチャー
 
 ### 完了済み
 - [x] プロジェクト設計（DB、SRS、ノートタイプ等）
@@ -690,3 +692,7 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 - [x] Phase 7.3 動作確認完了
 - [x] Phase 7.4 Anki互換機能強化（サブデッキ + ノートタグ）
 - [x] Phase 7.5 学習カスタマイズ（Anki互換デッキオプション: DeckSettings、scheduler設定対応、リーチ検知、カード並び順、詳細設定UI）
+- [x] Phase 8.1 セッション内カード再提示（learningキュー、WaitingCountdown、graduated/totalプログレス）
+- [x] Phase 8.1 動作確認完了
+- [x] Phase 8.2 {{FrontSide}}プレースホルダー実装（renderer.ts、StudyCard、テスト4件）
+- [x] Phase 8.2 動作確認完了

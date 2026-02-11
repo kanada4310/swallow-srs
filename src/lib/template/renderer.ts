@@ -7,6 +7,8 @@ export interface RenderOptions {
   clozeNumber?: number
   /** 表面/裏面のどちらをレンダリングするか */
   side: 'front' | 'back'
+  /** レンダリング済みの表面HTML（裏面テンプレートの{{FrontSide}}で使用） */
+  renderedFront?: string
 }
 
 /**
@@ -31,7 +33,7 @@ export function renderTemplate(
   html = processInverseConditionalSections(html, fieldValues)
 
   // 4. 単純なフィールド置換（{{FieldName}}）
-  html = processSimpleFields(html, fieldValues)
+  html = processSimpleFields(html, fieldValues, options)
 
   return html
 }
@@ -40,12 +42,16 @@ export function renderTemplate(
  * 単純なフィールド置換
  * {{FieldName}} → フィールド値
  */
-function processSimpleFields(template: string, fieldValues: FieldValues): string {
+function processSimpleFields(template: string, fieldValues: FieldValues, options?: RenderOptions): string {
   return template.replace(/\{\{([^#^/}]+?)\}\}/g, (match, fieldName) => {
     const trimmedName = fieldName.trim()
     // cloze: プレフィックスは別処理済み
     if (trimmedName.startsWith('cloze:')) {
       return match
+    }
+    // {{FrontSide}} - Anki互換: 裏面でレンダリング済みの表面HTMLを挿入
+    if (trimmedName === 'FrontSide') {
+      return options?.renderedFront ?? ''
     }
     return fieldValues[trimmedName] ?? ''
   })

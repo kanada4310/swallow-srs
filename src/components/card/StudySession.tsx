@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { StudyCard } from './StudyCard'
 import {
   Ease,
@@ -33,6 +33,11 @@ interface CardData {
   schedule: CardSchedule
 }
 
+interface LearningQueueItem {
+  card: CardData
+  dueAt: number // Date.now() timestamp
+}
+
 interface StudySessionProps {
   deckName: string
   initialCards: CardData[]
@@ -41,13 +46,53 @@ interface StudySessionProps {
 }
 
 export function StudySession({ deckName, initialCards, userId, deckSettings }: StudySessionProps) {
-  const [cards, setCards] = useState<CardData[]>(initialCards)
-  const [currentIndex, setCurrentIndex] = useState(0)
+  // Queue-based state
+  const [mainQueue] = useState<CardData[]>(initialCards)
+  const [mainIndex, setMainIndex] = useState(0)
+  const [learningQueue, setLearningQueue] = useState<LearningQueueItem[]>([])
+  const [currentCard, setCurrentCard] = useState<CardData | null>(initialCards[0] ?? null)
+  const [fromLearningQueue, setFromLearningQueue] = useState(false)
+  const [totalCards] = useState(initialCards.length)
+  const [graduatedCount, setGraduatedCount] = useState(0)
+
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [stats, setStats] = useState({ reviewed: 0, correct: 0 })
   const [isOnline, setIsOnline] = useState(true)
   const [leechNotification, setLeechNotification] = useState<string | null>(null)
+  const [isWaiting, setIsWaiting] = useState(false)
   const cardStartTime = useRef<number>(Date.now())
+  const waitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const settings = resolveDeckSettings(deckSettings)
+
+  // Pick next card from queues
+  const pickNextCard = useCallback((
+    currentMainIndex: number,
+    currentLearningQueue: LearningQueueItem[]
+  ): { card: CardData | null; fromLearning: boolean; waiting: boolean } => {
+    const now = Date.now()
+
+    // Sort learning queue by due time
+    const sorted = [...currentLearningQueue].sort((a, b) => a.dueAt - b.dueAt)
+
+    // Check if any learning card is due
+    if (sorted.length > 0 && sorted[0].dueAt <= now) {
+      return { card: sorted[0].card, fromLearning: true, waiting: false }
+    }
+
+    // Try main queue
+    if (currentMainIndex < mainQueue.length) {
+      return { card: mainQueue[currentMainIndex], fromLearning: false, waiting: false }
+    }
+
+    // No main queue cards left — check if learning cards are pending
+    if (sorted.length > 0) {
+      return { card: null, fromLearning: false, waiting: true }
+    }
+
+    // Session complete
+    return { card: null, fromLearning: false, waiting: false }
+  }, [mainQueue])
 
   // Track online status
   useEffect(() => {
@@ -65,10 +110,10 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
     }
   }, [])
 
-  // Reset timer when moving to new card
+  // Reset timer when current card changes
   useEffect(() => {
     cardStartTime.current = Date.now()
-  }, [currentIndex])
+  }, [currentCard])
 
   // Try to sync when coming back online
   useEffect(() => {
@@ -88,10 +133,52 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
     }
   }, [leechNotification])
 
-  const currentCard = cards[currentIndex]
-  const settings = resolveDeckSettings(deckSettings)
+  // Timer for waiting on learning queue cards
+  useEffect(() => {
+    if (!isWaiting || learningQueue.length === 0) return
 
-  const handleAnswer = async (ease: Ease) => {
+    const sorted = [...learningQueue].sort((a, b) => a.dueAt - b.dueAt)
+    const nextDue = sorted[0].dueAt
+    const delay = Math.max(0, nextDue - Date.now())
+
+    waitTimerRef.current = setTimeout(() => {
+      setIsWaiting(false)
+      // Pick the now-due learning card
+      const result = pickNextCard(mainIndex, learningQueue)
+      if (result.card) {
+        setCurrentCard(result.card)
+        setFromLearningQueue(result.fromLearning)
+      }
+    }, delay)
+
+    return () => {
+      if (waitTimerRef.current) {
+        clearTimeout(waitTimerRef.current)
+      }
+    }
+  }, [isWaiting, learningQueue, mainIndex, pickNextCard])
+
+  // Also check learning queue periodically when processing main queue
+  // (a learning card might become due while user is reviewing main queue cards)
+  useEffect(() => {
+    if (isWaiting || !currentCard || learningQueue.length === 0) return
+
+    const sorted = [...learningQueue].sort((a, b) => a.dueAt - b.dueAt)
+    const nextDue = sorted[0].dueAt
+    const now = Date.now()
+
+    // If a learning card is already due and we're showing a main queue card that hasn't been answered yet,
+    // we don't interrupt — the user will see it after answering the current card.
+    // But if not due yet, set a timer to check when it becomes due (in case user is slow)
+    if (nextDue > now && !fromLearningQueue) {
+      const timer = setTimeout(() => {
+        // Don't interrupt current card, just mark that we should check on next pick
+      }, nextDue - now)
+      return () => clearTimeout(timer)
+    }
+  }, [learningQueue, currentCard, isWaiting, fromLearningQueue])
+
+  const handleAnswer = (ease: Ease) => {
     if (!currentCard || isSubmitting) return
 
     setIsSubmitting(true)
@@ -101,35 +188,75 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
     const lastInterval = currentCard.schedule.interval
 
     try {
-      // Calculate new schedule locally (synchronous, <1ms)
+      // Calculate new schedule locally
       const newSchedule = calculateNextReview(currentCard.schedule, ease, now, deckSettings)
 
       // Check for leech
+      let isSuspended = false
       if (ease === Ease.Again && newSchedule.lapses > (currentCard.schedule.lapses || 0)) {
         const isLeech = checkLeech(newSchedule, settings)
         if (isLeech) {
           setLeechNotification(`このカードはリーチです（失念回数: ${newSchedule.lapses}回）`)
-          // If suspend action, mark as suspended locally
           if (settings.leech_action === 'suspend') {
             newSchedule.state = 'suspended'
+            isSuspended = true
           }
         }
       }
 
-      // Update UI immediately - don't wait for any I/O
-      setCards(prevCards => {
-        const updated = [...prevCards]
-        updated[currentIndex] = {
-          ...updated[currentIndex],
-          schedule: newSchedule,
-        }
-        return updated
-      })
+      // Update stats
       setStats(prev => ({
         reviewed: prev.reviewed + 1,
         correct: ease >= Ease.Good ? prev.correct + 1 : prev.correct,
       }))
-      setCurrentIndex(prev => prev + 1)
+
+      // Determine what to do with this card
+      const updatedCard: CardData = { ...currentCard, schedule: newSchedule }
+      let newLearningQueue = [...learningQueue]
+
+      // Remove from learning queue if it came from there
+      if (fromLearningQueue) {
+        newLearningQueue = newLearningQueue.filter(item => item.card.id !== currentCard.id)
+      }
+
+      // Determine next main index
+      let newMainIndex = mainIndex
+      if (!fromLearningQueue) {
+        newMainIndex = mainIndex + 1
+      }
+
+      // Add to learning queue or count as graduated
+      if (!isSuspended && (newSchedule.state === 'learning' || newSchedule.state === 'relearning')) {
+        // Card needs re-presentation — add to learning queue
+        newLearningQueue.push({
+          card: updatedCard,
+          dueAt: newSchedule.due.getTime(),
+        })
+      } else {
+        // Card graduated (review state) or suspended — done for this session
+        setGraduatedCount(prev => prev + 1)
+      }
+
+      setLearningQueue(newLearningQueue)
+      setMainIndex(newMainIndex)
+
+      // Pick next card
+      const next = pickNextCard(newMainIndex, newLearningQueue)
+      if (next.card) {
+        setCurrentCard(next.card)
+        setFromLearningQueue(next.fromLearning)
+        setIsWaiting(false)
+      } else if (next.waiting) {
+        setCurrentCard(null)
+        setFromLearningQueue(false)
+        setIsWaiting(true)
+      } else {
+        // Session complete
+        setCurrentCard(null)
+        setFromLearningQueue(false)
+        setIsWaiting(false)
+      }
+
       setIsSubmitting(false)
 
       // Save locally and sync in background (non-blocking)
@@ -149,7 +276,6 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
         lastInterval,
         timeMs
       ).then(() => {
-        // After local save, try server sync (fire-and-forget)
         if (isOnline) {
           fetch('/api/study/answer', {
             method: 'POST',
@@ -168,8 +294,10 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
     }
   }
 
-  // Session complete
-  if (currentIndex >= cards.length) {
+  // Session complete (no current card and not waiting)
+  const isSessionComplete = !currentCard && !isWaiting && mainIndex >= mainQueue.length && learningQueue.length === 0
+
+  if (isSessionComplete) {
     return (
       <div className="max-w-lg mx-auto text-center py-12">
         <div className="text-green-500 mb-4">
@@ -208,8 +336,8 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
     )
   }
 
-  // No cards to study
-  if (cards.length === 0) {
+  // No cards to study (empty initial cards)
+  if (totalCards === 0) {
     return (
       <div className="max-w-lg mx-auto text-center py-12">
         <div className="text-gray-400 mb-4">
@@ -230,6 +358,51 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
       </div>
     )
   }
+
+  // Waiting for learning queue card to become due
+  if (isWaiting && !currentCard) {
+    const sorted = [...learningQueue].sort((a, b) => a.dueAt - b.dueAt)
+    const nextDueIn = sorted.length > 0 ? Math.max(0, Math.ceil((sorted[0].dueAt - Date.now()) / 1000)) : 0
+    return (
+      <div className="py-6">
+        <div className="max-w-2xl mx-auto mb-6">
+          <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
+            <span>{deckName}</span>
+            <div className="flex items-center gap-4">
+              <span>{graduatedCount} / {totalCards}</span>
+              {!isOnline && (
+                <span className="flex items-center gap-1 text-yellow-600">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21" />
+                  </svg>
+                  オフライン
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-blue-600 transition-all duration-300"
+              style={{ width: `${(graduatedCount / totalCards) * 100}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 min-h-[300px] flex flex-col items-center justify-center p-8">
+            <div className="text-gray-400 mb-4">
+              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <WaitingCountdown seconds={nextDueIn} learningCount={learningQueue.length} />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!currentCard) return null
 
   const intervalPreviews = getNextIntervalPreview(currentCard.schedule, undefined, deckSettings)
 
@@ -260,7 +433,12 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
         <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
           <span>{deckName}</span>
           <div className="flex items-center gap-4">
-            <span>{currentIndex + 1} / {cards.length}</span>
+            <span>
+              {graduatedCount} / {totalCards}
+              {learningQueue.length > 0 && (
+                <span className="text-orange-500 ml-1">(+{learningQueue.length})</span>
+              )}
+            </span>
             {!isOnline && (
               <span className="flex items-center gap-1 text-yellow-600">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -274,13 +452,14 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
         <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
           <div
             className="h-full bg-blue-600 transition-all duration-300"
-            style={{ width: `${((currentIndex) / cards.length) * 100}%` }}
+            style={{ width: `${(graduatedCount / totalCards) * 100}%` }}
           />
         </div>
       </div>
 
       {/* Card */}
       <StudyCard
+        key={currentCard.id + '-' + stats.reviewed}
         noteId={currentCard.noteId}
         fieldValues={currentCard.fieldValues}
         audioUrls={currentCard.audioUrls}
@@ -291,6 +470,41 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
         intervalPreviews={intervalPreviews}
         onAnswer={handleAnswer}
       />
+    </div>
+  )
+}
+
+/** Countdown display while waiting for learning cards */
+function WaitingCountdown({ seconds, learningCount }: { seconds: number; learningCount: number }) {
+  const [remaining, setRemaining] = useState(seconds)
+
+  useEffect(() => {
+    setRemaining(seconds)
+  }, [seconds])
+
+  useEffect(() => {
+    if (remaining <= 0) return
+    const timer = setInterval(() => {
+      setRemaining(prev => Math.max(0, prev - 1))
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [remaining])
+
+  const minutes = Math.floor(remaining / 60)
+  const secs = remaining % 60
+  const display = minutes > 0
+    ? `${minutes}:${secs.toString().padStart(2, '0')}`
+    : `${secs}秒`
+
+  return (
+    <div className="text-center">
+      <p className="text-lg font-medium text-gray-700 mb-2">
+        学習中のカードを待っています...
+      </p>
+      <p className="text-3xl font-bold text-blue-600 mb-2">{display}</p>
+      <p className="text-sm text-gray-500">
+        残り {learningCount} 枚のカードが再提示されます
+      </p>
     </div>
   )
 }

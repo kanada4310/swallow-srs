@@ -119,14 +119,14 @@ npm run test:watch   # Vitest 監視モード
 - **error.tsx**: `study/error.tsx`, `decks/error.tsx` でLink遷移時のRSCフェッチ失敗をキャッチ
 - **IndexedDBプロフィール取得**: Client ComponentがuserId未提供時にIndexedDBからprofile取得
 
-## 現在の進捗（2026-02-09更新）
+## 現在の進捗（2026-02-11更新）
 
-**Phase 7 完了 → Phase 8 学習セッション改善に着手予定**
+**Phase 8 学習セッション改善 進行中（8.1, 8.2 完了）**
 
 ### 次回セッションでやること
-1. **Phase 8.1**: セッション内カード再提示（learningキュー）— Again/Hardカードを同一セッション内で繰り返し提示
-2. **Phase 8.2**: {{FrontSide}} プレースホルダー実装（バグ修正）
-3. **Phase 8.3**: タイマー機能
+1. **Phase 8.3**: タイマー機能
+2. **Phase 8.4**: 回答取り消し（Undo）機能
+3. **Phase 8.5**: スワイプジェスチャー
 
 ### 今後のロードマップ概要（詳細は ROADMAP.md）
 - **Phase 8**: 学習セッション改善（カード再提示、タイマー、Undo、スワイプ）
@@ -138,7 +138,6 @@ npm run test:watch   # Vitest 監視モード
 
 ### 既知の問題（技術的詳細）
 - **オフライン時のページリロード**: SWのページナビゲーションキャッシュはNext.js RSCと競合するため削除。オフライン学習はアプリ内Link遷移（error.tsx → IndexedDB）で対応。フルリロードはオフライン不可。
-- **{{FrontSide}}未実装**: 裏面テンプレートの{{FrontSide}}プレースホルダーがレンダラーに未実装。Phase 8.2で対応予定。
 
 ## 参照ドキュメント
 

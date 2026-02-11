@@ -129,6 +129,57 @@ describe('Template Renderer', () => {
     })
   })
 
+  describe('renderTemplate - {{FrontSide}} placeholder', () => {
+    it('should replace {{FrontSide}} with rendered front HTML on back side', () => {
+      const backTemplate = '{{FrontSide}}<hr><div>{{Back}}</div>'
+      const fields: FieldValues = { Front: 'apple', Back: 'りんご' }
+      const renderedFront = '<div>apple</div>'
+      const result = renderTemplate(backTemplate, fields, {
+        side: 'back',
+        renderedFront,
+      })
+
+      expect(result).toContain('<div>apple</div>')
+      expect(result).toContain('りんご')
+    })
+
+    it('should render {{FrontSide}} as empty string on front side', () => {
+      const template = '{{FrontSide}}<div>{{Front}}</div>'
+      const fields: FieldValues = { Front: 'hello' }
+      const result = renderTemplate(template, fields, { side: 'front' })
+
+      expect(result).toBe('<div>hello</div>')
+    })
+
+    it('should render {{FrontSide}} as empty when renderedFront not provided', () => {
+      const template = '{{FrontSide}}<hr>{{Back}}'
+      const fields: FieldValues = { Back: 'りんご' }
+      const result = renderTemplate(template, fields, { side: 'back' })
+
+      expect(result).toBe('<hr>りんご')
+    })
+
+    it('should work with Cloze templates and {{FrontSide}}', () => {
+      const frontTemplate = '{{cloze:Text}}'
+      const backTemplate = '{{FrontSide}}<hr>{{Extra}}'
+      const fields: FieldValues = { Text: '{{c1::apple}} is a fruit', Extra: 'A common fruit' }
+
+      const renderedFront = renderTemplate(frontTemplate, fields, {
+        side: 'front',
+        clozeNumber: 1,
+      })
+      expect(renderedFront).toContain('[...]')
+
+      const renderedBack = renderTemplate(backTemplate, fields, {
+        side: 'back',
+        clozeNumber: 1,
+        renderedFront,
+      })
+      expect(renderedBack).toContain('[...]') // FrontSide contains the front cloze
+      expect(renderedBack).toContain('A common fruit')
+    })
+  })
+
   describe('extractFieldNames', () => {
     it('should extract simple field names', () => {
       const template = '{{Front}} {{Back}}'

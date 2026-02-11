@@ -49,9 +49,9 @@ export function StudyCard({
     return renderTemplate(
       template.back,
       fieldValues,
-      { side: 'back', clozeNumber }
+      { side: 'back', clozeNumber, renderedFront }
     )
-  }, [template.back, fieldValues, clozeNumber])
+  }, [template.back, fieldValues, clozeNumber, renderedFront])
 
   // Determine which fields to show audio buttons for based on field settings
   const ttsEnabledFields = useMemo(() => {
