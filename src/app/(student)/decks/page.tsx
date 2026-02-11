@@ -14,6 +14,7 @@ interface DeckWithStats {
   new_count: number
   learning_count: number
   review_count: number
+  settings?: Record<string, unknown>
 }
 
 async function getDecksWithStats(userId: string): Promise<DeckWithStats[]> {
@@ -23,11 +24,11 @@ async function getDecksWithStats(userId: string): Promise<DeckWithStats[]> {
   const [{ data: ownDecks }, { data: assignedDecks }] = await Promise.all([
     supabase
       .from('decks')
-      .select('id, name, owner_id, is_distributed, parent_deck_id')
+      .select('id, name, owner_id, is_distributed, parent_deck_id, settings')
       .eq('owner_id', userId),
     supabase
       .from('decks')
-      .select('id, name, owner_id, is_distributed, parent_deck_id')
+      .select('id, name, owner_id, is_distributed, parent_deck_id, settings')
       .neq('owner_id', userId),
   ])
 
@@ -86,6 +87,7 @@ async function getDecksWithStats(userId: string): Promise<DeckWithStats[]> {
     return {
       ...deck,
       parent_deck_id: deck.parent_deck_id || null,
+      settings: (deck as { settings?: Record<string, unknown> }).settings || undefined,
       total_cards: cardIds.length,
       new_count: newCount,
       learning_count: learningCount,

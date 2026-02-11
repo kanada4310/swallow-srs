@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { useOnlineStatus, usePrefetchAllDecks } from '@/lib/db/hooks'
 import { getDecksWithStatsOffline, db } from '@/lib/db/schema'
+import { DeckAdvancedSettings } from '@/components/deck/DeckAdvancedSettings'
+import type { DeckSettings } from '@/types/database'
 
 interface DeckWithStats {
   id: string
@@ -17,6 +19,7 @@ interface DeckWithStats {
   new_count: number
   learning_count: number
   review_count: number
+  settings?: Partial<DeckSettings>
 }
 
 interface DeckTreeNode extends DeckWithStats {
@@ -86,6 +89,54 @@ function flattenTree(nodes: DeckTreeNode[]): DeckTreeNode[] {
   return result
 }
 
+/** Filter decks by search query, preserving parent-child relationships */
+function filterDecksByQuery(decks: DeckWithStats[], query: string): DeckWithStats[] {
+  if (!query) return decks
+
+  const lowerQuery = query.toLowerCase()
+  const matchingIds = new Set<string>()
+
+  // Find directly matching decks
+  for (const deck of decks) {
+    if (deck.name.toLowerCase().includes(lowerQuery)) {
+      matchingIds.add(deck.id)
+    }
+  }
+
+  // Add ancestors of matching decks (so tree structure is preserved)
+  const deckMap = new Map(decks.map(d => [d.id, d]))
+  const addedAncestors = new Set<string>()
+  for (const id of Array.from(matchingIds)) {
+    let current = deckMap.get(id)
+    while (current?.parent_deck_id) {
+      if (addedAncestors.has(current.parent_deck_id)) break
+      addedAncestors.add(current.parent_deck_id)
+      matchingIds.add(current.parent_deck_id)
+      current = deckMap.get(current.parent_deck_id)
+    }
+  }
+
+  // Add children of matching decks
+  const addedChildren = new Set<string>()
+  function addDescendants(parentId: string) {
+    for (const deck of decks) {
+      if (deck.parent_deck_id === parentId && !addedChildren.has(deck.id)) {
+        addedChildren.add(deck.id)
+        matchingIds.add(deck.id)
+        addDescendants(deck.id)
+      }
+    }
+  }
+  // Only add descendants of originally matching decks (not ancestors)
+  for (const deck of decks) {
+    if (deck.name.toLowerCase().includes(lowerQuery)) {
+      addDescendants(deck.id)
+    }
+  }
+
+  return decks.filter(d => matchingIds.has(d.id))
+}
+
 interface DecksPageClientProps {
   initialDecks?: DeckWithStats[]
   userProfile?: { id: string; name: string; role: string }
@@ -99,6 +150,13 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [isDeletingDeck, setIsDeletingDeck] = useState(false)
   const [deckDeleteError, setDeckDeleteError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  // Settings modal state
+  const [settingsDeckId, setSettingsDeckId] = useState<string | null>(null)
+  const [settingsValues, setSettingsValues] = useState<Partial<DeckSettings>>({})
+  const [settingsError, setSettingsError] = useState<string | null>(null)
+  const [isSavingSettings, setIsSavingSettings] = useState(false)
 
   const hasServerData = initialDecks !== undefined && userProfileProp !== undefined
 
@@ -174,8 +232,48 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
     }
   }
 
+  const handleOpenSettings = (deckId: string) => {
+    const deck = decks?.find(d => d.id === deckId)
+    setSettingsDeckId(deckId)
+    setSettingsValues(deck?.settings || {})
+    setSettingsError(null)
+  }
+
+  const handleSaveSettings = async () => {
+    if (!settingsDeckId) return
+    setIsSavingSettings(true)
+    setSettingsError(null)
+    try {
+      const response = await fetch(`/api/decks/${settingsDeckId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings: settingsValues }),
+      })
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || '設定の保存に失敗しました')
+      }
+      // Update local state
+      setLocalDecks(prev => {
+        const current = prev ?? sourceDecks ?? []
+        return current.map(d =>
+          d.id === settingsDeckId ? { ...d, settings: settingsValues } : d
+        )
+      })
+      setSettingsDeckId(null)
+    } catch (err) {
+      setSettingsError(err instanceof Error ? err.message : '設定の保存に失敗しました')
+    } finally {
+      setIsSavingSettings(false)
+    }
+  }
+
   const deletingDeckName = showDeleteConfirm
     ? decks?.find(d => d.id === showDeleteConfirm)?.name || ''
+    : ''
+
+  const settingsDeckName = settingsDeckId
+    ? decks?.find(d => d.id === settingsDeckId)?.name || ''
     : ''
 
   // Wrap in AppLayout when in standalone mode (no server-side layout)
@@ -199,16 +297,22 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
     return wrapInLayout(<DecksLoadingSkeleton />)
   }
 
-  const ownDecks = decks.filter(d => d.is_own)
-  const assignedDecks = decks.filter(d => !d.is_own)
+  // Apply search filter
+  const filteredDecks = searchQuery ? filterDecksByQuery(decks, searchQuery) : decks
+
+  const ownDecks = filteredDecks.filter(d => d.is_own)
+  const assignedDecks = filteredDecks.filter(d => !d.is_own)
 
   // Build tree for own decks
   const ownDeckTree = buildDeckTree(ownDecks)
   const flatOwnDecks = flattenTree(ownDeckTree)
 
+  const hasResults = flatOwnDecks.length > 0 || assignedDecks.length > 0
+  const hasDecks = decks.length > 0
+
   return wrapInLayout(
     <div className="max-w-4xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-gray-900">デッキ一覧</h1>
         {userProfile && userProfile.role !== 'student' && (
           <Link
@@ -219,6 +323,32 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
           </Link>
         )}
       </div>
+
+      {/* Search filter */}
+      {hasDecks && (
+        <div className="relative mb-6">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="デッキ名で検索..."
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+      )}
 
       {!isOnline && (
         <div className="mb-4 flex items-center gap-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-700">
@@ -247,6 +377,8 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
                 } : undefined}
                 canDelete={userProfile?.role !== 'student'}
                 onDelete={() => setShowDeleteConfirm(deck.id)}
+                canSettings={true}
+                onSettings={() => handleOpenSettings(deck.id)}
               />
             ))}
           </div>
@@ -265,8 +397,15 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
         </section>
       )}
 
+      {/* 検索結果なし */}
+      {searchQuery && !hasResults && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+          <p className="text-gray-500">「{searchQuery}」に一致するデッキが見つかりません</p>
+        </div>
+      )}
+
       {/* デッキがない場合 */}
-      {decks.length === 0 && (
+      {!searchQuery && !hasDecks && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
           <div className="text-gray-400 mb-4">
             <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -324,16 +463,67 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
           </div>
         </div>
       )}
+
+      {/* Settings Modal */}
+      {settingsDeckId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">デッキ設定</h2>
+                <p className="text-sm text-gray-500 mt-1">{settingsDeckName}</p>
+              </div>
+              <button
+                onClick={() => setSettingsDeckId(null)}
+                className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              <DeckAdvancedSettings
+                settings={settingsValues}
+                onChange={setSettingsValues}
+              />
+              {settingsError && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  {settingsError}
+                </div>
+              )}
+            </div>
+            <div className="p-4 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                onClick={() => setSettingsDeckId(null)}
+                disabled={isSavingSettings}
+                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleSaveSettings}
+                disabled={isSavingSettings}
+                className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
+                {isSavingSettings ? '保存中...' : '保存'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-function DeckCard({ deck, depth = 0, aggregatedStats, canDelete, onDelete }: {
+function DeckCard({ deck, depth = 0, aggregatedStats, canDelete, onDelete, canSettings, onSettings }: {
   deck: DeckWithStats
   depth?: number
   aggregatedStats?: { total_cards: number; new_count: number; learning_count: number; review_count: number }
   canDelete?: boolean
   onDelete?: () => void
+  canSettings?: boolean
+  onSettings?: () => void
 }) {
   const stats = aggregatedStats || deck
   const hasDueCards = stats.review_count > 0 || stats.learning_count > 0 || stats.new_count > 0
@@ -343,7 +533,7 @@ function DeckCard({ deck, depth = 0, aggregatedStats, canDelete, onDelete }: {
       className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md hover:border-gray-300 transition-all"
       style={depth > 0 ? { marginLeft: depth * 24 } : undefined}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <Link href={`/decks/${deck.id}`} className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             {depth > 0 && (
@@ -361,45 +551,83 @@ function DeckCard({ deck, depth = 0, aggregatedStats, canDelete, onDelete }: {
           </p>
         </Link>
 
-        <div className="flex items-center gap-3">
-          {/* 学習状況バッジ */}
-          <div className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Badge section - hidden on small screens */}
+          <div className="hidden sm:flex items-center gap-1.5 text-sm">
             {stats.new_count > 0 && (
-              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded font-medium">
-                新規 {stats.new_count}
+              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded font-medium">
+                {stats.new_count}
               </span>
             )}
             {stats.learning_count > 0 && (
-              <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded font-medium">
-                学習中 {stats.learning_count}
+              <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded font-medium">
+                {stats.learning_count}
               </span>
             )}
             {stats.review_count > 0 && (
-              <span className="px-2 py-1 bg-green-100 text-green-700 rounded font-medium">
-                復習 {stats.review_count}
+              <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded font-medium">
+                {stats.review_count}
               </span>
             )}
             {!hasDueCards && stats.total_cards > 0 && (
-              <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded">
+              <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
                 完了
               </span>
             )}
           </div>
 
+          {/* Action buttons */}
+          {hasDueCards ? (
+            <Link
+              href={`/study?deck=${deck.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors"
+              title="学習開始"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </Link>
+          ) : (
+            <span className="p-1.5 text-gray-300 cursor-default" title="学習するカードがありません">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </span>
+          )}
+
+          {canSettings && onSettings && (
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                onSettings()
+              }}
+              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded transition-colors"
+              title="デッキ設定"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+          )}
+
           {canDelete && onDelete ? (
             <button
               onClick={(e) => {
                 e.preventDefault()
+                e.stopPropagation()
                 onDelete()
               }}
-              className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
+              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
               title="デッキを削除"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
-          ) : (
+          ) : !canSettings && (
             <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
@@ -413,10 +641,11 @@ function DeckCard({ deck, depth = 0, aggregatedStats, canDelete, onDelete }: {
 function DecksLoadingSkeleton() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div className="h-8 w-32 bg-gray-200 rounded animate-pulse" />
         <div className="h-10 w-20 bg-gray-200 rounded-lg animate-pulse" />
       </div>
+      <div className="h-10 w-full bg-gray-200 rounded-lg animate-pulse mb-6" />
       <div className="h-5 w-24 bg-gray-200 rounded animate-pulse mb-4" />
       <div className="space-y-3">
         {[...Array(4)].map((_, i) => (
