@@ -396,13 +396,17 @@ Anki本家と同様に、Again/Hardで評価したカードを同一セッショ
 - [x] sync_queueクリーンアップ + 補償エントリ追加（最終整合性保証）
 - [x] ユニットテスト（6件: 状態復元、新規カード削除、sync_queue操作、reviewLogId指定）
 
-### 8.5 スワイプジェスチャー
+### 8.5 スワイプジェスチャー ✅ 完了
 モバイルでスワイプ操作でカード回答。
 
-- [ ] react-swipeable 等でタッチイベントハンドリング
-- [ ] 左スワイプ=Again、右スワイプ=Good、上スワイプ=Easy
-- [ ] スワイプ方向のビジュアルフィードバック
-- [ ] 設定でスワイプ操作の有効/無効切り替え
+- [x] Vanilla Pointer Events でスワイプ検出（ライブラリ不使用）
+  - detectDirection / calculateProgress 純粋関数 + useSwipeGesture カスタムフック
+  - 表面: 上スワイプ → フリップ / 裏面: 左=Again, 下=Hard, 右=Good, 上=Easy
+- [x] スワイプ方向のビジュアルフィードバック（SwipeOverlay: 色付きオーバーレイ + ラベル + 間隔プレビュー）
+- [x] カード本体の微細な追従効果（translate 0.15倍）
+- [x] DeckSettings に swipe_enabled 追加（デフォルト: 有効）
+- [x] DeckAdvancedSettings に「スワイプ」タブ追加（トグル + 操作ガイド）
+- [x] ユニットテスト（15件: detectDirection 10件 + calculateProgress 5件）
 
 ---
 
@@ -629,13 +633,13 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 
 ## 現在の進捗
 
-**Phase**: Phase 8 学習セッション改善（進行中: 8.1, 8.2, 8.3, 8.4 完了）
+**Phase**: Phase 8 学習セッション改善 ✅ 完了（8.1〜8.5 全完了）
 **最終更新**: 2026-02-11
-**次のタスク**: Phase 8.5 スワイプジェスチャー
+**次のタスク**: Phase 9.1 デッキ名検索
 
 ### 次回セッションでやること
 
-1. **Phase 8.5**: スワイプジェスチャー
+1. **Phase 9.1**: デッキ名検索
 
 ### 完了済み
 - [x] プロジェクト設計（DB、SRS、ノートタイプ等）
@@ -704,3 +708,5 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 - [x] Phase 8.3 動作確認完了
 - [x] Phase 8.4 回答取り消し（Undo）機能（UndoSnapshot、undoAnswerLocally、/api/study/undo、10秒バナー、テスト6件）
 - [x] Phase 8.4 動作確認完了
+- [x] Phase 8.5 スワイプジェスチャー（Pointer Events、SwipeOverlay、DeckSettings swipe_enabled、テスト15件）
+- [x] Phase 8.5 動作確認完了

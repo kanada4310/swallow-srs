@@ -130,5 +130,11 @@ export function validateDeckSettings(raw: Partial<DeckSettings>): ValidationErro
     }
   }
 
+  if (raw.swipe_enabled !== undefined) {
+    if (typeof raw.swipe_enabled !== 'boolean') {
+      errors.push({ field: 'swipe_enabled', message: 'スワイプ設定はtrue/falseで指定してください' })
+    }
+  }
+
   return errors
 }

@@ -103,6 +103,9 @@ export interface DeckSettings {
   // === タイマー ===
   answer_time_limit: number                      // 回答制限時間（秒）。デフォルト: 0（無効）
   timer_action: 'flip' | 'auto_again' | 'none'  // 時間切れ時のアクション。デフォルト: 'none'
+
+  // === スワイプ ===
+  swipe_enabled: boolean                         // スワイプジェスチャー有効。デフォルト: true
 }
 
 export interface Deck {

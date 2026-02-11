@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { Ease } from '@/lib/srs/scheduler'
 import { renderTemplate, type FieldValues } from '@/lib/template'
 import { CardIframe } from '@/components/card/CardIframe'
 import { AudioButton } from '@/components/audio/AudioButton'
+import { SwipeOverlay } from '@/components/card/SwipeOverlay'
+import { useSwipeGesture, type SwipeDirection } from '@/lib/swipe/useSwipeGesture'
 import type { GeneratedContent, FieldDefinition } from '@/types/database'
 
 interface StudyCardProps {
@@ -24,6 +26,7 @@ interface StudyCardProps {
   autoFlip?: boolean
   onFlipped?: () => void
   autoAgainCountdown?: number | null
+  swipeEnabled?: boolean
 }
 
 export function StudyCard({
@@ -39,8 +42,36 @@ export function StudyCard({
   autoFlip,
   onFlipped,
   autoAgainCountdown,
+  swipeEnabled = false,
 }: StudyCardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
+
+  // Swipe gesture handling
+  const handleSwipe = useCallback((direction: SwipeDirection) => {
+    if (!isFlipped) {
+      // Front side: up = flip
+      if (direction === 'up') {
+        setIsFlipped(true)
+        onFlipped?.()
+      }
+    } else {
+      // Back side: directional answer
+      const directionToEase: Record<SwipeDirection, Ease> = {
+        left: Ease.Again,
+        down: Ease.Hard,
+        right: Ease.Good,
+        up: Ease.Easy,
+      }
+      const ease = directionToEase[direction]
+      onAnswer(ease)
+      setIsFlipped(false)
+    }
+  }, [isFlipped, onAnswer, onFlipped])
+
+  const { ref: swipeRef, swipeState } = useSwipeGesture({
+    enabled: swipeEnabled,
+    onSwipe: handleSwipe,
+  })
 
   // Render templates (pure template processing, no sanitization)
   const renderedFront = useMemo(() => {
@@ -114,10 +145,30 @@ export function StudyCard({
     setIsFlipped(false)
   }
 
+  // Card translation during swipe (subtle follow effect)
+  const swipeTransform = swipeState.active
+    ? `translate(${swipeState.dx * 0.15}px, ${swipeState.dy * 0.15}px)`
+    : undefined
+
   return (
     <div className="w-full max-w-2xl mx-auto">
       {/* Card */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 min-h-[300px] flex flex-col">
+      <div
+        ref={swipeRef}
+        className="bg-white rounded-xl shadow-lg border border-gray-200 min-h-[300px] flex flex-col relative"
+        style={{
+          touchAction: swipeEnabled ? 'none' : undefined,
+          transform: swipeTransform,
+          transition: swipeState.active ? undefined : 'transform 0.2s ease-out',
+        }}
+      >
+        {/* Swipe overlay */}
+        <SwipeOverlay
+          swipeState={swipeState}
+          isFlipped={isFlipped}
+          intervalPreviews={intervalPreviews}
+        />
+
         {!isFlipped ? (
           /* Front only */
           <div className="flex-1 p-8 flex flex-col items-center justify-center relative">

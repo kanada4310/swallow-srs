@@ -56,6 +56,7 @@ export function getDefaultDeckSettings(): DeckSettings {
     review_sort: 'due_date',
     answer_time_limit: 0,
     timer_action: 'none',
+    swipe_enabled: true,
   }
 }
 

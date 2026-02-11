@@ -9,7 +9,7 @@ interface DeckAdvancedSettingsProps {
   onChange: (settings: Partial<DeckSettings>) => void
 }
 
-type TabKey = 'new' | 'review' | 'lapse' | 'order' | 'timer'
+type TabKey = 'new' | 'review' | 'lapse' | 'order' | 'timer' | 'swipe'
 
 // Number input component that allows free editing and validates on blur
 function NumberInput({
@@ -93,6 +93,7 @@ export function DeckAdvancedSettings({ settings, onChange }: DeckAdvancedSetting
     { key: 'lapse', label: '失念' },
     { key: 'order', label: '表示順' },
     { key: 'timer', label: 'タイマー' },
+    { key: 'swipe', label: 'スワイプ' },
   ]
 
   return (
@@ -362,6 +363,61 @@ export function DeckAdvancedSettings({ settings, onChange }: DeckAdvancedSetting
                     <option value="auto_again">自動「もう一度」</option>
                   </select>
                 </SettingField>
+              </>
+            )}
+
+            {activeTab === 'swipe' && (
+              <>
+                <SettingField label="スワイプジェスチャー" description="タッチ操作でカードをスワイプして回答できます">
+                  <button
+                    type="button"
+                    onClick={() => update('swipe_enabled', !resolved.swipe_enabled)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      resolved.swipe_enabled ? 'bg-blue-600' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        resolved.swipe_enabled ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </SettingField>
+
+                {resolved.swipe_enabled && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-sm font-medium text-gray-700 mb-3">操作ガイド</p>
+                    <div className="space-y-2 text-sm text-gray-600">
+                      <p className="font-medium text-gray-700 mb-1">表面（問題）:</p>
+                      <div className="flex items-center gap-2 pl-2">
+                        <span className="text-blue-600">↑ 上スワイプ</span>
+                        <span className="text-gray-400">=</span>
+                        <span>答えを見る</span>
+                      </div>
+                      <p className="font-medium text-gray-700 mt-3 mb-1">裏面（回答）:</p>
+                      <div className="flex items-center gap-2 pl-2">
+                        <span className="text-red-500">← 左スワイプ</span>
+                        <span className="text-gray-400">=</span>
+                        <span>もう一度</span>
+                      </div>
+                      <div className="flex items-center gap-2 pl-2">
+                        <span className="text-orange-500">↓ 下スワイプ</span>
+                        <span className="text-gray-400">=</span>
+                        <span>難しい</span>
+                      </div>
+                      <div className="flex items-center gap-2 pl-2">
+                        <span className="text-green-500">→ 右スワイプ</span>
+                        <span className="text-gray-400">=</span>
+                        <span>正解</span>
+                      </div>
+                      <div className="flex items-center gap-2 pl-2">
+                        <span className="text-blue-500">↑ 上スワイプ</span>
+                        <span className="text-gray-400">=</span>
+                        <span>簡単</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>
