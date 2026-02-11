@@ -387,12 +387,14 @@ Anki本家と同様に、Again/Hardで評価したカードを同一セッショ
   - auto_again: めくり → 5秒カウントダウン → 自動Again（手動回答でキャンセル可）
   - none: カウントダウン表示のみ
 
-### 8.4 回答取り消し（Undo）機能
+### 8.4 回答取り消し（Undo）機能 ✅ 完了
 誤タップ時に直前の回答を取り消せる。
 
-- [ ] 直前の card_state を一時保存
-- [ ] 回答後10秒間「取り消し」ボタン表示
-- [ ] card_state / review_log のロールバック処理
+- [x] 直前の card_state を一時保存（UndoSnapshot: React state + IndexedDB card_state）
+- [x] 回答後10秒間「取り消し」ボタン表示（通常画面・待機画面・完了画面の3箇所）
+- [x] card_state / review_log のロールバック処理（undoAnswerLocally + /api/study/undo）
+- [x] sync_queueクリーンアップ + 補償エントリ追加（最終整合性保証）
+- [x] ユニットテスト（6件: 状態復元、新規カード削除、sync_queue操作、reviewLogId指定）
 
 ### 8.5 スワイプジェスチャー
 モバイルでスワイプ操作でカード回答。
@@ -627,14 +629,13 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 
 ## 現在の進捗
 
-**Phase**: Phase 8 学習セッション改善（進行中: 8.1, 8.2, 8.3 完了）
+**Phase**: Phase 8 学習セッション改善（進行中: 8.1, 8.2, 8.3, 8.4 完了）
 **最終更新**: 2026-02-11
-**次のタスク**: Phase 8.4 回答取り消し（Undo）機能
+**次のタスク**: Phase 8.5 スワイプジェスチャー
 
 ### 次回セッションでやること
 
-1. **Phase 8.4**: 回答取り消し（Undo）機能
-2. **Phase 8.5**: スワイプジェスチャー
+1. **Phase 8.5**: スワイプジェスチャー
 
 ### 完了済み
 - [x] プロジェクト設計（DB、SRS、ノートタイプ等）
@@ -701,3 +702,5 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 - [x] Phase 8.2 動作確認完了
 - [x] Phase 8.3 タイマー機能（CountdownTimer、autoFlip、auto_again 5秒カウントダウン、設定UI）
 - [x] Phase 8.3 動作確認完了
+- [x] Phase 8.4 回答取り消し（Undo）機能（UndoSnapshot、undoAnswerLocally、/api/study/undo、10秒バナー、テスト6件）
+- [x] Phase 8.4 動作確認完了

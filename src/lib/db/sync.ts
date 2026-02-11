@@ -328,10 +328,11 @@ export async function saveAnswerLocally(
     lapses?: number
   },
   lastInterval: number,
-  timeMs: number | null
+  timeMs: number | null,
+  reviewLogId?: string
 ): Promise<void> {
   const now = new Date()
-  const reviewLogId = crypto.randomUUID()
+  const logId = reviewLogId || crypto.randomUUID()
 
   // Save to local DB
   await db.transaction('rw', [db.cardStates, db.reviewLogs, db.syncQueue], async () => {
@@ -353,7 +354,7 @@ export async function saveAnswerLocally(
 
     // Add review log
     const reviewLog: LocalReviewLog = {
-      id: reviewLogId,
+      id: logId,
       user_id: userId,
       card_id: cardId,
       ease,
@@ -389,9 +390,9 @@ export async function saveAnswerLocally(
     await db.syncQueue.add({
       table: 'review_logs',
       operation: 'upsert',
-      record_id: reviewLogId,
+      record_id: logId,
       payload: {
-        id: reviewLogId,
+        id: logId,
         user_id: userId,
         card_id: cardId,
         ease,
@@ -403,6 +404,74 @@ export async function saveAnswerLocally(
       created_at: now,
       attempts: 0,
     })
+  })
+
+  updateStatus({ pendingCount: await getPendingSyncCount() })
+}
+
+/**
+ * Undo a locally saved answer - rollback card_state, remove review_log, clean sync_queue
+ */
+export async function undoAnswerLocally(
+  userId: string,
+  cardId: string,
+  reviewLogId: string,
+  previousCardState: LocalCardState | null
+): Promise<void> {
+  const cardStateId = `${userId}:${cardId}`
+  const now = new Date()
+
+  await db.transaction('rw', [db.cardStates, db.reviewLogs, db.syncQueue], async () => {
+    // 1. Restore or delete card_state
+    if (previousCardState) {
+      await db.cardStates.put(previousCardState)
+    } else {
+      // Card was new (no previous state) - delete the created state
+      await db.cardStates.delete(cardStateId)
+    }
+
+    // 2. Delete the review log entry
+    await db.reviewLogs.delete(reviewLogId)
+
+    // 3. Remove pending sync_queue entries for this answer
+    const allEntries = await db.syncQueue.toArray()
+    const entriesToDelete: number[] = []
+    for (const entry of allEntries) {
+      if (
+        (entry.table === 'card_states' && entry.record_id === cardStateId) ||
+        (entry.table === 'review_logs' && entry.record_id === reviewLogId)
+      ) {
+        if (entry.id !== undefined) {
+          entriesToDelete.push(entry.id)
+        }
+      }
+    }
+    if (entriesToDelete.length > 0) {
+      await db.syncQueue.bulkDelete(entriesToDelete)
+    }
+
+    // 4. Add compensation sync_queue entry to push restored state to server
+    if (previousCardState) {
+      await db.syncQueue.add({
+        table: 'card_states',
+        operation: 'upsert',
+        record_id: cardStateId,
+        payload: {
+          user_id: previousCardState.user_id,
+          card_id: previousCardState.card_id,
+          due: formatForServer(previousCardState.due),
+          interval: previousCardState.interval,
+          ease_factor: previousCardState.ease_factor,
+          repetitions: previousCardState.repetitions,
+          state: previousCardState.state,
+          learning_step: previousCardState.learning_step,
+          lapses: previousCardState.lapses ?? 0,
+          updated_at: formatForServer(now),
+        },
+        created_at: now,
+        attempts: 0,
+      })
+    }
   })
 
   updateStatus({ pendingCount: await getPendingSyncCount() })

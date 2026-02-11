@@ -11,7 +11,8 @@ import {
   type CardSchedule,
 } from '@/lib/srs/scheduler'
 import type { FieldValues } from '@/lib/template'
-import { saveAnswerLocally, pushToServer, getSyncStatus } from '@/lib/db/sync'
+import { saveAnswerLocally, undoAnswerLocally, pushToServer, getSyncStatus } from '@/lib/db/sync'
+import { getCardState, type LocalCardState } from '@/lib/db/schema'
 import { isOnline as checkOnline } from '@/lib/db/utils'
 import { SyncStatusBadge } from '@/components/ui/SyncStatusBadge'
 import Link from 'next/link'
@@ -36,6 +37,20 @@ interface CardData {
 interface LearningQueueItem {
   card: CardData
   dueAt: number // Date.now() timestamp
+}
+
+interface UndoSnapshot {
+  answeredCard: CardData
+  previousSchedule: CardSchedule
+  previousMainIndex: number
+  previousLearningQueue: LearningQueueItem[]
+  previousFromLearningQueue: boolean
+  previousGraduatedCount: number
+  previousStats: { reviewed: number; correct: number }
+  previousCardState: LocalCardState | null
+  reviewLogId: string
+  serverSyncFired: boolean
+  answeredAt: number
 }
 
 interface StudySessionProps {
@@ -63,6 +78,8 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
   const [autoFlipTrigger, setAutoFlipTrigger] = useState(false)
   const [isCardFlipped, setIsCardFlipped] = useState(false)
   const [autoAgainCountdown, setAutoAgainCountdown] = useState<number | null>(null)
+  const [undoSnapshot, setUndoSnapshot] = useState<UndoSnapshot | null>(null)
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const cardStartTime = useRef<number>(Date.now())
   const waitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const handleAnswerRef = useRef<(ease: Ease) => void>(() => {})
@@ -199,6 +216,21 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
     return () => clearTimeout(timer)
   }, [autoAgainCountdown])
 
+  // Auto-dismiss undo banner after 10 seconds
+  useEffect(() => {
+    if (undoSnapshot) {
+      undoTimerRef.current = setTimeout(() => {
+        setUndoSnapshot(null)
+      }, 10000)
+      return () => {
+        if (undoTimerRef.current) {
+          clearTimeout(undoTimerRef.current)
+          undoTimerRef.current = null
+        }
+      }
+    }
+  }, [undoSnapshot])
+
   // Timer time-up handler
   const handleTimeUp = useCallback(() => {
     if (settings.timer_action === 'flip') {
@@ -218,6 +250,15 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
     const now = new Date()
     const cardId = currentCard.id
     const lastInterval = currentCard.schedule.interval
+    const reviewLogId = crypto.randomUUID()
+
+    // Capture snapshot for undo BEFORE modifying state
+    const snapshotCard = currentCard
+    const snapshotMainIndex = mainIndex
+    const snapshotLearningQueue = [...learningQueue]
+    const snapshotFromLearning = fromLearningQueue
+    const snapshotGraduated = graduatedCount
+    const snapshotStats = { ...stats }
 
     try {
       // Calculate new schedule locally
@@ -272,6 +313,13 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
       setLearningQueue(newLearningQueue)
       setMainIndex(newMainIndex)
 
+      // Clear previous undo snapshot and timer
+      setUndoSnapshot(null)
+      if (undoTimerRef.current) {
+        clearTimeout(undoTimerRef.current)
+        undoTimerRef.current = null
+      }
+
       // Reset timer state before switching cards (must be synchronous, not in useEffect)
       setAutoFlipTrigger(false)
       setIsCardFlipped(false)
@@ -296,38 +344,155 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
 
       setIsSubmitting(false)
 
-      // Save locally and sync in background (non-blocking)
-      saveAnswerLocally(
-        userId,
-        cardId,
-        ease,
-        {
-          due: newSchedule.due,
-          interval: newSchedule.interval,
-          easeFactor: newSchedule.easeFactor,
-          repetitions: newSchedule.repetitions,
-          state: newSchedule.state,
-          learningStep: newSchedule.learningStep,
-          lapses: newSchedule.lapses,
-        },
-        lastInterval,
-        timeMs
-      ).then(() => {
-        if (isOnline) {
-          fetch('/api/study/answer', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cardId, ease, timeMs }),
-          }).catch(syncError => {
-            console.warn('Server sync failed, will retry later:', syncError)
-          })
+      // Fetch current card_state from IndexedDB for undo (async, non-blocking)
+      getCardState(userId, cardId).then(previousCardState => {
+        const snapshot: UndoSnapshot = {
+          answeredCard: snapshotCard,
+          previousSchedule: snapshotCard.schedule,
+          previousMainIndex: snapshotMainIndex,
+          previousLearningQueue: snapshotLearningQueue,
+          previousFromLearningQueue: snapshotFromLearning,
+          previousGraduatedCount: snapshotGraduated,
+          previousStats: snapshotStats,
+          previousCardState: previousCardState ?? null,
+          reviewLogId,
+          serverSyncFired: false,
+          answeredAt: Date.now(),
         }
-      }).catch(error => {
-        console.error('Error saving answer locally:', error)
+
+        // Save locally and sync in background (non-blocking)
+        saveAnswerLocally(
+          userId,
+          cardId,
+          ease,
+          {
+            due: newSchedule.due,
+            interval: newSchedule.interval,
+            easeFactor: newSchedule.easeFactor,
+            repetitions: newSchedule.repetitions,
+            state: newSchedule.state,
+            learningStep: newSchedule.learningStep,
+            lapses: newSchedule.lapses,
+          },
+          lastInterval,
+          timeMs,
+          reviewLogId
+        ).then(() => {
+          // Set undo snapshot after local save completes
+          setUndoSnapshot(prev => {
+            // Only update if this is still the current snapshot (not overwritten by a newer answer)
+            if (prev === null) return snapshot
+            return prev
+          })
+
+          if (isOnline) {
+            snapshot.serverSyncFired = true
+            fetch('/api/study/answer', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ cardId, ease, timeMs }),
+            }).catch(syncError => {
+              console.warn('Server sync failed, will retry later:', syncError)
+            })
+          }
+        }).catch(error => {
+          console.error('Error saving answer locally:', error)
+        })
+
+        // Set undo snapshot immediately (before local save, so user sees the banner right away)
+        setUndoSnapshot(snapshot)
+      }).catch(() => {
+        // If we can't get previous state, still save the answer but without undo
+        saveAnswerLocally(
+          userId,
+          cardId,
+          ease,
+          {
+            due: newSchedule.due,
+            interval: newSchedule.interval,
+            easeFactor: newSchedule.easeFactor,
+            repetitions: newSchedule.repetitions,
+            state: newSchedule.state,
+            learningStep: newSchedule.learningStep,
+            lapses: newSchedule.lapses,
+          },
+          lastInterval,
+          timeMs,
+          reviewLogId
+        ).then(() => {
+          if (isOnline) {
+            fetch('/api/study/answer', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ cardId, ease, timeMs }),
+            }).catch(syncError => {
+              console.warn('Server sync failed, will retry later:', syncError)
+            })
+          }
+        }).catch(error => {
+          console.error('Error saving answer locally:', error)
+        })
       })
     } catch (error) {
       console.error('Error processing answer:', error)
       setIsSubmitting(false)
+    }
+  }
+
+  const handleUndo = () => {
+    if (!undoSnapshot) return
+
+    const snapshot = undoSnapshot
+
+    // Clear undo state immediately
+    setUndoSnapshot(null)
+    if (undoTimerRef.current) {
+      clearTimeout(undoTimerRef.current)
+      undoTimerRef.current = null
+    }
+
+    // Restore React state
+    setCurrentCard(snapshot.answeredCard)
+    setMainIndex(snapshot.previousMainIndex)
+    setLearningQueue(snapshot.previousLearningQueue)
+    setFromLearningQueue(snapshot.previousFromLearningQueue)
+    setGraduatedCount(snapshot.previousGraduatedCount)
+    setStats(snapshot.previousStats)
+    setIsWaiting(false)
+
+    // Undo in IndexedDB (async, non-blocking)
+    undoAnswerLocally(
+      userId,
+      snapshot.answeredCard.id,
+      snapshot.reviewLogId,
+      snapshot.previousCardState
+    ).catch(error => {
+      console.error('Error undoing answer locally:', error)
+    })
+
+    // Undo on server if sync was fired (fire-and-forget)
+    if (snapshot.serverSyncFired && isOnline) {
+      const previousServerState = snapshot.previousCardState ? {
+        due: snapshot.previousCardState.due.toISOString(),
+        interval: snapshot.previousCardState.interval,
+        ease_factor: snapshot.previousCardState.ease_factor,
+        repetitions: snapshot.previousCardState.repetitions,
+        state: snapshot.previousCardState.state,
+        learning_step: snapshot.previousCardState.learning_step,
+        lapses: snapshot.previousCardState.lapses ?? 0,
+      } : null
+
+      fetch('/api/study/undo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cardId: snapshot.answeredCard.id,
+          reviewLogId: snapshot.reviewLogId,
+          previousState: previousServerState,
+        }),
+      }).catch(error => {
+        console.warn('Server undo failed, compensation sync will handle it:', error)
+      })
     }
   }
 
@@ -363,6 +528,7 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
             </div>
           </div>
         </div>
+        {undoSnapshot && <UndoBanner onUndo={handleUndo} />}
         <div className="flex flex-col items-center gap-3">
           <Link
             href="/decks"
@@ -427,6 +593,12 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
             />
           </div>
         </div>
+
+        {undoSnapshot && (
+          <div className="max-w-2xl mx-auto mb-4">
+            <UndoBanner onUndo={handleUndo} />
+          </div>
+        )}
 
         <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 min-h-[300px] flex flex-col items-center justify-center p-8">
@@ -497,6 +669,13 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
         </div>
       </div>
 
+      {/* Undo banner */}
+      {undoSnapshot && (
+        <div className="max-w-2xl mx-auto mb-2">
+          <UndoBanner onUndo={handleUndo} />
+        </div>
+      )}
+
       {/* Countdown Timer */}
       {settings.answer_time_limit > 0 && (
         <CountdownTimer
@@ -523,6 +702,24 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
         onFlipped={() => setIsCardFlipped(true)}
         autoAgainCountdown={autoAgainCountdown}
       />
+    </div>
+  )
+}
+
+/** Undo banner shown after answering a card */
+function UndoBanner({ onUndo }: { onUndo: () => void }) {
+  return (
+    <div className="flex items-center justify-between px-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm">
+      <span className="text-gray-600">回答を記録しました</span>
+      <button
+        onClick={onUndo}
+        className="flex items-center gap-1 px-3 py-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors font-medium"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a5 5 0 015 5v2M3 10l4-4M3 10l4 4" />
+        </svg>
+        取り消し
+      </button>
     </div>
   )
 }
