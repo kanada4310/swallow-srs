@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { requireAuth, requireTeacher } from '@/lib/api/auth'
+import { requireAuth } from '@/lib/api/auth'
 import type { FieldDefinition, GenerationRule, TemplateInput } from '@/types/database'
 
 // GET /api/note-types - Get all note types
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    const { user, error: authError } = await requireTeacher(supabase)
+    const { user, error: authError } = await requireAuth(supabase)
     if (authError) return authError
 
     const body = await request.json()

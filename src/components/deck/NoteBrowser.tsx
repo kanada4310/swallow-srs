@@ -15,6 +15,7 @@ interface NoteBrowserProps {
   deckTags?: string[]
   deckNameMap?: Map<string, string>
   canEdit: boolean
+  canEditNote?: (note: BrowsableNote) => boolean
   onEditNote: (note: BrowsableNote) => void
   onDeleteNote: (noteId: string) => Promise<void>
   onBulkDelete: (noteIds: string[]) => Promise<void>
@@ -34,6 +35,7 @@ export function NoteBrowser({
   deckTags,
   deckNameMap,
   canEdit,
+  canEditNote,
   onEditNote,
   onDeleteNote,
   onBulkDelete,
@@ -176,7 +178,13 @@ export function NoteBrowser({
   }
 
   const handleBulkDeleteConfirm = async () => {
-    const noteIds = Array.from(selectedNotes)
+    // Filter to only editable notes when per-note permissions are active
+    const noteIds = canEditNote
+      ? Array.from(selectedNotes).filter(id => {
+          const note = notes.find(n => n.id === id)
+          return note && canEditNote(note)
+        })
+      : Array.from(selectedNotes)
     if (noteIds.length === 0) return
 
     setIsBulkDeleting(true)
@@ -536,7 +544,7 @@ export function NoteBrowser({
               note={note}
               noteType={noteTypeMap.get(note.note_type_id)}
               deckName={!deckId && deckNameMap && note.deck_id ? deckNameMap.get(note.deck_id) : undefined}
-              canEdit={canEdit}
+              canEdit={canEditNote ? canEditNote(note) : canEdit}
               isSelectMode={isSelectMode}
               isSelected={selectedNotes.has(note.id)}
               onToggleSelect={() => toggleNoteSelection(note.id)}

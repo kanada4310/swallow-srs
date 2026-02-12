@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { StudyPageClient } from './StudyPageClient'
 import type { Profile, GeneratedContent, FieldDefinition, DeckSettings } from '@/types/database'
@@ -111,14 +112,16 @@ async function getStudyCards(userId: string, deckId: string): Promise<{ cards: C
 
   const stateMap = new Map(cardStates?.map(cs => [cs.card_id, cs]) || [])
 
-  // Get deck settings (full object)
-  const { data: deck } = await supabase
-    .from('decks')
-    .select('settings')
-    .eq('id', deckId)
-    .single()
+  // Get deck settings (full object) + user-specific overrides
+  const [{ data: deck }, { data: userDeckSettings }] = await Promise.all([
+    supabase.from('decks').select('settings').eq('id', deckId).single(),
+    supabase.from('user_deck_settings').select('settings').eq('user_id', userId).eq('deck_id', deckId).maybeSingle(),
+  ])
 
-  const deckSettings: Partial<DeckSettings> = deck?.settings ?? {}
+  const deckSettings: Partial<DeckSettings> = {
+    ...(deck?.settings ?? {}),
+    ...(userDeckSettings?.settings ?? {}),
+  }
   const settings = resolveDeckSettings(deckSettings)
 
   // Count how many new cards were introduced today
@@ -245,19 +248,9 @@ export default async function StudyPage({
     )
   }
 
-  // If no deck specified, show deck selection
+  // If no deck specified, redirect to decks page
   if (!deckId) {
-    return (
-      <AppLayout userName={profile.name} userRole={profile.role}>
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <StudyPageClient
-            deckId={null}
-            userId={profile.id}
-            userProfile={{ name: profile.name, role: profile.role }}
-          />
-        </div>
-      </AppLayout>
-    )
+    redirect('/decks')
   }
 
   // Get deck info

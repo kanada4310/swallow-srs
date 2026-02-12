@@ -34,6 +34,15 @@ interface StudentStats {
   streak: number
 }
 
+interface RecentDeck {
+  id: string
+  name: string
+  lastStudiedAt: string
+  due_count: number
+  new_count: number
+  learning_count: number
+}
+
 async function getTeacherStats(teacherId: string): Promise<{ stats: TeacherStats; students: StudentProgress[] }> {
   const supabase = await createClient()
 
@@ -240,6 +249,125 @@ async function getStudentStats(studentId: string): Promise<StudentStats> {
   }
 }
 
+async function getRecentDecks(userId: string): Promise<RecentDeck[]> {
+  const supabase = await createClient()
+
+  // Batch 1: Get recent review logs (last 200)
+  const { data: recentLogs } = await supabase
+    .from('review_logs')
+    .select('card_id, reviewed_at')
+    .eq('user_id', userId)
+    .order('reviewed_at', { ascending: false })
+    .limit(200)
+
+  if (!recentLogs || recentLogs.length === 0) return []
+
+  // Batch 2: Map card_ids to deck_ids
+  const cardIds = Array.from(new Set(recentLogs.map(l => l.card_id)))
+  const { data: cards } = await supabase
+    .from('cards')
+    .select('id, deck_id')
+    .in('id', cardIds)
+
+  if (!cards || cards.length === 0) return []
+
+  const cardToDeck = new Map<string, string>()
+  for (const c of cards) {
+    cardToDeck.set(c.id, c.deck_id)
+  }
+
+  // Find top 5 unique decks by most recent review
+  const deckLastStudied = new Map<string, string>()
+  for (const log of recentLogs) {
+    const deckId = cardToDeck.get(log.card_id)
+    if (deckId && !deckLastStudied.has(deckId)) {
+      deckLastStudied.set(deckId, log.reviewed_at)
+    }
+  }
+
+  const topDeckIds = Array.from(deckLastStudied.entries())
+    .sort((a, b) => new Date(b[1]).getTime() - new Date(a[1]).getTime())
+    .slice(0, 5)
+    .map(([id]) => id)
+
+  if (topDeckIds.length === 0) return []
+
+  const now = new Date().toISOString()
+
+  // Batch 3 (parallel): deck names + card_states for due/learning counts + cards for new count
+  const [
+    { data: decks },
+    { data: cardStates },
+    { data: deckCards },
+  ] = await Promise.all([
+    supabase
+      .from('decks')
+      .select('id, name')
+      .in('id', topDeckIds),
+    supabase
+      .from('card_states')
+      .select('card_id, state, due')
+      .eq('user_id', userId)
+      .in('card_id', cards.filter(c => topDeckIds.includes(c.deck_id)).map(c => c.id)),
+    supabase
+      .from('cards')
+      .select('id, deck_id')
+      .in('deck_id', topDeckIds),
+  ])
+
+  const deckNameMap = new Map<string, string>()
+  for (const d of decks || []) {
+    deckNameMap.set(d.id, d.name)
+  }
+
+  // Build card_id -> deck_id for all cards in target decks
+  const allCardToDeck = new Map<string, string>()
+  for (const c of deckCards || []) {
+    allCardToDeck.set(c.id, c.deck_id)
+  }
+
+  // Cards with card_states (studied)
+  const studiedCardIds = new Set((cardStates || []).map(cs => cs.card_id))
+
+  // Aggregate per deck
+  const deckStats = new Map<string, { due: number; learning: number; newCount: number }>()
+  for (const id of topDeckIds) {
+    deckStats.set(id, { due: 0, learning: 0, newCount: 0 })
+  }
+
+  // Count due and learning from card_states
+  for (const cs of cardStates || []) {
+    const deckId = allCardToDeck.get(cs.card_id)
+    if (!deckId) continue
+    const stat = deckStats.get(deckId)
+    if (!stat) continue
+    if (cs.state === 'review' && cs.due <= now) {
+      stat.due++
+    } else if (cs.state === 'learning' || cs.state === 'relearning') {
+      stat.learning++
+    }
+  }
+
+  // Count new cards (cards without card_states)
+  for (const c of deckCards || []) {
+    if (!studiedCardIds.has(c.id)) {
+      const stat = deckStats.get(c.deck_id)
+      if (stat) stat.newCount++
+    }
+  }
+
+  return topDeckIds
+    .filter(id => deckNameMap.has(id))
+    .map(id => ({
+      id,
+      name: deckNameMap.get(id)!,
+      lastStudiedAt: deckLastStudied.get(id)!,
+      due_count: deckStats.get(id)?.due || 0,
+      new_count: deckStats.get(id)?.newCount || 0,
+      learning_count: deckStats.get(id)?.learning || 0,
+    }))
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient()
 
@@ -279,7 +407,10 @@ export default async function DashboardPage() {
 }
 
 async function StudentDashboard({ userId }: { userId: string }) {
-  const stats = await getStudentStats(userId)
+  const [stats, recentDecks] = await Promise.all([
+    getStudentStats(userId),
+    getRecentDecks(userId),
+  ])
 
   return (
     <div className="space-y-6">
@@ -306,6 +437,63 @@ async function StudentDashboard({ userId }: { userId: string }) {
           </p>
         )}
       </section>
+
+      {/* Recent Decks */}
+      {recentDecks.length > 0 && (
+        <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">最近のデッキ</h2>
+          <div className="space-y-3">
+            {recentDecks.map((deck) => {
+              const hasDue = deck.due_count > 0 || deck.new_count > 0 || deck.learning_count > 0
+              return (
+                <div
+                  key={deck.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-gray-900 truncate">{deck.name}</p>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-xs text-gray-400">
+                        {formatRelativeTime(deck.lastStudiedAt)}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {deck.due_count > 0 && (
+                          <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded">
+                            復習 {deck.due_count}
+                          </span>
+                        )}
+                        {deck.new_count > 0 && (
+                          <span className="text-xs px-1.5 py-0.5 bg-green-100 text-green-700 rounded">
+                            新規 {deck.new_count}
+                          </span>
+                        )}
+                        {deck.learning_count > 0 && (
+                          <span className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded">
+                            学習中 {deck.learning_count}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <Link
+                    href={`/study?deck=${deck.id}`}
+                    className={`ml-3 flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full transition-colors ${
+                      hasDue
+                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'bg-gray-200 text-gray-400'
+                    }`}
+                    title={hasDue ? '学習開始' : '学習するカードがありません'}
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </Link>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Quick Actions */}
       <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

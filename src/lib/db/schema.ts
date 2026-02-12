@@ -75,6 +75,15 @@ export interface AudioCacheEntry {
   cachedAt: Date
 }
 
+// User-specific deck settings override
+export interface LocalUserDeckSettings {
+  id: string // composite key: `${user_id}:${deck_id}`
+  user_id: string
+  deck_id: string
+  settings: Record<string, unknown>
+  updated_at: Date
+}
+
 class TsubameSRSDatabase extends Dexie {
   // Tables
   profiles!: Table<Profile>
@@ -88,6 +97,7 @@ class TsubameSRSDatabase extends Dexie {
   syncQueue!: Table<SyncQueueEntry>
   syncMetadata!: Table<SyncMetadata>
   audioCache!: Table<AudioCacheEntry>
+  userDeckSettings!: Table<LocalUserDeckSettings>
 
   constructor() {
     super('tsubame-srs')
@@ -175,6 +185,22 @@ class TsubameSRSDatabase extends Dexie {
           cs.lapses = 0
         }
       })
+    })
+
+    // Version 6: Add userDeckSettings table for per-user deck setting overrides
+    this.version(6).stores({
+      profiles: 'id',
+      noteTypes: 'id',
+      cardTemplates: 'id, note_type_id',
+      decks: 'id, owner_id, parent_deck_id',
+      notes: 'id, deck_id, *tags',
+      cards: 'id, note_id, deck_id',
+      cardStates: 'id, user_id, card_id, due, [user_id+card_id]',
+      reviewLogs: 'id, user_id, card_id, synced_at',
+      syncQueue: '++id, table, created_at, attempts',
+      syncMetadata: 'key',
+      audioCache: 'id, noteId, cachedAt',
+      userDeckSettings: 'id, user_id, deck_id, [user_id+deck_id]',
     })
   }
 }
@@ -634,9 +660,15 @@ export async function getStudyCardsOffline(
     .toArray()
   const stateMap = new Map(states.map(s => [s.card_id, s]))
 
-  // Get deck settings
+  // Get deck settings + user-specific overrides
   const deck = await db.decks.get(deckId)
-  const settings = resolveDeckSettings(deck?.settings)
+  const userSettingsId = `${userId}:${deckId}`
+  const userDeckSetting = await db.userDeckSettings.get(userSettingsId).catch(() => undefined)
+  const mergedDeckSettings = {
+    ...(deck?.settings || {}),
+    ...(userDeckSetting?.settings || {}),
+  }
+  const settings = resolveDeckSettings(mergedDeckSettings)
 
   // Count new cards introduced today
   const todayStart = new Date()

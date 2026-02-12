@@ -314,7 +314,7 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-gray-900">デッキ一覧</h1>
-        {userProfile && userProfile.role !== 'student' && (
+        {userProfile && (
           <Link
             href="/decks/new"
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
@@ -375,7 +375,7 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
                   learning_count: deck.aggregated_learning_count,
                   review_count: deck.aggregated_review_count,
                 } : undefined}
-                canDelete={userProfile?.role !== 'student'}
+                canDelete={true}
                 onDelete={() => setShowDeleteConfirm(deck.id)}
                 canSettings={true}
                 onSettings={() => handleOpenSettings(deck.id)}
@@ -391,7 +391,12 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
           <h2 className="text-lg font-semibold text-gray-700 mb-4">配布デッキ</h2>
           <div className="space-y-3">
             {assignedDecks.map((deck) => (
-              <DeckCard key={deck.id} deck={deck} />
+              <DeckCard
+                key={deck.id}
+                deck={deck}
+                canSettings={true}
+                onSettings={() => handleOpenSettings(deck.id)}
+              />
             ))}
           </div>
         </section>
@@ -419,7 +424,7 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
             {!isOnline
               ? 'オンライン時にデッキを開くと、データが自動的にキャッシュされます。'
               : userProfile?.role === 'student'
-                ? '講師からデッキが配布されるのを待ちましょう。'
+                ? '新しいデッキを作成して学習を始めましょう！'
                 : 'デッキを作成して、生徒に配布しましょう。'}
           </p>
         </div>
@@ -472,6 +477,11 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
               <div>
                 <h2 className="text-lg font-bold text-gray-900">デッキ設定</h2>
                 <p className="text-sm text-gray-500 mt-1">{settingsDeckName}</p>
+                {settingsDeckId && decks?.find(d => d.id === settingsDeckId && !d.is_own) && (
+                  <p className="text-sm text-blue-600 mt-1">
+                    この設定はあなたの学習にのみ影響します。
+                  </p>
+                )}
               </div>
               <button
                 onClick={() => setSettingsDeckId(null)}

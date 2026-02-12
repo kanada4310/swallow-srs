@@ -20,8 +20,8 @@ interface DeckWithStats {
 async function getDecksWithStats(userId: string): Promise<DeckWithStats[]> {
   const supabase = await createClient()
 
-  // Get own decks and assigned decks in parallel
-  const [{ data: ownDecks }, { data: assignedDecks }] = await Promise.all([
+  // Get own decks, assigned decks, and user-specific settings in parallel
+  const [{ data: ownDecks }, { data: assignedDecks }, { data: userSettings }] = await Promise.all([
     supabase
       .from('decks')
       .select('id, name, owner_id, is_distributed, parent_deck_id, settings')
@@ -30,7 +30,17 @@ async function getDecksWithStats(userId: string): Promise<DeckWithStats[]> {
       .from('decks')
       .select('id, name, owner_id, is_distributed, parent_deck_id, settings')
       .neq('owner_id', userId),
+    supabase
+      .from('user_deck_settings')
+      .select('deck_id, settings')
+      .eq('user_id', userId),
   ])
+
+  // Build user settings map
+  const userSettingsMap = new Map<string, Record<string, unknown>>()
+  for (const us of userSettings || []) {
+    userSettingsMap.set(us.deck_id, us.settings as Record<string, unknown>)
+  }
 
   const allDecks = [
     ...(ownDecks || []).map(d => ({ ...d, is_own: true })),
@@ -84,10 +94,17 @@ async function getDecksWithStats(userId: string): Promise<DeckWithStats[]> {
       }
     }
 
+    // Merge user-specific settings over deck settings
+    const baseDeckSettings = (deck as { settings?: Record<string, unknown> }).settings || {}
+    const userOverride = userSettingsMap.get(deck.id)
+    const mergedSettings = userOverride
+      ? { ...baseDeckSettings, ...userOverride }
+      : baseDeckSettings
+
     return {
       ...deck,
       parent_deck_id: deck.parent_deck_id || null,
-      settings: (deck as { settings?: Record<string, unknown> }).settings || undefined,
+      settings: Object.keys(mergedSettings).length > 0 ? mergedSettings : undefined,
       total_cards: cardIds.length,
       new_count: newCount,
       learning_count: learningCount,

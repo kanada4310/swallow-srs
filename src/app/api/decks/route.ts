@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { requireAuth, requireTeacher } from '@/lib/api/auth'
+import { requireAuth } from '@/lib/api/auth'
 import { validateDeckSettings } from '@/lib/srs/settings-validation'
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { user, error } = await requireTeacher(supabase)
+    const { user, error } = await requireAuth(supabase)
     if (error) return error
 
     const body = await request.json()

@@ -29,10 +29,33 @@ export async function PUT(
       return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
     }
 
+    // Non-owner: only allow settings override via user_deck_settings
     if (deck.owner_id !== user.id) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+      if (name !== undefined) {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+      }
+      if (settings) {
+        const errors = validateDeckSettings(settings)
+        if (errors.length > 0) {
+          return NextResponse.json({ error: errors.map(e => e.message).join(', ') }, { status: 400 })
+        }
+        const { error: upsertError } = await supabase
+          .from('user_deck_settings')
+          .upsert({
+            user_id: user.id,
+            deck_id: deckId,
+            settings,
+          })
+        if (upsertError) {
+          console.error('Error saving user deck settings:', upsertError)
+          return NextResponse.json({ error: upsertError.message }, { status: 500 })
+        }
+        return NextResponse.json({ deck: { ...deck, settings }, isUserOverride: true })
+      }
+      return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
     }
 
+    // Owner: update deck directly
     // Validate settings if provided
     if (settings) {
       const errors = validateDeckSettings(settings)

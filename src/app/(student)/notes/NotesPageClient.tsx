@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { NoteBrowser } from '@/components/deck/NoteBrowser'
 import { NoteEditModal } from '@/components/deck/NoteEditModal'
 import { NoteEditor } from '@/components/deck/NoteEditor'
@@ -12,6 +12,7 @@ interface NotesPageClientProps {
   initialTotal?: number
   noteTypes?: NoteType[]
   deckNameEntries?: [string, string][]
+  ownDeckIds?: string[]
   userProfile?: { id: string; name: string; role: string }
 }
 
@@ -20,6 +21,7 @@ export function NotesPageClient({
   initialTotal,
   noteTypes: noteTypesProp,
   deckNameEntries,
+  ownDeckIds: ownDeckIdsProp,
   userProfile,
 }: NotesPageClientProps) {
   const [notes, setNotes] = useState<BrowsableNote[]>(initialNotes || [])
@@ -42,7 +44,14 @@ export function NotesPageClient({
     return map
   }, [deckNameEntries])
 
-  const canEdit = userProfile?.role !== 'student'
+  // Teachers/admins can edit all notes; students can only edit notes in their own decks
+  const ownDeckIdSet = useMemo(() => new Set(ownDeckIdsProp || []), [ownDeckIdsProp])
+  const isTeacherOrAdmin = userProfile?.role === 'teacher' || userProfile?.role === 'admin'
+  const canEdit = isTeacherOrAdmin || ownDeckIdSet.size > 0
+  const canEditNote = useCallback((note: BrowsableNote): boolean => {
+    if (isTeacherOrAdmin) return true
+    return note.deck_id ? ownDeckIdSet.has(note.deck_id) : false
+  }, [isTeacherOrAdmin, ownDeckIdSet])
 
   const handleDeleteNote = async (noteId: string) => {
     setDeletingNoteId(noteId)
@@ -221,9 +230,11 @@ export function NotesPageClient({
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             >
               <option value="">デッキを選択...</option>
-              {deckNameEntries?.map(([id, name]) => (
-                <option key={id} value={id}>{name}</option>
-              ))}
+              {deckNameEntries
+                ?.filter(([id]) => isTeacherOrAdmin || ownDeckIdSet.has(id))
+                .map(([id, name]) => (
+                  <option key={id} value={id}>{name}</option>
+                ))}
             </select>
           </div>
 
@@ -244,6 +255,7 @@ export function NotesPageClient({
         noteTypes={noteTypes}
         deckNameMap={deckNameMap}
         canEdit={canEdit}
+        canEditNote={isTeacherOrAdmin ? undefined : canEditNote}
         onEditNote={(note) => setEditingNote(note)}
         onDeleteNote={handleDeleteNote}
         onBulkDelete={handleBulkDelete}

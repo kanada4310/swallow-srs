@@ -49,7 +49,7 @@ export default async function EditNoteTypePage({ params }: PageProps) {
     .eq('id', user.id)
     .single()
 
-  if (!profile || (profile.role !== 'teacher' && profile.role !== 'admin')) {
+  if (!profile) {
     redirect('/')
   }
 

@@ -58,9 +58,9 @@ const NoteTypesIcon = () => (
 
 const studentNavItems: NavItem[] = [
   { href: '/', label: 'ホーム', icon: <HomeIcon /> },
-  { href: '/study', label: '学習', icon: <StudyIcon /> },
   { href: '/decks', label: 'デッキ', icon: <DecksIcon /> },
   { href: '/notes', label: 'ノート', icon: <NotesIcon /> },
+  { href: '/note-types', label: 'テンプレート', icon: <NoteTypesIcon /> },
   { href: '/stats', label: '統計', icon: <StatsIcon /> },
 ]
 

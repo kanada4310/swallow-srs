@@ -29,11 +29,6 @@ export default async function NewDeckPage({
     redirect('/login')
   }
 
-  // Only teachers and admins can create decks
-  if (profile.role === 'student') {
-    redirect('/decks')
-  }
-
   // Fetch user's decks for parent selection
   const { data: userDecks } = await supabase
     .from('decks')

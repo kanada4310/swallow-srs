@@ -147,7 +147,7 @@ async function getDeckWithNotes(deckId: string, userId: string) {
   }
 }
 
-async function getNoteTypes(userId: string) {
+async function getNoteTypes(userId: string, deckNoteTypeIds: string[]) {
   const supabase = await createClient()
 
   // Get system note types and custom note types owned by the user
@@ -158,7 +158,23 @@ async function getNoteTypes(userId: string) {
     .order('is_system', { ascending: false })
     .order('name')
 
-  return noteTypes || []
+  const result = noteTypes || []
+  const existingIds = new Set(result.map(nt => nt.id))
+
+  // Also fetch note types used by notes in this deck (for assigned decks with custom note types)
+  const missingIds = deckNoteTypeIds.filter(id => !existingIds.has(id))
+  if (missingIds.length > 0) {
+    const { data: extraNoteTypes } = await supabase
+      .from('note_types')
+      .select('id, name, fields, generation_rules')
+      .in('id', missingIds)
+
+    if (extraNoteTypes) {
+      result.push(...extraNoteTypes)
+    }
+  }
+
+  return result
 }
 
 export default async function DeckDetailPage({ params }: PageProps) {
@@ -182,8 +198,28 @@ export default async function DeckDetailPage({ params }: PageProps) {
     notFound()
   }
 
-  const noteTypes = await getNoteTypes(profile.id)
-  const canEdit = deckData.isOwner && profile.role !== 'student'
+  // Extract unique note type IDs from the deck's notes
+  const deckNoteTypeIds = Array.from(new Set(
+    (deckData.notes as Array<{ note_type_id?: string }>)
+      .map(n => n.note_type_id)
+      .filter((id): id is string => !!id)
+  ))
+  const noteTypes = await getNoteTypes(profile.id, deckNoteTypeIds)
+  const canEdit = deckData.isOwner
+
+  // Get user-specific deck settings override
+  let mergedDeckSettings = deckData.deck.settings || {}
+  if (!deckData.isOwner) {
+    const { data: userSettings } = await supabase
+      .from('user_deck_settings')
+      .select('settings')
+      .eq('user_id', profile.id)
+      .eq('deck_id', id)
+      .maybeSingle()
+    if (userSettings?.settings) {
+      mergedDeckSettings = { ...mergedDeckSettings, ...userSettings.settings }
+    }
+  }
 
   return (
     <AppLayout userName={profile.name} userRole={profile.role}>
@@ -274,13 +310,15 @@ export default async function DeckDetailPage({ params }: PageProps) {
         <DeckDetailClient
           deckId={id}
           deckName={deckData.deck.name}
-          deckSettings={deckData.deck.settings || {}}
+          deckSettings={mergedDeckSettings}
           allDeckIds={deckData.allDeckIds}
           notes={deckData.notes as unknown as BrowsableNote[]}
           totalNoteCount={deckData.totalNoteCount}
           noteTypes={noteTypes as NoteType[]}
           deckTags={deckData.deckTags}
           canEdit={canEdit}
+          isOwner={deckData.isOwner}
+          userRole={profile.role}
         />
       </div>
     </AppLayout>

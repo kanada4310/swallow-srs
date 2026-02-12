@@ -128,6 +128,9 @@ export default async function NotesPage() {
   // Serialize deckNameMap for client
   const deckNameEntries = Array.from(deckMap.entries())
 
+  // Collect own deck IDs for per-note edit permission
+  const ownDeckIds = (ownDecks || []).map(d => d.id)
+
   return (
     <AppLayout userName={profile.name} userRole={profile.role}>
       <NotesPageClient
@@ -135,6 +138,7 @@ export default async function NotesPage() {
         initialTotal={initialTotal}
         noteTypes={noteTypes || []}
         deckNameEntries={deckNameEntries}
+        ownDeckIds={ownDeckIds}
         userProfile={{ id: profile.id, name: profile.name, role: profile.role }}
       />
     </AppLayout>
