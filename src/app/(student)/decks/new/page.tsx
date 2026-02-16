@@ -1,45 +1,59 @@
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { DeckForm } from '@/components/deck/DeckForm'
-import { redirect } from 'next/navigation'
-import type { Profile } from '@/types/database'
+import { db } from '@/lib/db/schema'
 
-interface SearchParams {
-  parent?: string
-}
+export default function NewDeckPage() {
+  const { profile, isLoading } = useAuth()
+  const searchParams = useSearchParams()
+  const parentId = searchParams.get('parent') || ''
 
-export default async function NewDeckPage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>
-}) {
-  const params = await searchParams
-  const parentId = params.parent || ''
+  const [parentDecks, setParentDecks] = useState<Array<{ id: string; name: string }>>([])
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  useEffect(() => {
+    if (!profile) return
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, name, role')
-    .eq('id', user?.id)
-    .single() as { data: Profile | null }
+    const loadDecks = async () => {
+      try {
+        const decks = await db.decks
+          .where('owner_id')
+          .equals(profile.id)
+          .toArray()
+        setParentDecks(
+          decks
+            .map(d => ({ id: d.id, name: d.name }))
+            .sort((a, b) => a.name.localeCompare(b.name))
+        )
+      } catch {
+        setParentDecks([])
+      }
+    }
 
-  if (!profile) {
-    redirect('/login')
+    loadDecks()
+  }, [profile])
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="h-8 bg-gray-200 rounded w-48 mb-6 animate-pulse" />
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="space-y-4">
+              <div className="h-10 bg-gray-200 rounded animate-pulse" />
+              <div className="h-10 bg-gray-200 rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </AppLayout>
+    )
   }
 
-  // Fetch user's decks for parent selection
-  const { data: userDecks } = await supabase
-    .from('decks')
-    .select('id, name')
-    .eq('owner_id', profile.id)
-    .order('name')
-
-  const parentDecks = (userDecks || []).map(d => ({ id: d.id, name: d.name }))
-
   return (
-    <AppLayout userName={profile.name} userRole={profile.role}>
+    <AppLayout>
       <div className="max-w-2xl mx-auto px-4 py-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">新しいデッキを作成</h1>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

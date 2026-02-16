@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { StudySession } from '@/components/card/StudySession'
-import { AppLayout } from '@/components/layout/AppLayout'
 import { useOnlineStatus } from '@/lib/db/hooks'
 import { getStudyCardsOffline, getDecksWithStatsOffline, db } from '@/lib/db/schema'
 import Link from 'next/link'
@@ -31,7 +30,6 @@ interface StudyPageClientProps {
   deckName?: string
   initialCards?: CardData[]
   userId?: string
-  userProfile?: { name: string; role: string }
   deckSettings?: Partial<DeckSettings>
 }
 
@@ -40,7 +38,6 @@ export function StudyPageClient({
   deckName,
   initialCards,
   userId: userIdProp,
-  userProfile: userProfileProp,
   deckSettings,
 }: StudyPageClientProps) {
   const isOnline = useOnlineStatus()
@@ -51,7 +48,6 @@ export function StudyPageClient({
 
   // State for data loaded from IndexedDB
   const [offlineUserId, setOfflineUserId] = useState<string | null>(null)
-  const [offlineProfile, setOfflineProfile] = useState<{ name: string; role: string } | null>(null)
   const [offlineCards, setOfflineCards] = useState<CardData[] | null>(null)
   const [offlineDeckName, setOfflineDeckName] = useState<string | null>(null)
   const [offlineDecks, setOfflineDecks] = useState<
@@ -65,7 +61,7 @@ export function StudyPageClient({
 
   // Resolved values (server data or offline data)
   const userId = userIdProp || offlineUserId
-  const userProfile = userProfileProp || offlineProfile
+
 
   // Load offline data when server data is unavailable
   useEffect(() => {
@@ -83,7 +79,6 @@ export function StudyPageClient({
           if (profile) {
             resolvedUserId = profile.id
             setOfflineUserId(profile.id)
-            setOfflineProfile({ name: profile.name, role: profile.role })
           } else {
             setOfflineError('オフラインデータがありません。オンラインでログインしてください。')
             return
@@ -114,29 +109,14 @@ export function StudyPageClient({
     loadOfflineData()
   }, [hasServerData, deckId, userIdProp])
 
-  // Wrap content in AppLayout when in standalone mode (no server-side layout)
-  const needsLayout = !userProfileProp
-  const wrapInLayout = (content: React.ReactNode) => {
-    if (needsLayout && userProfile) {
-      return (
-        <AppLayout userName={userProfile.name} userRole={userProfile.role as 'student' | 'teacher' | 'admin'}>
-          <div className="max-w-4xl mx-auto px-4">
-            {content}
-          </div>
-        </AppLayout>
-      )
-    }
-    return content
-  }
-
   // Loading state for offline
   if (!hasServerData && isLoadingOffline) {
-    return wrapInLayout(<StudyLoadingSkeleton />)
+    return <StudyLoadingSkeleton />
   }
 
   // Error state
   if (!hasServerData && offlineError) {
-    return wrapInLayout(
+    return (
       <div className="py-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
           {offlineError}
@@ -152,7 +132,7 @@ export function StudyPageClient({
     }
 
     // Offline deck selection
-    return wrapInLayout(
+    return (
       <div className="py-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">学習</h1>
         <OfflineBadge />
@@ -210,10 +190,10 @@ export function StudyPageClient({
   const resolvedDeckName = deckName || offlineDeckName || 'デッキ'
 
   if (!cards || !userId) {
-    return wrapInLayout(<StudyLoadingSkeleton />)
+    return <StudyLoadingSkeleton />
   }
 
-  return wrapInLayout(
+  return (
     <div className="py-0">
       {!isOnline && <OfflineBadge />}
       <StudySession

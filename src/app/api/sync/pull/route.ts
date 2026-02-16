@@ -163,5 +163,71 @@ export async function POST(request: NextRequest) {
     response.cardStates = cardStates
   }
 
+  // Fetch user_deck_settings for the user
+  const { data: userDeckSettings } = await supabase
+    .from('user_deck_settings')
+    .select('*')
+    .eq('user_id', user.id)
+
+  if (userDeckSettings && userDeckSettings.length > 0) {
+    response.userDeckSettings = userDeckSettings
+  }
+
+  // Fetch classes (teacher's own classes + classes user is a member of)
+  const { data: teacherClasses } = await supabase
+    .from('classes')
+    .select('*')
+    .eq('teacher_id', user.id)
+
+  const { data: membershipClasses } = await supabase
+    .from('class_members')
+    .select('class_id, classes(*)')
+    .eq('user_id', user.id)
+
+  const allClasses = [
+    ...(teacherClasses || []),
+    ...((membershipClasses || []) as unknown as Array<{ class_id: string; classes: Record<string, unknown> | null }>)
+      .map(m => m.classes)
+      .filter((c): c is Record<string, unknown> => c !== null),
+  ]
+  const uniqueClasses = Array.from(new Map(allClasses.map(c => [c.id, c])).values())
+
+  if (uniqueClasses.length > 0) {
+    response.classes = uniqueClasses
+
+    // Fetch class members for these classes
+    const classIds = uniqueClasses.map(c => c.id as string)
+    const { data: classMembers } = await supabase
+      .from('class_members')
+      .select('*')
+      .in('class_id', classIds)
+
+    if (classMembers && classMembers.length > 0) {
+      response.classMembers = classMembers
+    }
+  }
+
+  // Fetch deck_assignments relevant to user
+  // (assignments to user directly or to classes user belongs to)
+  const userClassIds = (membershipClasses || []).map((m: { class_id: string }) => m.class_id)
+  const assignmentFilters = [`user_id.eq.${user.id}`]
+  if (userClassIds.length > 0) {
+    assignmentFilters.push(`class_id.in.(${userClassIds.join(',')})`)
+  }
+  // Also get assignments for decks the user owns
+  const ownDeckIds = (ownDecks || []).map(d => d.id)
+  if (ownDeckIds.length > 0) {
+    assignmentFilters.push(`deck_id.in.(${ownDeckIds.join(',')})`)
+  }
+
+  const { data: deckAssignments } = await supabase
+    .from('deck_assignments')
+    .select('*')
+    .or(assignmentFilters.join(','))
+
+  if (deckAssignments && deckAssignments.length > 0) {
+    response.deckAssignments = deckAssignments
+  }
+
   return NextResponse.json(response)
 }

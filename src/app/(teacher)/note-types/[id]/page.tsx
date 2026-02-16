@@ -1,65 +1,79 @@
-import { redirect, notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { NoteTypeEditorClient } from '@/components/note-type/NoteTypeEditorClient'
-import type { NoteTypeWithTemplates, CardTemplate } from '@/types/database'
+import { db } from '@/lib/db/schema'
+import type { NoteTypeWithTemplates } from '@/types/database'
 
-interface PageProps {
-  params: Promise<{ id: string }>
-}
+export default function EditNoteTypePage() {
+  const { id } = useParams<{ id: string }>()
+  const { isLoading } = useAuth()
+  const [noteType, setNoteType] = useState<NoteTypeWithTemplates | null>(null)
+  const [notFound, setNotFound] = useState(false)
+  const [isLoadingData, setIsLoadingData] = useState(true)
 
-async function getNoteType(id: string): Promise<NoteTypeWithTemplates | null> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  useEffect(() => {
+    if (!id) return
 
-  if (!user) return null
+    const loadNoteType = async () => {
+      setIsLoadingData(true)
+      try {
+        const nt = await db.noteTypes.get(id)
+        if (!nt) {
+          setNotFound(true)
+          setIsLoadingData(false)
+          return
+        }
 
-  const { data: noteType, error } = await supabase
-    .from('note_types')
-    .select(`
-      *,
-      card_templates (*)
-    `)
-    .eq('id', id)
-    .or(`is_system.eq.true,owner_id.eq.${user.id}`)
-    .single()
+        const templates = await db.cardTemplates
+          .where('note_type_id')
+          .equals(id)
+          .toArray()
 
-  if (error || !noteType) return null
+        templates.sort((a, b) => a.ordinal - b.ordinal)
 
-  // Sort templates by ordinal
-  if (noteType.card_templates) {
-    noteType.card_templates.sort((a: CardTemplate, b: CardTemplate) => a.ordinal - b.ordinal)
+        setNoteType({
+          ...nt,
+          card_templates: templates,
+        })
+      } catch {
+        setNotFound(true)
+      } finally {
+        setIsLoadingData(false)
+      }
+    }
+
+    loadNoteType()
+  }, [id])
+
+  if (isLoading || isLoadingData) {
+    return (
+      <AppLayout>
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="h-8 bg-gray-200 rounded w-48 mb-6 animate-pulse" />
+          <div className="h-64 bg-gray-200 rounded animate-pulse" />
+        </div>
+      </AppLayout>
+    )
   }
 
-  return noteType as NoteTypeWithTemplates
-}
-
-export default async function EditNoteTypePage({ params }: PageProps) {
-  const { id } = await params
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    redirect('/login')
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('name, role')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile) {
-    redirect('/')
-  }
-
-  const noteType = await getNoteType(id)
-  if (!noteType) {
-    notFound()
+  if (notFound || !noteType) {
+    return (
+      <AppLayout>
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+            ノートタイプが見つかりませんでした。
+          </div>
+        </div>
+      </AppLayout>
+    )
   }
 
   return (
-    <AppLayout userName={profile.name} userRole={profile.role}>
+    <AppLayout>
       <div className="max-w-4xl mx-auto px-4 py-6">
         <NoteTypeEditorClient mode="edit" noteType={noteType} />
       </div>

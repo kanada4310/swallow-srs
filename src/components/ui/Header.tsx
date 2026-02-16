@@ -1,22 +1,15 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { Settings } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { SyncIndicator } from './SyncIndicator'
 
-interface HeaderProps {
-  userName?: string
-  userRole?: 'student' | 'teacher' | 'admin'
-}
-
-export function Header({ userName, userRole }: HeaderProps) {
-  const router = useRouter()
+export function Header() {
+  const { profile, logout } = useAuth()
 
   const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/login')
+    await logout()
   }
 
   return (
@@ -30,16 +23,15 @@ export function Header({ userName, userRole }: HeaderProps) {
 
           {/* User Info & Actions */}
           <div className="flex items-center gap-2 sm:gap-4">
-            {userName && (
+            {profile && (
               <div className="hidden sm:flex items-center gap-2 text-sm text-gray-600">
-                <span>{userName}</span>
-                {userRole && (
-                  <span className="px-2 py-0.5 bg-gray-100 rounded text-xs">
-                    {userRole === 'teacher' ? '講師' : userRole === 'admin' ? '管理者' : '生徒'}
-                  </span>
-                )}
+                <span>{profile.name}</span>
+                <span className="px-2 py-0.5 bg-gray-100 rounded text-xs">
+                  {profile.role === 'teacher' ? '講師' : profile.role === 'admin' ? '管理者' : '生徒'}
+                </span>
               </div>
             )}
+            <SyncIndicator />
             <Link
               href="/settings"
               className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"

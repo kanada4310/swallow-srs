@@ -1,144 +1,184 @@
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { db } from '@/lib/db/schema'
 import { NotesPageClient } from './NotesPageClient'
-import type { Profile, GeneratedContent } from '@/types/database'
+import type { NoteType } from '@/types/database'
+import type { BrowsableNote } from '@/components/deck/NoteCard'
 
-export default async function NotesPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+interface NotesData {
+  initialNotes: BrowsableNote[]
+  initialTotal: number
+  noteTypes: NoteType[]
+  deckNameEntries: [string, string][]
+  ownDeckIds: string[]
+}
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, name, role')
-    .eq('id', user?.id)
-    .single() as { data: Profile | null }
+function NotesSkeleton() {
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="h-8 bg-gray-200 rounded w-32 mb-6 animate-pulse" />
+      <div className="h-10 bg-gray-200 rounded mb-4 animate-pulse" />
+      <div className="space-y-3">
+        {[1, 2, 3, 4, 5].map(i => (
+          <div key={i} className="h-20 bg-gray-200 rounded animate-pulse" />
+        ))}
+      </div>
+    </div>
+  )
+}
 
-  if (!profile) {
-    return <NotesPageClient />
-  }
+export default function NotesPage() {
+  const { profile, isLoading: authLoading } = useAuth()
+  const [notesData, setNotesData] = useState<NotesData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Fetch note types
-  const { data: noteTypes } = await supabase
-    .from('note_types')
-    .select('*')
-    .or(`owner_id.eq.${profile.id},is_system.eq.true`)
-    .order('name')
+  useEffect(() => {
+    if (authLoading || !profile) return
 
-  // Fetch all accessible deck IDs + names for cross-deck search
-  const [{ data: ownDecks }, { data: directAssignments }, { data: classMembers }] = await Promise.all([
-    supabase.from('decks').select('id, name').eq('owner_id', profile.id),
-    supabase.from('deck_assignments').select('deck_id').eq('user_id', profile.id),
-    supabase.from('class_members').select('class_id').eq('user_id', profile.id),
-  ])
+    let cancelled = false
 
-  const deckMap = new Map<string, string>()
-  for (const d of ownDecks || []) deckMap.set(d.id, d.name)
+    async function loadNotesData() {
+      try {
+        // Get note types (system + user-owned)
+        const allNoteTypes = await db.noteTypes.toArray()
+        const noteTypes = allNoteTypes.filter(
+          nt => nt.is_system || nt.owner_id === profile!.id
+        ) as NoteType[]
 
-  // Get assigned deck details
-  const assignedDeckIds: string[] = []
-  for (const a of directAssignments || []) {
-    if (!deckMap.has(a.deck_id)) assignedDeckIds.push(a.deck_id)
-  }
+        // Get all accessible decks from Dexie
+        const allDecks = await db.decks.toArray()
+        const deckMap = new Map<string, string>()
 
-  const classIds = (classMembers || []).map(cm => cm.class_id)
-  if (classIds.length > 0) {
-    const { data: classAssignments } = await supabase
-      .from('deck_assignments')
-      .select('deck_id')
-      .in('class_id', classIds)
-    for (const a of classAssignments || []) {
-      if (!deckMap.has(a.deck_id)) assignedDeckIds.push(a.deck_id)
-    }
-  }
+        // Own decks
+        const ownDeckIds: string[] = []
+        for (const d of allDecks) {
+          deckMap.set(d.id, d.name)
+          if (d.owner_id === profile!.id) {
+            ownDeckIds.push(d.id)
+          }
+        }
 
-  // Fetch names for assigned decks
-  if (assignedDeckIds.length > 0) {
-    const { data: assignedDeckDetails } = await supabase
-      .from('decks')
-      .select('id, name')
-      .in('id', assignedDeckIds)
-    for (const d of assignedDeckDetails || []) deckMap.set(d.id, d.name)
-  }
+        const allDeckIds = Array.from(deckMap.keys())
 
-  // Also fetch subdeck names (children of known decks)
-  const allDeckIds = Array.from(deckMap.keys())
-  if (allDeckIds.length > 0) {
-    const { data: subDecks } = await supabase
-      .from('decks')
-      .select('id, name')
-      .in('parent_deck_id', allDeckIds)
-    for (const d of subDecks || []) deckMap.set(d.id, d.name)
-  }
+        // Get notes from all accessible decks (first 50)
+        let allNotes: Array<{
+          id: string
+          deck_id: string
+          field_values: Record<string, string>
+          note_type_id: string
+          generated_content: unknown
+          tags: string[]
+          created_at: string | Date
+        }> = []
 
-  const allSearchDeckIds = Array.from(deckMap.keys())
+        if (allDeckIds.length > 0) {
+          const notes = await db.notes
+            .where('deck_id')
+            .anyOf(allDeckIds)
+            .toArray()
 
-  let initialNotes: Array<{
-    id: string
-    deck_id?: string
-    field_values: Record<string, string>
-    note_type_id: string
-    generated_content: GeneratedContent | null
-    tags: string[]
-    created_at: string
-    cards: Array<{ id: string }>
-  }> = []
-  let initialTotal = 0
+          // Sort by created_at descending
+          notes.sort((a, b) => {
+            const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
+            const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
+            return dateB - dateA
+          })
 
-  if (allSearchDeckIds.length > 0) {
-    // Use direct query instead of RPC to avoid function overloading issues
-    // (007 and 008 migrations created two overloaded search_notes functions)
-    const { data: notesData, count } = await supabase
-      .from('notes')
-      .select('id, deck_id, field_values, note_type_id, generated_content, tags, created_at', { count: 'exact' })
-      .in('deck_id', allSearchDeckIds)
-      .order('created_at', { ascending: false })
-      .range(0, 49)
+          allNotes = notes
+        }
 
-    initialTotal = count || 0
-    const rows = notesData || []
+        const initialTotal = allNotes.length
+        const pagedNotes = allNotes.slice(0, 50)
 
-    // Get cards for these notes
-    const noteIds = rows.map(r => r.id)
-    const cardsMap: Record<string, Array<{ id: string }>> = {}
-    if (noteIds.length > 0) {
-      const { data: cards } = await supabase
-        .from('cards')
-        .select('id, note_id')
-        .in('note_id', noteIds)
-      if (cards) {
-        for (const card of cards) {
-          if (!cardsMap[card.note_id]) cardsMap[card.note_id] = []
-          cardsMap[card.note_id].push({ id: card.id })
+        // Get cards for paged notes
+        const noteIds = pagedNotes.map(n => n.id)
+        const cardsMap: Record<string, Array<{ id: string }>> = {}
+        if (noteIds.length > 0) {
+          const cards = await db.cards
+            .where('note_id')
+            .anyOf(noteIds)
+            .toArray()
+          for (const card of cards) {
+            if (!cardsMap[card.note_id]) cardsMap[card.note_id] = []
+            cardsMap[card.note_id].push({ id: card.id })
+          }
+        }
+
+        const initialNotes: BrowsableNote[] = pagedNotes.map(n => ({
+          id: n.id,
+          deck_id: n.deck_id,
+          field_values: n.field_values,
+          note_type_id: n.note_type_id,
+          generated_content: (n.generated_content as BrowsableNote['generated_content']) || null,
+          tags: n.tags || [],
+          created_at: typeof n.created_at === 'string' ? n.created_at : new Date(n.created_at || Date.now()).toISOString(),
+          cards: cardsMap[n.id] || [],
+        }))
+
+        // Also add note types referenced by notes that we don't have yet
+        const noteTypeIdsInNotes = new Set(allNotes.map(n => n.note_type_id))
+        const existingNoteTypeIds = new Set(noteTypes.map(nt => nt.id))
+        const missingNoteTypeIds = Array.from(noteTypeIdsInNotes).filter(id => !existingNoteTypeIds.has(id))
+        if (missingNoteTypeIds.length > 0) {
+          const extraNoteTypes = await db.noteTypes
+            .where('id')
+            .anyOf(missingNoteTypeIds)
+            .toArray()
+          noteTypes.push(...(extraNoteTypes as NoteType[]))
+        }
+
+        const deckNameEntries = Array.from(deckMap.entries()) as [string, string][]
+
+        if (!cancelled) {
+          setNotesData({
+            initialNotes,
+            initialTotal,
+            noteTypes,
+            deckNameEntries,
+            ownDeckIds,
+          })
+          setIsLoading(false)
+        }
+      } catch (error) {
+        console.error('Failed to load notes data from Dexie:', error)
+        if (!cancelled) {
+          setNotesData({
+            initialNotes: [],
+            initialTotal: 0,
+            noteTypes: [],
+            deckNameEntries: [],
+            ownDeckIds: [],
+          })
+          setIsLoading(false)
         }
       }
     }
 
-    initialNotes = rows.map(row => ({
-      id: row.id,
-      deck_id: row.deck_id || undefined,
-      field_values: row.field_values as Record<string, string>,
-      note_type_id: row.note_type_id,
-      generated_content: (row.generated_content as GeneratedContent | null) || null,
-      tags: (row.tags as string[]) || [],
-      created_at: row.created_at,
-      cards: cardsMap[row.id] || [],
-    }))
+    loadNotesData()
+    return () => { cancelled = true }
+  }, [profile, authLoading])
+
+  if (authLoading || isLoading) {
+    return (
+      <AppLayout>
+        <NotesSkeleton />
+      </AppLayout>
+    )
   }
 
-  // Serialize deckNameMap for client
-  const deckNameEntries = Array.from(deckMap.entries())
-
-  // Collect own deck IDs for per-note edit permission
-  const ownDeckIds = (ownDecks || []).map(d => d.id)
+  if (!profile) return null
 
   return (
-    <AppLayout userName={profile.name} userRole={profile.role}>
+    <AppLayout>
       <NotesPageClient
-        initialNotes={initialNotes}
-        initialTotal={initialTotal}
-        noteTypes={noteTypes || []}
-        deckNameEntries={deckNameEntries}
-        ownDeckIds={ownDeckIds}
+        initialNotes={notesData?.initialNotes}
+        initialTotal={notesData?.initialTotal}
+        noteTypes={notesData?.noteTypes}
+        deckNameEntries={notesData?.deckNameEntries}
+        ownDeckIds={notesData?.ownDeckIds}
         userProfile={{ id: profile.id, name: profile.name, role: profile.role }}
       />
     </AppLayout>

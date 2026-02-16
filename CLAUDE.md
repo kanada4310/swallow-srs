@@ -119,25 +119,30 @@ npm run test:watch   # Vitest 監視モード
 - **error.tsx**: `study/error.tsx`, `decks/error.tsx` でLink遷移時のRSCフェッチ失敗をキャッチ
 - **IndexedDBプロフィール取得**: Client ComponentがuserId未提供時にIndexedDBからprofile取得
 
-## 現在の進捗（2026-02-12更新）
+## クライアントファースト化（Phase 12） ✅ 完了
 
-**Phase 9.5 生徒セルフスタディ強化 🔧 実装済み（バグ調査中）**
+- **AuthProvider**: グローバル認証コンテキスト（`src/contexts/AuthContext.tsx`）。Dexie即時ロード + Supabase更新
+- **useDexieQuery**: stale-while-revalidate パターンの汎用フック（`src/lib/db/useDexieQuery.ts`）
+- **全ページClient Component化**: 全13ページを`'use client'`に変換、Dexie.jsプライマリ
+- **SyncIndicator**: ヘッダーに同期状態インジケーター（`src/components/ui/SyncIndicator.tsx`）
+- **Dexie v7**: classes, classMembers, deckAssignments テーブル追加
+- **Pull API拡張**: classes, classMembers, deckAssignments, userDeckSettings を同期対象に追加
+- **バックグラウンド同期**: 5分間隔 + タブフォーカス時 + 初回ログイン時
+
+## 現在の進捗（2026-02-16更新）
+
+**Phase 12 クライアントファースト化（SPA化）完了**
 
 ### 次回セッションでやること
-1. **Phase 9.5 バグ修正**: 生徒作成デッキでカード枚数が0表示される問題（RLS関連の可能性大。getDecksWithStatsのcardsクエリがRLSでブロックされている可能性）
-2. **Phase 9.5 動作確認の続き**: 配布デッキ読み取り専用、学習設定オーバーライド、講師回帰確認
-3. **Phase 9.2**: 最近学習したデッキのクイックアクセス（ダッシュボードに直近学習デッキ表示）
+1. **Phase 15**: FSRS導入 - SM-2からFSRSへのアップグレード
+2. **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア
 
-### 今後のロードマップ概要（詳細は ROADMAP.md）
-- **Phase 9**: ナビゲーション・UX改善（デッキ検索、最近のデッキ、学習時間表示）
-- **Phase 10**: ゲーミフィケーション（ストリーク、ヒートマップ、ゴール、リーダーボード）
-- **Phase 11**: 講師ツール強化（宿題機能、生徒詳細、クラス分析、保護者レポート）
-- **Phase 12**: クライアントファースト化/SPA化（全画面Client Component化、プッシュ通知）
-- **Phase 13-16**: コンテンツ効率化、学習モード拡張、FSRS、コラボレーション
-
-### 既知の問題（技術的詳細）
-- **オフライン時のページリロード**: SWのページナビゲーションキャッシュはNext.js RSCと競合するため削除。オフライン学習はアプリ内Link遷移（error.tsx → IndexedDB）で対応。フルリロードはオフライン不可。
-- **生徒作成デッキのカード枚数0表示**: Phase 9.5でrequireTeacher→requireAuthに変更後、生徒がデッキ作成・ノート追加は成功する（200応答）が、デッキ一覧のカード枚数が0で学習ボタンがグレー。RLS policiesのネストしたSELECTサブクエリが原因の可能性。
+### 今後のロードマップ概要（優先度順、詳細は ROADMAP.md）
+- **Phase 15**: FSRS導入 ★次
+- **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア
+- **Phase 10**: ゲーミフィケーション
+- **Phase 11**: 講師ツール強化
+- **Phase 13-14, 16**: コンテンツ効率化、学習モード拡張、コラボレーション
 
 ## 参照ドキュメント
 

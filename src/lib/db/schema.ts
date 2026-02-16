@@ -14,6 +14,9 @@ import type {
   CardState,
   FieldDefinition,
   GeneratedContent,
+  Class,
+  ClassMember,
+  DeckAssignment,
 } from '@/types/database'
 import type { CardSchedule } from '@/lib/srs/scheduler'
 import { resolveDeckSettings } from '@/lib/srs/scheduler'
@@ -98,6 +101,9 @@ class TsubameSRSDatabase extends Dexie {
   syncMetadata!: Table<SyncMetadata>
   audioCache!: Table<AudioCacheEntry>
   userDeckSettings!: Table<LocalUserDeckSettings>
+  classes!: Table<Class>
+  classMembers!: Table<ClassMember>
+  deckAssignments!: Table<DeckAssignment>
 
   constructor() {
     super('tsubame-srs')
@@ -201,6 +207,25 @@ class TsubameSRSDatabase extends Dexie {
       syncMetadata: 'key',
       audioCache: 'id, noteId, cachedAt',
       userDeckSettings: 'id, user_id, deck_id, [user_id+deck_id]',
+    })
+
+    // Version 7: Add classes, classMembers, deckAssignments for SPA化
+    this.version(7).stores({
+      profiles: 'id',
+      noteTypes: 'id',
+      cardTemplates: 'id, note_type_id',
+      decks: 'id, owner_id, parent_deck_id',
+      notes: 'id, deck_id, *tags',
+      cards: 'id, note_id, deck_id',
+      cardStates: 'id, user_id, card_id, due, [user_id+card_id]',
+      reviewLogs: 'id, user_id, card_id, synced_at',
+      syncQueue: '++id, table, created_at, attempts',
+      syncMetadata: 'key',
+      audioCache: 'id, noteId, cachedAt',
+      userDeckSettings: 'id, user_id, deck_id, [user_id+deck_id]',
+      classes: 'id, teacher_id',
+      classMembers: '[class_id+user_id], class_id, user_id',
+      deckAssignments: 'id, deck_id, class_id, user_id',
     })
   }
 }
@@ -318,6 +343,10 @@ export async function clearAllData(): Promise<void> {
       db.syncQueue,
       db.syncMetadata,
       db.audioCache,
+      db.userDeckSettings,
+      db.classes,
+      db.classMembers,
+      db.deckAssignments,
     ],
     async () => {
       await Promise.all([
@@ -332,6 +361,10 @@ export async function clearAllData(): Promise<void> {
         db.syncQueue.clear(),
         db.syncMetadata.clear(),
         db.audioCache.clear(),
+        db.userDeckSettings.clear(),
+        db.classes.clear(),
+        db.classMembers.clear(),
+        db.deckAssignments.clear(),
       ])
     }
   )

@@ -1,31 +1,27 @@
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useAuth } from '@/contexts/AuthContext'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { TTSSettings } from '@/components/audio/TTSSettings'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 
-interface Profile {
-  id: string
-  name: string
-  role: 'student' | 'teacher' | 'admin'
-}
+export default function SettingsPage() {
+  const { isLoading } = useAuth()
 
-export default async function SettingsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, name, role')
-    .eq('id', user?.id)
-    .single() as { data: Profile | null }
-
-  if (!profile) {
-    return null
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          <div className="h-8 bg-gray-200 rounded w-24 mb-6 animate-pulse" />
+          <div className="h-40 bg-gray-200 rounded animate-pulse" />
+        </div>
+      </AppLayout>
+    )
   }
 
   return (
-    <AppLayout userName={profile.name} userRole={profile.role}>
+    <AppLayout>
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="mb-6">
           <Link

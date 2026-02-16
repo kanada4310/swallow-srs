@@ -1,228 +1,255 @@
-import { createClient } from '@/lib/supabase/server'
-import { AppLayout } from '@/components/layout/AppLayout'
-import { redirect, notFound } from 'next/navigation'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import type { Profile, NoteType } from '@/types/database'
+import { useAuth } from '@/contexts/AuthContext'
+import { AppLayout } from '@/components/layout/AppLayout'
+import { db, getDescendantDeckIds } from '@/lib/db/schema'
+import type { NoteType, DeckSettings } from '@/types/database'
 import type { BrowsableNote } from '@/components/deck/NoteCard'
 import { DeckDetailClient } from './DeckDetailClient'
 
-interface PageProps {
-  params: Promise<{ id: string }>
+interface DeckData {
+  deckName: string
+  deckSettings: Partial<DeckSettings>
+  allDeckIds: string[]
+  notes: BrowsableNote[]
+  totalNoteCount: number
+  totalCards: number
+  dueCount: number
+  newCount: number
+  isOwner: boolean
+  noteTypes: NoteType[]
+  deckTags: string[]
+  childDecks: Array<{ id: string; name: string }>
+  canEdit: boolean
+  userRole: string
 }
 
-async function getDeckWithNotes(deckId: string, userId: string) {
-  const supabase = await createClient()
-
-  // Get deck
-  const { data: deck } = await supabase
-    .from('decks')
-    .select('*')
-    .eq('id', deckId)
-    .single()
-
-  if (!deck) return null
-
-  // Get all descendant deck IDs for subdeck note inclusion
-  let allDeckIds = [deckId]
-  try {
-    const { data: descendantIds } = await supabase.rpc('get_descendant_deck_ids', { p_deck_id: deckId })
-    if (descendantIds && Array.isArray(descendantIds) && descendantIds.length > 0) {
-      allDeckIds = [deckId, ...descendantIds]
-    }
-  } catch {
-    // RPC doesn't exist yet - subdeck feature not available
-  }
-
-  // Get notes with their cards (first page + total count)
-  // Try with tags column first; if migration 008 hasn't been run, fall back without
-  let notes: Array<Record<string, unknown>> | null = null
-  let totalNoteCount: number | null = null
-
-  const notesResult = await supabase
-    .from('notes')
-    .select(`
-      id,
-      field_values,
-      note_type_id,
-      generated_content,
-      tags,
-      created_at,
-      cards (id)
-    `, { count: 'exact' })
-    .in('deck_id', allDeckIds)
-    .order('created_at', { ascending: false })
-    .range(0, 49)
-
-  if (notesResult.error && notesResult.error.message?.includes('tags')) {
-    const fallback = await supabase
-      .from('notes')
-      .select(`
-        id,
-        field_values,
-        note_type_id,
-        generated_content,
-        created_at,
-        cards (id)
-      `, { count: 'exact' })
-      .in('deck_id', allDeckIds)
-      .order('created_at', { ascending: false })
-      .range(0, 49)
-    notes = fallback.data
-    totalNoteCount = fallback.count
-  } else {
-    notes = notesResult.data
-    totalNoteCount = notesResult.count
-  }
-
-  // Get card count
-  const { count: totalCards } = await supabase
-    .from('cards')
-    .select('*', { count: 'exact', head: true })
-    .eq('deck_id', deckId)
-
-  // Get due cards count for this user
-  const now = new Date().toISOString()
-  const { data: dueCards } = await supabase
-    .from('card_states')
-    .select('card_id')
-    .eq('user_id', userId)
-    .lte('due', now)
-
-  const dueCardIds = new Set(dueCards?.map(c => c.card_id) || [])
-
-  // Get cards in this deck that are due
-  const { data: deckCards } = await supabase
-    .from('cards')
-    .select('id')
-    .eq('deck_id', deckId)
-
-  let dueCount = 0
-  for (const card of deckCards || []) {
-    if (dueCardIds.has(card.id)) {
-      dueCount++
-    }
-  }
-
-  // New cards are those without card_state
-  const { data: cardStatesForDeck } = await supabase
-    .from('card_states')
-    .select('card_id')
-    .eq('user_id', userId)
-
-  const studiedCardIds = new Set(cardStatesForDeck?.map(cs => cs.card_id) || [])
-  let newCount = 0
-  for (const card of deckCards || []) {
-    if (!studiedCardIds.has(card.id)) {
-      newCount++
-    }
-  }
-
-  // Get unique tags for this deck (may fail if migration 008 hasn't been run)
-  let deckTags: string[] = []
-  try {
-    const { data: deckTagsData } = await supabase.rpc('get_deck_tags', { p_deck_id: deckId })
-    deckTags = (deckTagsData as string[] | null) || []
-  } catch {
-    // RPC doesn't exist yet - tags feature not available
-  }
-
-  // Get child decks
-  const { data: childDecks } = await supabase
-    .from('decks')
-    .select('id, name, parent_deck_id')
-    .eq('parent_deck_id', deckId)
-    .order('name')
-
-  return {
-    deck,
-    notes: notes || [],
-    totalNoteCount: totalNoteCount || 0,
-    totalCards: totalCards || 0,
-    dueCount,
-    newCount,
-    isOwner: deck.owner_id === userId,
-    deckTags,
-    childDecks: childDecks || [],
-    allDeckIds,
-  }
+function DeckDetailSkeleton() {
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="h-4 bg-gray-200 rounded w-24 mb-2 animate-pulse" />
+      <div className="h-8 bg-gray-200 rounded w-48 mb-6 animate-pulse" />
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+        <div className="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <div className="h-8 bg-gray-200 rounded w-12 mx-auto mb-1 animate-pulse" />
+            <div className="h-4 bg-gray-200 rounded w-16 mx-auto animate-pulse" />
+          </div>
+          <div>
+            <div className="h-8 bg-gray-200 rounded w-12 mx-auto mb-1 animate-pulse" />
+            <div className="h-4 bg-gray-200 rounded w-16 mx-auto animate-pulse" />
+          </div>
+          <div>
+            <div className="h-8 bg-gray-200 rounded w-12 mx-auto mb-1 animate-pulse" />
+            <div className="h-4 bg-gray-200 rounded w-16 mx-auto animate-pulse" />
+          </div>
+        </div>
+      </div>
+      <div className="h-12 bg-gray-200 rounded mb-6 animate-pulse" />
+      <div className="space-y-3">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-24 bg-gray-200 rounded animate-pulse" />
+        ))}
+      </div>
+    </div>
+  )
 }
 
-async function getNoteTypes(userId: string, deckNoteTypeIds: string[]) {
-  const supabase = await createClient()
+export default function DeckDetailPage() {
+  const params = useParams()
+  const deckId = params.id as string
+  const { profile, isLoading: authLoading } = useAuth()
+  const [deckData, setDeckData] = useState<DeckData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
 
-  // Get system note types and custom note types owned by the user
-  const { data: noteTypes } = await supabase
-    .from('note_types')
-    .select('id, name, fields, generation_rules')
-    .or(`is_system.eq.true,owner_id.eq.${userId}`)
-    .order('is_system', { ascending: false })
-    .order('name')
+  useEffect(() => {
+    if (authLoading || !profile || !deckId) return
 
-  const result = noteTypes || []
-  const existingIds = new Set(result.map(nt => nt.id))
+    let cancelled = false
 
-  // Also fetch note types used by notes in this deck (for assigned decks with custom note types)
-  const missingIds = deckNoteTypeIds.filter(id => !existingIds.has(id))
-  if (missingIds.length > 0) {
-    const { data: extraNoteTypes } = await supabase
-      .from('note_types')
-      .select('id, name, fields, generation_rules')
-      .in('id', missingIds)
+    async function loadDeckData() {
+      try {
+        // Get deck from Dexie
+        const deck = await db.decks.get(deckId)
+        if (!deck) {
+          if (!cancelled) setNotFound(true)
+          if (!cancelled) setIsLoading(false)
+          return
+        }
 
-    if (extraNoteTypes) {
-      result.push(...extraNoteTypes)
+        // Get descendant deck IDs
+        const descendantIds = await getDescendantDeckIds(deckId)
+        const allDeckIds = [deckId, ...descendantIds]
+
+        // Get notes (first 50) from all deck IDs
+        const allNotes = await db.notes
+          .where('deck_id')
+          .anyOf(allDeckIds)
+          .toArray()
+
+        // Sort by created_at descending
+        allNotes.sort((a, b) => {
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
+          return dateB - dateA
+        })
+
+        const totalNoteCount = allNotes.length
+        const pagedNotes = allNotes.slice(0, 50)
+
+        // Get cards for paged notes
+        const noteIds = pagedNotes.map(n => n.id)
+        const allCards = noteIds.length > 0
+          ? await db.cards.where('note_id').anyOf(noteIds).toArray()
+          : []
+        const cardsMap = new Map<string, Array<{ id: string }>>()
+        for (const card of allCards) {
+          if (!cardsMap.has(card.note_id)) cardsMap.set(card.note_id, [])
+          cardsMap.get(card.note_id)!.push({ id: card.id })
+        }
+
+        const browsableNotes: BrowsableNote[] = pagedNotes.map(n => ({
+          id: n.id,
+          deck_id: n.deck_id,
+          field_values: n.field_values,
+          note_type_id: n.note_type_id,
+          generated_content: n.generated_content || null,
+          tags: n.tags || [],
+          created_at: typeof n.created_at === 'string' ? n.created_at : new Date(n.created_at || Date.now()).toISOString(),
+          cards: cardsMap.get(n.id) || [],
+        }))
+
+        // Get total card count for this deck (not subdecks)
+        const deckCards = await db.cards.where('deck_id').equals(deckId).toArray()
+        const totalCards = deckCards.length
+
+        // Get card states for user
+        const cardIds = deckCards.map(c => c.id)
+        const cardStates = cardIds.length > 0
+          ? await db.cardStates.where('card_id').anyOf(cardIds).toArray()
+          : []
+        const cardStateMap = new Map(cardStates.filter(cs => cs.user_id === profile!.id).map(cs => [cs.card_id, cs]))
+
+        // Calculate due and new counts
+        const now = new Date()
+        let dueCount = 0
+        let newCount = 0
+        for (const card of deckCards) {
+          const cs = cardStateMap.get(card.id)
+          if (!cs) {
+            newCount++
+          } else if (cs.due <= now && cs.state !== 'suspended') {
+            dueCount++
+          }
+        }
+
+        // Get unique note type IDs
+        const noteTypeIdSet = new Set(allNotes.map(n => n.note_type_id))
+        // Also get system and user-owned note types
+        const allNoteTypes = await db.noteTypes.toArray()
+        const noteTypes = allNoteTypes.filter(nt =>
+          noteTypeIdSet.has(nt.id) ||
+          nt.is_system ||
+          nt.owner_id === profile!.id
+        ) as NoteType[]
+
+        // Get unique tags from notes
+        const tagSet = new Set<string>()
+        for (const n of allNotes) {
+          if (n.tags) {
+            for (const tag of n.tags) tagSet.add(tag)
+          }
+        }
+        const deckTags = Array.from(tagSet).sort()
+
+        // Get child decks
+        const childDecks = await db.decks
+          .where('parent_deck_id')
+          .equals(deckId)
+          .toArray()
+        childDecks.sort((a, b) => a.name.localeCompare(b.name))
+
+        const isOwner = deck.owner_id === profile!.id
+
+        // Get user-specific deck settings override
+        let mergedSettings: Partial<DeckSettings> = (deck.settings || {}) as Partial<DeckSettings>
+        if (!isOwner) {
+          try {
+            const settingsKey = `${profile!.id}:${deckId}`
+            const userSettings = await db.userDeckSettings.get(settingsKey)
+            if (userSettings?.settings) {
+              mergedSettings = { ...mergedSettings, ...userSettings.settings } as Partial<DeckSettings>
+            }
+          } catch {
+            // userDeckSettings table might not exist
+          }
+        }
+
+        if (!cancelled) {
+          setDeckData({
+            deckName: deck.name,
+            deckSettings: mergedSettings,
+            allDeckIds,
+            notes: browsableNotes,
+            totalNoteCount,
+            totalCards,
+            dueCount,
+            newCount,
+            isOwner,
+            noteTypes,
+            deckTags,
+            childDecks: childDecks.map(d => ({ id: d.id, name: d.name })),
+            canEdit: isOwner,
+            userRole: profile!.role,
+          })
+          setIsLoading(false)
+        }
+      } catch (error) {
+        console.error('Failed to load deck data from Dexie:', error)
+        if (!cancelled) {
+          setNotFound(true)
+          setIsLoading(false)
+        }
+      }
     }
+
+    loadDeckData()
+    return () => { cancelled = true }
+  }, [deckId, profile, authLoading])
+
+  if (authLoading || isLoading) {
+    return (
+      <AppLayout>
+        <DeckDetailSkeleton />
+      </AppLayout>
+    )
   }
 
-  return result
-}
+  if (!profile) return null
 
-export default async function DeckDetailPage({ params }: PageProps) {
-  const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, name, role')
-    .eq('id', user?.id)
-    .single() as { data: Profile | null }
-
-  if (!profile) {
-    redirect('/login')
-  }
-
-  const deckData = await getDeckWithNotes(id, profile.id)
-
-  if (!deckData) {
-    notFound()
-  }
-
-  // Extract unique note type IDs from the deck's notes
-  const deckNoteTypeIds = Array.from(new Set(
-    (deckData.notes as Array<{ note_type_id?: string }>)
-      .map(n => n.note_type_id)
-      .filter((id): id is string => !!id)
-  ))
-  const noteTypes = await getNoteTypes(profile.id, deckNoteTypeIds)
-  const canEdit = deckData.isOwner
-
-  // Get user-specific deck settings override
-  let mergedDeckSettings = deckData.deck.settings || {}
-  if (!deckData.isOwner) {
-    const { data: userSettings } = await supabase
-      .from('user_deck_settings')
-      .select('settings')
-      .eq('user_id', profile.id)
-      .eq('deck_id', id)
-      .maybeSingle()
-    if (userSettings?.settings) {
-      mergedDeckSettings = { ...mergedDeckSettings, ...userSettings.settings }
-    }
+  if (notFound || !deckData) {
+    return (
+      <AppLayout>
+        <div className="max-w-4xl mx-auto px-4 py-6 text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">デッキが見つかりません</h1>
+          <p className="text-gray-600 mb-6">このデッキは存在しないか、アクセス権がありません。</p>
+          <Link
+            href="/decks"
+            className="text-blue-600 hover:text-blue-800 font-medium"
+          >
+            デッキ一覧に戻る
+          </Link>
+        </div>
+      </AppLayout>
+    )
   }
 
   return (
-    <AppLayout userName={profile.name} userRole={profile.role}>
+    <AppLayout>
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -236,7 +263,7 @@ export default async function DeckDetailPage({ params }: PageProps) {
               </svg>
               デッキ一覧
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">{deckData.deck.name}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{deckData.deckName}</h1>
           </div>
         </div>
 
@@ -261,7 +288,7 @@ export default async function DeckDetailPage({ params }: PageProps) {
         {/* Study Button */}
         {deckData.totalCards > 0 && (
           <Link
-            href={`/study?deck=${id}`}
+            href={`/study?deck=${deckId}`}
             className="block w-full py-4 bg-blue-600 text-white text-center rounded-lg hover:bg-blue-700 transition-colors font-medium mb-6"
           >
             学習を開始
@@ -273,7 +300,7 @@ export default async function DeckDetailPage({ params }: PageProps) {
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-3">サブデッキ</h2>
             <div className="space-y-2">
-              {deckData.childDecks.map((child: { id: string; name: string }) => (
+              {deckData.childDecks.map((child) => (
                 <Link
                   key={child.id}
                   href={`/decks/${child.id}`}
@@ -292,10 +319,10 @@ export default async function DeckDetailPage({ params }: PageProps) {
         )}
 
         {/* Create Sub-deck Button */}
-        {canEdit && (
+        {deckData.canEdit && (
           <div className="mb-6">
             <Link
-              href={`/decks/new?parent=${id}`}
+              href={`/decks/new?parent=${deckId}`}
               className="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-600 border border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -308,17 +335,17 @@ export default async function DeckDetailPage({ params }: PageProps) {
 
         {/* Client Component for Note Management */}
         <DeckDetailClient
-          deckId={id}
-          deckName={deckData.deck.name}
-          deckSettings={mergedDeckSettings}
+          deckId={deckId}
+          deckName={deckData.deckName}
+          deckSettings={deckData.deckSettings}
           allDeckIds={deckData.allDeckIds}
-          notes={deckData.notes as unknown as BrowsableNote[]}
+          notes={deckData.notes}
           totalNoteCount={deckData.totalNoteCount}
-          noteTypes={noteTypes as NoteType[]}
+          noteTypes={deckData.noteTypes}
           deckTags={deckData.deckTags}
-          canEdit={canEdit}
+          canEdit={deckData.canEdit}
           isOwner={deckData.isOwner}
-          userRole={profile.role}
+          userRole={deckData.userRole}
         />
       </div>
     </AppLayout>

@@ -1,283 +1,89 @@
-import { createClient } from '@/lib/supabase/server'
-import { AppLayout } from '@/components/layout/AppLayout'
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-
-// Profile type
-interface Profile {
-  id: string
-  name: string
-  role: 'student' | 'teacher' | 'admin'
-}
-
-interface TeacherStats {
-  studentCount: number
-  classCount: number
-  deckCount: number
-  cardCount: number
-}
-
-interface StudentProgress {
-  id: string
-  name: string
-  email: string
-  reviewsToday: number
-  totalReviews: number
-  dueCards: number
-  lastActivity: string | null
-}
+import { useAuth } from '@/contexts/AuthContext'
+import { AppLayout } from '@/components/layout/AppLayout'
+import { db } from '@/lib/db/schema'
 
 interface StudentStats {
   dueCards: number
   newCards: number
   learningCards: number
   reviewsToday: number
-  streak: number
 }
 
 interface RecentDeck {
   id: string
   name: string
-  lastStudiedAt: string
+  lastStudiedAt: Date
   due_count: number
   new_count: number
   learning_count: number
 }
 
-async function getTeacherStats(teacherId: string): Promise<{ stats: TeacherStats; students: StudentProgress[] }> {
-  const supabase = await createClient()
-
-  // Parallel batch 1: Get classes, class members, decks
-  const [
-    { count: classCount },
-    { data: classMembers },
-    { count: deckCount },
-    { data: decks },
-  ] = await Promise.all([
-    supabase
-      .from('classes')
-      .select('*', { count: 'exact', head: true })
-      .eq('teacher_id', teacherId),
-    supabase
-      .from('class_members')
-      .select('user_id, classes!inner(teacher_id)')
-      .eq('classes.teacher_id', teacherId),
-    supabase
-      .from('decks')
-      .select('*', { count: 'exact', head: true })
-      .eq('owner_id', teacherId),
-    supabase
-      .from('decks')
-      .select('id')
-      .eq('owner_id', teacherId),
-  ])
-
-  const uniqueStudentIds = Array.from(new Set(classMembers?.map(m => m.user_id) || []))
-  const deckIds = decks?.map(d => d.id) || []
-
-  // Parallel batch 2: Card count + student data (all batched)
-  const today = new Date()
-  today.setHours(4, 0, 0, 0)
-  if (new Date().getHours() < 4) {
-    today.setDate(today.getDate() - 1)
-  }
-
-  const cardCountPromise = deckIds.length > 0
-    ? supabase.from('cards').select('*', { count: 'exact', head: true }).in('deck_id', deckIds)
-    : Promise.resolve({ count: 0 })
-
-  const studentProfilesPromise = uniqueStudentIds.length > 0
-    ? supabase.from('profiles').select('id, name, email').in('id', uniqueStudentIds)
-    : Promise.resolve({ data: [] })
-
-  const reviewLogsTodayPromise = uniqueStudentIds.length > 0
-    ? supabase
-        .from('review_logs')
-        .select('user_id')
-        .in('user_id', uniqueStudentIds)
-        .gte('reviewed_at', today.toISOString())
-    : Promise.resolve({ data: [] })
-
-  const totalReviewsPromise = uniqueStudentIds.length > 0
-    ? supabase
-        .from('review_logs')
-        .select('user_id')
-        .in('user_id', uniqueStudentIds)
-    : Promise.resolve({ data: [] })
-
-  const dueCardsPromise = uniqueStudentIds.length > 0
-    ? supabase
-        .from('card_states')
-        .select('user_id')
-        .in('user_id', uniqueStudentIds)
-        .lte('due', new Date().toISOString())
-    : Promise.resolve({ data: [] })
-
-  const lastReviewsPromise = uniqueStudentIds.length > 0
-    ? supabase
-        .from('review_logs')
-        .select('user_id, reviewed_at')
-        .in('user_id', uniqueStudentIds)
-        .order('reviewed_at', { ascending: false })
-    : Promise.resolve({ data: [] })
-
-  const [
-    cardCountResult,
-    { data: studentProfiles },
-    { data: reviewLogsToday },
-    { data: totalReviewLogs },
-    { data: dueCardStates },
-    { data: lastReviewLogs },
-  ] = await Promise.all([
-    cardCountPromise,
-    studentProfilesPromise,
-    reviewLogsTodayPromise,
-    totalReviewsPromise,
-    dueCardsPromise,
-    lastReviewsPromise,
-  ])
-
-  const cardCount = ('count' in cardCountResult ? cardCountResult.count : 0) || 0
-
-  // Aggregate student stats from batch results
-  const reviewsTodayByUser = new Map<string, number>()
-  for (const log of reviewLogsToday || []) {
-    reviewsTodayByUser.set(log.user_id, (reviewsTodayByUser.get(log.user_id) || 0) + 1)
-  }
-
-  const totalReviewsByUser = new Map<string, number>()
-  for (const log of totalReviewLogs || []) {
-    totalReviewsByUser.set(log.user_id, (totalReviewsByUser.get(log.user_id) || 0) + 1)
-  }
-
-  const dueCardsByUser = new Map<string, number>()
-  for (const cs of dueCardStates || []) {
-    dueCardsByUser.set(cs.user_id, (dueCardsByUser.get(cs.user_id) || 0) + 1)
-  }
-
-  const lastActivityByUser = new Map<string, string>()
-  for (const log of lastReviewLogs || []) {
-    if (!lastActivityByUser.has(log.user_id)) {
-      lastActivityByUser.set(log.user_id, log.reviewed_at)
-    }
-  }
-
-  const studentsWithProgress: StudentProgress[] = (studentProfiles || []).map(profile => ({
-    id: profile.id,
-    name: profile.name,
-    email: profile.email,
-    reviewsToday: reviewsTodayByUser.get(profile.id) || 0,
-    totalReviews: totalReviewsByUser.get(profile.id) || 0,
-    dueCards: dueCardsByUser.get(profile.id) || 0,
-    lastActivity: lastActivityByUser.get(profile.id) || null,
-  }))
-
-  studentsWithProgress.sort((a, b) => b.reviewsToday - a.reviewsToday)
-
-  return {
-    stats: {
-      studentCount: uniqueStudentIds.length,
-      classCount: classCount || 0,
-      deckCount: deckCount || 0,
-      cardCount,
-    },
-    students: studentsWithProgress.slice(0, 5),
-  }
+interface TeacherStats {
+  deckCount: number
+  cardCount: number
 }
 
-async function getStudentStats(studentId: string): Promise<StudentStats> {
-  const supabase = await createClient()
-
-  const today = new Date()
-  today.setHours(4, 0, 0, 0)
-  if (new Date().getHours() < 4) {
-    today.setDate(today.getDate() - 1)
+async function getStudentStatsLocal(userId: string): Promise<StudentStats> {
+  const now = new Date()
+  const todayStart = new Date()
+  todayStart.setHours(4, 0, 0, 0)
+  if (now.getHours() < 4) {
+    todayStart.setDate(todayStart.getDate() - 1)
   }
 
-  // Parallel batch: all stats queries at once
-  const [
-    { count: dueCards },
-    { count: reviewsToday },
-    { count: learningCards },
-    { data: ownDecks },
-    { data: allCardStates },
-  ] = await Promise.all([
-    supabase
-      .from('card_states')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', studentId)
-      .eq('state', 'review')
-      .lte('due', new Date().toISOString()),
-    supabase
-      .from('review_logs')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', studentId)
-      .gte('reviewed_at', today.toISOString()),
-    supabase
-      .from('card_states')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', studentId)
-      .in('state', ['learning', 'relearning']),
-    supabase
-      .from('decks')
-      .select('id')
-      .eq('owner_id', studentId),
-    supabase
-      .from('card_states')
-      .select('card_id')
-      .eq('user_id', studentId),
-  ])
+  const allCardStates = await db.cardStates
+    .where('user_id')
+    .equals(userId)
+    .toArray()
 
-  const deckIds = ownDecks?.map(d => d.id) || []
-  const studiedCardIds = new Set(allCardStates?.map(cs => cs.card_id) || [])
+  let dueCards = 0
+  let learningCards = 0
+  const studiedCardIds = new Set(allCardStates.map(cs => cs.card_id))
 
-  let newCards = 0
-  if (deckIds.length > 0) {
-    const { data: allCards } = await supabase
-      .from('cards')
-      .select('id')
-      .in('deck_id', deckIds)
-
-    newCards = (allCards || []).filter(c => !studiedCardIds.has(c.id)).length
+  for (const cs of allCardStates) {
+    if (cs.state === 'review' && cs.due <= now) dueCards++
+    if (cs.state === 'learning' || cs.state === 'relearning') learningCards++
   }
 
-  return {
-    dueCards: dueCards || 0,
-    newCards,
-    learningCards: learningCards || 0,
-    reviewsToday: reviewsToday || 0,
-    streak: 0,
-  }
+  // Count new cards
+  const allCards = await db.cards.toArray()
+  const newCards = allCards.filter(c => !studiedCardIds.has(c.id)).length
+
+  // Reviews today
+  const reviewsToday = await db.reviewLogs
+    .where('user_id')
+    .equals(userId)
+    .filter(log => log.reviewed_at >= todayStart)
+    .count()
+
+  return { dueCards, newCards, learningCards, reviewsToday }
 }
 
-async function getRecentDecks(userId: string): Promise<RecentDeck[]> {
-  const supabase = await createClient()
-
-  // Batch 1: Get recent review logs (last 200)
-  const { data: recentLogs } = await supabase
-    .from('review_logs')
-    .select('card_id, reviewed_at')
-    .eq('user_id', userId)
-    .order('reviewed_at', { ascending: false })
+async function getRecentDecksLocal(userId: string): Promise<RecentDeck[]> {
+  const recentLogs = await db.reviewLogs
+    .where('user_id')
+    .equals(userId)
+    .reverse()
     .limit(200)
+    .toArray()
 
-  if (!recentLogs || recentLogs.length === 0) return []
+  recentLogs.sort((a, b) => b.reviewed_at.getTime() - a.reviewed_at.getTime())
 
-  // Batch 2: Map card_ids to deck_ids
+  if (recentLogs.length === 0) return []
+
   const cardIds = Array.from(new Set(recentLogs.map(l => l.card_id)))
-  const { data: cards } = await supabase
-    .from('cards')
-    .select('id, deck_id')
-    .in('id', cardIds)
-
-  if (!cards || cards.length === 0) return []
-
+  const cards = await db.cards.where('id').anyOf(cardIds).toArray()
   const cardToDeck = new Map<string, string>()
   for (const c of cards) {
     cardToDeck.set(c.id, c.deck_id)
   }
 
-  // Find top 5 unique decks by most recent review
-  const deckLastStudied = new Map<string, string>()
+  // Find top 5 unique decks
+  const deckLastStudied = new Map<string, Date>()
   for (const log of recentLogs) {
     const deckId = cardToDeck.get(log.card_id)
     if (deckId && !deckLastStudied.has(deckId)) {
@@ -286,48 +92,22 @@ async function getRecentDecks(userId: string): Promise<RecentDeck[]> {
   }
 
   const topDeckIds = Array.from(deckLastStudied.entries())
-    .sort((a, b) => new Date(b[1]).getTime() - new Date(a[1]).getTime())
+    .sort((a, b) => b[1].getTime() - a[1].getTime())
     .slice(0, 5)
     .map(([id]) => id)
 
   if (topDeckIds.length === 0) return []
 
-  const now = new Date().toISOString()
+  const now = new Date()
+  const decks = await db.decks.where('id').anyOf(topDeckIds).toArray()
+  const deckNameMap = new Map(decks.map(d => [d.id, d.name]))
 
-  // Batch 3 (parallel): deck names + card_states for due/learning counts + cards for new count
-  const [
-    { data: decks },
-    { data: cardStates },
-    { data: deckCards },
-  ] = await Promise.all([
-    supabase
-      .from('decks')
-      .select('id, name')
-      .in('id', topDeckIds),
-    supabase
-      .from('card_states')
-      .select('card_id, state, due')
-      .eq('user_id', userId)
-      .in('card_id', cards.filter(c => topDeckIds.includes(c.deck_id)).map(c => c.id)),
-    supabase
-      .from('cards')
-      .select('id, deck_id')
-      .in('deck_id', topDeckIds),
-  ])
-
-  const deckNameMap = new Map<string, string>()
-  for (const d of decks || []) {
-    deckNameMap.set(d.id, d.name)
-  }
-
-  // Build card_id -> deck_id for all cards in target decks
-  const allCardToDeck = new Map<string, string>()
-  for (const c of deckCards || []) {
-    allCardToDeck.set(c.id, c.deck_id)
-  }
-
-  // Cards with card_states (studied)
-  const studiedCardIds = new Set((cardStates || []).map(cs => cs.card_id))
+  const deckCards = await db.cards.where('deck_id').anyOf(topDeckIds).toArray()
+  const allCardStates = await db.cardStates
+    .where('user_id')
+    .equals(userId)
+    .toArray()
+  const stateByCard = new Map(allCardStates.map(cs => [cs.card_id, cs]))
 
   // Aggregate per deck
   const deckStats = new Map<string, { due: number; learning: number; newCount: number }>()
@@ -335,24 +115,16 @@ async function getRecentDecks(userId: string): Promise<RecentDeck[]> {
     deckStats.set(id, { due: 0, learning: 0, newCount: 0 })
   }
 
-  // Count due and learning from card_states
-  for (const cs of cardStates || []) {
-    const deckId = allCardToDeck.get(cs.card_id)
-    if (!deckId) continue
-    const stat = deckStats.get(deckId)
+  for (const c of deckCards) {
+    const stat = deckStats.get(c.deck_id)
     if (!stat) continue
-    if (cs.state === 'review' && cs.due <= now) {
+    const cs = stateByCard.get(c.id)
+    if (!cs) {
+      stat.newCount++
+    } else if (cs.state === 'review' && cs.due <= now) {
       stat.due++
     } else if (cs.state === 'learning' || cs.state === 'relearning') {
       stat.learning++
-    }
-  }
-
-  // Count new cards (cards without card_states)
-  for (const c of deckCards || []) {
-    if (!studiedCardIds.has(c.id)) {
-      const stat = deckStats.get(c.deck_id)
-      if (stat) stat.newCount++
     }
   }
 
@@ -368,25 +140,42 @@ async function getRecentDecks(userId: string): Promise<RecentDeck[]> {
     }))
 }
 
-export default async function DashboardPage() {
-  const supabase = await createClient()
+async function getTeacherStatsLocal(userId: string): Promise<TeacherStats> {
+  const decks = await db.decks.where('owner_id').equals(userId).toArray()
+  const deckIds = decks.map(d => d.id)
+  let cardCount = 0
+  if (deckIds.length > 0) {
+    cardCount = await db.cards.where('deck_id').anyOf(deckIds).count()
+  }
+  return { deckCount: decks.length, cardCount }
+}
 
-  const { data: { user } } = await supabase.auth.getUser()
+export default function DashboardPage() {
+  const { profile, isLoading } = useAuth()
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, name, role')
-    .eq('id', user?.id)
-    .single() as { data: Profile | null }
-
-  if (!profile) {
-    return null
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="h-8 bg-gray-200 rounded w-64 mb-2 animate-pulse" />
+          <div className="h-5 bg-gray-200 rounded w-40 mb-6 animate-pulse" />
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="grid grid-cols-3 gap-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="p-4 bg-gray-100 rounded-lg animate-pulse h-20" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </AppLayout>
+    )
   }
 
+  if (!profile) return null
+
   return (
-    <AppLayout userName={profile.name} userRole={profile.role}>
+    <AppLayout>
       <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Greeting */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">
             こんにちは、{profile.name}さん
@@ -406,35 +195,55 @@ export default async function DashboardPage() {
   )
 }
 
-async function StudentDashboard({ userId }: { userId: string }) {
-  const [stats, recentDecks] = await Promise.all([
-    getStudentStats(userId),
-    getRecentDecks(userId),
-  ])
+function StudentDashboard({ userId }: { userId: string }) {
+  const [stats, setStats] = useState<StudentStats | null>(null)
+  const [recentDecks, setRecentDecks] = useState<RecentDeck[]>([])
+
+  useEffect(() => {
+    const load = async () => {
+      const [s, rd] = await Promise.all([
+        getStudentStatsLocal(userId),
+        getRecentDecksLocal(userId),
+      ])
+      setStats(s)
+      setRecentDecks(rd)
+    }
+    load()
+  }, [userId])
 
   return (
     <div className="space-y-6">
       {/* Today's Study Summary */}
       <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">今日の学習</h2>
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div className="p-4 bg-blue-50 rounded-lg">
-            <div className="text-3xl font-bold text-blue-600">{stats.dueCards}</div>
-            <div className="text-sm text-gray-600 mt-1">復習カード</div>
+        {stats ? (
+          <>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <div className="text-3xl font-bold text-blue-600">{stats.dueCards}</div>
+                <div className="text-sm text-gray-600 mt-1">復習カード</div>
+              </div>
+              <div className="p-4 bg-green-50 rounded-lg">
+                <div className="text-3xl font-bold text-green-600">{stats.newCards}</div>
+                <div className="text-sm text-gray-600 mt-1">新規カード</div>
+              </div>
+              <div className="p-4 bg-purple-50 rounded-lg">
+                <div className="text-3xl font-bold text-purple-600">{stats.learningCards}</div>
+                <div className="text-sm text-gray-600 mt-1">学習中</div>
+              </div>
+            </div>
+            {stats.reviewsToday > 0 && (
+              <p className="text-center text-sm text-gray-500 mt-4">
+                今日は {stats.reviewsToday} 枚のカードを復習しました
+              </p>
+            )}
+          </>
+        ) : (
+          <div className="grid grid-cols-3 gap-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="p-4 bg-gray-100 rounded-lg animate-pulse h-20" />
+            ))}
           </div>
-          <div className="p-4 bg-green-50 rounded-lg">
-            <div className="text-3xl font-bold text-green-600">{stats.newCards}</div>
-            <div className="text-sm text-gray-600 mt-1">新規カード</div>
-          </div>
-          <div className="p-4 bg-purple-50 rounded-lg">
-            <div className="text-3xl font-bold text-purple-600">{stats.learningCards}</div>
-            <div className="text-sm text-gray-600 mt-1">学習中</div>
-          </div>
-        </div>
-        {stats.reviewsToday > 0 && (
-          <p className="text-center text-sm text-gray-500 mt-4">
-            今日は {stats.reviewsToday} 枚のカードを復習しました
-          </p>
         )}
       </section>
 
@@ -523,32 +332,36 @@ async function StudentDashboard({ userId }: { userId: string }) {
   )
 }
 
-async function TeacherDashboard({ userId }: { userId: string }) {
-  const { stats, students } = await getTeacherStats(userId)
+function TeacherDashboard({ userId }: { userId: string }) {
+  const [stats, setStats] = useState<TeacherStats | null>(null)
+
+  useEffect(() => {
+    getTeacherStatsLocal(userId).then(setStats)
+  }, [userId])
 
   return (
     <div className="space-y-6">
       {/* Overview */}
       <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">概要</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-          <div className="p-4 bg-blue-50 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">{stats.studentCount}</div>
-            <div className="text-sm text-gray-600 mt-1">生徒数</div>
+        {stats ? (
+          <div className="grid grid-cols-2 gap-4 text-center">
+            <div className="p-4 bg-purple-50 rounded-lg">
+              <div className="text-2xl font-bold text-purple-600">{stats.deckCount}</div>
+              <div className="text-sm text-gray-600 mt-1">デッキ数</div>
+            </div>
+            <div className="p-4 bg-orange-50 rounded-lg">
+              <div className="text-2xl font-bold text-orange-600">{stats.cardCount}</div>
+              <div className="text-sm text-gray-600 mt-1">カード数</div>
+            </div>
           </div>
-          <div className="p-4 bg-green-50 rounded-lg">
-            <div className="text-2xl font-bold text-green-600">{stats.classCount}</div>
-            <div className="text-sm text-gray-600 mt-1">クラス数</div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="p-4 bg-gray-100 rounded-lg animate-pulse h-20" />
+            ))}
           </div>
-          <div className="p-4 bg-purple-50 rounded-lg">
-            <div className="text-2xl font-bold text-purple-600">{stats.deckCount}</div>
-            <div className="text-sm text-gray-600 mt-1">デッキ数</div>
-          </div>
-          <div className="p-4 bg-orange-50 rounded-lg">
-            <div className="text-2xl font-bold text-orange-600">{stats.cardCount}</div>
-            <div className="text-sm text-gray-600 mt-1">カード数</div>
-          </div>
-        </div>
+        )}
       </section>
 
       {/* Quick Actions */}
@@ -575,70 +388,14 @@ async function TeacherDashboard({ userId }: { userId: string }) {
           </Link>
         </div>
       </section>
-
-      {/* Student Activity */}
-      <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">生徒の学習状況</h2>
-          {students.length > 0 && (
-            <Link href="/students" className="text-sm text-blue-600 hover:text-blue-700">
-              すべて見る
-            </Link>
-          )}
-        </div>
-
-        {students.length === 0 ? (
-          <div className="text-gray-500 text-center py-8">
-            <svg className="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-            </svg>
-            <p>まだ生徒がいません</p>
-            <Link href="/students" className="text-sm text-blue-600 hover:text-blue-700 mt-1 inline-block">
-              クラスを作成して生徒を追加
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {students.map((student) => (
-              <div
-                key={student.id}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-              >
-                <div>
-                  <p className="font-medium text-gray-900">{student.name}</p>
-                  <p className="text-sm text-gray-500">
-                    今日 {student.reviewsToday} 枚 / 累計 {student.totalReviews} 枚
-                  </p>
-                </div>
-                <div className="text-right">
-                  {student.dueCards > 0 ? (
-                    <span className="text-sm text-orange-600">
-                      {student.dueCards} 枚の復習待ち
-                    </span>
-                  ) : (
-                    <span className="text-sm text-green-600">
-                      完了
-                    </span>
-                  )}
-                  {student.lastActivity && (
-                    <p className="text-xs text-gray-400 mt-1">
-                      最終: {formatRelativeTime(student.lastActivity)}
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
     </div>
   )
 }
 
-function formatRelativeTime(dateStr: string): string {
-  const date = new Date(dateStr)
+function formatRelativeTime(date: Date | string): string {
+  const d = date instanceof Date ? date : new Date(date)
   const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
+  const diffMs = now.getTime() - d.getTime()
   const diffMins = Math.floor(diffMs / 60000)
   const diffHours = Math.floor(diffMs / 3600000)
   const diffDays = Math.floor(diffMs / 86400000)
@@ -648,5 +405,5 @@ function formatRelativeTime(dateStr: string): string {
   if (diffHours < 24) return `${diffHours}時間前`
   if (diffDays < 7) return `${diffDays}日前`
 
-  return date.toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' })
+  return d.toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' })
 }

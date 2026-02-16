@@ -1,141 +1,24 @@
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useAuth } from '@/contexts/AuthContext'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { DecksPageClient } from './DecksPageClient'
-import type { Profile } from '@/types/database'
 
-interface DeckWithStats {
-  id: string
-  name: string
-  owner_id: string
-  is_distributed: boolean
-  parent_deck_id: string | null
-  is_own: boolean
-  total_cards: number
-  new_count: number
-  learning_count: number
-  review_count: number
-  settings?: Record<string, unknown>
-}
+export default function DecksPage() {
+  const { profile, isLoading } = useAuth()
 
-async function getDecksWithStats(userId: string): Promise<DeckWithStats[]> {
-  const supabase = await createClient()
-
-  // Get own decks, assigned decks, and user-specific settings in parallel
-  const [{ data: ownDecks }, { data: assignedDecks }, { data: userSettings }] = await Promise.all([
-    supabase
-      .from('decks')
-      .select('id, name, owner_id, is_distributed, parent_deck_id, settings')
-      .eq('owner_id', userId),
-    supabase
-      .from('decks')
-      .select('id, name, owner_id, is_distributed, parent_deck_id, settings')
-      .neq('owner_id', userId),
-    supabase
-      .from('user_deck_settings')
-      .select('deck_id, settings')
-      .eq('user_id', userId),
-  ])
-
-  // Build user settings map
-  const userSettingsMap = new Map<string, Record<string, unknown>>()
-  for (const us of userSettings || []) {
-    userSettingsMap.set(us.deck_id, us.settings as Record<string, unknown>)
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <DecksPageClient />
+      </AppLayout>
+    )
   }
-
-  const allDecks = [
-    ...(ownDecks || []).map(d => ({ ...d, is_own: true })),
-    ...(assignedDecks || []).map(d => ({ ...d, is_own: false })),
-  ]
-
-  if (allDecks.length === 0) return []
-
-  const deckIds = allDecks.map(d => d.id)
-
-  // Batch: get all cards for all decks + all card_states for this user in 2 queries
-  const [{ data: allCards }, { data: allCardStates }] = await Promise.all([
-    supabase
-      .from('cards')
-      .select('id, deck_id')
-      .in('deck_id', deckIds),
-    supabase
-      .from('card_states')
-      .select('card_id, state')
-      .eq('user_id', userId),
-  ])
-
-  // Build lookup maps
-  const cardsByDeck = new Map<string, string[]>()
-  for (const card of allCards || []) {
-    const list = cardsByDeck.get(card.deck_id) || []
-    list.push(card.id)
-    cardsByDeck.set(card.deck_id, list)
-  }
-
-  const stateByCard = new Map<string, string>()
-  for (const cs of allCardStates || []) {
-    stateByCard.set(cs.card_id, cs.state)
-  }
-
-  // Aggregate stats per deck
-  return allDecks.map(deck => {
-    const cardIds = cardsByDeck.get(deck.id) || []
-    let newCount = 0
-    let learningCount = 0
-    let reviewCount = 0
-
-    for (const cardId of cardIds) {
-      const state = stateByCard.get(cardId)
-      if (!state || state === 'new') {
-        newCount++
-      } else if (state === 'learning' || state === 'relearning') {
-        learningCount++
-      } else if (state === 'review') {
-        reviewCount++
-      }
-    }
-
-    // Merge user-specific settings over deck settings
-    const baseDeckSettings = (deck as { settings?: Record<string, unknown> }).settings || {}
-    const userOverride = userSettingsMap.get(deck.id)
-    const mergedSettings = userOverride
-      ? { ...baseDeckSettings, ...userOverride }
-      : baseDeckSettings
-
-    return {
-      ...deck,
-      parent_deck_id: deck.parent_deck_id || null,
-      settings: Object.keys(mergedSettings).length > 0 ? mergedSettings : undefined,
-      total_cards: cardIds.length,
-      new_count: newCount,
-      learning_count: learningCount,
-      review_count: reviewCount,
-    }
-  })
-}
-
-export default async function DecksPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, name, role')
-    .eq('id', user?.id)
-    .single() as { data: Profile | null }
-
-  // Offline or unauthenticated - render client-only fallback
-  // DecksPageClient will load profile and decks from IndexedDB
-  if (!profile) {
-    return <DecksPageClient />
-  }
-
-  const decks = await getDecksWithStats(profile.id)
 
   return (
-    <AppLayout userName={profile.name} userRole={profile.role}>
+    <AppLayout>
       <DecksPageClient
-        initialDecks={decks}
-        userProfile={{ id: profile.id, name: profile.name, role: profile.role }}
+        userProfile={profile ? { id: profile.id, name: profile.name, role: profile.role } : undefined}
       />
     </AppLayout>
   )

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { AppLayout } from '@/components/layout/AppLayout'
 import { useOnlineStatus, usePrefetchAllDecks } from '@/lib/db/hooks'
 import { getDecksWithStatsOffline, db } from '@/lib/db/schema'
 import { DeckAdvancedSettings } from '@/components/deck/DeckAdvancedSettings'
@@ -276,25 +275,8 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
     ? decks?.find(d => d.id === settingsDeckId)?.name || ''
     : ''
 
-  // Wrap in AppLayout when in standalone mode (no server-side layout)
-  const needsLayout = !userProfileProp
-  const wrapInLayout = (content: React.ReactNode) => {
-    if (needsLayout && userProfile) {
-      return (
-        <AppLayout userName={userProfile.name} userRole={userProfile.role as 'student' | 'teacher' | 'admin'}>
-          {content}
-        </AppLayout>
-      )
-    }
-    return content
-  }
-
-  if (!hasServerData && isLoadingOffline) {
-    return wrapInLayout(<DecksLoadingSkeleton />)
-  }
-
-  if (!decks) {
-    return wrapInLayout(<DecksLoadingSkeleton />)
+  if (isLoadingOffline || !decks) {
+    return <DecksLoadingSkeleton />
   }
 
   // Apply search filter
@@ -310,7 +292,7 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
   const hasResults = flatOwnDecks.length > 0 || assignedDecks.length > 0
   const hasDecks = decks.length > 0
 
-  return wrapInLayout(
+  return (
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold text-gray-900">デッキ一覧</h1>

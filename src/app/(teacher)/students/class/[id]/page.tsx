@@ -1,35 +1,18 @@
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ClassDetailClient } from './ClassDetailClient'
+import { createClient } from '@/lib/supabase/client'
 
-interface Profile {
+interface Member {
   id: string
   name: string
-  role: 'student' | 'teacher' | 'admin'
-}
-
-interface PageProps {
-  params: Promise<{ id: string }>
-}
-
-interface ClassMember {
-  user_id: string
-  joined_at: string
-  profiles: {
-    id: string
-    name: string
-    email: string
-  }
-}
-
-interface ClassWithMembers {
-  id: string
-  name: string
-  teacher_id: string
-  created_at: string
-  class_members: ClassMember[]
+  email: string
+  joinedAt: string
 }
 
 interface Student {
@@ -38,86 +21,109 @@ interface Student {
   email: string
 }
 
-async function getClassWithMembers(classId: string, teacherId: string) {
-  const supabase = await createClient()
+export default function ClassDetailPage() {
+  const { id } = useParams<{ id: string }>()
+  const { profile, isLoading } = useAuth()
+  const [classData, setClassData] = useState<{ name: string; members: Member[]; availableStudents: Student[] } | null>(null)
+  const [notFound, setNotFound] = useState(false)
 
-  const { data: classData } = await supabase
-    .from('classes')
-    .select(`
-      id,
-      name,
-      teacher_id,
-      created_at,
-      class_members (
-        user_id,
-        joined_at,
-        profiles:user_id (
-          id,
-          name,
-          email
-        )
-      )
-    `)
-    .eq('id', classId)
-    .eq('teacher_id', teacherId)
-    .single()
+  useEffect(() => {
+    if (!id || !profile || profile.role === 'student') return
 
-  return classData as ClassWithMembers | null
-}
+    const loadClassData = async () => {
+      try {
+        const supabase = createClient()
 
-async function getAllStudents() {
-  const supabase = await createClient()
+        // Load class with members
+        const { data: cls } = await supabase
+          .from('classes')
+          .select(`
+            id,
+            name,
+            teacher_id,
+            created_at,
+            class_members (
+              user_id,
+              joined_at,
+              profiles:user_id (
+                id,
+                name,
+                email
+              )
+            )
+          `)
+          .eq('id', id)
+          .eq('teacher_id', profile.id)
+          .single()
 
-  const { data: students } = await supabase
-    .from('profiles')
-    .select('id, name, email')
-    .eq('role', 'student')
-    .order('name')
+        if (!cls) {
+          setNotFound(true)
+          return
+        }
 
-  return students as Student[] || []
-}
+        interface ClassMember {
+          user_id: string
+          joined_at: string
+          profiles: { id: string; name: string; email: string }
+        }
 
-export default async function ClassDetailPage({ params }: PageProps) {
-  const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+        const members = ((cls.class_members as unknown as ClassMember[]) || []).map(m => ({
+          id: m.user_id,
+          name: m.profiles?.name || 'Unknown',
+          email: m.profiles?.email || '',
+          joinedAt: m.joined_at,
+        }))
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, name, role')
-    .eq('id', user?.id)
-    .single() as { data: Profile | null }
+        // Load all students
+        const { data: allStudents } = await supabase
+          .from('profiles')
+          .select('id, name, email')
+          .eq('role', 'student')
+          .order('name')
 
-  if (!profile) {
-    redirect('/login')
+        const memberIds = new Set(members.map(m => m.id))
+        const availableStudents = ((allStudents as Student[]) || []).filter(s => !memberIds.has(s.id))
+
+        setClassData({
+          name: cls.name as string,
+          members,
+          availableStudents,
+        })
+      } catch {
+        setNotFound(true)
+      }
+    }
+
+    loadClassData()
+  }, [id, profile])
+
+  if (isLoading || (!classData && !notFound)) {
+    return (
+      <AppLayout>
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="h-4 bg-gray-200 rounded w-24 mb-2 animate-pulse" />
+          <div className="h-8 bg-gray-200 rounded w-48 mb-6 animate-pulse" />
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6 h-16 animate-pulse" />
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 h-48 animate-pulse" />
+        </div>
+      </AppLayout>
+    )
   }
 
-  if (profile.role === 'student') {
-    redirect('/decks')
+  if (notFound || !classData) {
+    return (
+      <AppLayout>
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+            クラスが見つかりませんでした。
+          </div>
+        </div>
+      </AppLayout>
+    )
   }
-
-  const classData = await getClassWithMembers(id, profile.id)
-
-  if (!classData) {
-    notFound()
-  }
-
-  const allStudents = await getAllStudents()
-
-  // Transform members
-  const members = classData.class_members?.map(m => ({
-    id: m.user_id,
-    name: m.profiles?.name || 'Unknown',
-    email: m.profiles?.email || '',
-    joinedAt: m.joined_at,
-  })) || []
-
-  // Filter out students who are already members
-  const memberIds = new Set(members.map(m => m.id))
-  const availableStudents = allStudents.filter(s => !memberIds.has(s.id))
 
   return (
-    <AppLayout userName={profile.name} userRole={profile.role}>
+    <AppLayout>
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6">
@@ -136,8 +142,8 @@ export default async function ClassDetailPage({ params }: PageProps) {
         <ClassDetailClient
           classId={id}
           className={classData.name}
-          initialMembers={members}
-          availableStudents={availableStudents}
+          initialMembers={classData.members}
+          availableStudents={classData.availableStudents}
         />
       </div>
     </AppLayout>

@@ -421,12 +421,12 @@ Anki本家と同様に、Again/Hardで評価したカードを同一セッショ
 - [x] DeckCardに設定ボタン（⚙）追加（マイデッキのみ、DeckAdvancedSettingsモーダル）
 - [x] page.tsxにsettingsカラム追加（設定モーダルの初期値用）
 
-### 9.2 最近学習したデッキのクイックアクセス
+### 9.2 最近学習したデッキのクイックアクセス ✅ 完了
 ダッシュボードに直近学習デッキを表示し、ワンタップで学習開始。
 
-- [ ] review_logs から直近の学習デッキを取得
-- [ ] ダッシュボードに「最近のデッキ」セクション（3〜5件）
-- [ ] 「学習開始」ボタンで直接 /study?deckId=xxx に遷移
+- [x] review_logs から直近の学習デッキを取得
+- [x] ダッシュボードに「最近のデッキ」セクション（3〜5件）
+- [x] 「学習開始」ボタンで直接 /study?deckId=xxx に遷移
 
 ### 9.3 学習時間トラッキング表示
 既存の review_logs.time_ms データを統計ページに表示。
@@ -442,7 +442,7 @@ Anki本家と同様に、Again/Hardで評価したカードを同一セッショ
 - [ ] デッキ一覧にプログレスバー表示
 - [ ] 保護者/講師向けの分かりやすい指標
 
-### 9.5 生徒セルフスタディ強化 🔧 実装済み（バグ調査中）
+### 9.5 生徒セルフスタディ強化 ✅ 完了
 生徒が自分のデッキ・ノートタイプを作成・管理できるようにし、配布デッキの学習設定をユーザー個別にオーバーライド可能に。
 
 - [x] DBマイグレーション（012_user_deck_settings.sql: ユーザー別デッキ設定テーブル）
@@ -458,7 +458,7 @@ Anki本家と同様に、Again/Hardで評価したカードを同一セッショ
 - [x] BottomNavにテンプレートタブ追加
 - [x] ノートタイプページのロールチェック削除
 - [x] Dexie.js v6（userDeckSettings テーブル）
-- [ ] バグ修正: 生徒作成デッキでカード枚数が0表示（RLS調査中）
+- [x] バグ修正: 生徒作成デッキでカード枚数が0表示（RLS修正済み）
 
 ---
 
@@ -530,26 +530,30 @@ GitHub風の学習ヒートマップとストリーク（連続学習日数）�
 
 ---
 
-## Phase 12: クライアントファースト化（SPA化）
+## Phase 12: クライアントファースト化（SPA化） ✅ 完了
 
 全画面をClient Component + Dexie.jsプライマリに移行し、ページ遷移を高速化。
 サーバー通信はバックグラウンド同期のみ。
 
-### 12.1 全画面のClient Component化
+### 12.1 全画面のClient Component化 ✅ 完了
 Server Component → Client Component への段階的移行。
 
-- [ ] ダッシュボードページのクライアントファースト化
-- [ ] デッキ詳細ページのクライアントファースト化
-- [ ] 講師ダッシュボードのクライアントファースト化
-- [ ] ノートタイプ管理ページのクライアントファースト化
-- [ ] ルーティングの最適化（クライアントサイドナビゲーション）
+- [x] AuthProvider + useAuth グローバル認証コンテキスト
+- [x] useDexieQuery stale-while-revalidateフック
+- [x] ダッシュボードページのクライアントファースト化
+- [x] デッキ詳細ページのクライアントファースト化
+- [x] 講師ページ（生徒管理/クラス詳細）のクライアントファースト化
+- [x] ノートタイプ管理ページのクライアントファースト化
+- [x] Stats/Settings/Notes/Study/Decksページのクライアントファースト化
+- [x] ルーティングの最適化（クライアントサイドナビゲーション）
 
-### 12.2 バックグラウンド同期の強化
+### 12.2 バックグラウンド同期の強化 ✅ 完了
 stale-while-revalidate パターンで、表示はローカル即時 → 裏でサーバー同期。
 
-- [ ] 全テーブルのDexie.js同期ロジック整備
-- [ ] 同期状態インジケーター（最終同期時刻表示）
-- [ ] 差分同期の効率化（updated_at ベース）
+- [x] 全テーブルのDexie.js同期ロジック整備（Dexie v7: classes, classMembers, deckAssignments追加）
+- [x] 同期状態インジケーター（最終同期時刻表示、SyncIndicatorコンポーネント）
+- [x] Pull API拡張（classes, classMembers, deckAssignments, userDeckSettings）
+- [x] バックグラウンド同期（5分間隔 + タブフォーカス + 初回ログイン）
 
 ### 12.3 プッシュ通知（学習リマインダー）
 Web Push API で学習リマインダーを送信。
@@ -654,87 +658,28 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 
 ## 現在の進捗
 
-**Phase**: Phase 9.5 生徒セルフスタディ強化 🔧 実装済み（バグ調査中）
-**最終更新**: 2026-02-12
-**次のタスク**: Phase 9.5 バグ修正（生徒作成デッキのカード枚数0表示問題）
+**Phase**: Phase 12 完了、次は Phase 15
+**最終更新**: 2026-02-16
+**次のタスク**: Phase 15 FSRS導入
 
 ### 次回セッションでやること
 
-1. **Phase 9.5 バグ修正**: 生徒作成デッキでカード枚数が0表示される問題（RLS関連の可能性大）
-2. **Phase 9.5 動作確認の続き**: 配布デッキ読み取り専用、学習設定オーバーライド、講師回帰確認
-3. **Phase 9.2**: 最近学習したデッキのクイックアクセス
+1. **Phase 15**: FSRS導入 - SM-2からFSRSへのアップグレード
+2. **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア
+
+### 今後のロードマップ（優先度順）
+- **Phase 15**: FSRS導入 ★次
+- **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア
+- **Phase 10**: ゲーミフィケーション
+- **Phase 11**: 講師ツール強化
+- **Phase 13-14, 16**: コンテンツ効率化、学習モード拡張、コラボレーション
 
 ### 完了済み
-- [x] プロジェクト設計（DB、SRS、ノートタイプ等）
-- [x] Claude Code開発アーキテクチャ整備
-- [x] Git初期化 & GitHubプッシュ
-- [x] Phase 1.1 環境構築（Next.js 14, Tailwind, Vitest, Supabase）
-- [x] Phase 1.2 認証（Googleログイン、プロフィール設定）
-- [x] Phase 1.3 データベース（profilesテーブル、RLS）
-- [x] Phase 1.4 基本UI（ダッシュボード、レイアウト、ナビゲーション）
-- [x] 残りのDBスキーマSQL作成・実行（classes, note_types, decks, cards等）
-- [x] 認証ミドルウェア強化（ルート保護、プロフィールチェック）
-- [x] デッキ一覧ページ機能実装（自分のデッキ表示、学習状況バッジ）
-- [x] カード学習画面実装（フリップ、回答ボタン、進捗表示、完了画面）
-- [x] SM-2アルゴリズム実装（テスト22件パス）
-- [x] 学習回答API（card_states更新、review_logs記録）
-- [x] 型定義ファイル作成（src/types/database.ts）
-- [x] テストデータで動作確認完了
-- [x] テンプレートレンダリング機能実装（HTMLサニタイズ、Cloze対応、テスト33件追加）
-- [x] RLSポリシー修正SQL作成・適用（002_fix_rls_policies.sql）
-- [x] デッキ作成API・UI実装（POST /api/decks、/decks/new）
-- [x] ノート追加API・UI実装（POST /api/notes、NoteEditorコンポーネント）
-- [x] デッキ詳細ページ実装（/decks/[id]、ノート一覧表示）
-- [x] クラス管理API実装（CRUD、メンバー管理）
-- [x] クラス管理UI実装（/students、クラス作成・編集・削除、生徒追加・削除）
-- [x] デッキ配布機能（クラス/個人への配布、配布解除）
-- [x] 講師ダッシュボード強化（生徒の学習進捗表示、統計情報）
-- [x] CSVインポート機能（CSVパーサー、マッピングUI、バリデーション、一括インポート）
-- [x] Phase 3.1 ローカルDB（Dexie.jsスキーマ定義、ローカル保存ロジック）
-- [x] Phase 3.2 同期（sync_queue実装、オンライン検知、競合検知・解決UI）
-- [x] Phase 3.3 PWA対応（Service Worker、オフラインページ、インストール促進UI）
-- [x] Phase 3 動作確認完了・Dexieスキーマバグ修正（syncQueueにattemptsインデックス追加）
-- [x] Phase 4.1 TTS音声生成（OpenAI TTS統合、音声再生ボタン、設定UI、オフラインキャッシュ）
-- [x] Phase 4.2 例文生成（Claude API統合、一括生成機能、学習画面表示）
-- [x] Phase 4.2 動作確認完了（Supabaseマイグレーション適用、ANTHROPIC_API_KEY設定、一括生成・学習画面表示確認）
-- [x] Phase 4.3 OCR機能（Claude Vision統合、写真から単語抽出、レビュー・編集UI、デッキ詳細ページ統合）
-- [x] Phase 4.3 動作確認完了
-- [x] Phase 5.1 統計ページ（Recharts導入、詳細統計API、グラフコンポーネント6種類、期間選択UI、オフライン統計対応）
-- [x] Phase 5.1 動作確認完了
-- [x] Phase 5.2 ノートタイプ拡張（カスタムノートタイプ作成UI、フィールド/テンプレートエディタ、ライブプレビュー、API対応）
-- [x] Phase 5.2 動作確認完了（カスタムノートタイプ→ノート追加→学習のフロー確認、バグ修正）
-- [x] Phase 5.3 CSVエクスポート（CSV生成ユーティリティ、エクスポートAPI、デッキ詳細ボタン、テスト17件）
-- [x] Phase 5.3 動作確認完了
-- [x] Phase 6.1 学習体験の高速化（カード切り替え非ブロッキング化、Link変更、ローディングスケルトン）
-- [x] Phase 6.1 動作確認完了
-- [x] Phase 6.2 ページ遷移パフォーマンス改善（N+1クエリ解消、ミドルウェア最適化、楽観的UI、スケルトン）
-- [x] Phase 6.2 動作確認完了
-- [x] Phase 6.3 オフライン完全対応（StudyPageClient、DecksPageClient、offline-data API、usePrefetchAllDecks、SW強化）
-- [x] Phase 6.3 動作確認完了（SW→RSC競合修正、error.tsx境界によるオフラインLink遷移確認）
-- [x] Phase 6.4 OCRカスタムノートタイプ対応（ノートタイプ選択UI、動的プロンプト生成、フィールドベースレビューUI）
-- [x] Phase 6.4 動作確認完了
-- [x] Phase 6.5 AI生成ルール対応（GenerationRule、ルールエディタ、一括生成ルール選択UI、field_values保存）
-- [x] Phase 6.5 動作確認完了
-- [x] Phase 7.1 削除機能（ノート単体/一括削除、デッキ削除、ノートタイプ削除UI、IndexedDBクリーンアップ）
-- [x] Phase 7.1 動作確認完了
-- [x] Phase 7.2 ノートブラウズ・編集機能（検索/フィルタ/ソート/ページネーション、NoteEditModal、RPC検索関数）
-- [x] Phase 7.2 動作確認完了
-- [x] Phase 7.3 LLMベース テキストタグ付け機能（プリセット3種、NoteEditModal AI生成セクション、NoteCardワンタッチ生成）
-- [x] Phase 7.3 動作確認完了
-- [x] Phase 7.4 Anki互換機能強化（サブデッキ + ノートタグ）
-- [x] Phase 7.5 学習カスタマイズ（Anki互換デッキオプション: DeckSettings、scheduler設定対応、リーチ検知、カード並び順、詳細設定UI）
-- [x] Phase 8.1 セッション内カード再提示（learningキュー、WaitingCountdown、graduated/totalプログレス）
-- [x] Phase 8.1 動作確認完了
-- [x] Phase 8.2 {{FrontSide}}プレースホルダー実装（renderer.ts、StudyCard、テスト4件）
-- [x] Phase 8.2 動作確認完了
-- [x] Phase 8.3 タイマー機能（CountdownTimer、autoFlip、auto_again 5秒カウントダウン、設定UI）
-- [x] Phase 8.3 動作確認完了
-- [x] Phase 8.4 回答取り消し（Undo）機能（UndoSnapshot、undoAnswerLocally、/api/study/undo、10秒バナー、テスト6件）
-- [x] Phase 8.4 動作確認完了
-- [x] Phase 8.5 スワイプジェスチャー（Pointer Events、SwipeOverlay、DeckSettings swipe_enabled、テスト15件）
-- [x] Phase 8.5 動作確認完了
-- [x] Phase 9.1 デッキ一覧UX改善（検索フィルタ、学習開始ボタン、設定モーダル）
-- [x] Phase 9.1 動作確認完了
-- [ ] Phase 9.5 生徒セルフスタディ強化（実装済み、バグ調査中: 生徒作成デッキのカード枚数0表示）
-- [x] Phase 9.1 デッキ一覧UX改善（検索フィルタ、学習開始ボタン、設定モーダル）
-- [x] Phase 9.1 動作確認完了
+- [x] Phase 1-5: MVP、講師機能、オフライン、LLM連携、拡張機能
+- [x] Phase 6: UX改善 & パフォーマンス最適化（6.1-6.5）
+- [x] Phase 7: ユーザー要望機能（7.1-7.6）
+- [x] Phase 8: 学習セッション改善（8.1-8.5）
+- [x] Phase 9.1 デッキ一覧UX改善
+- [x] Phase 9.2 最近学習したデッキのクイックアクセス
+- [x] Phase 9.5 生徒セルフスタディ強化
+- [x] Phase 12: クライアントファースト化/SPA化（12.1-12.2）

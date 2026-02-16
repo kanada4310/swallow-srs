@@ -176,6 +176,29 @@ export async function pullFromServer(userId: string): Promise<void> {
     await db.cardTemplates.bulkPut(data.cardTemplates)
   }
 
+  if (data.userDeckSettings && data.userDeckSettings.length > 0) {
+    const mapped = data.userDeckSettings.map((s: { id: string; user_id: string; deck_id: string; settings: Record<string, unknown>; updated_at: string }) => ({
+      id: `${s.user_id}:${s.deck_id}`,
+      user_id: s.user_id,
+      deck_id: s.deck_id,
+      settings: s.settings,
+      updated_at: new Date(s.updated_at),
+    }))
+    await db.userDeckSettings.bulkPut(mapped)
+  }
+
+  if (data.classes) {
+    await db.classes.bulkPut(data.classes)
+  }
+
+  if (data.classMembers) {
+    await db.classMembers.bulkPut(data.classMembers)
+  }
+
+  if (data.deckAssignments) {
+    await db.deckAssignments.bulkPut(data.deckAssignments)
+  }
+
   await setSyncMeta('lastPullAt', new Date().toISOString())
 }
 
