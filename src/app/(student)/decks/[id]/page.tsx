@@ -60,7 +60,8 @@ function DeckDetailSkeleton() {
 
 export default function DeckDetailPage() {
   const params = useParams()
-  const deckId = params.id as string
+  // Fallback to window.location when rendered outside Next.js routing (offline mode)
+  const deckId = (params.id as string) || (typeof window !== 'undefined' ? window.location.pathname.split('/decks/')[1]?.split('/')[0] : '') || ''
   const { profile, isLoading: authLoading } = useAuth()
   const [deckData, setDeckData] = useState<DeckData | null>(null)
   const [isLoading, setIsLoading] = useState(true)

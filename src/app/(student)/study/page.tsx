@@ -10,7 +10,8 @@ function StudyPageInner() {
   const { userId, isLoading } = useAuth()
   const searchParams = useSearchParams()
   const router = useRouter()
-  const deckId = searchParams.get('deck') || null
+  // Fallback to window.location when rendered outside Next.js routing (offline mode)
+  const deckId = searchParams.get('deck') || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('deck') : null)
 
   if (isLoading) {
     return (

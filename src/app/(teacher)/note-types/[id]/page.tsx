@@ -9,7 +9,9 @@ import { db } from '@/lib/db/schema'
 import type { NoteTypeWithTemplates } from '@/types/database'
 
 export default function EditNoteTypePage() {
-  const { id } = useParams<{ id: string }>()
+  const params = useParams<{ id: string }>()
+  // Fallback to window.location when rendered outside Next.js routing (offline mode)
+  const id = params.id || (typeof window !== 'undefined' ? window.location.pathname.split('/note-types/')[1]?.split('/')[0] : '') || ''
   const { isLoading } = useAuth()
   const [noteType, setNoteType] = useState<NoteTypeWithTemplates | null>(null)
   const [notFound, setNotFound] = useState(false)

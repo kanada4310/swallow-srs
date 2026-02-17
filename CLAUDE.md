@@ -107,17 +107,22 @@ npm run test:watch   # Vitest 監視モード
 - 一括生成UIでルール選択、結果を `field_values` に直接保存
 - レガシーモード（generated_content）との後方互換を維持
 
-## オフライン完全対応（Phase 6.3）
+## オフライン完全対応（Phase 6.3 + 強化）
 
-- **ハイブリッドClient Componentパターン**: Server Componentでオンライン時の最適データ取得を維持しつつ、Client Componentがオフライン検知時にIndexedDBフォールバック
+- **OfflineNavProvider**: オフライン時のクライアントサイドナビゲーション（`src/contexts/OfflineNavContext.tsx`）
+  - 全ページコンポーネントをeager importでバンドル（ネットワーク不要）
+  - キャプチャフェーズでリンククリック横取り → Next.js MPA フォールバック防止
+  - 動的ルートパターンマッチング（`/decks/[id]`、`/note-types/[id]`、`/students/class/[id]`）
+  - ブラウザ更新ボタン防止（Navigation API + beforeunload + F5/Ctrl+R）
+  - `history.pushState` でURL更新、popstateで戻る/進む対応
+- **AuthContext オフライン強化**: トークンリフレッシュ失敗時のSIGNED_OUT無視、IndexedDBフォールバック
+- **動的ルートフォールバック**: `useParams()`/`useSearchParams()` が空の場合に `window.location` から取得
+- **error.tsx**: 全ルートにエラーバウンダリ追加（`createErrorBoundary`ユーティリティ）
 - **StudyPageClient**: `src/app/(student)/study/StudyPageClient.tsx` - initialCards有無でオンライン/オフライン切替
 - **DecksPageClient**: `src/app/(student)/decks/DecksPageClient.tsx` - initialDecks有無で切替
 - **offline-data API**: `GET /api/decks/[id]/offline-data` - デッキの全データを1回で取得
 - **プリフェッチ**: `usePrefetchAllDecks()` でデッキ一覧表示時に全デッキをバックグラウンドキャッシュ
 - **Service Worker**: 静的アセットのキャッシュ（ページナビゲーションキャッシュはRSC競合のため削除）
-- **Server Componentフォールバック**: `!profile` 時に `return null` せず Client Component を描画
-- **error.tsx**: `study/error.tsx`, `decks/error.tsx` でLink遷移時のRSCフェッチ失敗をキャッチ
-- **IndexedDBプロフィール取得**: Client ComponentがuserId未提供時にIndexedDBからprofile取得
 
 ## クライアントファースト化（Phase 12） ✅ 完了
 
@@ -129,9 +134,17 @@ npm run test:watch   # Vitest 監視モード
 - **Pull API拡張**: classes, classMembers, deckAssignments, userDeckSettings を同期対象に追加
 - **バックグラウンド同期**: 5分間隔 + タブフォーカス時 + 初回ログイン時
 
-## 現在の進捗（2026-02-16更新）
+## 現在の進捗（2026-02-17更新）
 
-**Phase 12 クライアントファースト化（SPA化）完了**
+**Phase 12 クライアントファースト化（SPA化）完了 + オフライン完全対応強化**
+
+### 今回のセッションで完了
+- **OfflineNavProvider**: オフライン時のクライアントサイドナビゲーション（全13ルート対応）
+  - 静的ルート（7ページ）+ 動的ルート（`/decks/[id]`、`/note-types/[id]`、`/students/class/[id]`）+ 新規作成（3ページ）
+  - Next.js MPA フォールバック防止（キャプチャフェーズでリンククリック横取り）
+  - ブラウザ更新ボタン防止（Navigation API + beforeunload + F5/Ctrl+R）
+- **AuthContext オフライン強化**: オフライン時のトークンリフレッシュ失敗によるログアウト防止、IndexedDBフォールバック
+- **error.tsx 境界**: 全ルートにエラーバウンダリ追加（`createErrorBoundary`ユーティリティ）
 
 ### 次回セッションでやること
 1. **Phase 15**: FSRS導入 - SM-2からFSRSへのアップグレード

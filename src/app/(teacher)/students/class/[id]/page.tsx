@@ -22,7 +22,9 @@ interface Student {
 }
 
 export default function ClassDetailPage() {
-  const { id } = useParams<{ id: string }>()
+  const params = useParams<{ id: string }>()
+  // Fallback to window.location when rendered outside Next.js routing (offline mode)
+  const id = params.id || (typeof window !== 'undefined' ? window.location.pathname.split('/students/class/')[1]?.split('/')[0] : '') || ''
   const { profile, isLoading } = useAuth()
   const [classData, setClassData] = useState<{ name: string; members: Member[]; availableStudents: Student[] } | null>(null)
   const [notFound, setNotFound] = useState(false)

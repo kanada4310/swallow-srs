@@ -37,6 +37,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
+        // Offline時はgetUser()が失敗してuser=nullになる場合がある
+        // IndexedDBにキャッシュがあればそれを使う
+        if (!navigator.onLine) {
+          console.log('[AuthContext] getUser returned null while offline, trying IndexedDB')
+          try {
+            const localProfile = await db.profiles.toCollection().first()
+            if (localProfile) {
+              setUserId(localProfile.id)
+              setProfile(localProfile)
+              setIsLoading(false)
+              return
+            }
+          } catch {
+            // IndexedDB not available
+          }
+        }
         setUserId(null)
         setProfile(null)
         setIsLoading(false)
@@ -111,7 +127,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const supabase = createClient()
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event) => {
+        console.log('[AuthContext] onAuthStateChange:', event, 'online:', navigator.onLine)
         if (event === 'SIGNED_OUT') {
+          // Offline時のトークンリフレッシュ失敗をSIGNED_OUTとして扱わない
+          if (!navigator.onLine) {
+            console.log('[AuthContext] Ignoring SIGNED_OUT while offline')
+            return
+          }
           setUserId(null)
           setProfile(null)
           router.replace('/login')

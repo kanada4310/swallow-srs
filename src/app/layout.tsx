@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { OfflineNavProvider } from '@/contexts/OfflineNavContext'
 
 export const metadata: Metadata = {
   title: 'つばめSRS',
@@ -43,7 +44,9 @@ export default function RootLayout({
     <html lang="ja" suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
         <AuthProvider>
-          {children}
+          <OfflineNavProvider>
+            {children}
+          </OfflineNavProvider>
         </AuthProvider>
       </body>
     </html>
