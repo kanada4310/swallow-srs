@@ -134,32 +134,35 @@ npm run test:watch   # Vitest 監視モード
 - **Pull API拡張**: classes, classMembers, deckAssignments, userDeckSettings を同期対象に追加
 - **バックグラウンド同期**: 5分間隔 + タブフォーカス時 + 初回ログイン時
 
+## Web Push通知（Phase 12.3）
+
+- **通知設定UI**: `/settings` ページに通知ON/OFF、テスト送信ボタン
+- **VAPID鍵**: `.env.local` に `NEXT_PUBLIC_VAPID_PUBLIC_KEY`、`VAPID_PRIVATE_KEY`、`VAPID_SUBJECT`
+- **Cron**: Vercel Cron で毎日22:00 UTC (07:00 JST) に送信（`vercel.json`）
+- **Service Worker**: `worker/index.ts` にpush/notificationclickハンドラ（@ducanh2912/next-pwa が自動ビルド）
+- **SQLマイグレーション**: `014_push_notifications.sql`（push_subscriptions, notification_settings, notification_logs）
+- **環境変数**: `CRON_SECRET`（Cron認証用）、`SUPABASE_SERVICE_ROLE_KEY`（RLSバイパス用）
+
 ## 現在の進捗（2026-02-18更新）
 
-**Phase 15 FSRS導入 完了 + バグ修正**
+**Phase 12.3 Web Push通知 完了**
 
 ### 今回のセッションで完了
-- **Phase 15: FSRS（Free Spaced Repetition Scheduler）導入**
-  - `ts-fsrs` パッケージ導入、SM-2/FSRS デュアルアルゴリズム対応
-  - `DeckSettings.algorithm: 'sm2' | 'fsrs'` でデッキ単位で切替可能
-  - `CardSchedule` に FSRS フィールド追加（stability, difficulty, elapsed_days, scheduled_days, last_review）
-  - `fsrs-scheduler.ts`: ts-fsrs ラッパー（型変換、パラメータ変換、calculateNextReviewFSRS、getNextIntervalPreviewFSRS）
-  - `fsrs-migration.ts`: SM-2→FSRS マイグレーション（stability≈interval、EF→difficulty変換）
-  - `/api/decks/[id]/migrate-fsrs`: マイグレーションAPI
-  - Dexie.js v8（LocalCardState に FSRS フィールド追加）
-  - sync.ts 全面更新（saveAnswerLocally、applyServerCardStates、undoAnswerLocally に FSRS フィールド）
-  - answer/undo/push API 更新
-  - DeckAdvancedSettings にアルゴリズムタブ追加（FSRS設定: 目標記憶率、最大間隔、ファジング等）
-  - SM-2固有設定のFSRSモード時非表示
-  - settings-validation にFSRS設定バリデーション追加
-  - SQLマイグレーション `013_fsrs_support.sql`（card_states に5カラム追加）
-  - テスト43件追加（fsrs-scheduler: 33件、fsrs-migration: 10件、scheduler routing: 4件）、全235件パス
-- **バグ修正: SM-2→FSRS未マイグレーションカードの間隔計算**
-  - `scheduleToFSRSCard()` で stability=null のレビューカードに SM-2 データから FSRS 値を自動推定
-  - stability≈interval、EF→difficulty 変換、elapsed_days/scheduled_days/last_review 推定
-- **バグ修正: 新規デッキ作成後の詳細画面遷移**
-  - DeckForm で作成成功後に Dexie.js にデッキデータを即座に保存
-  - クライアントファーストアーキテクチャでの Dexie 未同期問題を解消
+- **Phase 12.3: Web Push通知（毎日学習リマインダー）**
+  - `web-push` パッケージ導入、VAPID鍵ペア生成
+  - Service Worker pushハンドラ（`worker/index.ts`）: 通知表示 + タップで学習ページ遷移
+  - クライアントサイド購読ヘルパー（`src/lib/push/subscription.ts`）
+  - サーバーサイド送信ヘルパー（`src/lib/push/server.ts`）
+  - 購読API（POST/DELETE `/api/push/subscribe`）
+  - 通知設定API（GET/PUT `/api/push/settings`）
+  - テスト送信API（POST `/api/push/test`）
+  - NotificationSettings UIコンポーネント（トグル、時刻選択、テスト送信、iOS注意書き）
+  - 設定ページに通知設定セクション追加
+  - Vercel Cronエンドポイント（`/api/cron/daily-reminder`）: 期限切れカード検出→通知送信
+  - `extractFrontText()`: フィールド値からテキスト抽出（HTML除去、Cloze展開、100文字制限）
+  - SQLマイグレーション `014_push_notifications.sql`（3テーブル + RLS）
+  - `vercel.json` Cron設定（22:00 UTC = 07:00 JST）
+  - テスト17件追加（extractFrontText: 13件、sendPushNotification: 4件）、全252件パス
 
 ### 次回セッションでやること
 1. **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア

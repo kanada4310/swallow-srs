@@ -555,13 +555,15 @@ stale-while-revalidate パターンで、表示はローカル即時 → 裏で�
 - [x] Pull API拡張（classes, classMembers, deckAssignments, userDeckSettings）
 - [x] バックグラウンド同期（5分間隔 + タブフォーカス + 初回ログイン）
 
-### 12.3 プッシュ通知（学習リマインダー）
+### 12.3 プッシュ通知（学習リマインダー） ✅ 完了
 Web Push API で学習リマインダーを送信。
 
-- [ ] VAPID キー生成、通知購読テーブル
-- [ ] Service Worker でプッシュイベント受信
-- [ ] 通知送信サービス（Vercel Cron + web-push）
-- [ ] デッキ/ユーザー単位の通知時刻設定
+- [x] VAPID キー生成、通知購読テーブル（push_subscriptions, notification_settings, notification_logs）
+- [x] Service Worker でプッシュイベント受信（worker/index.ts）
+- [x] 通知送信サービス（Vercel Cron + web-push、毎日07:00 JST）
+- [x] 通知設定UI（/settings に NotificationSettings コンポーネント）
+- [x] テスト送信機能（/api/push/test）
+- [ ] デッキ/ユーザー単位の通知時刻設定（現在は全員07:00 JST固定）
 - [ ] 宿題期限リマインダー（Phase 11.1と連携）
 
 ---
@@ -664,7 +666,7 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 
 ## 現在の進捗
 
-**Phase**: Phase 15 完了、次は Phase 9.3-9.4
+**Phase**: Phase 12.3 完了、次は Phase 9.3-9.4
 **最終更新**: 2026-02-18
 **次のタスク**: Phase 9.3-9.4 学習時間・習熟度
 
@@ -687,5 +689,5 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 - [x] Phase 9.1 デッキ一覧UX改善
 - [x] Phase 9.2 最近学習したデッキのクイックアクセス
 - [x] Phase 9.5 生徒セルフスタディ強化
-- [x] Phase 12: クライアントファースト化/SPA化（12.1-12.2）
+- [x] Phase 12: クライアントファースト化/SPA化（12.1-12.2）+ プッシュ通知（12.3）
 - [x] Phase 15: FSRS導入（15.1）
