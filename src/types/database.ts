@@ -106,6 +106,14 @@ export interface DeckSettings {
 
   // === スワイプ ===
   swipe_enabled: boolean                         // スワイプジェスチャー有効。デフォルト: true
+
+  // === アルゴリズム ===
+  algorithm: 'sm2' | 'fsrs'                      // デフォルト: 'sm2'
+  fsrs_desired_retention: number                  // 目標記憶率 0.7-0.97。デフォルト: 0.9
+  fsrs_maximum_interval: number                   // 最大間隔（日）。デフォルト: 36500
+  fsrs_enable_fuzz: boolean                       // ファジング有効。デフォルト: true
+  fsrs_enable_short_term: boolean                 // 短期スケジュール有効。デフォルト: true
+  fsrs_weights: number[]                          // カスタム重み。デフォルト: []（ts-fsrsデフォルト使用）
 }
 
 export interface Deck {
@@ -171,6 +179,12 @@ export interface CardStateRecord {
   state: CardState
   learning_step: number
   lapses: number
+  // FSRS fields (nullable for SM-2 cards)
+  stability: number | null
+  difficulty: number | null
+  elapsed_days: number
+  scheduled_days: number
+  last_review: string | null
   updated_at: string
 }
 
@@ -225,6 +239,12 @@ export interface StudyCardData {
     state: CardState
     learningStep: number
     lapses: number
+    // FSRS fields (nullable for SM-2 cards)
+    stability: number | null
+    difficulty: number | null
+    elapsed_days: number
+    scheduled_days: number
+    last_review: Date | null
   }
 }
 

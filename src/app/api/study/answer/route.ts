@@ -55,6 +55,11 @@ export async function POST(request: NextRequest) {
         state: currentState.state as CardSchedule['state'],
         learningStep: currentState.learning_step,
         lapses: currentState.lapses ?? 0,
+        stability: currentState.stability ?? null,
+        difficulty: currentState.difficulty ?? null,
+        elapsed_days: currentState.elapsed_days ?? 0,
+        scheduled_days: currentState.scheduled_days ?? 0,
+        last_review: currentState.last_review ? new Date(currentState.last_review) : null,
       }
     } else {
       // New card - create initial schedule
@@ -66,6 +71,11 @@ export async function POST(request: NextRequest) {
         state: 'new',
         learningStep: 0,
         lapses: 0,
+        stability: null,
+        difficulty: null,
+        elapsed_days: 0,
+        scheduled_days: 0,
+        last_review: null,
       }
     }
 
@@ -96,6 +106,11 @@ export async function POST(request: NextRequest) {
         state: finalState,
         learning_step: newSchedule.learningStep,
         lapses: newSchedule.lapses,
+        stability: newSchedule.stability,
+        difficulty: newSchedule.difficulty,
+        elapsed_days: newSchedule.elapsed_days,
+        scheduled_days: newSchedule.scheduled_days,
+        last_review: newSchedule.last_review?.toISOString() ?? null,
         updated_at: now.toISOString(),
       }, {
         onConflict: 'user_id,card_id',

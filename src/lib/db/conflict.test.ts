@@ -24,6 +24,11 @@ describe('Conflict Detection', () => {
     state: 'review',
     learning_step: 0,
     lapses: 0,
+    stability: null,
+    difficulty: null,
+    elapsed_days: 0,
+    scheduled_days: 0,
+    last_review: null,
     updated_at: new Date('2024-01-15T10:00:00Z'),
     ...overrides,
   })

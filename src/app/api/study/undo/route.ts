@@ -38,6 +38,11 @@ export async function POST(request: NextRequest) {
           state: previousState.state,
           learning_step: previousState.learning_step,
           lapses: previousState.lapses ?? 0,
+          stability: previousState.stability ?? null,
+          difficulty: previousState.difficulty ?? null,
+          elapsed_days: previousState.elapsed_days ?? 0,
+          scheduled_days: previousState.scheduled_days ?? 0,
+          last_review: previousState.last_review ?? null,
           updated_at: new Date().toISOString(),
         }, {
           onConflict: 'user_id,card_id',

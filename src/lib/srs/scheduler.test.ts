@@ -88,6 +88,11 @@ describe('SRS Scheduler', () => {
       state: 'new',
       learningStep: 0,
       lapses: 0,
+      stability: null,
+      difficulty: null,
+      elapsed_days: 0,
+      scheduled_days: 0,
+      last_review: null,
     }
 
     it('should move to learning state on Again', () => {
@@ -123,6 +128,11 @@ describe('SRS Scheduler', () => {
       state: 'learning',
       learningStep: 1, // At step 1 (10 min)
       lapses: 0,
+      stability: null,
+      difficulty: null,
+      elapsed_days: 0,
+      scheduled_days: 0,
+      last_review: null,
     }
 
     it('should reset to step 0 on Again', () => {
@@ -154,6 +164,11 @@ describe('SRS Scheduler', () => {
       state: 'review',
       learningStep: 0,
       lapses: 0,
+      stability: null,
+      difficulty: null,
+      elapsed_days: 0,
+      scheduled_days: 0,
+      last_review: null,
     }
 
     it('should lapse to relearning on Again', () => {
@@ -195,6 +210,11 @@ describe('SRS Scheduler', () => {
       state: 'review',
       learningStep: 0,
       lapses: 0,
+      stability: null,
+      difficulty: null,
+      elapsed_days: 0,
+      scheduled_days: 0,
+      last_review: null,
     }
 
     it('should decrease ease factor on Again', () => {
@@ -237,6 +257,11 @@ describe('SRS Scheduler', () => {
         state: 'review',
         learningStep: 0,
         lapses: 0,
+        stability: null,
+        difficulty: null,
+        elapsed_days: 0,
+        scheduled_days: 0,
+        last_review: null,
       }
 
       const previews = getNextIntervalPreview(schedule, fixedDate)
@@ -283,6 +308,11 @@ describe('SRS Scheduler', () => {
       state: 'new',
       learningStep: 0,
       lapses: 0,
+      stability: null,
+      difficulty: null,
+      elapsed_days: 0,
+      scheduled_days: 0,
+      last_review: null,
     }
 
     it('should use custom learning steps [1, 5, 15]', () => {
@@ -315,6 +345,11 @@ describe('SRS Scheduler', () => {
       state: 'learning',
       learningStep: 1,
       lapses: 0,
+      stability: null,
+      difficulty: null,
+      elapsed_days: 0,
+      scheduled_days: 0,
+      last_review: null,
     }
 
     it('should use custom graduating_interval', () => {
@@ -339,6 +374,11 @@ describe('SRS Scheduler', () => {
       state: 'review',
       learningStep: 0,
       lapses: 0,
+      stability: null,
+      difficulty: null,
+      elapsed_days: 0,
+      scheduled_days: 0,
+      last_review: null,
     }
 
     it('should halve intervals with interval_modifier = 0.5', () => {
@@ -363,6 +403,11 @@ describe('SRS Scheduler', () => {
       state: 'review',
       learningStep: 0,
       lapses: 0,
+      stability: null,
+      difficulty: null,
+      elapsed_days: 0,
+      scheduled_days: 0,
+      last_review: null,
     }
 
     it('should clamp interval to max_interval', () => {
@@ -381,6 +426,11 @@ describe('SRS Scheduler', () => {
       state: 'review',
       learningStep: 0,
       lapses: 0,
+      stability: null,
+      difficulty: null,
+      elapsed_days: 0,
+      scheduled_days: 0,
+      last_review: null,
     }
 
     it('should use custom easy_bonus', () => {
@@ -406,6 +456,11 @@ describe('SRS Scheduler', () => {
       state: 'review',
       learningStep: 0,
       lapses: 2,
+      stability: null,
+      difficulty: null,
+      elapsed_days: 0,
+      scheduled_days: 0,
+      last_review: null,
     }
 
     it('should use custom lapse_new_interval', () => {
@@ -439,6 +494,11 @@ describe('SRS Scheduler', () => {
         state: 'review',
         learningStep: 0,
         lapses: 2,
+        stability: null,
+        difficulty: null,
+        elapsed_days: 0,
+        scheduled_days: 0,
+        last_review: null,
       }
 
       // Lapse #3 triggers leech (at threshold)
@@ -508,11 +568,47 @@ describe('SRS Scheduler', () => {
         state: 'review',
         learningStep: 0,
         lapses: 0,
+        stability: null,
+        difficulty: null,
+        elapsed_days: 0,
+        scheduled_days: 0,
+        last_review: null,
       }
 
       const previews = getNextIntervalPreview(schedule, fixedDate, { max_interval: 15 })
       // Good: 10 * 2.5 = 25, clamped to 15 → "15日"
       expect(previews[Ease.Good]).toBe('15日')
+    })
+  })
+
+  describe('Algorithm routing', () => {
+    it('should use SM-2 when algorithm is sm2 (default)', () => {
+      const schedule = createInitialSchedule()
+      const result = calculateNextReview(schedule, Ease.Good, fixedDate)
+      // SM-2 behavior: new card Good → advances learning step
+      expect(['learning', 'review']).toContain(result.state)
+    })
+
+    it('should use SM-2 when algorithm is explicitly sm2', () => {
+      const schedule = createInitialSchedule()
+      const result = calculateNextReview(schedule, Ease.Good, fixedDate, { algorithm: 'sm2' })
+      expect(['learning', 'review']).toContain(result.state)
+    })
+
+    it('should route to FSRS when algorithm is fsrs', () => {
+      const schedule = createInitialSchedule()
+      const result = calculateNextReview(schedule, Ease.Good, fixedDate, { algorithm: 'fsrs' })
+      // FSRS should also transition the card
+      expect(['learning', 'review']).toContain(result.state)
+      expect(result.due.getTime()).toBeGreaterThan(fixedDate.getTime())
+    })
+
+    it('should route getNextIntervalPreview to FSRS when algorithm is fsrs', () => {
+      const schedule = createInitialSchedule()
+      const previews = getNextIntervalPreview(schedule, fixedDate, { algorithm: 'fsrs' })
+      expect(previews[Ease.Again]).toBeTruthy()
+      expect(previews[Ease.Good]).toBeTruthy()
+      expect(previews[Ease.Easy]).toBeTruthy()
     })
   })
 })

@@ -9,7 +9,7 @@ interface DeckAdvancedSettingsProps {
   onChange: (settings: Partial<DeckSettings>) => void
 }
 
-type TabKey = 'new' | 'review' | 'lapse' | 'order' | 'timer' | 'swipe'
+type TabKey = 'algorithm' | 'new' | 'review' | 'lapse' | 'order' | 'timer' | 'swipe'
 
 // Number input component that allows free editing and validates on blur
 function NumberInput({
@@ -67,7 +67,7 @@ function NumberInput({
 
 export function DeckAdvancedSettings({ settings, onChange }: DeckAdvancedSettingsProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<TabKey>('new')
+  const [activeTab, setActiveTab] = useState<TabKey>('algorithm')
   const defaults = getDefaultDeckSettings()
 
   const resolved = { ...defaults, ...settings }
@@ -87,7 +87,10 @@ export function DeckAdvancedSettings({ settings, onChange }: DeckAdvancedSetting
       .filter(n => !isNaN(n) && n > 0)
   }
 
+  const isFSRS = resolved.algorithm === 'fsrs'
+
   const tabs: { key: TabKey; label: string }[] = [
+    { key: 'algorithm', label: 'アルゴリズム' },
     { key: 'new', label: '新規カード' },
     { key: 'review', label: '復習' },
     { key: 'lapse', label: '失念' },
@@ -136,6 +139,85 @@ export function DeckAdvancedSettings({ settings, onChange }: DeckAdvancedSetting
 
           {/* Tab content */}
           <div className="space-y-4">
+            {activeTab === 'algorithm' && (
+              <>
+                <SettingField label="スケジューリングアルゴリズム" description="FSRSはSM-2より効率的な復習スケジュールを生成します">
+                  <select
+                    value={resolved.algorithm}
+                    onChange={e => update('algorithm', e.target.value as 'sm2' | 'fsrs')}
+                    className="w-40 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  >
+                    <option value="sm2">SM-2（従来）</option>
+                    <option value="fsrs">FSRS</option>
+                  </select>
+                </SettingField>
+
+                {isFSRS && (
+                  <>
+                    <SettingField label="目標記憶率" description="高いほど復習頻度が上がります（0.70〜0.97）">
+                      <NumberInput
+                        value={resolved.fsrs_desired_retention}
+                        onChange={v => update('fsrs_desired_retention', v)}
+                        min={0.7}
+                        max={0.97}
+                        step="0.01"
+                        isFloat
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      />
+                    </SettingField>
+
+                    <SettingField label="最大間隔（日）" description="FSRSが設定する復習間隔の上限">
+                      <NumberInput
+                        value={resolved.fsrs_maximum_interval}
+                        onChange={v => update('fsrs_maximum_interval', v)}
+                        min={1}
+                        max={36500}
+                        className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      />
+                    </SettingField>
+
+                    <SettingField label="ファジング" description="復習間隔にランダムな変動を追加して分散させます">
+                      <button
+                        type="button"
+                        onClick={() => update('fsrs_enable_fuzz', !resolved.fsrs_enable_fuzz)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          resolved.fsrs_enable_fuzz ? 'bg-blue-600' : 'bg-gray-300'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            resolved.fsrs_enable_fuzz ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </SettingField>
+
+                    <SettingField label="短期スケジュール" description="学習ステップを使用します。オフにすると新規カードも即座に長期復習に入ります">
+                      <button
+                        type="button"
+                        onClick={() => update('fsrs_enable_short_term', !resolved.fsrs_enable_short_term)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          resolved.fsrs_enable_short_term ? 'bg-blue-600' : 'bg-gray-300'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            resolved.fsrs_enable_short_term ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </SettingField>
+
+                    <div className="bg-blue-50 rounded-lg p-3">
+                      <p className="text-xs text-blue-700">
+                        FSRSは機械学習ベースのアルゴリズムで、SM-2に比べて復習回数を20〜30%削減しながら同等以上の記憶定着を実現します。
+                      </p>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+
             {activeTab === 'new' && (
               <>
                 <SettingField label="1日の新規カード数" description="0にすると新規カードは出題されません">
@@ -204,51 +286,63 @@ export function DeckAdvancedSettings({ settings, onChange }: DeckAdvancedSetting
                   />
                 </SettingField>
 
-                <SettingField label="Easyボーナス" description="Easyで追加される倍率">
-                  <NumberInput
-                    value={resolved.easy_bonus}
-                    onChange={v => update('easy_bonus', v)}
-                    min={1.0}
-                    max={5.0}
-                    step="0.1"
-                    isFloat
-                    className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  />
-                </SettingField>
+                {!isFSRS && (
+                  <>
+                    <SettingField label="Easyボーナス" description="Easyで追加される倍率">
+                      <NumberInput
+                        value={resolved.easy_bonus}
+                        onChange={v => update('easy_bonus', v)}
+                        min={1.0}
+                        max={5.0}
+                        step="0.1"
+                        isFloat
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      />
+                    </SettingField>
 
-                <SettingField label="間隔倍率" description="全ての間隔に適用される倍率。1.0が標準">
-                  <NumberInput
-                    value={resolved.interval_modifier}
-                    onChange={v => update('interval_modifier', v)}
-                    min={0.1}
-                    max={5.0}
-                    step="0.05"
-                    isFloat
-                    className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  />
-                </SettingField>
+                    <SettingField label="間隔倍率" description="全ての間隔に適用される倍率。1.0が標準">
+                      <NumberInput
+                        value={resolved.interval_modifier}
+                        onChange={v => update('interval_modifier', v)}
+                        min={0.1}
+                        max={5.0}
+                        step="0.05"
+                        isFloat
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      />
+                    </SettingField>
 
-                <SettingField label="最大間隔（日）" description="復習間隔の上限">
-                  <NumberInput
-                    value={resolved.max_interval}
-                    onChange={v => update('max_interval', v)}
-                    min={1}
-                    max={36500}
-                    className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  />
-                </SettingField>
+                    <SettingField label="最大間隔（日）" description="復習間隔の上限">
+                      <NumberInput
+                        value={resolved.max_interval}
+                        onChange={v => update('max_interval', v)}
+                        min={1}
+                        max={36500}
+                        className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      />
+                    </SettingField>
 
-                <SettingField label="Hard倍率" description="Hardで適用される間隔倍率">
-                  <NumberInput
-                    value={resolved.hard_interval_modifier}
-                    onChange={v => update('hard_interval_modifier', v)}
-                    min={0.5}
-                    max={3.0}
-                    step="0.1"
-                    isFloat
-                    className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  />
-                </SettingField>
+                    <SettingField label="Hard倍率" description="Hardで適用される間隔倍率">
+                      <NumberInput
+                        value={resolved.hard_interval_modifier}
+                        onChange={v => update('hard_interval_modifier', v)}
+                        min={0.5}
+                        max={3.0}
+                        step="0.1"
+                        isFloat
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      />
+                    </SettingField>
+                  </>
+                )}
+
+                {isFSRS && (
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-xs text-gray-500">
+                      FSRSモードでは、間隔計算はアルゴリズムタブの設定（目標記憶率等）で制御されます。
+                    </p>
+                  </div>
+                )}
               </>
             )}
 
@@ -267,26 +361,30 @@ export function DeckAdvancedSettings({ settings, onChange }: DeckAdvancedSetting
                   />
                 </SettingField>
 
-                <SettingField label="新しい間隔（倍率）" description="失念時に現在の間隔にかける倍率（0.0〜1.0）">
-                  <NumberInput
-                    value={resolved.lapse_new_interval}
-                    onChange={v => update('lapse_new_interval', v)}
-                    min={0}
-                    max={1}
-                    step="0.05"
-                    isFloat
-                    className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  />
-                </SettingField>
+                {!isFSRS && (
+                  <>
+                    <SettingField label="新しい間隔（倍率）" description="失念時に現在の間隔にかける倍率（0.0〜1.0）">
+                      <NumberInput
+                        value={resolved.lapse_new_interval}
+                        onChange={v => update('lapse_new_interval', v)}
+                        min={0}
+                        max={1}
+                        step="0.05"
+                        isFloat
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      />
+                    </SettingField>
 
-                <SettingField label="最小間隔（日）" description="失念後の最小復習間隔">
-                  <NumberInput
-                    value={resolved.lapse_min_interval}
-                    onChange={v => update('lapse_min_interval', v)}
-                    min={1}
-                    className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  />
-                </SettingField>
+                    <SettingField label="最小間隔（日）" description="失念後の最小復習間隔">
+                      <NumberInput
+                        value={resolved.lapse_min_interval}
+                        onChange={v => update('lapse_min_interval', v)}
+                        min={1}
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      />
+                    </SettingField>
+                  </>
+                )}
 
                 <SettingField label="リーチしきい値" description="この回数失念するとリーチ判定。0で無効">
                   <NumberInput

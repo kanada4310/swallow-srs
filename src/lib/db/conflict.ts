@@ -20,6 +20,11 @@ export interface ConflictInfo {
     state: string
     learning_step: number
     lapses?: number
+    stability?: number | null
+    difficulty?: number | null
+    elapsed_days?: number
+    scheduled_days?: number
+    last_review?: string | null
     updated_at: string
   }
   fieldDifferences: string[]
@@ -30,18 +35,7 @@ export interface ConflictInfo {
  */
 export function detectConflicts(
   localStates: LocalCardState[],
-  serverStates: Array<{
-    user_id: string
-    card_id: string
-    due: string
-    interval: number
-    ease_factor: number
-    repetitions: number
-    state: string
-    learning_step: number
-    lapses?: number
-    updated_at: string
-  }>
+  serverStates: Array<ConflictInfo['serverData']>
 ): ConflictInfo[] {
   const conflicts: ConflictInfo[] = []
 
@@ -163,6 +157,11 @@ export function resolveConflict(
     state: conflict.serverData.state as LocalCardState['state'],
     learning_step: conflict.serverData.learning_step,
     lapses: conflict.serverData.lapses ?? 0,
+    stability: conflict.serverData.stability ?? null,
+    difficulty: conflict.serverData.difficulty ?? null,
+    elapsed_days: conflict.serverData.elapsed_days ?? 0,
+    scheduled_days: conflict.serverData.scheduled_days ?? 0,
+    last_review: conflict.serverData.last_review ? new Date(conflict.serverData.last_review) : null,
     updated_at: new Date(conflict.serverData.updated_at),
   }
 }

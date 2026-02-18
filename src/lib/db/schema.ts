@@ -34,6 +34,12 @@ export interface LocalCardState {
   state: CardState
   learning_step: number
   lapses: number
+  // FSRS fields (nullable for SM-2 cards)
+  stability: number | null
+  difficulty: number | null
+  elapsed_days: number
+  scheduled_days: number
+  last_review: Date | null
   updated_at: Date
 }
 
@@ -226,6 +232,34 @@ class TsubameSRSDatabase extends Dexie {
       classes: 'id, teacher_id',
       classMembers: '[class_id+user_id], class_id, user_id',
       deckAssignments: 'id, deck_id, class_id, user_id',
+    })
+
+    // Version 8: Add FSRS fields to cardStates (no index change needed)
+    this.version(8).stores({
+      profiles: 'id',
+      noteTypes: 'id',
+      cardTemplates: 'id, note_type_id',
+      decks: 'id, owner_id, parent_deck_id',
+      notes: 'id, deck_id, *tags',
+      cards: 'id, note_id, deck_id',
+      cardStates: 'id, user_id, card_id, due, [user_id+card_id]',
+      reviewLogs: 'id, user_id, card_id, synced_at',
+      syncQueue: '++id, table, created_at, attempts',
+      syncMetadata: 'key',
+      audioCache: 'id, noteId, cachedAt',
+      userDeckSettings: 'id, user_id, deck_id, [user_id+deck_id]',
+      classes: 'id, teacher_id',
+      classMembers: '[class_id+user_id], class_id, user_id',
+      deckAssignments: 'id, deck_id, class_id, user_id',
+    }).upgrade(tx => {
+      // Set FSRS default values for existing card states
+      return tx.table('cardStates').toCollection().modify(cs => {
+        if (cs.stability === undefined) cs.stability = null
+        if (cs.difficulty === undefined) cs.difficulty = null
+        if (cs.elapsed_days === undefined) cs.elapsed_days = 0
+        if (cs.scheduled_days === undefined) cs.scheduled_days = 0
+        if (cs.last_review === undefined) cs.last_review = null
+      })
     })
   }
 }
@@ -759,6 +793,11 @@ export async function getStudyCardsOffline(
         state: state.state as CardSchedule['state'],
         learningStep: state.learning_step,
         lapses: state.lapses ?? 0,
+        stability: state.stability ?? null,
+        difficulty: state.difficulty ?? null,
+        elapsed_days: state.elapsed_days ?? 0,
+        scheduled_days: state.scheduled_days ?? 0,
+        last_review: state.last_review ?? null,
       } : {
         due: now,
         interval: 0,
@@ -767,6 +806,11 @@ export async function getStudyCardsOffline(
         state: 'new' as const,
         learningStep: 0,
         lapses: 0,
+        stability: null,
+        difficulty: null,
+        elapsed_days: 0,
+        scheduled_days: 0,
+        last_review: null,
       },
     }
 

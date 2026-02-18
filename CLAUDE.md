@@ -134,25 +134,39 @@ npm run test:watch   # Vitest 監視モード
 - **Pull API拡張**: classes, classMembers, deckAssignments, userDeckSettings を同期対象に追加
 - **バックグラウンド同期**: 5分間隔 + タブフォーカス時 + 初回ログイン時
 
-## 現在の進捗（2026-02-17更新）
+## 現在の進捗（2026-02-18更新）
 
-**Phase 12 クライアントファースト化（SPA化）完了 + オフライン完全対応強化**
+**Phase 15 FSRS導入 完了 + バグ修正**
 
 ### 今回のセッションで完了
-- **OfflineNavProvider**: オフライン時のクライアントサイドナビゲーション（全13ルート対応）
-  - 静的ルート（7ページ）+ 動的ルート（`/decks/[id]`、`/note-types/[id]`、`/students/class/[id]`）+ 新規作成（3ページ）
-  - Next.js MPA フォールバック防止（キャプチャフェーズでリンククリック横取り）
-  - ブラウザ更新ボタン防止（Navigation API + beforeunload + F5/Ctrl+R）
-- **AuthContext オフライン強化**: オフライン時のトークンリフレッシュ失敗によるログアウト防止、IndexedDBフォールバック
-- **error.tsx 境界**: 全ルートにエラーバウンダリ追加（`createErrorBoundary`ユーティリティ）
+- **Phase 15: FSRS（Free Spaced Repetition Scheduler）導入**
+  - `ts-fsrs` パッケージ導入、SM-2/FSRS デュアルアルゴリズム対応
+  - `DeckSettings.algorithm: 'sm2' | 'fsrs'` でデッキ単位で切替可能
+  - `CardSchedule` に FSRS フィールド追加（stability, difficulty, elapsed_days, scheduled_days, last_review）
+  - `fsrs-scheduler.ts`: ts-fsrs ラッパー（型変換、パラメータ変換、calculateNextReviewFSRS、getNextIntervalPreviewFSRS）
+  - `fsrs-migration.ts`: SM-2→FSRS マイグレーション（stability≈interval、EF→difficulty変換）
+  - `/api/decks/[id]/migrate-fsrs`: マイグレーションAPI
+  - Dexie.js v8（LocalCardState に FSRS フィールド追加）
+  - sync.ts 全面更新（saveAnswerLocally、applyServerCardStates、undoAnswerLocally に FSRS フィールド）
+  - answer/undo/push API 更新
+  - DeckAdvancedSettings にアルゴリズムタブ追加（FSRS設定: 目標記憶率、最大間隔、ファジング等）
+  - SM-2固有設定のFSRSモード時非表示
+  - settings-validation にFSRS設定バリデーション追加
+  - SQLマイグレーション `013_fsrs_support.sql`（card_states に5カラム追加）
+  - テスト43件追加（fsrs-scheduler: 33件、fsrs-migration: 10件、scheduler routing: 4件）、全235件パス
+- **バグ修正: SM-2→FSRS未マイグレーションカードの間隔計算**
+  - `scheduleToFSRSCard()` で stability=null のレビューカードに SM-2 データから FSRS 値を自動推定
+  - stability≈interval、EF→difficulty 変換、elapsed_days/scheduled_days/last_review 推定
+- **バグ修正: 新規デッキ作成後の詳細画面遷移**
+  - DeckForm で作成成功後に Dexie.js にデッキデータを即座に保存
+  - クライアントファーストアーキテクチャでの Dexie 未同期問題を解消
 
 ### 次回セッションでやること
-1. **Phase 15**: FSRS導入 - SM-2からFSRSへのアップグレード
-2. **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア
+1. **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア
+2. **Phase 10**: ゲーミフィケーション
 
 ### 今後のロードマップ概要（優先度順、詳細は ROADMAP.md）
-- **Phase 15**: FSRS導入 ★次
-- **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア
+- **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア ★次
 - **Phase 10**: ゲーミフィケーション
 - **Phase 11**: 講師ツール強化
 - **Phase 13-14, 16**: コンテンツ効率化、学習モード拡張、コラボレーション

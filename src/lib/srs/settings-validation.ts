@@ -136,5 +136,45 @@ export function validateDeckSettings(raw: Partial<DeckSettings>): ValidationErro
     }
   }
 
+  // === FSRS settings ===
+
+  if (raw.algorithm !== undefined) {
+    if (raw.algorithm !== 'sm2' && raw.algorithm !== 'fsrs') {
+      errors.push({ field: 'algorithm', message: 'アルゴリズムはsm2またはfsrsを選択してください' })
+    }
+  }
+
+  if (raw.fsrs_desired_retention !== undefined) {
+    if (typeof raw.fsrs_desired_retention !== 'number' || raw.fsrs_desired_retention < 0.7 || raw.fsrs_desired_retention > 0.97) {
+      errors.push({ field: 'fsrs_desired_retention', message: '目標記憶率は0.70〜0.97で指定してください' })
+    }
+  }
+
+  if (raw.fsrs_maximum_interval !== undefined) {
+    if (!Number.isInteger(raw.fsrs_maximum_interval) || raw.fsrs_maximum_interval < 1 || raw.fsrs_maximum_interval > 36500) {
+      errors.push({ field: 'fsrs_maximum_interval', message: 'FSRS最大間隔は1〜36500日で指定してください' })
+    }
+  }
+
+  if (raw.fsrs_enable_fuzz !== undefined) {
+    if (typeof raw.fsrs_enable_fuzz !== 'boolean') {
+      errors.push({ field: 'fsrs_enable_fuzz', message: 'ファジング設定はtrue/falseで指定してください' })
+    }
+  }
+
+  if (raw.fsrs_enable_short_term !== undefined) {
+    if (typeof raw.fsrs_enable_short_term !== 'boolean') {
+      errors.push({ field: 'fsrs_enable_short_term', message: '短期スケジュール設定はtrue/falseで指定してください' })
+    }
+  }
+
+  if (raw.fsrs_weights !== undefined) {
+    if (!Array.isArray(raw.fsrs_weights)) {
+      errors.push({ field: 'fsrs_weights', message: 'FSRS重みは配列で指定してください' })
+    } else if (raw.fsrs_weights.length > 0 && raw.fsrs_weights.some(w => typeof w !== 'number')) {
+      errors.push({ field: 'fsrs_weights', message: 'FSRS重みは数値の配列で指定してください' })
+    }
+  }
+
   return errors
 }

@@ -3,6 +3,7 @@
  */
 
 import type { DeckSettings } from '@/types/database'
+import { calculateNextReviewFSRS, getNextIntervalPreviewFSRS } from './fsrs-scheduler'
 
 export type CardState = 'new' | 'learning' | 'review' | 'relearning' | 'suspended'
 
@@ -21,6 +22,12 @@ export interface CardSchedule {
   state: CardState
   learningStep: number
   lapses: number
+  // FSRS fields (null when SM-2)
+  stability: number | null
+  difficulty: number | null
+  elapsed_days: number
+  scheduled_days: number
+  last_review: Date | null
 }
 
 export interface ReviewResult {
@@ -57,6 +64,12 @@ export function getDefaultDeckSettings(): DeckSettings {
     answer_time_limit: 0,
     timer_action: 'none',
     swipe_enabled: true,
+    algorithm: 'sm2',
+    fsrs_desired_retention: 0.9,
+    fsrs_maximum_interval: 36500,
+    fsrs_enable_fuzz: true,
+    fsrs_enable_short_term: true,
+    fsrs_weights: [],
   }
 }
 
@@ -100,6 +113,11 @@ export function createInitialSchedule(): CardSchedule {
     state: 'new',
     learningStep: 0,
     lapses: 0,
+    stability: null,
+    difficulty: null,
+    elapsed_days: 0,
+    scheduled_days: 0,
+    last_review: null,
   }
 }
 
@@ -149,6 +167,12 @@ export function calculateNextReview(
   partialSettings?: Partial<DeckSettings>
 ): CardSchedule {
   const settings = resolveDeckSettings(partialSettings)
+
+  // Route to FSRS if algorithm is 'fsrs'
+  if (settings.algorithm === 'fsrs') {
+    return calculateNextReviewFSRS(schedule, ease, now, settings)
+  }
+
   const newSchedule = { ...schedule }
   // Ensure lapses is initialized
   if (newSchedule.lapses === undefined || newSchedule.lapses === null) {
@@ -298,6 +322,13 @@ export function getNextIntervalPreview(
   now: Date = new Date(),
   partialSettings?: Partial<DeckSettings>
 ): Record<Ease, string> {
+  const settings = resolveDeckSettings(partialSettings)
+
+  // Route to FSRS if algorithm is 'fsrs'
+  if (settings.algorithm === 'fsrs') {
+    return getNextIntervalPreviewFSRS(schedule, now, settings)
+  }
+
   const previews: Record<Ease, string> = {
     [Ease.Again]: '',
     [Ease.Hard]: '',

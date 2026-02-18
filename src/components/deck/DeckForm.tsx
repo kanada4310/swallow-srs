@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { DeckSettings } from '@/types/database'
 import { DeckAdvancedSettings } from './DeckAdvancedSettings'
+import { db } from '@/lib/db/schema'
 
 interface ParentDeckOption {
   id: string
@@ -58,6 +59,23 @@ export function DeckForm({ mode, initialData, parentDecks, defaultParentId }: De
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to create deck')
+      }
+
+      // Save to Dexie so deck detail page can find it immediately
+      try {
+        const deck = data.deck
+        await db.decks.put({
+          id: deck.id,
+          name: deck.name,
+          owner_id: deck.owner_id,
+          is_distributed: deck.is_distributed || false,
+          parent_deck_id: deck.parent_deck_id || null,
+          settings: deck.settings || {},
+          created_at: deck.created_at,
+          updated_at: deck.updated_at,
+        })
+      } catch {
+        // Non-critical: deck will sync later via background sync
       }
 
       // Redirect to deck detail page to add notes

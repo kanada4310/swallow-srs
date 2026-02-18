@@ -22,7 +22,8 @@
     "openai": "^6.17.0",
     "react": "^18",
     "react-dom": "^18",
-    "recharts": "^3.7.0"
+    "recharts": "^3.7.0",
+    "ts-fsrs": "^5.2.3"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",

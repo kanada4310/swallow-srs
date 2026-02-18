@@ -15,6 +15,13 @@ interface CardStatePayload {
   repetitions: number
   state: string
   learning_step: number
+  lapses?: number
+  // FSRS fields
+  stability?: number | null
+  difficulty?: number | null
+  elapsed_days?: number
+  scheduled_days?: number
+  last_review?: string | null
   updated_at: string
 }
 
@@ -69,6 +76,12 @@ export async function POST(request: NextRequest) {
           repetitions: s.repetitions,
           state: s.state,
           learning_step: s.learning_step,
+          lapses: s.lapses ?? 0,
+          stability: s.stability ?? null,
+          difficulty: s.difficulty ?? null,
+          elapsed_days: s.elapsed_days ?? 0,
+          scheduled_days: s.scheduled_days ?? 0,
+          last_review: s.last_review ?? null,
           updated_at: s.updated_at,
         })),
         {

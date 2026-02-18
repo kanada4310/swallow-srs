@@ -620,14 +620,20 @@ Web Push API で学習リマインダーを送信。
 
 ## Phase 15: SRSアルゴリズム進化
 
-### 15.1 FSRS（Free Spaced Repetition Scheduler）導入
+### 15.1 FSRS（Free Spaced Repetition Scheduler）導入 ✅ 完了
 SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 
-- [ ] ts-fsrs パッケージ導入
-- [ ] card_states スキーマ拡張（FSRS用パラメータ）
-- [ ] SM-2 → FSRS マイグレーションパス
-- [ ] 目標記憶率（desired retention）設定UI
-- [ ] SM-2 / FSRS 切り替えオプション（デッキ単位）
+- [x] ts-fsrs パッケージ導入
+- [x] card_states スキーマ拡張（FSRS用パラメータ: stability, difficulty, elapsed_days, scheduled_days, last_review）
+- [x] SM-2 → FSRS マイグレーションパス（migrate-fsrs API + fsrs-migration.ts）
+- [x] 目標記憶率（desired retention）設定UI
+- [x] SM-2 / FSRS 切り替えオプション（デッキ単位）
+- [x] DeckAdvancedSettingsにアルゴリズムタブ追加（FSRS設定: ファジング、短期スケジュール等）
+- [x] SM-2固有設定のFSRSモード時非表示
+- [x] Dexie.js v8（LocalCardState拡張）
+- [x] sync/answer/undo/push API全面FSRS対応
+- [x] テスト39件追加（全231件パス）
+- [x] SQLマイグレーション（013_fsrs_support.sql）
 
 ---
 
@@ -658,18 +664,17 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 
 ## 現在の進捗
 
-**Phase**: Phase 12 完了、次は Phase 15
-**最終更新**: 2026-02-16
-**次のタスク**: Phase 15 FSRS導入
+**Phase**: Phase 15 完了、次は Phase 9.3-9.4
+**最終更新**: 2026-02-18
+**次のタスク**: Phase 9.3-9.4 学習時間・習熟度
 
 ### 次回セッションでやること
 
-1. **Phase 15**: FSRS導入 - SM-2からFSRSへのアップグレード
-2. **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア
+1. **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア
+2. **Phase 10**: ゲーミフィケーション
 
 ### 今後のロードマップ（優先度順）
-- **Phase 15**: FSRS導入 ★次
-- **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア
+- **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア ★次
 - **Phase 10**: ゲーミフィケーション
 - **Phase 11**: 講師ツール強化
 - **Phase 13-14, 16**: コンテンツ効率化、学習モード拡張、コラボレーション
@@ -683,3 +688,4 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 - [x] Phase 9.2 最近学習したデッキのクイックアクセス
 - [x] Phase 9.5 生徒セルフスタディ強化
 - [x] Phase 12: クライアントファースト化/SPA化（12.1-12.2）
+- [x] Phase 15: FSRS導入（15.1）

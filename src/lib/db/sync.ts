@@ -216,6 +216,11 @@ async function applyServerCardStates(
     state: string
     learning_step: number
     lapses?: number
+    stability?: number | null
+    difficulty?: number | null
+    elapsed_days?: number
+    scheduled_days?: number
+    last_review?: string | null
     updated_at: string
   }>
 ): Promise<void> {
@@ -230,6 +235,11 @@ async function applyServerCardStates(
     state: s.state as LocalCardState['state'],
     learning_step: s.learning_step,
     lapses: s.lapses ?? 0,
+    stability: s.stability ?? null,
+    difficulty: s.difficulty ?? null,
+    elapsed_days: s.elapsed_days ?? 0,
+    scheduled_days: s.scheduled_days ?? 0,
+    last_review: s.last_review ? parseServerDate(s.last_review) : null,
     updated_at: parseServerDate(s.updated_at),
   }))
 
@@ -349,6 +359,12 @@ export async function saveAnswerLocally(
     state: string
     learningStep: number
     lapses?: number
+    // FSRS fields
+    stability?: number | null
+    difficulty?: number | null
+    elapsed_days?: number
+    scheduled_days?: number
+    last_review?: Date | null
   },
   lastInterval: number,
   timeMs: number | null,
@@ -371,6 +387,11 @@ export async function saveAnswerLocally(
       state: newSchedule.state as LocalCardState['state'],
       learning_step: newSchedule.learningStep,
       lapses: newSchedule.lapses ?? 0,
+      stability: newSchedule.stability ?? null,
+      difficulty: newSchedule.difficulty ?? null,
+      elapsed_days: newSchedule.elapsed_days ?? 0,
+      scheduled_days: newSchedule.scheduled_days ?? 0,
+      last_review: newSchedule.last_review ?? null,
       updated_at: now,
     }
     await db.cardStates.put(cardState)
@@ -404,6 +425,11 @@ export async function saveAnswerLocally(
         state: newSchedule.state,
         learning_step: newSchedule.learningStep,
         lapses: newSchedule.lapses ?? 0,
+        stability: newSchedule.stability ?? null,
+        difficulty: newSchedule.difficulty ?? null,
+        elapsed_days: newSchedule.elapsed_days ?? 0,
+        scheduled_days: newSchedule.scheduled_days ?? 0,
+        last_review: newSchedule.last_review ? formatForServer(newSchedule.last_review) : null,
         updated_at: formatForServer(now),
       },
       created_at: now,
@@ -489,6 +515,11 @@ export async function undoAnswerLocally(
           state: previousCardState.state,
           learning_step: previousCardState.learning_step,
           lapses: previousCardState.lapses ?? 0,
+          stability: previousCardState.stability ?? null,
+          difficulty: previousCardState.difficulty ?? null,
+          elapsed_days: previousCardState.elapsed_days ?? 0,
+          scheduled_days: previousCardState.scheduled_days ?? 0,
+          last_review: previousCardState.last_review ? formatForServer(previousCardState.last_review) : null,
           updated_at: formatForServer(now),
         },
         created_at: now,
@@ -542,6 +573,11 @@ export async function applyConflictResolution(
       state: conflict.serverData.state as LocalCardState['state'],
       learning_step: conflict.serverData.learning_step,
       lapses: conflict.serverData.lapses ?? 0,
+      stability: conflict.serverData.stability ?? null,
+      difficulty: conflict.serverData.difficulty ?? null,
+      elapsed_days: conflict.serverData.elapsed_days ?? 0,
+      scheduled_days: conflict.serverData.scheduled_days ?? 0,
+      last_review: conflict.serverData.last_review ? parseServerDate(conflict.serverData.last_review) : null,
       updated_at: parseServerDate(conflict.serverData.updated_at),
     })
   }

@@ -254,6 +254,11 @@ export function usePrefetchDeck(deckId: string | null) {
                   state: cs.state,
                   learning_step: cs.learning_step,
                   lapses: cs.lapses ?? 0,
+                  stability: cs.stability ?? null,
+                  difficulty: cs.difficulty ?? null,
+                  elapsed_days: cs.elapsed_days ?? 0,
+                  scheduled_days: cs.scheduled_days ?? 0,
+                  last_review: cs.last_review ? new Date(cs.last_review) : null,
                   updated_at: new Date(cs.updated_at),
                 })
               }
@@ -314,6 +319,11 @@ export function usePrefetchAllDecks(deckIds: string[]) {
                     state: cs.state,
                     learning_step: cs.learning_step,
                     lapses: cs.lapses ?? 0,
+                    stability: cs.stability ?? null,
+                    difficulty: cs.difficulty ?? null,
+                    elapsed_days: cs.elapsed_days ?? 0,
+                    scheduled_days: cs.scheduled_days ?? 0,
+                    last_review: cs.last_review ? new Date(cs.last_review) : null,
                     updated_at: new Date(cs.updated_at),
                   })
                 }
