@@ -136,33 +136,40 @@ npm run test:watch   # Vitest 監視モード
 
 ## Web Push通知（Phase 12.3）
 
-- **通知設定UI**: `/settings` ページに通知ON/OFF、テスト送信ボタン
-- **VAPID鍵**: `.env.local` に `NEXT_PUBLIC_VAPID_PUBLIC_KEY`、`VAPID_PRIVATE_KEY`、`VAPID_SUBJECT`
+- **通知設定UI**: `/settings/notifications` ページに通知ON/OFF、テスト送信ボタン
+- **VAPID鍵**: `.env.local` + Vercel環境変数に `NEXT_PUBLIC_VAPID_PUBLIC_KEY`、`VAPID_PRIVATE_KEY`、`VAPID_SUBJECT`
 - **Cron**: Vercel Cron で毎日22:00 UTC (07:00 JST) に送信（`vercel.json`）
 - **Service Worker**: `worker/index.ts` にpush/notificationclickハンドラ（@ducanh2912/next-pwa が自動ビルド）
 - **SQLマイグレーション**: `014_push_notifications.sql`（push_subscriptions, notification_settings, notification_logs）
 - **環境変数**: `CRON_SECRET`（Cron認証用）、`SUPABASE_SERVICE_ROLE_KEY`（RLSバイパス用）
 
-## 現在の進捗（2026-02-18更新）
+## TTS設定（デッキ単位）
 
-**Phase 12.3 Web Push通知 完了**
+- **DeckSettings**: `tts_voice`（6種: alloy/echo/fable/onyx/nova/shimmer）、`tts_speed`（0.25〜4.0）
+- **DeckAdvancedSettings「音声」タブ**: ボイス選択グリッド、速度ボタン（0.5x/0.75x/1.0x/1.25x）、テスト再生
+- **テンプレートプレースホルダー**: `{{tts:FieldName}}` でカード内に音声ボタンを自由配置
+- **TTSプリフェッチ**: カード表示時にバックグラウンドでTTS生成・IndexedDBキャッシュ
+- **TTS API skipSave**: テスト再生用にnote不要のbase64データURL返却モード
+
+## 現在の進捗（2026-02-19更新）
+
+**TTS設定デッキ移動 + 通知UI整理 完了**
 
 ### 今回のセッションで完了
-- **Phase 12.3: Web Push通知（毎日学習リマインダー）**
-  - `web-push` パッケージ導入、VAPID鍵ペア生成
-  - Service Worker pushハンドラ（`worker/index.ts`）: 通知表示 + タップで学習ページ遷移
-  - クライアントサイド購読ヘルパー（`src/lib/push/subscription.ts`）
-  - サーバーサイド送信ヘルパー（`src/lib/push/server.ts`）
-  - 購読API（POST/DELETE `/api/push/subscribe`）
-  - 通知設定API（GET/PUT `/api/push/settings`）
-  - テスト送信API（POST `/api/push/test`）
-  - NotificationSettings UIコンポーネント（トグル、時刻選択、テスト送信、iOS注意書き）
-  - 設定ページに通知設定セクション追加
-  - Vercel Cronエンドポイント（`/api/cron/daily-reminder`）: 期限切れカード検出→通知送信
-  - `extractFrontText()`: フィールド値からテキスト抽出（HTML除去、Cloze展開、100文字制限）
-  - SQLマイグレーション `014_push_notifications.sql`（3テーブル + RLS）
-  - `vercel.json` Cron設定（22:00 UTC = 07:00 JST）
-  - テスト17件追加（extractFrontText: 13件、sendPushNotification: 4件）、全252件パス
+- **TTS設定をデッキ単位に移動**
+  - DeckSettingsに`tts_voice`/`tts_speed`追加、デフォルト値・バリデーション追加
+  - DeckAdvancedSettingsに「音声」タブ追加（ボイス選択、速度選択、テスト再生）
+  - AudioButtonに`voice`/`speed` props追加、StudyCard/StudySession経由で伝搬
+  - TTS API に`skipSave`モード追加（テスト再生用base64返却）
+- **テンプレートTTSプレースホルダー（`{{tts:FieldName}}`）**
+  - renderer.tsに`processTtsPlaceholders`/`hasTtsPlaceholders`/`extractTtsFieldNames`追加
+  - CardIframeにTTSボタンCSS・クリックハンドラ（postMessage）追加
+  - StudyCardでiframe TTS再生・テンプレートTTS検知時のAutoButton非表示
+- **TTSプリフェッチ**: カード表示時にバックグラウンドで全TTS音声を事前生成・キャッシュ
+- **通知設定ページ分離**: `/settings/notifications` に独立、`/settings` は「整備中」表示
+- **ヘッダーにベルアイコン追加**: `/settings/notifications` への導線
+- **通知購読エラーハンドリング改善**: SubscribeResult型で原因別メッセージ（denied/no-vapid-key/subscribe-failed）
+- **Vercelビルドエラー修正**: tsconfig.jsonのworker除外がコミット漏れ
 
 ### 次回セッションでやること
 1. **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア
