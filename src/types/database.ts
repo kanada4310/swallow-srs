@@ -107,6 +107,10 @@ export interface DeckSettings {
   // === スワイプ ===
   swipe_enabled: boolean                         // スワイプジェスチャー有効。デフォルト: true
 
+  // === 音声 (TTS) ===
+  tts_voice: TTSVoice                              // デフォルト: 'alloy'
+  tts_speed: number                                // デフォルト: 1.0
+
   // === アルゴリズム ===
   algorithm: 'sm2' | 'fsrs'                      // デフォルト: 'sm2'
   fsrs_desired_retention: number                  // 目標記憶率 0.7-0.97。デフォルト: 0.9
@@ -318,4 +322,33 @@ export interface TemplateInput {
   front_template: string
   back_template: string
   css: string
+}
+
+// Push notification types
+export interface PushSubscriptionRecord {
+  id: string
+  user_id: string
+  endpoint: string
+  p256dh: string
+  auth: string
+  created_at: string
+  updated_at: string
+}
+
+export interface NotificationSettings {
+  user_id: string
+  enabled: boolean
+  reminder_hour: number
+  created_at: string
+  updated_at: string
+}
+
+export interface NotificationLog {
+  id: string
+  user_id: string
+  card_id: string | null
+  deck_id: string | null
+  status: 'sent' | 'failed' | 'skipped'
+  error_message: string | null
+  sent_at: string
 }

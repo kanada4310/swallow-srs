@@ -712,6 +712,8 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
         onFlipped={() => setIsCardFlipped(true)}
         autoAgainCountdown={autoAgainCountdown}
         swipeEnabled={settings.swipe_enabled}
+        ttsVoice={settings.tts_voice}
+        ttsSpeed={settings.tts_speed}
       />
     </div>
   )

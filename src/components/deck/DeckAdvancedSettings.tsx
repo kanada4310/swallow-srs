@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import type { DeckSettings } from '@/types/database'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import type { DeckSettings, TTSVoice } from '@/types/database'
 import { getDefaultDeckSettings } from '@/lib/srs/scheduler'
 
 interface DeckAdvancedSettingsProps {
@@ -9,7 +9,7 @@ interface DeckAdvancedSettingsProps {
   onChange: (settings: Partial<DeckSettings>) => void
 }
 
-type TabKey = 'algorithm' | 'new' | 'review' | 'lapse' | 'order' | 'timer' | 'swipe'
+type TabKey = 'algorithm' | 'new' | 'review' | 'lapse' | 'order' | 'timer' | 'swipe' | 'tts'
 
 // Number input component that allows free editing and validates on blur
 function NumberInput({
@@ -97,6 +97,7 @@ export function DeckAdvancedSettings({ settings, onChange }: DeckAdvancedSetting
     { key: 'order', label: '表示順' },
     { key: 'timer', label: 'タイマー' },
     { key: 'swipe', label: 'スワイプ' },
+    { key: 'tts', label: '音声' },
   ]
 
   return (
@@ -518,6 +519,10 @@ export function DeckAdvancedSettings({ settings, onChange }: DeckAdvancedSetting
                 )}
               </>
             )}
+
+            {activeTab === 'tts' && (
+              <TTSTab resolved={resolved} update={update} />
+            )}
           </div>
 
           {/* Reset button */}
@@ -533,6 +538,131 @@ export function DeckAdvancedSettings({ settings, onChange }: DeckAdvancedSetting
         </div>
       )}
     </div>
+  )
+}
+
+const VOICES: { value: TTSVoice; label: string; description: string }[] = [
+  { value: 'alloy', label: 'Alloy', description: 'ニュートラルで自然' },
+  { value: 'echo', label: 'Echo', description: '男性的で落ち着いた' },
+  { value: 'fable', label: 'Fable', description: '表現豊かでドラマチック' },
+  { value: 'onyx', label: 'Onyx', description: '深みのある男性的' },
+  { value: 'nova', label: 'Nova', description: '明るく女性的' },
+  { value: 'shimmer', label: 'Shimmer', description: '柔らかく女性的' },
+]
+
+const SPEED_OPTIONS = [
+  { value: 0.5, label: '0.5x' },
+  { value: 0.75, label: '0.75x' },
+  { value: 1.0, label: '1.0x' },
+  { value: 1.25, label: '1.25x' },
+]
+
+function TTSTab({
+  resolved,
+  update,
+}: {
+  resolved: DeckSettings
+  update: (key: keyof DeckSettings, value: DeckSettings[keyof DeckSettings]) => void
+}) {
+  const [isPlaying, setIsPlaying] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  const handleTestPlay = useCallback(async () => {
+    if (isPlaying) {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+      setIsPlaying(false)
+      return
+    }
+
+    setIsPlaying(true)
+    try {
+      const response = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: 'This is a test of the text to speech voice.',
+          voice: resolved.tts_voice,
+          speed: resolved.tts_speed,
+          skipSave: true,
+        }),
+      })
+
+      if (!response.ok) throw new Error('TTS error')
+      const data = await response.json()
+      if (!data.audioUrl) throw new Error('No audio URL')
+
+      const audio = new Audio(data.audioUrl)
+      audioRef.current = audio
+      audio.onended = () => {
+        setIsPlaying(false)
+        audioRef.current = null
+      }
+      audio.onerror = () => {
+        setIsPlaying(false)
+        audioRef.current = null
+      }
+      await audio.play()
+    } catch {
+      setIsPlaying(false)
+    }
+  }, [isPlaying, resolved.tts_voice, resolved.tts_speed])
+
+  return (
+    <>
+      <SettingField label="ボイス" description="TTS音声のボイスを選択">
+        <div className="grid grid-cols-2 gap-2">
+          {VOICES.map(v => (
+            <button
+              key={v.value}
+              type="button"
+              onClick={() => update('tts_voice', v.value)}
+              className={`px-3 py-2 rounded-lg text-sm text-left transition-colors ${
+                resolved.tts_voice === v.value
+                  ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-500'
+                  : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <span className="font-medium">{v.label}</span>
+              <span className="block text-xs text-gray-500">{v.description}</span>
+            </button>
+          ))}
+        </div>
+      </SettingField>
+
+      <SettingField label="速度" description="TTS音声の再生速度">
+        <div className="flex gap-2">
+          {SPEED_OPTIONS.map(s => (
+            <button
+              key={s.value}
+              type="button"
+              onClick={() => update('tts_speed', s.value)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                resolved.tts_speed === s.value
+                  ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-500'
+                  : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </SettingField>
+
+      <button
+        type="button"
+        onClick={handleTestPlay}
+        className={`w-full py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+          isPlaying
+            ? 'bg-blue-600 text-white'
+            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+        }`}
+      >
+        {isPlaying ? '再生中...' : 'テスト再生'}
+      </button>
+    </>
   )
 }
 

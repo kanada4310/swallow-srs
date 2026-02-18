@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { Ease } from '@/lib/srs/scheduler'
-import { renderTemplate, type FieldValues } from '@/lib/template'
+import { renderTemplate, hasTtsPlaceholders, extractTtsFieldNames, type FieldValues } from '@/lib/template'
 import { CardIframe } from '@/components/card/CardIframe'
 import { AudioButton } from '@/components/audio/AudioButton'
+import { getCachedAudio, saveAudioCache } from '@/lib/db/schema'
 import { SwipeOverlay } from '@/components/card/SwipeOverlay'
 import { useSwipeGesture, type SwipeDirection } from '@/lib/swipe/useSwipeGesture'
 import type { GeneratedContent, FieldDefinition } from '@/types/database'
@@ -27,6 +28,8 @@ interface StudyCardProps {
   onFlipped?: () => void
   autoAgainCountdown?: number | null
   swipeEnabled?: boolean
+  ttsVoice?: string
+  ttsSpeed?: number
 }
 
 export function StudyCard({
@@ -43,6 +46,8 @@ export function StudyCard({
   onFlipped,
   autoAgainCountdown,
   swipeEnabled = false,
+  ttsVoice,
+  ttsSpeed,
 }: StudyCardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
 
@@ -89,6 +94,154 @@ export function StudyCard({
       { side: 'back', clozeNumber, renderedFront }
     )
   }, [template.back, fieldValues, clozeNumber, renderedFront])
+
+  // Check if templates use inline {{tts:...}} placeholders
+  const templateHasTts = useMemo(() => {
+    return hasTtsPlaceholders(template.front) || hasTtsPlaceholders(template.back)
+  }, [template.front, template.back])
+
+  // Inline TTS playback from iframe
+  const inlineTtsAudioRef = useRef<HTMLAudioElement | null>(null)
+  const handleIframeTtsPlay = useCallback(async (fieldName: string) => {
+    // Stop any playing audio
+    if (inlineTtsAudioRef.current) {
+      inlineTtsAudioRef.current.pause()
+      inlineTtsAudioRef.current = null
+    }
+
+    const text = fieldValues[fieldName]
+    if (!text) return
+
+    // Check local cache first
+    const cached = await getCachedAudio(noteId, fieldName)
+    if (cached) {
+      const url = URL.createObjectURL(cached.audioBlob)
+      const audio = new Audio(url)
+      inlineTtsAudioRef.current = audio
+      audio.onended = () => { inlineTtsAudioRef.current = null }
+      await audio.play()
+      return
+    }
+
+    // Check pre-existing audio URL
+    if (audioUrls?.[fieldName]) {
+      const audio = new Audio(audioUrls[fieldName])
+      inlineTtsAudioRef.current = audio
+      audio.onended = () => { inlineTtsAudioRef.current = null }
+      await audio.play()
+      return
+    }
+
+    // Generate via API
+    try {
+      const response = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          noteId,
+          fieldName,
+          text,
+          ...(ttsVoice && { voice: ttsVoice }),
+          ...(ttsSpeed && { speed: ttsSpeed }),
+        }),
+      })
+      if (!response.ok) return
+      const data = await response.json()
+      if (!data.audioUrl) return
+
+      const audio = new Audio(data.audioUrl)
+      inlineTtsAudioRef.current = audio
+      audio.onended = () => { inlineTtsAudioRef.current = null }
+      await audio.play()
+
+      // Cache for offline
+      try {
+        const audioResponse = await fetch(data.audioUrl)
+        if (audioResponse.ok) {
+          const blob = await audioResponse.blob()
+          await saveAudioCache(noteId, fieldName, blob, data.audioUrl)
+        }
+      } catch { /* caching failure is non-critical */ }
+    } catch { /* TTS generation failure is non-critical */ }
+  }, [fieldValues, noteId, audioUrls, ttsVoice, ttsSpeed])
+
+  // Prefetch TTS audio in background when card appears
+  useEffect(() => {
+    // Collect all fields needing TTS
+    const fieldsToPreload = new Set<string>()
+
+    // From template {{tts:...}} placeholders
+    for (const name of extractTtsFieldNames(template.front)) {
+      fieldsToPreload.add(name)
+    }
+    for (const name of extractTtsFieldNames(template.back)) {
+      fieldsToPreload.add(name)
+    }
+
+    // From field settings (when no template placeholders)
+    if (fieldsToPreload.size === 0 && fields) {
+      for (const f of fields) {
+        if (f.settings?.tts_enabled && fieldValues[f.name]) {
+          fieldsToPreload.add(f.name)
+        }
+      }
+    }
+
+    if (fieldsToPreload.size === 0) return
+
+    let cancelled = false
+
+    Array.from(fieldsToPreload).forEach(async (fieldName) => {
+      if (cancelled) return
+      const text = fieldValues[fieldName]
+      if (!text) return
+
+      // Already cached?
+      try {
+        const cached = await getCachedAudio(noteId, fieldName)
+        if (cached || cancelled) return
+      } catch { return }
+
+      // Has existing audio URL? Pre-cache it
+      if (audioUrls?.[fieldName]) {
+        try {
+          const resp = await fetch(audioUrls[fieldName])
+          if (resp.ok && !cancelled) {
+            const blob = await resp.blob()
+            await saveAudioCache(noteId, fieldName, blob, audioUrls[fieldName])
+          }
+        } catch { /* non-critical */ }
+        return
+      }
+
+      // Generate via API and cache
+      try {
+        const resp = await fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            noteId,
+            fieldName,
+            text,
+            ...(ttsVoice && { voice: ttsVoice }),
+            ...(ttsSpeed && { speed: ttsSpeed }),
+          }),
+        })
+        if (!resp.ok || cancelled) return
+        const data = await resp.json()
+        if (!data.audioUrl || cancelled) return
+
+        // Cache the audio blob
+        const audioResp = await fetch(data.audioUrl)
+        if (audioResp.ok && !cancelled) {
+          const blob = await audioResp.blob()
+          await saveAudioCache(noteId, fieldName, blob, data.audioUrl)
+        }
+      } catch { /* non-critical */ }
+    })
+
+    return () => { cancelled = true }
+  }, [noteId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Determine which fields to show audio buttons for based on field settings
   const ttsEnabledFields = useMemo(() => {
@@ -172,8 +325,8 @@ export function StudyCard({
         {!isFlipped ? (
           /* Front only */
           <div className="flex-1 p-8 flex flex-col items-center justify-center relative">
-            <CardIframe key="front" html={renderedFront} css={template.css} className="text-xl" />
-            {frontTtsFields.length > 0 && (
+            <CardIframe key="front" html={renderedFront} css={template.css} className="text-xl" onTtsPlay={handleIframeTtsPlay} />
+            {!templateHasTts && frontTtsFields.length > 0 && (
               <div className="mt-4 flex gap-2">
                 {frontTtsFields.map(fieldName => (
                   <AudioButton
@@ -182,6 +335,8 @@ export function StudyCard({
                     fieldName={fieldName}
                     text={fieldValues[fieldName] || ''}
                     audioUrl={audioUrls?.[fieldName]}
+                    voice={ttsVoice}
+                    speed={ttsSpeed}
                     size="md"
                   />
                 ))}
@@ -191,8 +346,8 @@ export function StudyCard({
         ) : (
           /* Back only (back template is self-contained, includes front content) */
           <div className="flex-1 p-8 flex flex-col items-center justify-center">
-            <CardIframe key="back" html={renderedBack} css={template.css} className="text-xl" />
-            {backTtsFields.length > 0 && (
+            <CardIframe key="back" html={renderedBack} css={template.css} className="text-xl" onTtsPlay={handleIframeTtsPlay} />
+            {!templateHasTts && backTtsFields.length > 0 && (
               <div className="mt-4 flex gap-2">
                 {backTtsFields.map(fieldName => (
                   <AudioButton
@@ -201,6 +356,8 @@ export function StudyCard({
                     fieldName={fieldName}
                     text={fieldValues[fieldName] || ''}
                     audioUrl={audioUrls?.[fieldName]}
+                    voice={ttsVoice}
+                    speed={ttsSpeed}
                     size="md"
                   />
                 ))}

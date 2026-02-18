@@ -11,6 +11,8 @@ interface AudioButtonProps {
   fieldName: string
   text: string
   audioUrl?: string | null
+  voice?: string
+  speed?: number
   size?: 'sm' | 'md' | 'lg'
   className?: string
 }
@@ -20,6 +22,8 @@ export function AudioButton({
   fieldName,
   text,
   audioUrl,
+  voice,
+  speed,
   size = 'md',
   className = '',
 }: AudioButtonProps) {
@@ -119,6 +123,8 @@ export function AudioButton({
           noteId,
           fieldName,
           text,
+          ...(voice && { voice }),
+          ...(speed && { speed }),
         }),
       })
 
@@ -150,7 +156,7 @@ export function AudioButton({
       setState('error')
       setErrorMessage(error instanceof Error ? error.message : '音声生成に失敗しました')
     }
-  }, [noteId, fieldName, text, audioUrl, state, playAudio])
+  }, [noteId, fieldName, text, audioUrl, voice, speed, state, playAudio])
 
   const getIcon = () => {
     const iconSize = iconSizes[size]

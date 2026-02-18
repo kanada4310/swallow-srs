@@ -12,6 +12,7 @@ import StudyPage from '@/app/(student)/study/page'
 import StatsPage from '@/app/(student)/stats/page'
 import NotesPage from '@/app/(student)/notes/page'
 import SettingsPage from '@/app/(student)/settings/page'
+import NotificationsSettingsPage from '@/app/(student)/settings/notifications/page'
 import NoteTypesPage from '@/app/(teacher)/note-types/page'
 import EditNoteTypePage from '@/app/(teacher)/note-types/[id]/page'
 import NewNoteTypePage from '@/app/(teacher)/note-types/new/page'
@@ -27,6 +28,7 @@ const pageMap: Record<string, ComponentType> = {
   '/stats': StatsPage,
   '/notes': NotesPage,
   '/settings': SettingsPage,
+  '/settings/notifications': NotificationsSettingsPage,
   '/note-types': NoteTypesPage,
   '/note-types/new': NewNoteTypePage,
   '/students': StudentsPage,

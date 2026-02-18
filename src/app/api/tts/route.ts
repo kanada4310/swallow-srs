@@ -53,15 +53,7 @@ export async function POST(request: NextRequest) {
     if (authError) return authError
 
     const body = await request.json()
-    const { noteId, fieldName, text, voice = 'alloy', speed = 1.0 } = body
-
-    // Validate required fields
-    if (!noteId || !fieldName || !text) {
-      return NextResponse.json(
-        { error: 'Missing required fields: noteId, fieldName, text' },
-        { status: 400 }
-      )
-    }
+    const { noteId, fieldName, text, voice = 'alloy', speed = 1.0, skipSave = false } = body
 
     // Validate voice
     const validVoices: TTSVoice[] = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer']
@@ -76,6 +68,39 @@ export async function POST(request: NextRequest) {
     if (speed < 0.25 || speed > 4.0) {
       return NextResponse.json(
         { error: 'Speed must be between 0.25 and 4.0' },
+        { status: 400 }
+      )
+    }
+
+    // Test mode: generate audio without saving to storage/note
+    if (skipSave && text) {
+      let processedText = processClozeForTTS(stripHtml(text))
+      if (!processedText) {
+        return NextResponse.json({ error: 'No text content' }, { status: 400 })
+      }
+      if (processedText.length > 5000) {
+        processedText = processedText.substring(0, 5000)
+      }
+
+      const openai = getOpenAI()
+      const mp3Response = await openai.audio.speech.create({
+        model: 'tts-1',
+        voice: voice,
+        input: processedText,
+        speed: speed,
+      })
+
+      const audioBuffer = Buffer.from(await mp3Response.arrayBuffer())
+      const base64 = audioBuffer.toString('base64')
+      const audioUrl = `data:audio/mpeg;base64,${base64}`
+
+      return NextResponse.json({ success: true, audioUrl, cached: false })
+    }
+
+    // Validate required fields for normal (non-test) mode
+    if (!noteId || !fieldName || !text) {
+      return NextResponse.json(
+        { error: 'Missing required fields: noteId, fieldName, text' },
         { status: 400 }
       )
     }

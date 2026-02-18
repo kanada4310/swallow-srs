@@ -136,6 +136,21 @@ export function validateDeckSettings(raw: Partial<DeckSettings>): ValidationErro
     }
   }
 
+  // === TTS settings ===
+
+  if (raw.tts_voice !== undefined) {
+    const validVoices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer']
+    if (!validVoices.includes(raw.tts_voice)) {
+      errors.push({ field: 'tts_voice', message: 'ボイスが不正です' })
+    }
+  }
+
+  if (raw.tts_speed !== undefined) {
+    if (typeof raw.tts_speed !== 'number' || raw.tts_speed < 0.25 || raw.tts_speed > 4.0) {
+      errors.push({ field: 'tts_speed', message: '音声速度は0.25〜4.0で指定してください' })
+    }
+  }
+
   // === FSRS settings ===
 
   if (raw.algorithm !== undefined) {

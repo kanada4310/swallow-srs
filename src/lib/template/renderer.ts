@@ -32,10 +32,38 @@ export function renderTemplate(
   // 3. 逆条件付きセクション（{{^Field}}...{{/Field}}）
   html = processInverseConditionalSections(html, fieldValues)
 
-  // 4. 単純なフィールド置換（{{FieldName}}）
+  // 4. TTS音声ボタン（{{tts:FieldName}}）
+  html = processTtsPlaceholders(html, fieldValues)
+
+  // 5. 単純なフィールド置換（{{FieldName}}）
   html = processSimpleFields(html, fieldValues, options)
 
   return html
+}
+
+/**
+ * TTS音声ボタンプレースホルダー処理
+ * {{tts:FieldName}} → クリック可能な音声ボタンHTML
+ */
+function processTtsPlaceholders(template: string, fieldValues: FieldValues): string {
+  return template.replace(/\{\{tts:([^}]+)\}\}/g, (_match, fieldName) => {
+    const trimmed = fieldName.trim()
+    const value = fieldValues[trimmed]
+    if (!value) return ''
+    // Render a button; the iframe script handles click → postMessage
+    return `<button class="tts-btn" data-tts-field="${escapeAttr(trimmed)}" title="音声を再生" aria-label="${escapeAttr(trimmed)}の音声を再生"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></button>`
+  })
+}
+
+function escapeAttr(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+/**
+ * テンプレートにTTSプレースホルダーが含まれるかチェック
+ */
+export function hasTtsPlaceholders(template: string): boolean {
+  return /\{\{tts:[^}]+\}\}/.test(template)
 }
 
 /**
@@ -147,6 +175,19 @@ export function countClozeNumbers(text: string): number[] {
   }
 
   return Array.from(numbers).sort((a, b) => a - b)
+}
+
+/**
+ * テンプレートから {{tts:FieldName}} のフィールド名を抽出
+ */
+export function extractTtsFieldNames(template: string): string[] {
+  const regex = /\{\{tts:([^}]+)\}\}/g
+  const fields: string[] = []
+  let match
+  while ((match = regex.exec(template)) !== null) {
+    fields.push(match[1].trim())
+  }
+  return fields
 }
 
 /**

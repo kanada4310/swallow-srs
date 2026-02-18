@@ -7,6 +7,7 @@ interface CardIframeProps {
   css: string
   minHeight?: number
   className?: string
+  onTtsPlay?: (fieldName: string) => void
 }
 
 function buildSrcdoc(html: string, css: string, frameId: string): string {
@@ -36,6 +37,22 @@ function buildSrcdoc(html: string, css: string, frameId: string): string {
     font-weight: bold;
   }
   img { max-width: 100%; height: auto; }
+  .tts-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border: none;
+    border-radius: 50%;
+    background: #f3f4f6;
+    color: #4b5563;
+    cursor: pointer;
+    vertical-align: middle;
+    transition: background 0.15s;
+  }
+  .tts-btn:hover { background: #e5e7eb; }
+  .tts-btn:active { background: #d1d5db; }
+  .tts-btn.playing { background: #dbeafe; color: #2563eb; }
   ${css}
 </style>
 </head>
@@ -54,13 +71,38 @@ function buildSrcdoc(html: string, css: string, frameId: string): string {
   sendHeight();
   setTimeout(sendHeight, 50);
   setTimeout(sendHeight, 200);
+
+  // TTS button click handler
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.tts-btn');
+    if (btn) {
+      var field = btn.getAttribute('data-tts-field');
+      if (field) {
+        parent.postMessage({ type: 'card-tts-play', frameId: frameId, fieldName: field }, '*');
+      }
+    }
+  });
+
+  // Listen for TTS state updates from parent
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'card-tts-state' && e.data.frameId === frameId) {
+      var btns = document.querySelectorAll('.tts-btn[data-tts-field="' + e.data.fieldName + '"]');
+      for (var i = 0; i < btns.length; i++) {
+        if (e.data.playing) {
+          btns[i].classList.add('playing');
+        } else {
+          btns[i].classList.remove('playing');
+        }
+      }
+    }
+  });
 })();
 </script>
 </body>
 </html>`
 }
 
-export function CardIframe({ html, css, minHeight = 60, className }: CardIframeProps) {
+export function CardIframe({ html, css, minHeight = 60, className, onTtsPlay }: CardIframeProps) {
   const frameId = useId()
   const [isMounted, setIsMounted] = useState(false)
   const [height, setHeight] = useState(minHeight)
@@ -72,15 +114,14 @@ export function CardIframe({ html, css, minHeight = 60, className }: CardIframeP
   }, [])
 
   const handleMessage = useCallback((e: MessageEvent) => {
-    if (
-      e.data &&
-      e.data.type === 'card-iframe-resize' &&
-      e.data.frameId === frameId
-    ) {
+    if (!e.data || e.data.frameId !== frameId) return
+    if (e.data.type === 'card-iframe-resize') {
       const newHeight = Math.max(e.data.height, minHeight)
       setHeight(newHeight)
+    } else if (e.data.type === 'card-tts-play') {
+      onTtsPlay?.(e.data.fieldName)
     }
-  }, [frameId, minHeight])
+  }, [frameId, minHeight, onTtsPlay])
 
   // Listen for resize messages
   useEffect(() => {
