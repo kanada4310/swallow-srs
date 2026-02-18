@@ -33,25 +33,37 @@ export async function getExistingSubscription(): Promise<PushSubscription | null
   return registration.pushManager.getSubscription()
 }
 
-export async function subscribeToPush(): Promise<PushSubscription | null> {
-  if (!isPushSupported()) return null
+export type SubscribeResult =
+  | { ok: true; subscription: PushSubscription }
+  | { ok: false; reason: 'unsupported' | 'denied' | 'no-vapid-key' | 'subscribe-failed'; message: string }
+
+export async function subscribeToPush(): Promise<SubscribeResult> {
+  if (!isPushSupported()) {
+    return { ok: false, reason: 'unsupported', message: 'このブラウザはプッシュ通知に対応していません。' }
+  }
 
   const permission = await Notification.requestPermission()
-  if (permission !== 'granted') return null
+  if (permission !== 'granted') {
+    return { ok: false, reason: 'denied', message: '通知の許可が拒否されました。ブラウザの設定から通知を許可してください。' }
+  }
 
   const registration = await navigator.serviceWorker.ready
   const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
   if (!vapidPublicKey) {
     console.error('VAPID public key not configured')
-    return null
+    return { ok: false, reason: 'no-vapid-key', message: 'VAPID公開鍵が設定されていません。管理者に連絡してください。' }
   }
 
-  const subscription = await registration.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
-  })
-
-  return subscription
+  try {
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
+    })
+    return { ok: true, subscription }
+  } catch (err) {
+    console.error('Push subscription failed:', err)
+    return { ok: false, reason: 'subscribe-failed', message: `プッシュ購読に失敗しました: ${err instanceof Error ? err.message : '不明なエラー'}` }
+  }
 }
 
 export async function unsubscribeFromPush(): Promise<boolean> {

@@ -63,22 +63,34 @@ export function NotificationSettings() {
 
     if (newEnabled && !isSubscribed) {
       // Check if Service Worker is available
-      if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) {
+      if (!('serviceWorker' in navigator)) {
         setSettings((prev) => ({ ...prev, enabled: false }))
         setError('Service Workerが登録されていません。本番環境（HTTPS）またはPWAとしてインストールしてからお試しください。')
         return
       }
 
+      // Wait for SW to be ready (covers initial install where controller is null)
+      try {
+        await Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
+        ])
+      } catch {
+        setSettings((prev) => ({ ...prev, enabled: false }))
+        setError('Service Workerの準備ができていません。ページを再読み込みしてからお試しください。')
+        return
+      }
+
       // Subscribe to push when enabling
       try {
-        const subscription = await subscribeToPush()
-        if (!subscription) {
+        const result = await subscribeToPush()
+        if (!result.ok) {
           setSettings((prev) => ({ ...prev, enabled: false }))
-          setError('通知の許可が拒否されました。ブラウザの設定から通知を許可してください。')
+          setError(result.message)
           return
         }
 
-        const subJson = subscription.toJSON()
+        const subJson = result.subscription.toJSON()
         const response = await fetch('/api/push/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
