@@ -44,7 +44,28 @@
       "Bash(npx next start -p 3002)",
       "Bash(dir:*)",
       "Bash(npx next start -p 3003)",
-      "Bash(npx kill-port:*)"
+      "Bash(npx kill-port:*)",
+      "Bash(npx tsc:*)",
+      "Bash(wc:*)",
+      "Bash(git status:*)",
+      "Bash(npx next dev -p 3000)",
+      "Bash(npm ls:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(curl:*)",
+      "Bash(layout \")",
+      "Bash(done)",
+      "Bash(grep:*)",
+      "Bash(cmd /c \"taskkill /PID 13928 /F\")",
+      "Bash(ss:*)",
+      "WebFetch(domain:open-spaced-repetition.github.io)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:cdn.jsdelivr.net)",
+      "Bash(npx web-push:*)",
+      "Bash(npm list:*)",
+      "Bash(pnpm add:*)",
+      "Bash(openssl rand:*)",
+      "Bash(pnpm build:*)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npx tsc --noEmit)"
     ]
   }
 }

@@ -151,38 +151,16 @@ npm run test:watch   # Vitest 監視モード
 - **TTSプリフェッチ**: カード表示時にバックグラウンドでTTS生成・IndexedDBキャッシュ
 - **TTS API skipSave**: テスト再生用にnote不要のbase64データURL返却モード
 
-## 現在の進捗（2026-02-19更新）
+## 現在の進捗
 
-**TTS設定デッキ移動 + 通知UI整理 完了**
+詳細は @docs/progress.md を参照。
 
-### 今回のセッションで完了
-- **TTS設定をデッキ単位に移動**
-  - DeckSettingsに`tts_voice`/`tts_speed`追加、デフォルト値・バリデーション追加
-  - DeckAdvancedSettingsに「音声」タブ追加（ボイス選択、速度選択、テスト再生）
-  - AudioButtonに`voice`/`speed` props追加、StudyCard/StudySession経由で伝搬
-  - TTS API に`skipSave`モード追加（テスト再生用base64返却）
-- **テンプレートTTSプレースホルダー（`{{tts:FieldName}}`）**
-  - renderer.tsに`processTtsPlaceholders`/`hasTtsPlaceholders`/`extractTtsFieldNames`追加
-  - CardIframeにTTSボタンCSS・クリックハンドラ（postMessage）追加
-  - StudyCardでiframe TTS再生・テンプレートTTS検知時のAutoButton非表示
-- **TTSプリフェッチ**: カード表示時にバックグラウンドで全TTS音声を事前生成・キャッシュ
-- **通知設定ページ分離**: `/settings/notifications` に独立、`/settings` は「整備中」表示
-- **ヘッダーにベルアイコン追加**: `/settings/notifications` への導線
-- **通知購読エラーハンドリング改善**: SubscribeResult型で原因別メッセージ（denied/no-vapid-key/subscribe-failed）
-- **Vercelビルドエラー修正**: tsconfig.jsonのworker除外がコミット漏れ
-
-### 次回セッションでやること
-1. **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア
-2. **Phase 10**: ゲーミフィケーション
-
-### 今後のロードマップ概要（優先度順、詳細は ROADMAP.md）
-- **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア ★次
-- **Phase 10**: ゲーミフィケーション
-- **Phase 11**: 講師ツール強化
-- **Phase 13-14, 16**: コンテンツ効率化、学習モード拡張、コラボレーション
+- **最終更新**: 2026-04-09
+- **次にやること**: LINE自動ログインのデプロイ・動作確認 → 動詞の語法デッキ → Phase 9.3-9.4
 
 ## 参照ドキュメント
 
+- @docs/progress.md - 進捗管理・セッション引継ぎ
 - @docs/ARCHITECTURE.md - 詳細設計・DB スキーマ
 - @docs/ROADMAP.md - 開発ロードマップ
 
