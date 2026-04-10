@@ -25,10 +25,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  // Verify the request is for the current user
-  if (body.userId !== user.id) {
-    return NextResponse.json({ error: 'User ID mismatch' }, { status: 403 })
-  }
+  // Use authenticated user ID (ignore body.userId for security)
+  // Client may send stale userId from cached IndexedDB profile
 
   const lastSyncAt = body.lastSyncAt ? new Date(body.lastSyncAt) : null
   const response: Record<string, unknown> = {}
