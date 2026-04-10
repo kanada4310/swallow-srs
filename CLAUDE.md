@@ -143,6 +143,22 @@ npm run test:watch   # Vitest 監視モード
 - **SQLマイグレーション**: `014_push_notifications.sql`（push_subscriptions, notification_settings, notification_logs）
 - **環境変数**: `CRON_SECRET`（Cron認証用）、`SUPABASE_SERVICE_ROLE_KEY`（RLSバイパス用）
 
+## LINE自動ログイン（Phase 17a） ✅ 完了
+
+- **LINE認証フロー**: billing側LIFF → JWT生成 → SRS `/auth/line` → Supabaseセッション確立
+- **3段階フォールバック**: (1) パスワードログイン → (2) `user_metadata.line_user_id` 検索 + magic link → (3) 新規作成
+- **講師PCログイン**: ログインページに折りたたみ式メール+パスワードフォーム（`signInWithPassword`）
+- **セッション確立**: 既存ユーザーは `generateLink` + `verifyOtp`（パスワード非依存）
+- **同期対策**: pull APIは `body.userId` を無視し `auth.uid()` を使用（IndexedDBキャッシュ不整合対策）
+- **環境変数**: `SRS_AUTH_SECRET`（JWT署名共有鍵）、`SUPABASE_SERVICE_ROLE_KEY`（admin操作用）
+
+## 動詞の語法デッキ
+
+- **データ**: `data/` ディレクトリに元データ（.md + .tsv）、統合スクリプト、インポートスクリプト
+- **ノートタイプ**: 「動詞の語法」（フィールド: 日本語文/指定動詞/パーツ/正答/ID）
+- **タグ体系**: セクション | サブセクション | v:動詞 | 文型:パターン | 前置詞:パターン
+- **582ノート**: 13セクション（自動詞vs他動詞、SVO、SVC、SVOO、tell型、rob型、etc.）
+
 ## TTS設定（デッキ単位）
 
 - **DeckSettings**: `tts_voice`（6種: alloy/echo/fable/onyx/nova/shimmer）、`tts_speed`（0.25〜4.0）
@@ -156,7 +172,7 @@ npm run test:watch   # Vitest 監視モード
 詳細は @docs/progress.md を参照。
 
 - **最終更新**: 2026-04-10
-- **次にやること**: LINE自動ログインのデプロイ・動作確認（環境変数+billingメニュー追加待ち） → 動詞の語法デッキ → Phase 9.3-9.4
+- **次にやること**: 動詞の語法デッキの生徒配布 → Phase 9.3-9.4（学習時間トラッキング、習熟度スコア）
 
 ## 参照ドキュメント
 

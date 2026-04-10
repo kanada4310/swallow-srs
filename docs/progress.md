@@ -1,55 +1,51 @@
 # 進捗管理
 
 ## 現在の作業
-- Phase: Phase 17a（学習アプリ統合基盤 — LINE自動ログイン）
+- Phase: Phase 17a 完了 → 次は Phase 9.3-9.4
 - 最終更新: 2026-04-10
 - 次にやること:
-  1. LINE自動ログインのデプロイ・動作確認（環境変数設定 → billing側メニュー追加 → Vercelデプロイ → E2Eテスト）
-  2. 動詞の語法デッキのセットアップ（ノートタイプ作成 → TSVインポート → 生徒配布）
-  3. Phase 9.3-9.4: 学習時間トラッキング、習熟度スコア
+  1. 動詞の語法デッキを生徒に配布（deck_assignments 作成）
+  2. Phase 9.3-9.4: 学習時間トラッキング、習熟度スコア
+  3. Phase 10: ゲーミフィケーション
 
 ## セッション引継ぎメモ
 
-### 2026-04-10（セッション確認 + billing側設計）
+### 2026-04-10（動詞の語法デッキ作成 + 講師PCログイン + LINE認証修正）
 - **やったこと**:
-  - 進捗確認・セッション引継ぎ状況の整理
-  - LINE自動ログインの環境変数設定手順をドキュメント化
-  - billing側の総合メニューに「学習支援」セクションを追加する設計ドキュメント作成
-    - `swallow-billing/docs/TASK_add-study-menu.md` に格納
-    - `FormMenu.tsx` の `menuGroups` に「学習支援」グループ追加（`/srs` への導線）
+  - LINE自動ログインのE2Eテスト完了確認（環境変数・billingメニューはユーザーが設定済み）
+  - 動詞の語法デッキ作成:
+    - 2つのソースファイル（.md + .tsv）を統合スクリプト（`data/merge-verb-data.mjs`）でマージ
+    - 582ノート、5カテゴリのタグ体系（セクション/サブセクション/v:動詞/文型:/前置詞:）
+    - インポートスクリプト（`data/import-verb-deck.mjs`）でSupabaseに直接投入
+    - ノートタイプ「動詞の語法」（フィールド: 日本語文/指定動詞/パーツ/正答/ID）
+  - 講師用メール+パスワードログイン追加:
+    - ログインページに折りたたみ式「講師用ログイン」セクション追加
+    - 既存LINEアカウントに `gaimon.maam@gmail.com` + パスワードを紐付け
+    - LINEログインとPCログインで同一アカウントにアクセス可能に
+  - LINE認証ルート大幅修正:
+    - 3段階フォールバック: パスワードログイン → metadata検索+magic link → 新規作成
+    - メール変更済みユーザー（講師）でもLINE再ログインで同じアカウントにログイン
+    - `generateLink` + `verifyOtp` でパスワードに依存しないセッション確立
+  - 同期403エラー修正:
+    - pull APIの `userId` チェックを削除（認証済みユーザーIDを使用）
+    - クライアントのIndexedDBに古いユーザーIDがキャッシュされていても同期可能に
+  - `.env.local` の重複 `SUPABASE_SERVICE_ROLE_KEY=`（空）を削除
+  - profileのメールを `gaimon.maam@gmail.com` に更新
 - **途中で止まっていること**:
-  - 環境変数設定（SRS/billing両方のVercel環境変数）が未完了 — ユーザーが手動で設定中
-  - billing側の `FormMenu.tsx` への「学習支援」メニュー追加はユーザーがbilling側で作業予定
-  - 設定完了後にデプロイ・E2Eテストが必要
+  - 動詞の語法デッキの生徒への配布（`deck_assignments` 未作成）
 - **次のセッションで注意すべきこと**:
-  - 環境変数設定とbillingメニュー追加が完了しているか確認してからE2Eテストに進む
-  - リッチメニューではなく総合メニュー（FormMenu）内に「学習支援」として追加する方針に変更済み
+  - 講師PCログインのパスワードは `tsubame-teacher-2026`（Supabase auth直接設定）
+  - LINE認証は `user_metadata.line_user_id` でユーザー検索する方式に変更済み
+  - pull APIは `body.userId` を無視して `auth.uid()` を使用する（キャッシュ不整合対策）
+  - Google OAuthコールバック（`/callback`）はまだ残存
+
+### 2026-04-10（前半セッション — billing側設計）
+- billing側の総合メニューに「学習支援」セクション追加設計 → ユーザーが実装済み
+- LINE自動ログインの環境変数設定手順ドキュメント化 → ユーザーが設定済み
 
 ### 2026-04-09（LINE自動ログイン実装）
-- **やったこと**:
-  - Supabaseプロジェクト復旧（pause → restore）、Google OAuth公開ステータス修正、Site URLスペース修正
-  - LINE自動ログイン統合（Phase 17a）のコード実装完了:
-    - SRS: `/auth/line` ルートハンドラ（JWT検証 → Supabaseユーザー作成/ログイン → セッション確立）
-    - SRS: ログインページを「LINEからログインしてください」に変更
-    - SRS: ミドルウェアに `/auth/line` を公開パスとして追加
-    - billing: `/api/liff/srs-launch` API（LINE IDトークン検証 → SRS用JWT生成）
-    - billing: `/srs` LIFFページ（外部ブラウザでSRS起動）
-    - 両プロジェクトに `jose` パッケージ追加、`SRS_AUTH_SECRET` 環境変数追加
-  - 両プロジェクトのビルド/型チェック成功確認
-- **途中で止まっていること**:
-  - **デプロイ前の手動設定が未完了**:
-    1. SRS `.env.local` に `SUPABASE_SERVICE_ROLE_KEY` を追加（Supabase Dashboard → Settings → API）
-    2. SRS Vercel環境変数に `SRS_AUTH_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` を追加
-    3. billing Vercel環境変数に `SRS_AUTH_SECRET`, `SRS_APP_URL` を追加
-    4. LINEリッチメニューに「学習アプリ」ボタン追加（URL: `https://liff.line.me/{LIFF_ID}/srs`）
-  - ローカル・本番での動作確認（E2Eテスト）が未実施
-- **次のセッションで注意すべきこと**:
-  - `SUPABASE_SERVICE_ROLE_KEY` がSRS `.env.local` に入っていないとLINE認証ルートが動かない
-  - billing側のビルドはメモリ不足になりやすい。`NODE_OPTIONS="--max-old-space-size=4096"` が必要
-  - Google OAuthのコールバックルート（`/callback`）はまだ残している。LINE認証が安定したら削除可能
-
-### 2026-04-09（前半）
-- 動詞の語法デッキのインポート準備（TSV生成済み、UI手作業は未完了）
+- LINE自動ログイン統合（Phase 17a）のコード実装完了
+- Supabaseプロジェクト復旧、Google OAuth修正
 
 ### 2026-02-19
 - TTS設定デッキ移動 + 通知UI整理 完了
@@ -59,10 +55,10 @@
 ## 既知の課題
 - billing側のビルドがWindows環境でOOMになることがある（`--max-old-space-size=4096` で回避）
 - Google OAuthコールバック（`/callback/route.ts`）がまだ残存（LINE認証安定後に削除予定）
+- LINE端末のIndexedDBに古いユーザーIDがキャッシュされる場合がある（pull APIで対処済み、push APIも同様の対処が必要かもしれない）
 
 ## 今後のロードマップ概要（優先度順、詳細は ROADMAP.md）
-- **Phase 17a**: LINE自動ログイン — デプロイ・動作確認 ★次
-- **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア
+- **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア ★次
 - **Phase 10**: ゲーミフィケーション
 - **Phase 11**: 講師ツール強化
 - **Phase 13-14, 16**: コンテンツ効率化、学習モード拡張、コラボレーション
