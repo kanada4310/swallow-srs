@@ -10,6 +10,7 @@ import { BulkExampleGenerator } from '@/components/ai/ExampleGenerator'
 import { OCRImporter } from '@/components/ai/OCRImporter'
 import { DeckAdvancedSettings } from '@/components/deck/DeckAdvancedSettings'
 import { createClient } from '@/lib/supabase/client'
+import { db } from '@/lib/db/schema'
 import type { NoteType, DeckSettings } from '@/types/database'
 import type { BrowsableNote } from '@/components/deck/NoteCard'
 
@@ -577,9 +578,13 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ settings: deckSettings }),
                     })
+                    const data = await response.json()
                     if (!response.ok) {
-                      const data = await response.json()
                       throw new Error(data.error || '設定の保存に失敗しました')
+                    }
+                    // Update Dexie so reopening shows saved settings
+                    if (data.deck) {
+                      try { await db.decks.put(data.deck) } catch { /* ignore */ }
                     }
                     setShowSettingsModal(false)
                     router.refresh()

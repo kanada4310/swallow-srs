@@ -248,9 +248,13 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ settings: settingsValues }),
       })
+      const data = await response.json()
       if (!response.ok) {
-        const data = await response.json()
         throw new Error(data.error || '設定の保存に失敗しました')
+      }
+      // Update Dexie so reopening shows saved settings
+      if (data.deck) {
+        try { await db.decks.put(data.deck) } catch { /* ignore */ }
       }
       // Update local state
       setLocalDecks(prev => {
