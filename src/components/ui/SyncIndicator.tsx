@@ -93,7 +93,7 @@ export function SyncIndicator() {
 
             {status.error && (
               <div className="px-3 py-2 border-b border-gray-100">
-                <div className="text-xs text-red-500 truncate">{status.error}</div>
+                <div className="text-xs text-red-500 break-all">{status.error}</div>
               </div>
             )}
 

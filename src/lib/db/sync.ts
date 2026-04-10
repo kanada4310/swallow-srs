@@ -118,7 +118,9 @@ export async function pullFromServer(userId: string): Promise<void> {
   })
 
   if (!response.ok) {
-    throw new Error(`Pull failed: ${response.statusText}`)
+    const errorText = await response.text().catch(() => '')
+    console.error(`[Sync] Pull failed: ${response.status} ${response.statusText}`, errorText)
+    throw new Error(`Pull failed: ${response.status} ${response.statusText} ${errorText}`)
   }
 
   const data = await response.json()
