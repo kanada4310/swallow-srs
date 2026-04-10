@@ -64,35 +64,31 @@ export async function GET(request: NextRequest) {
   const adminClient = createSupabaseClient(supabaseUrl, serviceRoleKey)
   const validRole = role === 'teacher' || role === 'admin' ? role : 'student'
 
+  // Look up existing user by line_user_id in metadata (handles email changes)
+  let signInEmail = email
+  let signInPassword = password
+
   try {
-    // Try to create user (will fail with "already registered" if exists)
-    const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { line_user_id: lineUserId, name, role: validRole },
-    })
+    const { data: { users: allUsers } } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
+    const existingUser = allUsers.find(
+      (u) => u.user_metadata?.line_user_id === lineUserId
+    )
 
-    if (newUser?.user) {
-      // New user — create profile
-      const { error: profileError } = await adminClient
-        .from('profiles')
-        .insert({
-          id: newUser.user.id,
-          email,
-          name,
-          role: validRole,
-        })
+    if (existingUser) {
+      // Existing user found — use their current email for sign-in
+      signInEmail = existingUser.email!
 
-      if (profileError) {
-        console.error('[LINE Auth] Failed to create profile:', profileError)
+      if (signInEmail !== email) {
+        // Email was changed (e.g., teacher set a custom email)
+        // Update password to match current derived credentials
+        await adminClient.auth.admin.updateUserById(existingUser.id, { password })
       }
-    } else if (createError) {
-      // User already exists — update profile name if changed
+
+      // Update profile name if changed
       const { data: existingProfile } = await adminClient
         .from('profiles')
         .select('id, name')
-        .eq('email', email)
+        .eq('id', existingUser.id)
         .single()
 
       if (existingProfile && existingProfile.name !== name) {
@@ -100,6 +96,34 @@ export async function GET(request: NextRequest) {
           .from('profiles')
           .update({ name })
           .eq('id', existingProfile.id)
+      }
+    } else {
+      // New user — create account
+      const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { line_user_id: lineUserId, name, role: validRole },
+      })
+
+      if (createError) {
+        console.error('[LINE Auth] Failed to create user:', createError)
+        return NextResponse.redirect(`${origin}/login?error=server_error`)
+      }
+
+      if (newUser?.user) {
+        const { error: profileError } = await adminClient
+          .from('profiles')
+          .insert({
+            id: newUser.user.id,
+            email,
+            name,
+            role: validRole,
+          })
+
+        if (profileError) {
+          console.error('[LINE Auth] Failed to create profile:', profileError)
+        }
       }
     }
   } catch (err) {
@@ -124,7 +148,7 @@ export async function GET(request: NextRequest) {
   })
 
   const { data: session, error: signInError } = await supabase.auth.signInWithPassword({
-    email,
+    email: signInEmail,
     password,
   })
 
