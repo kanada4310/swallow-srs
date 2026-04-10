@@ -77,12 +77,6 @@ export async function GET(request: NextRequest) {
       // Existing user found — use their current email for sign-in
       signInEmail = existingUser.email!
 
-      if (signInEmail !== email) {
-        // Email was changed (e.g., teacher set a custom email)
-        // Update password to match current derived credentials
-        await adminClient.auth.admin.updateUserById(existingUser.id, { password })
-      }
-
       // Update profile name if changed
       const { data: existingProfile } = await adminClient
         .from('profiles')
@@ -130,7 +124,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/login?error=server_error`)
   }
 
-  // 4. Sign in with SSR client (sets session cookies)
+  // 4. Generate magic link and verify OTP to create session (no password needed)
+  const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
+    type: 'magiclink',
+    email: signInEmail,
+  })
+
+  if (linkError || !linkData.properties?.hashed_token) {
+    console.error('[LINE Auth] Failed to generate link:', linkError)
+    return NextResponse.redirect(`${origin}/login?error=server_error`)
+  }
+
   const response = NextResponse.redirect(`${origin}/`)
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -146,13 +150,13 @@ export async function GET(request: NextRequest) {
     },
   })
 
-  const { data: session, error: signInError } = await supabase.auth.signInWithPassword({
-    email: signInEmail,
-    password,
+  const { data: session, error: signInError } = await supabase.auth.verifyOtp({
+    token_hash: linkData.properties.hashed_token,
+    type: 'magiclink',
   })
 
   if (signInError || !session.user) {
-    console.error('[LINE Auth] Sign-in failed:', signInError)
+    console.error('[LINE Auth] OTP verification failed:', signInError)
     return NextResponse.redirect(`${origin}/login?error=server_error`)
   }
 
