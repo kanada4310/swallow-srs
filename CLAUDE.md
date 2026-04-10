@@ -172,7 +172,7 @@ npm run test:watch   # Vitest 監視モード
 詳細は @docs/progress.md を参照。
 
 - **最終更新**: 2026-04-10
-- **次にやること**: 動詞の語法デッキの生徒配布 → Phase 9.3-9.4（学習時間トラッキング、習熟度スコア）
+- **次にやること**: フィルタデッキ機能の実装（計画書: `.claude/plans/scalable-sniffing-journal.md`） → 生徒配布 → Phase 9.3-9.4
 
 ## 参照ドキュメント
 
