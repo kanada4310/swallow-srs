@@ -66,7 +66,6 @@ export async function GET(request: NextRequest) {
 
   // Look up existing user by line_user_id in metadata (handles email changes)
   let signInEmail = email
-  let signInPassword = password
 
   try {
     const { data: { users: allUsers } } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
