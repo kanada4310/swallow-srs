@@ -1,0 +1,583 @@
+﻿ID	日本語文	指定動詞	パーツ	正答	タグ
+bring up_1	母は私を一人で育てた。	bring up	alone	My mother brought me up alone.	自動詞vs他動詞|grow_up/bring_up|v:bring_up|文型:SVO
+bring up_2	私は祖父母に育てられた。	bring up	grandparents	I was brought up by my grandparents.	自動詞vs他動詞|grow_up/bring_up|v:bring_up|文型:SVO
+bring up_3	彼女は会議で新しいアイデアを提案した。	bring up	idea / meeting	She brought up a new idea at the meeting.	自動詞vs他動詞|grow_up/bring_up|v:bring_up|文型:SVO
+grow up_1	私は東京で育った。	grow up	Tokyo	I grew up in Tokyo.	自動詞vs他動詞|grow_up/bring_up|v:grow_up|文型:SV
+grow up_2	彼は大人になったら医者になりたい。	grow up	doctor	He wants to be a doctor when he grows up.	自動詞vs他動詞|grow_up/bring_up|v:grow_up|文型:SV
+grow up_3	いい加減大人になれよ。	grow up	－	Grow up!	自動詞vs他動詞|grow_up/bring_up|v:grow_up|文型:SV
+lay_1	私は本をテーブルに置いた。	lay	book / table	I laid the book on the table.	自動詞vs他動詞|lie/lay|v:lay|文型:SVO
+lay_2	その鳥は毎朝卵を産む。	lay	bird / eggs / every morning	The bird lays eggs every morning.	自動詞vs他動詞|lie/lay|v:lay|文型:SVO
+lay_3	彼らはその計画の基礎を築いた。	lay	foundation / plan	They laid the foundation for the plan.	自動詞vs他動詞|lie/lay|v:lay|文型:SVO
+lie_1	私はベッドに横になった。	lie	bed	I lay on the bed.	自動詞vs他動詞|lie/lay|v:lie|文型:SV
+lie_2	その町は山のふもとにある。	lie	town / foot / mountain	The town lies at the foot of the mountain.	自動詞vs他動詞|lie/lay|v:lie|文型:SV
+lie_3	問題はそこにある。	lie	problem	The problem lies there.	自動詞vs他動詞|lie/lay|v:lie|文型:SV
+raise_1	彼は手を挙げた。	raise	hand	He raised his hand.	自動詞vs他動詞|rise/raise/arise|v:raise|文型:SVO
+raise_2	彼女は重要な問題を提起した。	raise	important issue	She raised an important issue.	自動詞vs他動詞|rise/raise/arise|v:raise|文型:SVO
+raise_3	その会社は社員の給料を上げた。	raise	company / salary	The company raised the salary.	自動詞vs他動詞|rise/raise/arise|v:raise|文型:SVO
+rise_1	太陽は東から昇る。	rise	sun / east	The sun rises in the east.	自動詞vs他動詞|rise/raise/arise|v:rise|文型:SV
+rise_2	失業率が急激に上昇した。	rise	unemployment rate / sharply	The unemployment rate rose sharply.	自動詞vs他動詞|rise/raise/arise|v:rise|文型:SV
+rise_3	彼はその困難に立ち向かった。	rise	challenge	He rose to the challenge.	自動詞vs他動詞|rise/raise/arise|v:rise|文型:SV
+seat_1	このバスは50人乗れる。	seat	bus / 50 people	This bus seats 50 people.	自動詞vs他動詞|sit/seat|v:seat|文型:SVO
+seat_2	お客様はこちらにお座りください。	seat	here	Please be seated here.	自動詞vs他動詞|sit/seat|v:seat|文型:SVO
+seat_3	彼女は最前列に座っていた。	seat	front row	She was seated in the front row.	自動詞vs他動詞|sit/seat|v:seat|文型:SVO
+sit_1	座ってください。	sit	down	Please sit down.	自動詞vs他動詞|sit/seat|v:sit|文型:SV
+sit_2	彼はずっと座ったままだった。	sit	still	He sat still.	自動詞vs他動詞|sit/seat|v:sit|文型:SV
+sit_3	私たちは床に座った。	sit	floor	We sat on the floor.	自動詞vs他動詞|sit/seat|v:sit|文型:SV
+accompany_1	彼女は彼に同行して会議に出席した。	accompany	meeting	She accompanied him to the meeting.	実はSVO|v:accompany|文型:SVO
+accompany_2	ガイドが私たちに同行した。	accompany	guide	A guide accompanied us.	実はSVO|v:accompany|文型:SVO
+accompany_3	彼はピアノで彼女の歌を伴奏した。	accompany	piano / song	He accompanied her song on the piano.	実はSVO|v:accompany|文型:SVO
+address_1	見知らぬ人が私に話しかけてきた。	address	stranger	A stranger addressed me.	実はSVO|v:address|文型:SVO
+address_2	大統領は国民に演説した。	address	president / nation	The president addressed the nation.	実はSVO|v:address|文型:SVO
+address_3	彼女はその問題に取り組んだ。	address	problem	She addressed the problem.	実はSVO|v:address|文型:SVO
+answer_1	彼女は私の質問に答えた。	answer	question	She answered my question.	実はSVO|v:answer|文型:SVO
+answer_2	誰もドアに出なかった。	answer	door	Nobody answered the door.	実はSVO|v:answer|文型:SVO
+answer_3	彼は電話に出た。	answer	phone	He answered the phone.	実はSVO|v:answer|文型:SVO
+approach_1	台風が町に近づいている。	approach	typhoon / town	The typhoon is approaching the town.	実はSVO|v:approach|文型:SVO
+approach_2	試験の日が近づいている。	approach	exam day	The exam day is approaching.	実はSVO|v:approach|文型:SVO
+approach_3	彼女は慎重にその問題に取り組んだ。	approach	problem / carefully	She carefully approached the problem.	実はSVO|v:approach|文型:SVO
+attend_1	彼は会議に出席した。	attend	meeting	He attended the meeting.	実はSVO|v:attend|文型:SVO
+attend_2	約500人がそのコンサートに出席した。	attend	500 people / concert	About 500 people attended the concert.	実はSVO|v:attend|文型:SVO
+attend_3	彼女は地元の高校に通った。	attend	local high school	She attended the local high school.	実はSVO|v:attend|文型:SVO
+consider_1	彼らはその提案を検討した。	consider	proposal	They considered the proposal.	実はSVO|v:consider|文型:SVO
+consider_2	彼女は転職を考えている。	consider	changing jobs	She is considering changing jobs.	実はSVO|v:consider|文型:SVO
+consider_3	もう一つの選択肢も検討すべきだ。	consider	another option	You should consider another option.	実はSVO|v:consider|文型:SVO
+contact_1	何かあったらすぐ連絡してください。	contact	immediately	Please contact me immediately.	実はSVO|v:contact|文型:SVO
+contact_2	詳細については事務局に連絡してください。	contact	details / office	Please contact the office for details.	実はSVO|v:contact|文型:SVO
+contact_3	彼女は直接顧客に連絡を取った。	contact	customer / directly	She contacted the customer directly.	実はSVO|v:contact|文型:SVO
+deserve_1	彼は賞を受けるに値する。	deserve	prize	He deserves the prize.	実はSVO|v:deserve|文型:SVO
+deserve_2	彼女はもっと良い扱いを受けるに値する。	deserve	better treatment	She deserves better treatment.	実はSVO|v:deserve|文型:SVO
+deserve_3	この問題はもっと注目されるべきだ。	deserve	attention	This issue deserves more attention.	実はSVO|v:deserve|文型:SVO
+discuss_1	私たちはその問題について議論した。	discuss	problem	We discussed the problem.	実はSVO|v:discuss|文型:SVO
+discuss_2	彼らは新しい計画について議論した。	discuss	new plan	They discussed the new plan.	実はSVO|v:discuss|文型:SVO
+discuss_3	その件は後で議論しよう。	discuss	matter / later	Let's discuss the matter later.	実はSVO|v:discuss|文型:SVO
+enter_1	彼女は部屋に入った。	enter	room	She entered the room.	実はSVO|v:enter|文型:SVO
+enter_2	彼は有名な大学に入学した。	enter	famous university	He entered a famous university.	実はSVO|v:enter|文型:SVO
+enter_3	新しいデータをシステムに入力してください。	enter	data / system	Please enter the data into the system.	実はSVO|v:enter|文型:SVO
+follow_1	彼女は父のあとを継いで医者になった。	follow	father	She followed her father as a doctor.	実はSVO|v:follow|文型:SVO
+follow_2	私の言うことに従ってください。	follow	instructions	Please follow my instructions.	実はSVO|v:follow|文型:SVO
+follow_3	何が起こったか話の流れが追えない。	follow	story	I can't follow the story.	実はSVO|v:follow|文型:SVO
+join_1	彼はサッカークラブに入った。	join	soccer club	He joined the soccer club.	実はSVO|v:join|文型:SVO
+join_2	彼女は私たちの会話に加わった。	join	conversation	She joined our conversation.	実はSVO|v:join|文型:SVO
+join_3	夕食にご一緒しませんか。	join	dinner	Would you like to join us for dinner?	実はSVO|v:join|文型:SVO
+leave_1	私は朝7時に家を出た。	leave	home / 7 a.m.	I left home at 7 a.m.	実はSVO|v:leave|文型:SVO
+leave_2	彼女は若くして故郷を離れた。	leave	hometown / young	She left her hometown young.	実はSVO|v:leave|文型:SVO
+leave_3	その電車は5分後に出発する。	leave	train / five minutes	The train leaves in five minutes.	実はSVO|v:leave|文型:SVO
+marry_1	彼は高校時代の恋人と結婚した。	marry	high school sweetheart	He married his high school sweetheart.	実はSVO|v:marry|文型:SVO
+marry_2	彼らは去年結婚した。	marry	last year	They got married last year.	実はSVO|v:marry|文型:SVO
+marry_3	彼女は医者と結婚している。	marry	doctor	She is married to a doctor.	実はSVO|v:marry|文型:SVO
+mention_1	彼女はその事件について何も言及しなかった。	mention	incident	She didn't mention the incident.	実はSVO|v:mention|文型:SVO
+mention_2	彼はその名前を一度も口にしなかった。	mention	name	He never mentioned the name.	実はSVO|v:mention|文型:SVO
+mention_3	言ってくれてもよかったのに。	mention	it	You could have mentioned it.	実はSVO|v:mention|文型:SVO
+obey_1	子どもは親に従うべきだ。	obey	children / parents	Children should obey their parents.	実はSVO|v:obey|文型:SVO
+obey_2	兵士たちは命令に従った。	obey	soldiers / order	The soldiers obeyed the order.	実はSVO|v:obey|文型:SVO
+obey_3	すべての市民は法律に従わなければならない。	obey	citizens / law	All citizens must obey the law.	実はSVO|v:obey|文型:SVO
+reach_1	私たちはようやく駅に着いた。	reach	station	We finally reached the station.	実はSVO|v:reach|文型:SVO
+reach_2	彼は目標を達成した。	reach	goal	He reached his goal.	実はSVO|v:reach|文型:SVO
+reach_3	彼らは合意に達した。	reach	agreement	They reached an agreement.	実はSVO|v:reach|文型:SVO
+resemble_1	彼は父親に似ている。	resemble	father	He resembles his father.	実はSVO|v:resemble|文型:SVO
+resemble_2	この絵はあの有名な作品に似ている。	resemble	famous painting	This painting resembles that famous painting.	実はSVO|v:resemble|文型:SVO
+resemble_3	二つの事件は互いに似ている。	resemble	each other / two cases	The two cases resemble each other.	実はSVO|v:resemble|文型:SVO
+survive_1	彼女は夫より10年長生きした。	survive	husband / 10 years	She survived her husband by 10 years.	実はSVO|v:survive|文型:SVO
+survive_2	乗客のうち数人だけが生き残った。	survive	passengers / only a few	Only a few passengers survived the crash.	実はSVO|v:survive|文型:SVO
+survive_3	その会社は不況を乗り越えた。	survive	company / recession	The company survived the recession.	実はSVO|v:survive|文型:SVO
+visit_1	私たちは去年京都を訪れた。	visit	Kyoto / last year	We visited Kyoto last year.	実はSVO|v:visit|文型:SVO
+visit_2	多くの観光客がその寺を訪れる。	visit	tourists / temple	Many tourists visit the temple.	実はSVO|v:visit|文型:SVO
+visit_3	医者が患者を往診した。	visit	doctor / patient	The doctor visited the patient.	実はSVO|v:visit|文型:SVO
+appear_1	彼は疲れているようだ。	appear	tired	He appears tired.	SVC|v:appear|文型:SVC
+appear_2	その計画は成功しそうだ。	appear	plan / successful	The plan appears successful.	SVC|v:appear|文型:SVC
+appear_3	問題はないように見える。	appear	problem	There appears to be no problem.	SVC|v:appear|文型:SVC
+become_1	彼女は有名な歌手になった。	become	famous singer	She became a famous singer.	SVC|v:become|文型:SVC
+become_2	その夢は現実になった。	become	dream / reality	The dream became a reality.	SVC|v:become|文型:SVC
+become_3	状況はさらに悪くなった。	become	situation / worse	The situation became worse.	SVC|v:become|文型:SVC
+come_1	彼女の夢はついに実現した。	come	dream / true	Her dream came true.	SVC|v:come|文型:SVC
+come_2	すべてがうまくいくだろう。	come	right	Everything will come right.	SVC|v:come|文型:SVC
+come_3	そのロープがほどけた。	come	rope / loose	The rope came loose.	SVC|v:come|文型:SVC
+fall_1	彼は恋に落ちた。	fall	love	He fell in love.	SVC|v:fall|文型:SVC
+fall_2	彼女は眠りに落ちた。	fall	asleep	She fell asleep.	SVC|v:fall|文型:SVC
+fall_3	彼らは沈黙した。	fall	silent	They fell silent.	SVC|v:fall|文型:SVC
+feel_1	彼女は気分が悪そうだ。	feel	sick	She feels sick.	SVC|v:feel|文型:SVC
+feel_2	この布は柔らかい。	feel	cloth / soft	This cloth feels soft.	SVC|v:feel|文型:SVC
+feel_3	私は自分が無力に感じた。	feel	helpless	I felt helpless.	SVC|v:feel|文型:SVC
+get_1	日が暮れて暗くなった。	get	dark	It got dark.	SVC|v:get|文型:SVC
+get_2	彼は次第に良くなってきた。	get	better / gradually	He gradually got better.	SVC|v:get|文型:SVC
+get_3	準備はできた？	get	ready	Are you ready? / Did you get ready?	SVC|v:get|文型:SVC
+go_1	計画は失敗に終わった。	go	plan / wrong	The plan went wrong.	SVC|v:go|文型:SVC
+go_2	食べ物が腐った。	go	food / bad	The food went bad.	SVC|v:go|文型:SVC
+go_3	彼女は電話が鳴ると顔が青ざめた。	go	pale / phone	She went pale when the phone rang.	SVC|v:go|文型:SVC
+grow_1	彼女は年を取るにつれ美しくなった。	grow	beautiful / older	She grew more beautiful as she got older.	SVC|v:grow|文型:SVC
+grow_2	彼は待つのにうんざりしてきた。	grow	tired / waiting	He grew tired of waiting.	SVC|v:grow|文型:SVC
+grow_3	空が暗くなってきた。	grow	sky / dark	The sky grew dark.	SVC|v:grow|文型:SVC
+look_1	彼女は若く見える。	look	young	She looks young.	SVC|v:look|文型:SVC
+look_2	その料理はおいしそうだ。	look	dish / delicious	The dish looks delicious.	SVC|v:look|文型:SVC
+look_3	彼は自信ありげだ。	look	confident	He looks confident.	SVC|v:look|文型:SVC
+prove_1	その噂は本当だと分かった。	prove	rumor / true	The rumor proved true.	SVC|v:prove|文型:SVC
+prove_2	彼の方法は効果的だと分かった。	prove	method / effective	His method proved effective.	SVC|v:prove|文型:SVC
+prove_3	その薬は有害だと判明した。	prove	medicine / harmful	The medicine proved harmful.	SVC|v:prove|文型:SVC
+remain_1	彼は黙ったままだった。	remain	silent	He remained silent.	SVC|v:remain|文型:SVC
+remain_2	問題は未解決のままだ。	remain	problem / unsolved	The problem remains unsolved.	SVC|v:remain|文型:SVC
+remain_3	彼女は座ったままだった。	remain	seated	She remained seated.	SVC|v:remain|文型:SVC
+seem_1	彼女は幸せそうだ。	seem	happy	She seems happy.	SVC|v:seem|文型:SVC
+seem_2	その話は本当のようだ。	seem	story / true	The story seems true.	SVC|v:seem|文型:SVC
+seem_3	すべてがうまくいっているようだ。	seem	everything / fine	Everything seems fine.	SVC|v:seem|文型:SVC
+smell_1	このバラはいい香りがする。	smell	rose / nice	This rose smells nice.	SVC|v:smell|文型:SVC
+smell_2	何か焦げ臭い。	smell	something / burning	Something smells burning.	SVC|v:smell|文型:SVC
+smell_3	この部屋はカビ臭い。	smell	room / musty	This room smells musty.	SVC|v:smell|文型:SVC
+sound_1	それはいい考えに聞こえる。	sound	good idea	That sounds like a good idea.	SVC|v:sound|文型:SVC
+sound_2	彼女の声は悲しそうだった。	sound	voice / sad	Her voice sounded sad.	SVC|v:sound|文型:SVC
+sound_3	その話は信じがたい。	sound	story / unbelievable	The story sounds unbelievable.	SVC|v:sound|文型:SVC
+stay_1	天気は一週間ずっと晴れだった。	stay	weather / sunny / week	The weather stayed sunny for a week.	SVC|v:stay|文型:SVC
+stay_2	彼は若いままでいたい。	stay	young	He wants to stay young.	SVC|v:stay|文型:SVC
+stay_3	落ち着いて。	stay	calm	Stay calm.	SVC|v:stay|文型:SVC
+taste_1	このスープはおいしい。	taste	soup / good	This soup tastes good.	SVC|v:taste|文型:SVC
+taste_2	この薬は苦い。	taste	medicine / bitter	This medicine tastes bitter.	SVC|v:taste|文型:SVC
+taste_3	このワインはフルーティーな味がする。	taste	wine / fruity	This wine tastes fruity.	SVC|v:taste|文型:SVC
+turn_1	彼の顔は赤くなった。	turn	face / red	His face turned red.	SVC|v:turn|文型:SVC
+turn_2	葉が黄色に変わった。	turn	leaves / yellow	The leaves turned yellow.	SVC|v:turn|文型:SVC
+turn_3	牛乳が腐った。	turn	milk / sour	The milk turned sour.	SVC|v:turn|文型:SVC
+ask_1	彼女は私に名前を尋ねた。	ask	name	She asked me my name.	SVOO|v:ask|文型:SVOO
+ask_2	彼は私に意見を求めた。	ask	opinion	He asked me my opinion.	SVOO|v:ask|文型:SVOO
+ask_3	彼女は私に質問をした。	ask	question	She asked me a question.	SVOO|v:ask|文型:SVOO
+award_1	彼女は最優秀賞を授与された。	award	top prize	She was awarded the top prize.	SVOO|v:award|文型:SVOO
+award_2	委員会は彼に奨学金を授与した。	award	committee / scholarship	The committee awarded him a scholarship.	SVOO|v:award|文型:SVOO
+award_3	その映画は彼に賞をもたらした。	award	film / prize	The film awarded him a prize.	SVOO|v:award|文型:SVOO
+buy_1	彼女は私にセーターを買ってくれた。	buy	sweater	She bought me a sweater.	SVOO|v:buy|文型:SVOO
+buy_2	母は子どもたちにおもちゃを買った。	buy	mother / children / toys	My mother bought the children toys.	SVOO|v:buy|文型:SVOO
+buy_3	彼は自分に新しい車を買った。	buy	new car / himself	He bought himself a new car.	SVOO|v:buy|文型:SVOO
+cook_1	彼女は私たちに夕食を作ってくれた。	cook	dinner	She cooked us dinner.	SVOO|v:cook|文型:SVOO
+cook_2	母はいつも朝食を作ってくれる。	cook	mother / breakfast	My mother always cooks me breakfast.	SVOO|v:cook|文型:SVOO
+cook_3	彼は妻に特別な料理を作った。	cook	wife / special dish	He cooked his wife a special dish.	SVOO|v:cook|文型:SVOO
+cost_1	その事故で彼は命を失った。	cost	accident / life	The accident cost him his life.	SVOO|v:cost|文型:SVOO
+cost_2	そのミスは彼女に職を失わせた。	cost	mistake / job	The mistake cost her her job.	SVOO|v:cost|文型:SVOO
+cost_3	その車は私に200万円かかった。	cost	car / two million yen	The car cost me two million yen.	SVOO|v:cost|文型:SVOO
+do_1	運動は健康に良い。	do	exercise / good / health	Exercise does you good.	SVOO|v:do|文型:SVOO
+do_2	少し休めば楽になるよ。	do	rest / good	A little rest will do you good.	SVOO|v:do|文型:SVOO
+do_3	それは彼に害を与えた。	do	harm	It did him harm.	SVOO|v:do|文型:SVOO
+get_4	彼女は私に飲み物を取ってきてくれた。	get	drink	She got me a drink.	SVOO|v:get|文型:SVOO
+get_5	タクシーを呼んでくれませんか。	get	taxi	Could you get me a taxi?	SVOO|v:get|文型:SVOO
+get_6	少し時間をください。	get	some time	Get me some time.	SVOO|v:get|文型:SVOO
+give_1	彼は私にプレゼントをくれた。	give	present	He gave me a present.	SVOO|v:give|文型:SVOO
+give_2	その経験は私に自信を与えた。	give	experience / confidence	The experience gave me confidence.	SVOO|v:give|文型:SVOO
+give_3	彼女にもう一度チャンスを与えよう。	give	another chance	Let's give her another chance.	SVOO|v:give|文型:SVOO
+make_1	彼女は私にケーキを作ってくれた。	make	cake	She made me a cake.	SVOO|v:make|文型:SVOO
+make_2	彼は彼女にドレスを作った。	make	dress	He made her a dress.	SVOO|v:make|文型:SVOO
+make_3	コーヒーを入れましょうか。	make	coffee	Shall I make you coffee?	SVOO|v:make|文型:SVOO
+offer_1	彼は私に助けを申し出た。	offer	help	He offered me help.	SVOO|v:offer|文型:SVOO
+offer_2	会社は彼女にそのポストを提示した。	offer	company / position	The company offered her the position.	SVOO|v:offer|文型:SVOO
+offer_3	彼女は私にコーヒーを勧めてくれた。	offer	coffee	She offered me coffee.	SVOO|v:offer|文型:SVOO
+spare_1	5分だけ時間をいただけますか。	spare	five minutes	Can you spare me five minutes?	SVOO|v:spare|文型:SVOO
+spare_2	詳細は省略させてください。	spare	details	Spare me the details.	SVOO|v:spare|文型:SVOO
+spare_3	彼女は私に手間をかけさせなかった。	spare	trouble	She spared me the trouble.	SVOO|v:spare|文型:SVOO
+take_1	その旅行は私に3日かかった。	take	trip / three days	The trip took me three days.	SVOO|v:take|文型:SVOO
+take_2	駅まで10分かかる。	take	station / 10 minutes	It takes 10 minutes to get to the station.	SVOO|v:take|文型:SVOO
+take_3	その仕事は彼に丸一日かかった。	take	job / whole day	The job took him a whole day.	SVOO|v:take|文型:SVOO
+teach_1	彼は私たちに英語を教えている。	teach	English	He teaches us English.	SVOO|v:teach|文型:SVOO
+teach_2	経験が私に忍耐を教えた。	teach	experience / patience	Experience taught me patience.	SVOO|v:teach|文型:SVOO
+teach_3	失敗が彼に謙虚さを教えた。	teach	failure / humility	Failure taught him humility.	SVOO|v:teach|文型:SVOO
+catch_1	警察は彼が盗んでいるところを捕まえた。	catch	police / steal	The police caught him stealing.	SVO_do|v:catch|文型:SVOC
+catch_2	私は彼女が嘘をついているところを見つけた。	catch	lie	I caught her lying.	SVO_do|v:catch|文型:SVOC
+catch_3	彼は息子がゲームをしているところを見つけた。	catch	son / play / game	He caught his son playing a game.	SVO_do|v:catch|文型:SVOC
+consider_4	私は彼女を賢いと思う。	consider	smart	I consider her smart.	SVO_do|v:consider|文型:SVOC
+consider_5	彼らはその問題を重要だと考えた。	consider	problem / important	They considered the problem important.	SVO_do|v:consider|文型:SVOC
+consider_6	彼女はそれを侮辱だとみなした。	consider	insult	She considered it an insult.	SVO_do|v:consider|文型:SVOC
+feel_4	私は地面が揺れるのを感じた。	feel	ground / shake	I felt the ground shake.	SVO_do|v:feel|文型:SVOC
+feel_5	彼女は何かが腕に触れるのを感じた。	feel	something / touch / arm	She felt something touch her arm.	SVO_do|v:feel|文型:SVOC
+feel_6	彼は心臓がドキドキするのを感じた。	feel	heart / beat	He felt his heart beating.	SVO_do|v:feel|文型:SVOC
+find_1	私は彼の説明が分かりにくいと感じた。	find	explanation / confusing	I found his explanation confusing.	SVO_do|v:find|文型:SVOC
+find_2	彼女はその本が面白いと思った。	find	book / interesting	She found the book interesting.	SVO_do|v:find|文型:SVOC
+find_3	私たちはドアが開いているのに気づいた。	find	door / open	We found the door open.	SVO_do|v:find|文型:SVOC
+get_7	私は彼に部屋を掃除させた。	get	room / clean	I got him to clean the room.	SVO_do|v:get|文型:SVOC
+get_8	彼女は車を修理してもらった。	get	car / repaired	She got her car repaired.	SVO_do|v:get|文型:SVOC
+get_9	彼はようやく機械を動かした。	get	machine / work	He finally got the machine to work.	SVO_do|v:get|文型:SVOC
+have_1	私は髪を切ってもらった。	have	hair / cut	I had my hair cut.	SVO_do|v:have|文型:SVOC
+have_2	彼女は息子に部屋を掃除させた。	have	son / room / clean	She had her son clean the room.	SVO_do|v:have|文型:SVOC
+have_3	財布を盗まれた。	have	wallet / stolen	I had my wallet stolen.	SVO_do|v:have|文型:SVOC
+hear_1	私は誰かがドアをノックするのを聞いた。	hear	someone / knock / door	I heard someone knock on the door.	SVO_do|v:hear|文型:SVOC
+hear_2	彼女は隣の部屋で誰かが話しているのを聞いた。	hear	someone / talk / next room	She heard someone talking in the next room.	SVO_do|v:hear|文型:SVOC
+hear_3	彼は自分の名前が呼ばれるのを聞いた。	hear	name / called	He heard his name called.	SVO_do|v:hear|文型:SVOC
+keep_4	ドアを開けたままにしておいて。	keep	door / open	Keep the door open.	SVO_do|v:keep|文型:SVOC
+keep_5	彼は私を待たせた。	keep	wait	He kept me waiting.	SVO_do|v:keep|文型:SVOC
+keep_6	彼女はエンジンをかけたままにした。	keep	engine / running	She kept the engine running.	SVO_do|v:keep|文型:SVOC
+leave_4	彼は窓を開けたままにした。	leave	window / open	He left the window open.	SVO_do|v:leave|文型:SVOC
+leave_5	仕事を途中のままにしないで。	leave	work / unfinished	Don't leave your work unfinished.	SVO_do|v:leave|文型:SVOC
+leave_6	彼女は水を出しっぱなしにした。	leave	water / running	She left the water running.	SVO_do|v:leave|文型:SVOC
+let_1	彼は私に車を使わせてくれた。	let	car / use	He let me use his car.	SVO_do|v:let|文型:SVOC
+let_2	彼女は猫を外に出した。	let	cat / out	She let the cat out.	SVO_do|v:let|文型:SVOC
+let_3	そのことは忘れてください。	let	it / go	Let it go.	SVO_do|v:let|文型:SVOC
+make_4	彼女は私を笑わせた。	make	laugh	She made me laugh.	SVO_do|v:make|文型:SVOC
+make_5	その映画は私を泣かせた。	make	movie / cry	The movie made me cry.	SVO_do|v:make|文型:SVOC
+make_6	彼は自分の意見を理解させた。	make	opinion / understood	He made his opinion understood.	SVO_do|v:make|文型:SVOC
+see_1	私は彼女が部屋に入るのを見た。	see	enter / room	I saw her enter the room.	SVO_do|v:see|文型:SVOC
+see_2	彼は彼女が泣いているのを見た。	see	cry	He saw her crying.	SVO_do|v:see|文型:SVOC
+see_3	私は車が修理されているのを見た。	see	car / repaired	I saw the car being repaired.	SVO_do|v:see|文型:SVOC
+smell_4	私は何か焦げる臭いがした。	smell	something / burn	I smelled something burning.	SVO_do|v:smell|文型:SVOC
+smell_5	彼女はガスが漏れている臭いがした。	smell	gas / leak	She smelled gas leaking.	SVO_do|v:smell|文型:SVOC
+smell_6	彼はコーヒーの香りがするのに気づいた。	smell	coffee / brew	He smelled coffee brewing.	SVO_do|v:smell|文型:SVOC
+ask_4	彼は私に手伝ってくれるよう頼んだ。	ask	help	He asked me to help him.	SVO_to_do|v:ask|文型:SVO+to_do|前置詞:to
+ask_5	彼女は私にドアを閉めるよう頼んだ。	ask	close / door	She asked me to close the door.	SVO_to_do|v:ask|文型:SVO+to_do|前置詞:to
+ask_6	彼は上司に休暇をもらえるよう頼んだ。	ask	boss / day off	He asked his boss to give him a day off.	SVO_to_do|v:ask|文型:SVO+to_do|前置詞:to
+cause_1	何がその事故を引き起こしたのか。	cause	accident	What caused the accident to happen?	SVO_to_do|v:cause|文型:SVO+to_do|前置詞:to
+cause_2	大雨が電車を遅らせた。	cause	heavy rain / train / delay	The heavy rain caused the train to be delayed.	SVO_to_do|v:cause|文型:SVO+to_do|前置詞:to
+cause_3	ストレスは人を病気にする。	cause	stress / sick	Stress causes people to get sick.	SVO_to_do|v:cause|文型:SVO+to_do|前置詞:to
+compel_1	証拠が彼に真実を認めさせた。	compel	evidence / admit / truth	The evidence compelled him to admit the truth.	SVO_to_do|v:compel|文型:SVO+to_do|前置詞:to
+compel_2	彼女は辞職に追い込まれた。	compel	resign	She was compelled to resign.	SVO_to_do|v:compel|文型:SVO+to_do|前置詞:to
+compel_3	好奇心が彼女にその箱を開けさせた。	compel	curiosity / open / box	Curiosity compelled her to open the box.	SVO_to_do|v:compel|文型:SVO+to_do|前置詞:to
+determine_1	その経験が彼に医者になることを決心させた。	determine	experience / doctor	The experience determined him to become a doctor.	SVO_to_do|v:determine|文型:SVO+to_do|前置詞:to
+determine_2	彼女は成功することを固く決意している。	determine	succeed	She is determined to succeed.	SVO_to_do|v:determine|文型:SVO+to_do|前置詞:to
+determine_3	彼は困難に負けないと決意した。	determine	difficulty / give up	He determined not to give up despite the difficulty.	SVO_to_do|v:determine|文型:SVO+to_do|前置詞:to
+enable_1	インターネットは私たちが情報にアクセスすることを可能にした。	enable	access / information	The Internet enabled us to access information.	SVO_to_do|v:enable|文型:SVO+to_do|前置詞:to
+enable_2	この技術は医者がより正確に診断することを可能にする。	enable	technology / doctors / diagnose	This technology enables doctors to diagnose more accurately.	SVO_to_do|v:enable|文型:SVO+to_do|前置詞:to
+enable_3	その奨学金が彼女の留学を可能にした。	enable	scholarship / study abroad	The scholarship enabled her to study abroad.	SVO_to_do|v:enable|文型:SVO+to_do|前置詞:to
+encourage_1	先生は私たちに一生懸命勉強するよう励ました。	encourage	study hard	The teacher encouraged us to study hard.	SVO_to_do|v:encourage|文型:SVO+to_do|前置詞:to
+encourage_2	彼女は彼に夢を追い続けるよう励ました。	encourage	follow / dream	She encouraged him to follow his dream.	SVO_to_do|v:encourage|文型:SVO+to_do|前置詞:to
+encourage_3	その成功が彼をもっと努力する気にさせた。	encourage	success / try harder	The success encouraged him to try harder.	SVO_to_do|v:encourage|文型:SVO+to_do|前置詞:to
+expect_1	私は彼女が成功すると期待している。	expect	succeed	I expect her to succeed.	SVO_to_do|v:expect|文型:SVO+to_do|前置詞:to
+expect_2	彼らは私が全てを知っていると思っていた。	expect	know / everything	They expected me to know everything.	SVO_to_do|v:expect|文型:SVO+to_do|前置詞:to
+expect_3	その電車は3時に到着する予定だ。	expect	train / arrive	The train is expected to arrive at 3\.	SVO_to_do|v:expect|文型:SVO+to_do|前置詞:to
+force_1	彼女は私に残業するよう強制した。	force	work overtime	She forced me to work overtime.	SVO_to_do|v:force|文型:SVO+to_do|前置詞:to
+force_2	台風で私たちは家にいることを余儀なくされた。	force	typhoon / stay home	The typhoon forced us to stay home.	SVO_to_do|v:force|文型:SVO+to_do|前置詞:to
+force_3	彼は自分の意見を変えることを強いられた。	force	change / opinion	He was forced to change his opinion.	SVO_to_do|v:force|文型:SVO+to_do|前置詞:to
+oblige_1	状況が彼女に決断を迫った。	oblige	situation / decide	The situation obliged her to decide.	SVO_to_do|v:oblige|文型:SVO+to_do|前置詞:to
+oblige_2	私は出席することを義務付けられている。	oblige	attend	I am obliged to attend.	SVO_to_do|v:oblige|文型:SVO+to_do|前置詞:to
+oblige_3	手伝っていただけるとありがたいのですが。	oblige	help	I would be obliged if you could help.	SVO_to_do|v:oblige|文型:SVO+to_do|前置詞:to
+urge_1	彼は私に決断を急ぐよう促した。	urge	decision / quickly	He urged me to make a decision quickly.	SVO_to_do|v:urge|文型:SVO+to_do|前置詞:to
+urge_2	彼女は政府に対策を取るよう求めた。	urge	government / action	She urged the government to take action.	SVO_to_do|v:urge|文型:SVO+to_do|前置詞:to
+urge_3	医者は彼にもっと休むよう強く勧めた。	urge	doctor / rest more	The doctor urged him to rest more.	SVO_to_do|v:urge|文型:SVO+to_do|前置詞:to
+want_1	私は彼女に来てほしい。	want	come	I want her to come.	SVO_to_do|v:want|文型:SVO+to_do|前置詞:to
+want_2	彼は誰にも知られたくない。	want	anyone / know	He doesn't want anyone to know.	SVO_to_do|v:want|文型:SVO+to_do|前置詞:to
+want_3	彼女は私に正直でいてほしかった。	want	honest	She wanted me to be honest.	SVO_to_do|v:want|文型:SVO+to_do|前置詞:to
+describe_1	彼は自分を専門家だと言っている。	describe	expert	He describes himself as an expert.	SVO_as_do|v:describe|文型:SVO+as|前置詞:as
+describe_2	彼女はその映画を傑作と評した。	describe	movie / masterpiece	She described the movie as a masterpiece.	SVO_as_do|v:describe|文型:SVO+as|前置詞:as
+describe_3	その事件は悲劇と表現された。	describe	incident / tragedy	The incident was described as a tragedy.	SVO_as_do|v:describe|文型:SVO+as|前置詞:as
+identify_1	科学者たちはそれを新種だと同定した。	identify	scientists / new species	Scientists identified it as a new species.	SVO_as_do|v:identify|文型:SVO+as|前置詞:as
+identify_2	警察は彼を容疑者と特定した。	identify	police / suspect	The police identified him as a suspect.	SVO_as_do|v:identify|文型:SVO+as|前置詞:as
+identify_3	その物質は有害だと判定された。	identify	substance / harmful	The substance was identified as harmful.	SVO_as_do|v:identify|文型:SVO+as|前置詞:as
+look on_1	私たちは彼女をリーダーだと思っている。	look on	leader	We look on her as a leader.	SVO_as_do|v:look_on|文型:SVO+as|前置詞:as
+look on_2	彼らは彼を英雄とみなした。	look on	hero	They looked on him as a hero.	SVO_as_do|v:look_on|文型:SVO+as|前置詞:as
+look on_3	その行為は裏切りだとみなされた。	look on	act / betrayal	The act was looked on as a betrayal.	SVO_as_do|v:look_on|文型:SVO+as|前置詞:as
+regard_1	私は彼を友人だと思っている。	regard	friend	I regard him as a friend.	SVO_as_do|v:regard|文型:SVO+as|前置詞:as
+regard_2	彼女はその経験を貴重なものとみなした。	regard	experience / valuable	She regarded the experience as valuable.	SVO_as_do|v:regard|文型:SVO+as|前置詞:as
+regard_3	その発言は侮辱とみなされた。	regard	remark / insult	The remark was regarded as an insult.	SVO_as_do|v:regard|文型:SVO+as|前置詞:as
+see_4	私は彼女を姉のように見ている。	see	sister	I see her as a sister.	SVO_as_do|v:see|文型:SVO+as|前置詞:as
+see_5	彼らは変化をチャンスと捉えた。	see	change / opportunity	They saw the change as an opportunity.	SVO_as_do|v:see|文型:SVO+as|前置詞:as
+see_6	その問題は深刻だと見られている。	see	problem / serious	The problem is seen as serious.	SVO_as_do|v:see|文型:SVO+as|前置詞:as
+take_4	私は彼女の沈黙を同意と受け取った。	take	silence / agreement	I took her silence as agreement.	SVO_as_do|v:take|文型:SVO+as|前置詞:as
+take_5	彼は私の冗談を本気に受け取った。	take	joke / serious	He took my joke as serious.	SVO_as_do|v:take|文型:SVO+as|前置詞:as
+take_6	彼女の笑顔は承認のしるしと受け取られた。	take	smile / sign / approval	Her smile was taken as a sign of approval.	SVO_as_do|v:take|文型:SVO+as|前置詞:as
+think of_1	私は彼のことを兄のように思っている。	think of	brother	I think of him as a brother.	SVO_as_do|v:think_of|文型:SVO+as|前置詞:as
+think of_2	彼女は自分を芸術家だと思っている。	think of	artist	She thinks of herself as an artist.	SVO_as_do|v:think_of|文型:SVO+as|前置詞:as
+think of_3	その計画は成功だとみなされた。	think of	plan / success	The plan was thought of as a success.	SVO_as_do|v:think_of|文型:SVO+as|前置詞:as
+view_1	専門家たちはその状況を危険だと見ている。	view	experts / situation / dangerous	Experts view the situation as dangerous.	SVO_as_do|v:view|文型:SVO+as|前置詞:as
+view_2	彼女はその変化を好機と見た。	view	change / opportunity	She viewed the change as an opportunity.	SVO_as_do|v:view|文型:SVO+as|前置詞:as
+view_3	その決定は間違いだと見られている。	view	decision / mistake	The decision is viewed as a mistake.	SVO_as_do|v:view|文型:SVO+as|前置詞:as
+advise_1	医者は彼に十分な睡眠をとるよう助言した。	advise	doctor / get / enough sleep	The doctor advised him to get enough sleep.	tell型/say型|V人to～|v:advise|文型:SVO+to_do
+advise_2	弁護士は彼女に何も言わないよう助言した。	advise	lawyer / say nothing	The lawyer advised her to say nothing.	tell型/say型|V人to～|v:advise|文型:SVO+to_do
+advise_3	先生は生徒たちにもっと多くの本を読むよう助言した。	advise	teacher / students / read / more books	The teacher advised the students to read more books.	tell型/say型|V人to～|v:advise|文型:SVO+to_do
+apologize_1	彼は彼女に遅刻したことを謝った。	apologize	being late	He apologized to her for being late.	tell型/say型|apologize_to人for～|v:apologize|文型:SVO+for|前置詞:to|前置詞:for
+apologize_2	彼女は上司に失礼な発言をしたことを謝罪した。	apologize	boss / rude remark	She apologized to her boss for her rude remark.	tell型/say型|apologize_to人for～|v:apologize|文型:SVO+for|前置詞:to|前置詞:for
+apologize_3	彼らは市民に迷惑をかけたことを公式に謝罪した。	apologize	citizens / inconvenience / officially	They officially apologized to the citizens for the inconvenience.	tell型/say型|apologize_to人for～|v:apologize|文型:SVO+for|前置詞:to|前置詞:for
+convince_1	彼女はなかなか自分の無実を信じてもらえなかった。	convince	innocence	She could not convince them of her innocence.	tell型/say型|V人of～|v:convince|文型:SVO+of|前置詞:of
+convince_2	その証拠が陪審員に彼の有罪を確信させた。	convince	evidence / jury / guilt	The evidence convinced the jury of his guilt.	tell型/say型|V人of～|v:convince|文型:SVO+of|前置詞:of
+convince_3	彼はようやく上司にその計画の価値を納得させた。	convince	boss / value / plan	He finally convinced his boss of the value of the plan.	tell型/say型|V人of～|v:convince|文型:SVO+of|前置詞:of
+convince_4	彼女は私に、その決断が正しいと納得させた。	convince	decision / right	She convinced me that the decision was right.	tell型/say型|V人that～|v:convince|文型:SVO+that
+convince_5	科学者たちはついに政府に、対策が必要だと納得させた。	convince	scientists / government / measures / necessary	The scientists finally convinced the government that measures were necessary.	tell型/say型|V人that～|v:convince|文型:SVO+that
+convince_6	彼はなかなか家族に、自分が大丈夫だと信じてもらえなかった。	convince	family / fine	He could not convince his family that he was fine.	tell型/say型|V人that～|v:convince|文型:SVO+that
+convince_7	彼女はなんとか彼に考えを変えさせた。	convince	change / mind	She managed to convince him to change his mind.	tell型/say型|V人to～|v:convince|文型:SVO+to_do
+convince_8	友人が私に医者に行くよう説き伏せた。	convince	friend / see / doctor	My friend convinced me to see a doctor.	tell型/say型|V人to～|v:convince|文型:SVO+to_do
+convince_9	彼らはなんとか社長に新しいシステムを導入させた。	convince	president / introduce / new system	They convinced the president to introduce a new system.	tell型/say型|V人to～|v:convince|文型:SVO+to_do
+explain_1	彼は私に、なぜ遅れたのかを説明した。	explain	reason / late	He explained to me why he was late.	tell型/say型|Vto人that～|v:explain|文型:SV+to人+that|前置詞:to
+explain_2	先生は生徒たちに、その規則が必要な理由を説明した。	explain	teacher / students / rule / necessary	The teacher explained to the students why the rule was necessary.	tell型/say型|Vto人that～|v:explain|文型:SV+to人+that|前置詞:to
+explain_3	医者は患者に、手術がどのように行われるかを説明した。	explain	doctor / patient / operation / performed	The doctor explained to the patient how the operation would be performed.	tell型/say型|Vto人that～|v:explain|文型:SV+to人+that|前置詞:to
+inform_1	警察は家族に事故のことを知らせた。	inform	police / family / accident	The police informed the family of the accident.	tell型/say型|V人of～|v:inform|文型:SVO+of|前置詞:of
+inform_2	会社は従業員に方針の変更を通知した。	inform	company / employees / change / policy	The company informed the employees of the change in policy.	tell型/say型|V人of～|v:inform|文型:SVO+of|前置詞:of
+inform_3	彼女はすぐに上司に結果を報告した。	inform	boss / result / immediately	She immediately informed her boss of the result.	tell型/say型|V人of～|v:inform|文型:SVO+of|前置詞:of
+inform_4	病院は彼女に、手術が成功したと知らせた。	inform	hospital / operation / successful	The hospital informed her that the operation was successful.	tell型/say型|V人that～|v:inform|文型:SVO+that
+inform_5	係員は乗客に、フライトが遅延していると知らせた。	inform	staff / passengers / flight / delayed	The staff informed the passengers that the flight was delayed.	tell型/say型|V人that～|v:inform|文型:SVO+that
+inform_6	大学は学生たちに、授業がオンラインになると通知した。	inform	university / students / classes / online	The university informed the students that the classes would be held online.	tell型/say型|V人that～|v:inform|文型:SVO+that
+persuade_1	彼はようやく委員会にその方針の必要性を納得させた。	persuade	committee / necessity / policy	He finally persuaded the committee of the necessity of the policy.	tell型/say型|V人of～|v:persuade|文型:SVO+of|前置詞:of
+persuade_2	弁護士はなんとか陪審員に依頼人の無実を信じさせた。	persuade	lawyer / jury / client's innocence	The lawyer managed to persuade the jury of his client's innocence.	tell型/say型|V人of～|v:persuade|文型:SVO+of|前置詞:of
+persuade_3	彼女は親にその計画の安全性を納得させることができなかった。	persuade	parents / safety / plan	She could not persuade her parents of the safety of the plan.	tell型/say型|V人of～|v:persuade|文型:SVO+of|前置詞:of
+persuade_4	彼は彼女に、その仕事が自分に向いていると納得させた。	persuade	job / suited	He persuaded her that the job was suited to him.	tell型/say型|V人that～|v:persuade|文型:SVO+that
+persuade_5	医者はようやく患者に、手術が必要だと納得させた。	persuade	doctor / patient / operation / necessary	The doctor finally persuaded the patient that the operation was necessary.	tell型/say型|V人that～|v:persuade|文型:SVO+that
+persuade_6	彼らは政府に、その政策が有効だと納得させることができなかった。	persuade	government / policy / effective	They could not persuade the government that the policy was effective.	tell型/say型|V人that～|v:persuade|文型:SVO+that
+persuade_7	彼女はなんとか父を説得して、留学を許してもらった。	persuade	father / study abroad	She managed to persuade her father to let her study abroad.	tell型/say型|V人to～|v:persuade|文型:SVO+to_do
+persuade_8	彼は友人を説得して、その考えを諦めさせた。	persuade	friend / give up / idea	He persuaded his friend to give up the idea.	tell型/say型|V人to～|v:persuade|文型:SVO+to_do
+persuade_9	医者はなんとか患者を説得して、禁煙させた。	persuade	doctor / patient / quit / smoking	The doctor managed to persuade the patient to quit smoking.	tell型/say型|V人to～|v:persuade|文型:SVO+to_do
+remind_1	この写真を見ると子どもの頃を思い出す。	remind	photo / childhood	This photo reminds me of my childhood.	tell型/say型|V人of～|v:remind|文型:SVO+of|前置詞:of
+remind_2	彼女の笑顔は私に亡き母を思い出させた。	remind	smile / late mother	Her smile reminded me of my late mother.	tell型/say型|V人of～|v:remind|文型:SVO+of|前置詞:of
+remind_3	その匂いは私に故郷を思い出させる。	remind	smell / hometown	The smell reminds me of my hometown.	tell型/say型|V人of～|v:remind|文型:SVO+of|前置詞:of
+remind_4	彼女は私に、会議が3時からだと念を押した。	remind	meeting / three o'clock	She reminded me that the meeting started at three o'clock.	tell型/say型|V人that～|v:remind|文型:SVO+that
+remind_5	この事件は私たちに、安全がいかに大切かを改めて教えてくれた。	remind	incident / safety / important	This incident reminded us that safety is very important.	tell型/say型|V人that～|v:remind|文型:SVO+that
+remind_6	彼は私に、締め切りが明日だということを思い出させてくれた。	remind	deadline / tomorrow	He reminded me that the deadline was tomorrow.	tell型/say型|V人that～|v:remind|文型:SVO+that
+remind_7	薬を飲み忘れないよう念を押してください。	remind	medicine	Please remind me to take my medicine.	tell型/say型|V人to～|v:remind|文型:SVO+to_do
+remind_8	彼女は彼にドアに鍵をかけるよう念を押した。	remind	lock / door	She reminded him to lock the door.	tell型/say型|V人to～|v:remind|文型:SVO+to_do
+remind_9	先生は生徒たちに宿題を提出するよう念を押した。	remind	teacher / students / submit / homework	The teacher reminded the students to submit their homework.	tell型/say型|V人to～|v:remind|文型:SVO+to_do
+say_1	彼は彼女に、もうすぐ戻ると言った。	say	back / soon	He said to her that he would be back soon.	tell型/say型|Vto人that～|v:say|文型:SV+to人+that|前置詞:to
+say_2	先生は生徒たちに、努力が大切だと言った。	say	teacher / students / effort / important	The teacher said to the students that effort was important.	tell型/say型|Vto人that～|v:say|文型:SV+to人+that|前置詞:to
+say_3	彼女は私に、その知らせを聞いてとても驚いたと言った。	say	surprised / news	She said to me that she was very surprised to hear the news.	tell型/say型|Vto人that～|v:say|文型:SV+to人+that|前置詞:to
+suggest_1	彼はもう一度やり直してみてはどうかと提案した。	suggest	try again	He suggested that I try again.	tell型/say型|Vto人that～|v:suggest|文型:SV+to人+that|前置詞:to
+suggest_2	医者は彼女がもっと休息をとるべきだと提案した。	suggest	doctor / rest / more	The doctor suggested that she should get more rest.	tell型/say型|Vto人that～|v:suggest|文型:SV+to人+that|前置詞:to
+suggest_3	上司は私にその計画を見直してはどうかと提案した。	suggest	boss / reconsider / plan	My boss suggested that I reconsider the plan.	tell型/say型|Vto人that～|v:suggest|文型:SV+to人+that|前置詞:to
+tell_1	彼女は手術のリスクについて知らされなかった。	tell	risks / operation	She was not told of the risks of the operation.	tell型/say型|V人of～|v:tell|文型:SVO+of|前置詞:of
+tell_2	誰も私たちにスケジュールの変更を知らせなかった。	tell	change / schedule	Nobody told us of the change in the schedule.	tell型/say型|V人of～|v:tell|文型:SVO+of|前置詞:of
+tell_3	彼はその決定について事前に知らされていた。	tell	decision / advance	He had been told of the decision in advance.	tell型/say型|V人of～|v:tell|文型:SVO+of|前置詞:of
+tell_4	医者は彼に、すぐに手術が必要だと告げた。	tell	doctor / operation / immediately	The doctor told him that he needed an operation immediately.	tell型/say型|V人that～|v:tell|文型:SVO+that
+tell_5	彼女は私に、その話は本当ではないと言った。	tell	story / true	She told me that the story was not true.	tell型/say型|V人that～|v:tell|文型:SVO+that
+tell_6	先生は生徒たちに、試験は延期されると伝えた。	tell	teacher / exam / postponed	The teacher told the students that the exam would be postponed.	tell型/say型|V人that～|v:tell|文型:SVO+that
+tell_7	医者は彼にタバコをやめるよう言った。	tell	doctor / stop / smoking	The doctor told him to stop smoking.	tell型/say型|V人to～|v:tell|文型:SVO+to_do
+tell_8	母は私に早く帰ってくるよう言った。	tell	mother / come home / early	My mother told me to come home early.	tell型/say型|V人to～|v:tell|文型:SVO+to_do
+tell_9	警察は群衆にその場を離れるよう命じた。	tell	police / crowd / leave	The police told the crowd to leave the area.	tell型/say型|V人to～|v:tell|文型:SVO+to_do
+warn_1	政府は国民に台風の危険を警告した。	warn	government / people / danger / typhoon	The government warned the people of the danger of the typhoon.	tell型/say型|V人of～|v:warn|文型:SVO+of|前置詞:of
+warn_2	先生は生徒たちにカンニングの結果を警告した。	warn	teacher / students / consequences / cheating	The teacher warned the students of the consequences of cheating.	tell型/say型|V人of～|v:warn|文型:SVO+of|前置詞:of
+warn_3	彼女はあらかじめリスクについて警告されていた。	warn	risks / beforehand	She had been warned of the risks beforehand.	tell型/say型|V人of～|v:warn|文型:SVO+of|前置詞:of
+warn_4	警察は市民に、その地域が危険だと警告した。	warn	police / citizens / area / dangerous	The police warned citizens that the area was dangerous.	tell型/say型|V人that～|v:warn|文型:SVO+that
+warn_5	天気予報は、嵐が近づいていると警告した。	warn	weather forecast / storm / approaching	The weather forecast warned that a storm was approaching.	tell型/say型|V人that～|v:warn|文型:SVO+that
+warn_6	医者は彼女に、このまま働き続ければ体を壊すと警告した。	warn	doctor / health / break down / keep working	The doctor warned her that her health would break down if she kept working.	tell型/say型|V人that～|v:warn|文型:SVO+that
+warn_7	警察は市民にその地域を避けるよう警告した。	warn	police / citizens / avoid / area	The police warned citizens to avoid the area.	tell型/say型|V人to～|v:warn|文型:SVO+to_do
+warn_8	医者は彼に無理をしないよう警告した。	warn	doctor / overwork	The doctor warned him not to overwork.	tell型/say型|V人to～|v:warn|文型:SVO+to_do
+warn_9	父は私に見知らぬ人についていかないよう警告した。	warn	father / strangers	My father warned me not to follow strangers.	tell型/say型|V人to～|v:warn|文型:SVO+to_do
+clear_1	彼は机の上を片付けた。	clear	desk / papers	He cleared his desk of the papers.	rob型/provide型|V人of物|v:clear|文型:SVO+of|前置詞:of
+clear_2	彼女は排水溝の雪を取り除いた。	clear	drain / snow	She cleared the drain of snow.	rob型/provide型|V人of物|v:clear|文型:SVO+of|前置詞:of
+clear_3	警察は道路から障害物を取り除いた。	clear	police / road / obstacles	The police cleared the road of obstacles.	rob型/provide型|V人of物|v:clear|文型:SVO+of|前置詞:of
+confront_1	記者は大臣に矛盾した発言を突きつけた。	confront	reporter / minister / contradictory statements	The reporter confronted the minister with his contradictory statements.	rob型/provide型|face/confrontAwithB|v:confront|文型:SVO+with|前置詞:with
+confront_2	彼女は夫に不誠実な行動の証拠を突きつけた。	confront	husband / evidence / dishonest behavior	She confronted her husband with evidence of his dishonest behavior.	rob型/provide型|face/confrontAwithB|v:confront|文型:SVO+with|前置詞:with
+confront_3	上司は彼に業績不振のデータを突きつけた。	confront	boss / data / poor performance	The boss confronted him with data showing his poor performance.	rob型/provide型|face/confrontAwithB|v:confront|文型:SVO+with|前置詞:with
+cure_1	その薬は彼の病気を治した。	cure	medicine / disease	The medicine cured him of his disease.	rob型/provide型|V人of物|v:cure|文型:SVO+of|前置詞:of
+cure_2	旅行が彼女の退屈を紛らわせた。	cure	trip / boredom	The trip cured her of her boredom.	rob型/provide型|V人of物|v:cure|文型:SVO+of|前置詞:of
+cure_3	その経験は彼の怠け癖を直した。	cure	experience / lazy habit	The experience cured him of his lazy habit.	rob型/provide型|V人of物|v:cure|文型:SVO+of|前置詞:of
+deprive_1	戦争は多くの子どもたちから教育の機会を奪った。	deprive	war / children / education	The war deprived many children of their education.	rob型/provide型|V人of物|v:deprive|文型:SVO+of|前置詞:of
+deprive_2	睡眠不足は人から判断力を奪う。	deprive	lack of sleep / judgment	Lack of sleep deprives people of their judgment.	rob型/provide型|V人of物|v:deprive|文型:SVO+of|前置詞:of
+deprive_3	その規制は市民から基本的権利を奪うものだと批判された。	deprive	regulation / citizens / basic rights	The regulation was criticized for depriving citizens of their basic rights.	rob型/provide型|V人of物|v:deprive|文型:SVO+of|前置詞:of
+endow_1	彼女は生まれつき音楽の才能に恵まれている。	endow	musical talent	She is endowed with musical talent.	rob型/provide型|V人with物|v:endow|文型:SVO+with|前置詞:with
+endow_2	その地域は豊かな天然資源に恵まれている。	endow	region / rich natural resources	The region is endowed with rich natural resources.	rob型/provide型|V人with物|v:endow|文型:SVO+with|前置詞:with
+endow_3	彼は生まれながらにリーダーシップの資質を持っている。	endow	leadership qualities	He is endowed with leadership qualities.	rob型/provide型|V人with物|v:endow|文型:SVO+with|前置詞:with
+equip_1	その学校はすべての教室にコンピューターを備え付けた。	equip	school / classrooms / computers	The school equipped all classrooms with computers.	rob型/provide型|V人with物|v:equip|文型:SVO+with|前置詞:with
+equip_2	登山家たちは最新の道具を持って山に挑んだ。	equip	climbers / latest tools	The climbers were equipped with the latest tools.	rob型/provide型|V人with物|v:equip|文型:SVO+with|前置詞:with
+equip_3	その訓練は兵士たちに実戦に必要なスキルを身につけさせた。	equip	training / soldiers / skills / combat	The training equipped the soldiers with the skills needed for combat.	rob型/provide型|V人with物|v:equip|文型:SVO+with|前置詞:with
+face_1	警察は容疑者に証拠を突きつけた。	face	police / suspect / evidence	The police faced the suspect with the evidence.	rob型/provide型|face/confrontAwithB|v:face|文型:SVO+with|前置詞:with
+face_2	彼女は彼に冷酷な事実を突きつけた。	face	harsh facts	She faced him with the harsh facts.	rob型/provide型|face/confrontAwithB|v:face|文型:SVO+with|前置詞:with
+face_3	裁判官は被告に目撃者の証言を突きつけた。	face	judge / defendant / witness testimony	The judge faced the defendant with the witness testimony.	rob型/provide型|face/confrontAwithB|v:face|文型:SVO+with|前置詞:with
+feed_1	その川は村に清潔な水を供給している。	feed	river / village / clean water	The river feeds the village with clean water.	rob型/provide型|V人with物|v:feed|文型:SVO+with|前置詞:with
+feed_2	その発電所は何千もの家庭に電力を供給している。	feed	power plant / thousands of homes / electricity	The power plant feeds thousands of homes with electricity.	rob型/provide型|V人with物|v:feed|文型:SVO+with|前置詞:with
+feed_3	そのパイプラインは都市にガスを供給している。	feed	pipeline / city / gas	The pipeline feeds the city with gas.	rob型/provide型|V人with物|v:feed|文型:SVO+with|前置詞:with
+fill_1	彼女はコップを水で満たした。	fill	glass / water	She filled the glass with water.	rob型/provide型|fillAwithB|v:fill|文型:SVO+with|前置詞:with
+fill_2	その知らせは彼を希望で満たした。	fill	news / hope	The news filled him with hope.	rob型/provide型|fillAwithB|v:fill|文型:SVO+with|前置詞:with
+fill_3	その部屋は笑い声で満ちていた。	fill	room / laughter	The room was filled with laughter.	rob型/provide型|fillAwithB|v:fill|文型:SVO+with|前置詞:with
+furnish_1	その会社は新入社員にラップトップを支給した。	furnish	company / new employees / laptops	The company furnished new employees with laptops.	rob型/provide型|V人with物|v:furnish|文型:SVO+with|前置詞:with
+furnish_2	家主はアパートに家具を備え付けた。	furnish	landlord / apartment / furniture	The landlord furnished the apartment with furniture.	rob型/provide型|V人with物|v:furnish|文型:SVO+with|前置詞:with
+furnish_3	彼女は弁護士に必要な書類を提供した。	furnish	lawyer / necessary documents	She furnished the lawyer with the necessary documents.	rob型/provide型|V人with物|v:furnish|文型:SVO+with|前置詞:with
+present_1	委員会は優勝者に賞を授与した。	present	committee / winner / prize	The committee presented the winner with a prize.	rob型/provide型|V人with物|v:present|文型:SVO+with|前置詞:with
+present_2	彼は彼女に花束を贈った。	present	bouquet of flowers	He presented her with a bouquet of flowers.	rob型/provide型|V人with物|v:present|文型:SVO+with|前置詞:with
+present_3	市長は消防士たちに勇気の証明書を授与した。	present	mayor / firefighters / certificate of bravery	The mayor presented the firefighters with a certificate of bravery.	rob型/provide型|V人with物|v:present|文型:SVO+with|前置詞:with
+provide_1	政府は被災者に食料を提供した。	provide	government / victims / food	The government provided the victims with food.	rob型/provide型|V人with物|v:provide|文型:SVO+with|前置詞:with
+provide_2	その奨学金は彼女に留学の機会を与えた。	provide	scholarship / opportunity / study abroad	The scholarship provided her with an opportunity to study abroad.	rob型/provide型|V人with物|v:provide|文型:SVO+with|前置詞:with
+provide_3	その会社は従業員に最新の設備を提供した。	provide	company / employees / latest equipment	The company provided its employees with the latest equipment.	rob型/provide型|V人with物|v:provide|文型:SVO+with|前置詞:with
+relieve_1	その薬は彼の痛みを和らげた。	relieve	medicine / pain	The medicine relieved him of his pain.	rob型/provide型|V人of物|v:relieve|文型:SVO+of|前置詞:of
+relieve_2	彼女は彼の不安を和らげようとした。	relieve	anxiety	She tried to relieve him of his anxiety.	rob型/provide型|V人of物|v:relieve|文型:SVO+of|前置詞:of
+relieve_3	彼は重大な責任から解放された。	relieve	heavy responsibility	He was relieved of his heavy responsibility.	rob型/provide型|V人of物|v:relieve|文型:SVO+of|前置詞:of
+rid_1	私はその古い習慣を取り除きたい。	rid	old habit	I want to rid myself of that old habit.	rob型/provide型|V人of物|v:rid|文型:SVO+of|前置詞:of
+rid_2	彼女はようやく借金を返済した。	rid	debt	She finally rid herself of her debt.	rob型/provide型|V人of物|v:rid|文型:SVO+of|前置詞:of
+rid_3	その都市はネズミの問題を解決しようとしている。	rid	city / rat problem	The city is trying to rid itself of its rat problem.	rob型/provide型|V人of物|v:rid|文型:SVO+of|前置詞:of
+rob_1	彼は路上で財布を奪われた。	rob	wallet / street	He was robbed of his wallet on the street.	rob型/provide型|V人of物|v:rob|文型:SVO+of|前置詞:of
+rob_2	その事故は彼から視力を奪った。	rob	accident / sight	The accident robbed him of his sight.	rob型/provide型|V人of物|v:rob|文型:SVO+of|前置詞:of
+rob_3	長い入院生活が彼女から自信を奪った。	rob	long hospital stay / confidence	The long hospital stay robbed her of her confidence.	rob型/provide型|V人of物|v:rob|文型:SVO+of|前置詞:of
+supply_1	その工場は近隣の家庭に電力を供給している。	supply	factory / nearby homes / electricity	The factory supplies nearby homes with electricity.	rob型/provide型|V人with物|v:supply|文型:SVO+with|前置詞:with
+supply_2	政府は学校に教科書を供給した。	supply	government / schools / textbooks	The government supplied the schools with textbooks.	rob型/provide型|V人with物|v:supply|文型:SVO+with|前置詞:with
+supply_3	その農場は市場に新鮮な野菜を供給している。	supply	farm / market / fresh vegetables	The farm supplies the market with fresh vegetables.	rob型/provide型|V人with物|v:supply|文型:SVO+with|前置詞:with
+admire_1	みんなが彼の勇気を称えた。	admire	courage	Everyone admired him for his courage.	thank型/persuade型/prevent型|V人for～|v:admire|文型:SVO+for|前置詞:for
+admire_2	彼女は忍耐力を称えられた。	admire	patience	She was admired for her patience.	thank型/persuade型/prevent型|V人for～|v:admire|文型:SVO+for|前置詞:for
+admire_3	世界中の人々が彼女の業績を賞賛した。	admire	people around the world / achievements	People around the world admired her for her achievements.	thank型/persuade型/prevent型|V人for～|v:admire|文型:SVO+for|前置詞:for
+ban_1	その国は企業が特定の化学物質を使用することを禁止した。	ban	country / companies / using / certain chemicals	The country banned companies from using certain chemicals.	thank型/persuade型/prevent型|V人from-ing|v:ban|文型:SVO+from_-ing|前置詞:from
+ban_2	その施設は来館者が館内で喫煙することを禁止している。	ban	facility / visitors / smoking / premises	The facility bans visitors from smoking on its premises.	thank型/persuade型/prevent型|V人from-ing|v:ban|文型:SVO+from_-ing|前置詞:from
+ban_3	選手はドーピング違反で試合への出場を禁じられた。	ban	athlete / competing / doping violation	The athlete was banned from competing for a doping violation.	thank型/persuade型/prevent型|V人from-ing|v:ban|文型:SVO+from_-ing|前置詞:from
+blame_1	彼らは事故の責任を運転手のせいにした。	blame	driver / accident	They blamed the driver for the accident.	thank型/persuade型/prevent型|V人for～|v:blame|文型:SVO+for|前置詞:for
+blame_2	彼女は失敗を自分のせいだと思っていた。	blame	failure	She blamed herself for the failure.	thank型/persuade型/prevent型|V人for～|v:blame|文型:SVO+for|前置詞:for
+blame_3	彼らはプロジェクトの失敗をマネージャーのせいにした。	blame	manager / project's failure	They blamed the manager for the project's failure.	thank型/persuade型/prevent型|V人for～|v:blame|文型:SVO+for|前置詞:for
+criticize_1	批評家たちはその政策の曖昧さを批判した。	criticize	critics / policy / vagueness	The critics criticized the policy for its vagueness.	thank型/persuade型/prevent型|criticize人for～|v:criticize|文型:SVO+for|前置詞:for
+criticize_2	彼は約束を守らなかったことで批判された。	criticize	breaking / promise	He was criticized for breaking his promise.	thank型/persuade型/prevent型|criticize人for～|v:criticize|文型:SVO+for|前置詞:for
+criticize_3	メディアは政府の対応の遅さを批判した。	criticize	media / government / slow response	The media criticized the government for its slow response.	thank型/persuade型/prevent型|criticize人for～|v:criticize|文型:SVO+for|前置詞:for
+discourage_1	高い税金は企業の投資意欲を削いでいる。	discourage	high taxes / companies / investing	High taxes discourage companies from investing.	thank型/persuade型/prevent型|V人from-ing|v:discourage|文型:SVO+from_-ing|前置詞:from
+discourage_2	その失敗は彼女が再挑戦する意欲を失わせた。	discourage	failure / trying again	The failure discouraged her from trying again.	thank型/persuade型/prevent型|V人from-ing|v:discourage|文型:SVO+from_-ing|前置詞:from
+discourage_3	親は子どもが危険なスポーツをしないよう諭した。	discourage	parents / child / dangerous sports	The parents discouraged their child from playing dangerous sports.	thank型/persuade型/prevent型|V人from-ing|v:discourage|文型:SVO+from_-ing|前置詞:from
+fine_1	彼は駐車違反で罰金を科された。	fine	illegal parking	He was fined for illegal parking.	thank型/persuade型/prevent型|V人for～|v:fine|文型:SVO+for|前置詞:for
+fine_2	その会社は環境規制に違反したとして罰金を科された。	fine	company / violating environmental regulations	The company was fined for violating environmental regulations.	thank型/persuade型/prevent型|V人for～|v:fine|文型:SVO+for|前置詞:for
+fine_3	彼女はスピード違反で5万円の罰金を科された。	fine	speeding / 50,000 yen	She was fined 50,000 yen for speeding.	thank型/persuade型/prevent型|V人for～|v:fine|文型:SVO+for|前置詞:for
+grateful_1	私は助けてくれたことに対して彼女にとても感謝している。	be grateful	help	I am very grateful to her for her help.	thank型/persuade型/prevent型|be_grateful_to人for～|v:be_grateful|文型:SVO+for|前置詞:to|前置詞:for
+grateful_2	彼はアドバイスをくれた先生にとても感謝していた。	be grateful	teacher / advice	He was very grateful to his teacher for the advice.	thank型/persuade型/prevent型|be_grateful_to人for～|v:be_grateful|文型:SVO+for|前置詞:to|前置詞:for
+grateful_3	私たちはご支援いただいた皆様に心より感謝申し上げます。	be grateful	support	We are deeply grateful to everyone for their support.	thank型/persuade型/prevent型|be_grateful_to人for～|v:be_grateful|文型:SVO+for|前置詞:to|前置詞:for
+keep_1	仕事の忙しさが彼女の旅行を妨げた。	keep	busy work / traveling	Busy work kept her from traveling.	thank型/persuade型/prevent型|V人from-ing|v:keep|文型:SVO+from_-ing|前置詞:from
+keep_2	その騒音が私の勉強を妨げた。	keep	noise / studying	The noise kept me from studying.	thank型/persuade型/prevent型|V人from-ing|v:keep|文型:SVO+from_-ing|前置詞:from
+keep_3	雪が私たちが時間通りに到着するのを妨げた。	keep	snow / arriving / time	The snow kept us from arriving on time.	thank型/persuade型/prevent型|V人from-ing|v:keep|文型:SVO+from_-ing|前置詞:from
+persuade_into_1	彼女はなんとか彼に契約書に署名させた。	persuade	signing / contract	She persuaded him into signing the contract.	thank型/persuade型/prevent型|V人into-ing|v:persuade|文型:SVO+into_-ing|前置詞:into
+persuade_into_2	友人が私にボランティアプログラムに参加するよう説き伏せた。	persuade	friend / joining / volunteer program	My friend persuaded me into joining the volunteer program.	thank型/persuade型/prevent型|V人into-ing|v:persuade|文型:SVO+into_-ing|前置詞:into
+persuade_into_3	彼らはなんとか社長にその提案を受け入れさせた。	persuade	president / accepting / proposal	They persuaded the president into accepting the proposal.	thank型/persuade型/prevent型|V人into-ing|v:persuade|文型:SVO+into_-ing|前置詞:into
+persuade_out_1	彼女はなんとか彼にその危険な計画を試みることを諦めさせた。	persuade	attempting / dangerous plan	She persuaded him out of attempting the dangerous plan.	thank型/persuade型/prevent型|V人out_of-ing|v:persuade|文型:SVO+out_of_-ing|前置詞:out_of
+persuade_out_2	友人が私に仕事を辞めることを思いとどまらせた。	persuade	friend / quitting / job	My friend persuaded me out of quitting my job.	thank型/persuade型/prevent型|V人out_of-ing|v:persuade|文型:SVO+out_of_-ing|前置詞:out_of
+persuade_out_3	親は息子に大学を中退することを思いとどまらせた。	persuade	parents / son / dropping out / university	The parents persuaded their son out of dropping out of university.	thank型/persuade型/prevent型|V人out_of-ing|v:persuade|文型:SVO+out_of_-ing|前置詞:out_of
+praise_1	先生は彼の努力を褒めた。	praise	teacher / effort	The teacher praised him for his effort.	thank型/persuade型/prevent型|V人for～|v:praise|文型:SVO+for|前置詞:for
+praise_2	批評家たちはその映画の独創性を高く評価した。	praise	critics / originality / film	The critics praised the film for its originality.	thank型/persuade型/prevent型|V人for～|v:praise|文型:SVO+for|前置詞:for
+praise_3	彼女は正直な対応を褒められた。	praise	honest response	She was praised for her honest response.	thank型/persuade型/prevent型|V人for～|v:praise|文型:SVO+for|前置詞:for
+prevent_1	悪天候が私たちの外出を妨げた。	prevent	bad weather / going out	Bad weather prevented us from going out.	thank型/persuade型/prevent型|V人from-ing|v:prevent|文型:SVO+from_-ing|前置詞:from
+prevent_2	その柵は子どもたちが川に近づくのを防いだ。	prevent	fence / children / approaching / river	The fence prevented the children from approaching the river.	thank型/persuade型/prevent型|V人from-ing|v:prevent|文型:SVO+from_-ing|前置詞:from
+prevent_3	けがが彼の試合への出場を妨げた。	prevent	injury / playing / match	The injury prevented him from playing in the match.	thank型/persuade型/prevent型|V人from-ing|v:prevent|文型:SVO+from_-ing|前置詞:from
+prohibit_1	法律はその地域での狩猟を人々に禁じている。	prohibit	law / people / hunting / area	The law prohibits people from hunting in the area.	thank型/persuade型/prevent型|V人from-ing|v:prohibit|文型:SVO+from_-ing|前置詞:from
+prohibit_2	その規則は学生が携帯電話を使うことを禁じている。	prohibit	rule / students / using / phones	The rule prohibits students from using their phones.	thank型/persuade型/prevent型|V人from-ing|v:prohibit|文型:SVO+from_-ing|前置詞:from
+prohibit_3	その条約は各国が核兵器を使用することを禁止している。	prohibit	treaty / countries / using / nuclear weapons	The treaty prohibits countries from using nuclear weapons.	thank型/persuade型/prevent型|V人from-ing|v:prohibit|文型:SVO+from_-ing|前置詞:from
+punish_1	彼は規則を破ったことで罰せられた。	punish	breaking the rules	He was punished for breaking the rules.	thank型/persuade型/prevent型|V人for～|v:punish|文型:SVO+for|前置詞:for
+punish_2	親は子どもを嘘をついたことで罰した。	punish	parents / child / lying	The parents punished the child for lying.	thank型/persuade型/prevent型|V人for～|v:punish|文型:SVO+for|前置詞:for
+punish_3	その国は汚職で有罪となった官僚を処罰した。	punish	country / officials / corruption	The country punished the officials for corruption.	thank型/persuade型/prevent型|V人for～|v:punish|文型:SVO+for|前置詞:for
+save_1	彼のアドバイスのおかげで私は大きなミスをせずに済んだ。	save	advice / making / serious mistake	His advice saved me from making a serious mistake.	thank型/persuade型/prevent型|V人from-ing|v:save|文型:SVO+from_-ing|前置詞:from
+save_2	シートベルトが彼女を重傷を負うことから救った。	save	seatbelt / being seriously injured	The seatbelt saved her from being seriously injured.	thank型/persuade型/prevent型|V人from-ing|v:save|文型:SVO+from_-ing|前置詞:from
+save_3	ワクチンは多くの人々が重い病気にかかるのを防いだ。	save	vaccine / many people / serious illness	The vaccine saved many people from serious illness.	thank型/persuade型/prevent型|V人from-ing|v:save|文型:SVO+from_-ing|前置詞:from
+stop_1	何があなたを試みることを妨げているのですか。	stop	trying	What is stopping you from trying?	thank型/persuade型/prevent型|V人from-ing|v:stop|文型:SVO+from_-ing|前置詞:from
+stop_2	痛みが彼の眠りを妨げた。	stop	pain / sleeping	The pain stopped him from sleeping.	thank型/persuade型/prevent型|V人from-ing|v:stop|文型:SVO+from_-ing|前置詞:from
+stop_3	その規制は企業が市場を独占するのを妨げる。	stop	regulation / companies / monopolizing / market	The regulation stops companies from monopolizing the market.	thank型/persuade型/prevent型|V人from-ing|v:stop|文型:SVO+from_-ing|前置詞:from
+talk_into_1	彼は彼女を説得して、その仕事を引き受けさせた。	talk	accept / job	He talked her into accepting the job.	thank型/persuade型/prevent型|V人into-ing|v:talk|文型:SVO+into_-ing|前置詞:into
+talk_into_2	友人が私を説得して、パーティーに参加させた。	talk	friend / join / party	My friend talked me into joining the party.	thank型/persuade型/prevent型|V人into-ing|v:talk|文型:SVO+into_-ing|前置詞:into
+talk_into_3	彼女は夫を説得して、新しい車を買わせた。	talk	husband / buying / new car	She talked her husband into buying a new car.	thank型/persuade型/prevent型|V人into-ing|v:talk|文型:SVO+into_-ing|前置詞:into
+talk_out_1	彼は彼女にその無謀な投資をやめさせた。	talk	reckless investment	He talked her out of the reckless investment.	thank型/persuade型/prevent型|V人out_of-ing|v:talk|文型:SVO+out_of_-ing|前置詞:out_of
+talk_out_2	医者は患者に手術を断ることを思いとどまらせた。	talk	doctor / patient / refusing / operation	The doctor talked the patient out of refusing the operation.	thank型/persuade型/prevent型|V人out_of-ing|v:talk|文型:SVO+out_of_-ing|前置詞:out_of
+talk_out_3	彼女はなんとか弟に家出を思いとどまらせた。	talk	younger brother / running away	She managed to talk her younger brother out of running away.	thank型/persuade型/prevent型|V人out_of-ing|v:talk|文型:SVO+out_of_-ing|前置詞:out_of
+thank_1	彼女は助けてくれたことに対して私に感謝した。	thank	help	She thanked me for my help.	thank型/persuade型/prevent型|V人for～|v:thank|文型:SVO+for|前置詞:for
+thank_2	私たちは温かいもてなしに対して彼らに感謝した。	thank	warm hospitality	We thanked them for their warm hospitality.	thank型/persuade型/prevent型|V人for～|v:thank|文型:SVO+for|前置詞:for
+thank_3	彼は励ましてくれたことに対して先生に感謝した。	thank	teacher / encouragement	He thanked his teacher for her encouragement.	thank型/persuade型/prevent型|V人for～|v:thank|文型:SVO+for|前置詞:for
+advocate_1	彼女は死刑制度を廃止すべきだと主張した。	advocate	death penalty / abolished	She advocated that the death penalty be abolished.	suggest型/think型|V_that_should|v:advocate|文型:V+that_should
+advocate_2	その団体は教育予算を増やすべきだと主張した。	advocate	organization / education budget / increased	The organization advocated that the education budget be increased.	suggest型/think型|V_that_should|v:advocate|文型:V+that_should
+advocate_3	専門家はより厳しい規制を設けるべきだと主張した。	advocate	expert / stricter regulations / introduced	The expert advocated that stricter regulations be introduced.	suggest型/think型|V_that_should|v:advocate|文型:V+that_should
+afraid_1	彼女は暗闇を怖がっている。	be afraid	dark	She is afraid of the dark.	suggest型/think型|be_afraid_of|v:be_afraid|文型:be+形容詞+of|前置詞:of
+afraid_2	彼は失敗することを恐れていた。	be afraid	failing	He was afraid of failing.	suggest型/think型|be_afraid_of|v:be_afraid|文型:be+形容詞+of|前置詞:of
+afraid_3	多くの人が変化を恐れる。	be afraid	change	Many people are afraid of change.	suggest型/think型|be_afraid_of|v:be_afraid|文型:be+形容詞+of|前置詞:of
+ashamed_1	彼は自分の行動を恥ずかしく思った。	be ashamed	behavior	He was ashamed of his behavior.	suggest型/think型|be_ashamed_of|v:be_ashamed|文型:be+形容詞+of|前置詞:of
+ashamed_2	彼女は嘘をついたことを恥じていた。	be ashamed	lying	She was ashamed of lying.	suggest型/think型|be_ashamed_of|v:be_ashamed|文型:be+形容詞+of|前置詞:of
+ashamed_3	あなたはそのような発言を恥ずかしく思うべきだ。	be ashamed	such a remark	You should be ashamed of such a remark.	suggest型/think型|be_ashamed_of|v:be_ashamed|文型:be+形容詞+of|前置詞:of
+ask_u4_1	彼は私たちに静かにするよう頼んだ。	ask	quiet	He asked that we be quiet.	suggest型/think型|V_that_should|v:ask|文型:V+that_should
+ask_u4_2	彼女は報告書を明日までに提出するよう頼んだ。	ask	report / submitted / tomorrow	She asked that the report be submitted by tomorrow.	suggest型/think型|V_that_should|v:ask|文型:V+that_should
+ask_u4_3	生徒たちは試験を延期するよう頼んだ。	ask	students / exam / postponed	The students asked that the exam be postponed.	suggest型/think型|V_that_should|v:ask|文型:V+that_should
+aware_1	彼女はその問題の深刻さに気づいていた。	be aware	seriousness / problem	She was aware of the seriousness of the problem.	suggest型/think型|be_aware_of|v:be_aware|文型:be+形容詞+of|前置詞:of
+aware_2	あなたはその規則を知っていますか。	be aware	rule	Are you aware of the rule?	suggest型/think型|be_aware_of|v:be_aware|文型:be+形容詞+of|前置詞:of
+aware_3	私たちは自分たちの行動がもたらすリスクを認識していた。	be aware	risks / actions	We were aware of the risks of our actions.	suggest型/think型|be_aware_of|v:be_aware|文型:be+形容詞+of|前置詞:of
+careful_1	濡れた床に気をつけてください。	be careful	wet floor	Please be careful of the wet floor.	suggest型/think型|be_careful_of|v:be_careful|文型:be+形容詞+of|前置詞:of
+careful_2	見知らぬ人には気をつけなさい。	be careful	strangers	Be careful of strangers.	suggest型/think型|be_careful_of|v:be_careful|文型:be+形容詞+of|前置詞:of
+careful_3	個人情報には気をつけるべきだ。	be careful	personal information	You should be careful of your personal information.	suggest型/think型|be_careful_of|v:be_careful|文型:be+形容詞+of|前置詞:of
+complain_1	彼は給料が低いと不満を言った。	complain	low salary	He complained of a low salary.	suggest型/think型|V_of/V_that|v:complain
+complain_2	彼女はずっと頭痛を訴えていた。	complain	headache	She had been complaining of a headache.	suggest型/think型|V_of/V_that|v:complain
+complain_3	彼は待ち時間が長すぎると不満を言った。	complain	waiting time / too long	He complained that the waiting time was too long.	suggest型/think型|V_of/V_that|v:complain
+conscious_1	彼女は自分の外見をとても気にしている。	be conscious	appearance	She is very conscious of her appearance.	suggest型/think型|be_conscious_of|v:be_conscious|文型:be+形容詞+of|前置詞:of
+conscious_2	優れたリーダーは自分の言葉の影響力を意識している。	be conscious	impact / words	A good leader is conscious of the impact of their words.	suggest型/think型|be_conscious_of|v:be_conscious|文型:be+形容詞+of|前置詞:of
+conscious_3	彼は環境への影響を常に意識している。	be conscious	environmental impact	He is always conscious of the environmental impact.	suggest型/think型|be_conscious_of|v:be_conscious|文型:be+形容詞+of|前置詞:of
+decide_1	委員会はその提案を採用することを決定した。	decide	committee / proposal / adopted	The committee decided that the proposal be adopted.	suggest型/think型|V_that_should|v:decide|文型:V+that_should
+decide_2	彼らは新しいシステムを導入することを決めた。	decide	new system / introduced	They decided that a new system be introduced.	suggest型/think型|V_that_should|v:decide|文型:V+that_should
+decide_3	取締役会は工場を閉鎖することを決定した。	decide	board / factory / closed	The board decided that the factory be closed.	suggest型/think型|V_that_should|v:decide|文型:V+that_should
+demand_1	労働者たちは賃金の引き上げを要求した。	demand	workers / wages / raised	The workers demanded that their wages be raised.	suggest型/think型|V_that_should|v:demand|文型:V+that_should
+demand_2	彼女は状況について説明するよう強く求めた。	demand	situation / explained	She demanded that the situation be explained.	suggest型/think型|V_that_should|v:demand|文型:V+that_should
+demand_3	市民は汚職を調査するよう求めた。	demand	citizens / corruption / investigated	The citizens demanded that the corruption be investigated.	suggest型/think型|V_that_should|v:demand|文型:V+that_should
+dream_1	彼女はいつか宇宙飛行士になることを夢見ている。	dream	becoming / astronaut	She dreams of becoming an astronaut.	suggest型/think型|V_of/V_that|v:dream
+dream_2	彼は海外で生活することを夢見ていた。	dream	living abroad	He dreamed of living abroad.	suggest型/think型|V_of/V_that|v:dream
+dream_3	私はそんなことをするとは夢にも思わなかった。	dream	doing such a thing	I never dreamed that I would do such a thing.	suggest型/think型|V_of/V_that|v:dream
+ignorant_1	彼はその法律を知らなかった。	be ignorant	law	He was ignorant of the law.	suggest型/think型|be_ignorant_of|v:be_ignorant|文型:be+形容詞+of|前置詞:of
+ignorant_2	彼女は自分の権利を知らなかった。	be ignorant	rights	She was ignorant of her rights.	suggest型/think型|be_ignorant_of|v:be_ignorant|文型:be+形容詞+of|前置詞:of
+ignorant_3	多くの人がその問題の深刻さに気づいていなかった。	be ignorant	seriousness / problem	Many people were ignorant of the seriousness of the problem.	suggest型/think型|be_ignorant_of|v:be_ignorant|文型:be+形容詞+of|前置詞:of
+insist_1	彼はもう一度チャンスを与えるよう主張した。	insist	given / another chance	He insisted that he be given another chance.	suggest型/think型|V_that_should|v:insist|文型:V+that_should
+insist_2	彼女は全員が規則に従うべきだと主張した。	insist	everyone / follow / rules	She insisted that everyone follow the rules.	suggest型/think型|V_that_should|v:insist|文型:V+that_should
+insist_3	上司は報告書をすぐに提出するよう強く求めた。	insist	boss / report / submitted / immediately	The boss insisted that the report be submitted immediately.	suggest型/think型|V_that_should|v:insist|文型:V+that_should
+order_1	裁判官は被告を釈放するよう命じた。	order	judge / defendant / released	The judge ordered that the defendant be released.	suggest型/think型|V_that_should|v:order|文型:V+that_should
+order_2	司令官は部隊を撤退させるよう命令した。	order	commander / troops / withdraw	The commander ordered that the troops withdraw.	suggest型/think型|V_that_should|v:order|文型:V+that_should
+order_3	医者は彼に完全な安静を命じた。	order	doctor / complete rest	The doctor ordered that he have complete rest.	suggest型/think型|V_that_should|v:order|文型:V+that_should
+propose_1	彼は会議を来週に延期することを提案した。	propose	meeting / postponed / next week	He proposed that the meeting be postponed until next week.	suggest型/think型|V_that_should|v:propose|文型:V+that_should
+propose_2	彼女は新しい制度を導入することを提案した。	propose	new system / introduced	She proposed that a new system be introduced.	suggest型/think型|V_that_should|v:propose|文型:V+that_should
+propose_3	市長は公園を拡張することを提案した。	propose	mayor / park / expanded	The mayor proposed that the park be expanded.	suggest型/think型|V_that_should|v:propose|文型:V+that_should
+proud_1	彼女は息子の成績を誇りに思っている。	be proud	son's achievement	She is proud of her son's achievement.	suggest型/think型|be_proud_of|v:be_proud|文型:be+形容詞+of|前置詞:of
+proud_2	私たちは自分たちの伝統を誇りに思っている。	be proud	tradition	We are proud of our tradition.	suggest型/think型|be_proud_of|v:be_proud|文型:be+形容詞+of|前置詞:of
+proud_3	彼は自分の仕事に誇りを持っていた。	be proud	work	He was proud of his work.	suggest型/think型|be_proud_of|v:be_proud|文型:be+形容詞+of|前置詞:of
+recommend_1	専門家は定期的な運動をするよう勧めた。	recommend	expert / exercise / regularly	The expert recommended that we exercise regularly.	suggest型/think型|V_that_should|v:recommend|文型:V+that_should
+recommend_2	医者は彼にすぐに手術を受けるよう勧めた。	recommend	doctor / operation / immediately	The doctor recommended that he have an operation immediately.	suggest型/think型|V_that_should|v:recommend|文型:V+that_should
+recommend_3	委員会はその方針を改定するよう勧告した。	recommend	committee / policy / revised	The committee recommended that the policy be revised.	suggest型/think型|V_that_should|v:recommend|文型:V+that_should
+request_1	彼女は会議を延期するよう求めた。	request	meeting / postponed	She requested that the meeting be postponed.	suggest型/think型|V_that_should|v:request|文型:V+that_should
+request_2	病院はすべての訪問者がマスクを着用するよう求めた。	request	hospital / visitors / wear / masks	The hospital requested that all visitors wear masks.	suggest型/think型|V_that_should|v:request|文型:V+that_should
+request_3	住民は道路の修理を求めた。	request	residents / road / repaired	The residents requested that the road be repaired.	suggest型/think型|V_that_should|v:request|文型:V+that_should
+require_1	その大学はすべての学生が論文を提出することを求めている。	require	university / students / submit / thesis	The university requires that all students submit a thesis.	suggest型/think型|V_that_should|v:require|文型:V+that_should
+require_2	その規則は社員が制服を着ることを義務付けている。	require	rule / employees / wear / uniform	The rule requires that employees wear a uniform.	suggest型/think型|V_that_should|v:require|文型:V+that_should
+require_3	法律はすべての車両が保険に加入することを求めている。	require	law / vehicles / insured	The law requires that all vehicles be insured.	suggest型/think型|V_that_should|v:require|文型:V+that_should
+suggest_u4_1	彼は私たちに早めに出発することを提案した。	suggest	leave / early	He suggested that we leave early.	suggest型/think型|V_that_should|v:suggest|文型:V+that_should
+suggest_u4_2	医者は彼女がもっと休息を取るべきだと提案した。	suggest	doctor / get / more rest	The doctor suggested that she should get more rest.	suggest型/think型|V_that_should|v:suggest|文型:V+that_should
+suggest_u4_3	委員会はその計画を見直すよう提案した。	suggest	committee / reconsider / plan	The committee suggested that they reconsider the plan.	suggest型/think型|V_that_should|v:suggest|文型:V+that_should
+sure_1	私は彼が正しいと確信している。	be sure	right	I am sure of his being right.	suggest型/think型|be_sure_of|v:be_sure|文型:be+形容詞+of|前置詞:of
+sure_2	彼女は自分の答えが正しいと確信していた。	be sure	answer / correct	She was sure of her answer being correct.	suggest型/think型|be_sure_of|v:be_sure|文型:be+形容詞+of|前置詞:of
+sure_3	私たちは成功を確信していた。	be sure	success	We were sure of our success.	suggest型/think型|be_sure_of|v:be_sure|文型:be+形容詞+of|前置詞:of
+think_1	彼女はいつも他人のことを考えている。	think	others	She always thinks of others.	suggest型/think型|V_of/V_that|v:think
+think_2	あなたはその計画についてどう思いますか。	think	plan	What do you think of the plan?	suggest型/think型|V_of/V_that|v:think
+think_3	彼は自分が失敗するとは思っていなかった。	think	fail	He never thought that he would fail.	suggest型/think型|V_of/V_that|v:think
+urge_u4_1	政府は市民にワクチンを接種するよう強く促した。	urge	government / citizens / vaccinated	The government urged that citizens be vaccinated.	suggest型/think型|V_that_should|v:urge|文型:V+that_should
+urge_u4_2	専門家は直ちに対策を取るよう強く求めた。	urge	expert / measures / taken / immediately	The expert urged that measures be taken immediately.	suggest型/think型|V_that_should|v:urge|文型:V+that_should
+urge_u4_3	彼女は会議を早急に開くよう強く求めた。	urge	meeting / held / soon	She urged that a meeting be held soon.	suggest型/think型|V_that_should|v:urge|文型:V+that_should
+borrow_1	図書館から本を借りてもいいですか。	borrow	book / library	May I borrow a book from the library?	言う・貸す借りるの識別|borrow|v:borrow
+borrow_2	彼女は友人からドレスを借りた。	borrow	dress / friend	She borrowed a dress from her friend.	言う・貸す借りるの識別|borrow|v:borrow
+borrow_3	少しの間、あなたの辞書を借りてもいいですか。	borrow	dictionary / moment	May I borrow your dictionary for a moment?	言う・貸す借りるの識別|borrow|v:borrow
+hire_1	私たちは旅行のために車を借りた。	hire	car / trip	We hired a car for the trip.	言う・貸す借りるの識別|hire|v:hire
+hire_2	彼女は会議のために通訳を雇った。	hire	translator / meeting	She hired a translator for the meeting.	言う・貸す借りるの識別|hire|v:hire
+hire_3	その会社はイベントのために追加のスタッフを雇った。	hire	company / extra staff / event	The company hired extra staff for the event.	言う・貸す借りるの識別|hire|v:hire
+lend_1	彼女は私に傘を貸してくれた。	lend	umbrella	She lent me her umbrella.	言う・貸す借りるの識別|lend人物|v:lend|文型:SVOO
+lend_2	銀行は彼に事業のための資金を貸した。	lend	bank / money / business	The bank lent him money for his business.	言う・貸す借りるの識別|lend人物|v:lend|文型:SVOO
+lend_3	少しの間、ペンを貸してもらえますか。	lend	pen / moment	Could you lend me your pen for a moment?	言う・貸す借りるの識別|lend人物|v:lend|文型:SVOO
+owe_1	私はあなたに5000円借りています。	owe	5,000 yen	I owe you 5,000 yen.	言う・貸す借りるの識別|owe人物|v:owe|文型:SVOO
+owe_2	彼女は成功を両親のおかげだと思っている。	owe	success / parents	She owes her success to her parents.	言う・貸す借りるの識別|owe人物|v:owe|文型:SVOO
+owe_3	私は彼に命の恩人だと思っている。	owe	life	I owe him my life.	言う・貸す借りるの識別|owe人物|v:owe|文型:SVOO
+rent_1	私たちは週末のためにコテージを借りた。	rent	cottage / weekend	We rented a cottage for the weekend.	言う・貸す借りるの識別|rent人物|v:rent|文型:SVOO
+rent_2	彼は大家からアパートを借りている。	rent	apartment / landlord	He rents an apartment from his landlord.	言う・貸す借りるの識別|rent人物|v:rent|文型:SVOO
+rent_3	彼女は学生にその部屋を貸している。	rent	room / student	She rents the room to a student.	言う・貸す借りるの識別|rent人物|v:rent|文型:SVOO
+said_1	彼は非常に裕福だと言われている。	say	very wealthy	He is said to be very wealthy.	言う・貸す借りるの識別|be_said_to|v:say
+said_2	その薬は副作用があると言われている。	say	medicine / side effects	The medicine is said to have side effects.	言う・貸す借りるの識別|be_said_to|v:say
+said_3	その遺跡は1000年以上前に建てられたと言われている。	say	ruins / built / more than 1000 years ago	It is said that the ruins were built more than 1,000 years ago.	言う・貸す借りるの識別|be_said_to|v:say
+speak_1	彼女は3か国語を話す。	speak	three languages	She speaks three languages.	言う・貸す借りるの識別|speak+言語|v:speak
+speak_2	あなたは英語を話せますか。	speak	English	Can you speak English?	言う・貸す借りるの識別|speak+言語|v:speak
+speak_3	彼はビジネスの場でも流暢にフランス語を話す。	speak	French / fluently / business	He speaks French fluently even in business situations.	言う・貸す借りるの識別|speak+言語|v:speak
+tell_from_1	彼はその二つの音の違いがわかった。	tell	two sounds	He could tell the two sounds from each other.	言う・貸す借りるの識別|tellAfromB|v:tell
+tell_from_2	この暗さでは本物と偽物の区別がつかない。	tell	real / fake / darkness	I can't tell the real one from the fake one in this darkness.	言う・貸す借りるの識別|tellAfromB|v:tell
+tell_from_3	双子の兄弟を見分けるのは難しい。	tell	twin brothers	It is difficult to tell the twin brothers from each other.	言う・貸す借りるの識別|tellAfromB|v:tell
+tell_that_1	彼の表情を見れば彼が怒っていることがわかる。	tell	expression / angry	You can tell from his expression that he is angry.	言う・貸す借りるの識別|tell_that|v:tell
+tell_that_2	声を聞けば彼女が疲れていることがわかった。	tell	voice / tired	I could tell from her voice that she was tired.	言う・貸す借りるの識別|tell_that|v:tell
+tell_that_3	その報告書を読めば状況が深刻だとわかる。	tell	report / situation / serious	You can tell from the report that the situation is serious.	言う・貸す借りるの識別|tell_that|v:tell
+use_1	トイレをお借りしてもいいですか。	use	bathroom	May I use your bathroom?	言う・貸す借りるの識別|use|v:use
+use_2	電話をお借りしてもいいですか。	use	phone	Could I use your phone?	言う・貸す借りるの識別|use|v:use
+use_3	このコンピューターを使ってもいいですか。	use	computer	May I use this computer?	言う・貸す借りるの識別|use|v:use
+allow_1	父は私に車を使うことを許可した。	allow	father / use / car	My father allowed me to use his car.	その他の語法|allow人to～|v:allow|文型:SVO+to_do|前置詞:to
+allow_2	その規則は学生が携帯電話を使うことを禁じている。	allow	rule / students / use / phones	The rule does not allow students to use their phones.	その他の語法|allow人to～|v:allow|文型:SVO+to_do|前置詞:to
+allow_3	その法律は18歳未満の飲酒を禁じている。	allow	law / under 18 / drink	The law does not allow people under 18 to drink.	その他の語法|allow人to～|v:allow|文型:SVO+to_do|前置詞:to
+come_up_1	あなたはその問題の解決策を思いつきましたか。	come up with	solution / problem	Did you come up with a solution to the problem?	その他の語法|hit_on/come_up_with|v:come_up_with|文型:SVO
+come_up_2	チームはユニークなアイデアを思いついた。	come up with	team / unique idea	The team came up with a unique idea.	その他の語法|hit_on/come_up_with|v:come_up_with|文型:SVO
+come_up_3	彼女は新しいマーケティング戦略を考え出した。	come up with	new marketing strategy	She came up with a new marketing strategy.	その他の語法|hit_on/come_up_with|v:come_up_with|文型:SVO
+doubt_1	彼が時間通りに来るとは思えない。	doubt	arrive / time	I doubt that he will arrive on time.	その他の語法|doubt_that|v:doubt|文型:V+that
+doubt_2	彼女はその計画が成功するとは思っていなかった。	doubt	plan / succeed	She doubted that the plan would succeed.	その他の語法|doubt_that|v:doubt|文型:V+that
+doubt_3	私は彼の言っていることが本当だとは思えない。	doubt	saying / true	I doubt that what he is saying is true.	その他の語法|doubt_that|v:doubt|文型:V+that
+excuse_1	彼は遅刻したことを許してもらった。	excuse	being late	He was excused for being late.	その他の語法|forgive人for～|v:excuse|文型:SVO+for|前置詞:for
+excuse_2	彼女は自分の無知を許されるものではない。	excuse	ignorance	She cannot be excused for her ignorance.	その他の語法|forgive人for～|v:excuse|文型:SVO+for|前置詞:for
+excuse_3	遅刻したことをお許しください。	excuse	being late	Please excuse me for being late.	その他の語法|forgive人for～|v:excuse|文型:SVO+for|前置詞:for
+forgive_1	彼女は彼の過ちを許した。	forgive	mistake	She forgave him for his mistake.	その他の語法|forgive人for～|v:forgive|文型:SVO+for|前置詞:for
+forgive_2	彼は遅刻したことを許してもらえなかった。	forgive	being late	He was not forgiven for being late.	その他の語法|forgive人for～|v:forgive|文型:SVO+for|前置詞:for
+forgive_3	彼女は彼の無礼な態度を許した。	forgive	rude behavior	She forgave him for his rude behavior.	その他の語法|forgive人for～|v:forgive|文型:SVO+for|前置詞:for
+go_with_1	その赤いワインはステーキによく合う。	go with	red wine / steak	Red wine goes well with steak.	その他の語法|match/go_with|v:go_with|文型:SVO
+happen_to_1	彼に何かひどいことが起きたに違いない。	happen	something terrible	Something terrible must have happened to him.	その他の語法|happen_to人|v:happen|文型:SV+to
+happen_to_2	彼女に何が起きたのか誰も知らなかった。	happen	what	Nobody knew what had happened to her.	その他の語法|happen_to人|v:happen|文型:SV+to
+happen_to_3	その事故が彼に起きたのは不運だった。	happen	accident / unlucky	It was unlucky that the accident happened to him.	その他の語法|happen_to人|v:happen|文型:SV+to
+happen_v_1	たまたま彼女が駅で彼に会った。	happen	meet / station	She happened to meet him at the station.	その他の語法|happen_to_V|v:happen|文型:SV+to_do
+happen_v_2	たまたま私はその日休みを取っていた。	happen	day off	I happened to have the day off that day.	その他の語法|happen_to_V|v:happen|文型:SV+to_do
+happen_v_3	たまたま彼はその場に居合わせていた。	happen	present / scene	It happened that he was present at the scene.	その他の語法|happen_to_V|v:happen|文型:SV+to_do
+hit_on_1	彼はシャワーを浴びているときにアイデアを思いついた。	hit on	idea / shower	He hit on an idea while taking a shower.	その他の語法|hit_on/come_up_with|v:hit_on|文型:SVO
+hit_on_2	科学者はその問題の解決策を偶然思いついた。	hit on	scientist / solution / problem	The scientist hit on a solution to the problem.	その他の語法|hit_on/come_up_with|v:hit_on|文型:SVO
+hit_on_3	彼女は散歩中に新しい計画を思いついた。	hit on	new plan / walk	She hit upon a new plan during her walk.	その他の語法|hit_on/come_up_with|v:hit_on|文型:SVO
+match_1	そのネクタイはスーツに合っている。	match	tie / suit	The tie matches the suit.	その他の語法|match/go_with|v:match|文型:SVO
+match_2	その靴はバッグに合っていない。	match	shoes / bag	The shoes don't match the bag.	その他の語法|match/go_with|v:match|文型:SVO
+occur_1	突然、彼女に良いアイデアが浮かんだ。	occur	good idea / suddenly	A good idea suddenly occurred to her.	その他の語法|occur_to/strike|v:occur|文型:SVO
+occur_2	それが嘘かもしれないという考えが私の心に浮かんだ。	occur	idea / lie	It occurred to me that it might be a lie.	その他の語法|occur_to/strike|v:occur|文型:SVO
+occur_3	その解決策が彼に浮かんだのは真夜中だった。	occur	solution / midnight	The solution occurred to him at midnight.	その他の語法|occur_to/strike|v:occur|文型:SVO
+permit_1	この公園では犬を連れ込むことが許可されている。	permit	park / dogs	This park permits dogs to enter.	その他の語法|allow人to～|v:permit|文型:SVO+to_do|前置詞:to
+permit_2	その施設は来館者が写真を撮ることを許可していない。	permit	facility / visitors / take photographs	The facility does not permit visitors to take photographs.	その他の語法|allow人to～|v:permit|文型:SVO+to_do|前置詞:to
+permit_3	天候が許せば試合は予定通り行われる。	permit	weather / match / scheduled	If the weather permits, the match will be held as scheduled.	その他の語法|allow人to～|v:permit|文型:SVO+to_do|前置詞:to
+strike_1	突然、彼に良いアイデアが浮かんだ。	strike	good idea / suddenly	A good idea suddenly struck him.	その他の語法|occur_to/strike|v:strike|文型:SVO
+strike_2	その発言がおかしいと気づいた。	strike	remark / strange	It struck me that the remark was strange.	その他の語法|occur_to/strike|v:strike|文型:SVO
+strike_3	彼女に問題を別の角度から考えるというアイデアが浮かんだ。	strike	idea / different angle	The idea of looking at the problem from a different angle struck her.	その他の語法|occur_to/strike|v:strike|文型:SVO
+suit_1	その赤いドレスはあなたによく似合う。	suit	red dress	The red dress suits you well.	その他の語法|suit/become|v:suit|文型:SVO
+suit_2	その仕事は彼の性格に合っている。	suit	job / personality	The job suits his personality.	その他の語法|suit/become|v:suit|文型:SVO
+suit_3	その色は彼女にとてもよく似合っている。	become	color	The color becomes her very well.	その他の語法|suit/become|v:become|文型:SVO
+suspect_1	警察は彼が犯人だと疑っていた。	suspect	police / guilty	The police suspected that he was guilty.	その他の語法|suspect_that|v:suspect|文型:V+that
+suspect_2	私は彼女が本当のことを言っていないと疑っていた。	suspect	telling / truth	I suspected that she was not telling the truth.	その他の語法|suspect_that|v:suspect|文型:V+that
+suspect_3	彼らはその情報が正確でないと疑っていた。	suspect	information / accurate	They suspected that the information was not accurate.	その他の語法|suspect_that|v:suspect|文型:V+that
