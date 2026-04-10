@@ -65,7 +65,10 @@
       "Bash(pnpm add:*)",
       "Bash(openssl rand:*)",
       "Bash(pnpm build:*)",
-      "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npx tsc --noEmit)"
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npx tsc --noEmit)",
+      "Read(//c/Users/gaimo/AppData/Local/Programs/**)",
+      "Read(//c/Users/gaimo/projects/**)",
+      "Read(//c/Users/gaimo/**)"
     ]
   }
 }
