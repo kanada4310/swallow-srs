@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { requireAuth } from '@/lib/api/auth'
 import OpenAI from 'openai'
 import type { TTSVoice } from '@/types/database'
@@ -235,8 +236,18 @@ export async function POST(request: NextRequest) {
     const timestamp = Date.now()
     const fileName = `${noteId}/${fieldName}_${timestamp}.mp3`
 
-    // Upload to Supabase Storage
-    const { error: uploadError } = await supabase.storage
+    // Upload to Supabase Storage using service role (bypass RLS)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error('Missing SUPABASE_SERVICE_ROLE_KEY for TTS upload')
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+    }
+    const adminClient = createSupabaseClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
+
+    const { error: uploadError } = await adminClient.storage
       .from('audio')
       .upload(fileName, audioBuffer, {
         contentType: 'audio/mpeg',
@@ -252,7 +263,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get public URL
-    const { data: publicUrlData } = supabase.storage
+    const { data: publicUrlData } = adminClient.storage
       .from('audio')
       .getPublicUrl(fileName)
 
@@ -264,7 +275,7 @@ export async function POST(request: NextRequest) {
       [fieldName]: audioUrl,
     }
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await adminClient
       .from('notes')
       .update({ audio_urls: updatedAudioUrls })
       .eq('id', noteId)
