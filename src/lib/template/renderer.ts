@@ -50,8 +50,9 @@ function processTtsPlaceholders(template: string, fieldValues: FieldValues): str
     const trimmed = fieldName.trim()
     const value = fieldValues[trimmed]
     if (!value) return ''
-    // Render a button; the iframe script handles click → postMessage
-    return `<button class="tts-btn" data-tts-field="${escapeAttr(trimmed)}" title="音声を再生" aria-label="${escapeAttr(trimmed)}の音声を再生"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></button>`
+    // Render field value + TTS button inline
+    const ttsButton = `<button class="tts-btn" data-tts-field="${escapeAttr(trimmed)}" title="音声を再生" aria-label="${escapeAttr(trimmed)}の音声を再生"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></button>`
+    return `<span class="tts-field">${value} ${ttsButton}</span>`
   })
 }
 

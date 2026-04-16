@@ -53,6 +53,11 @@ function buildSrcdoc(html: string, css: string, frameId: string): string {
   .tts-btn:hover { background: #e5e7eb; }
   .tts-btn:active { background: #d1d5db; }
   .tts-btn.playing { background: #dbeafe; color: #2563eb; }
+  .tts-field {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
   ${css}
 </style>
 </head>

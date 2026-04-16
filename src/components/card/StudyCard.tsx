@@ -169,8 +169,15 @@ export function StudyCard({
     } catch { /* TTS generation failure is non-critical */ }
   }, [fieldValues, noteId, audioUrls, ttsVoice, ttsSpeed])
 
+  // Track which fields have been prefetched (for autoplay coordination)
+  const prefetchedFieldsRef = useRef<Set<string>>(new Set())
+  const autoplayPendingRef = useRef<string | null>(null)
+
   // Prefetch TTS audio in background when card appears
   useEffect(() => {
+    prefetchedFieldsRef.current = new Set()
+    autoplayPendingRef.current = null
+
     // Collect all fields needing TTS
     const fieldsToPreload = new Set<string>()
 
@@ -195,7 +202,7 @@ export function StudyCard({
 
     let cancelled = false
 
-    Array.from(fieldsToPreload).forEach(async (fieldName) => {
+    const prefetchField = async (fieldName: string) => {
       if (cancelled) return
       const text = fieldValues[fieldName]
       if (!text) return
@@ -203,7 +210,16 @@ export function StudyCard({
       // Already cached?
       try {
         const cached = await getCachedAudio(noteId, fieldName)
-        if (cached || cancelled) return
+        if (cached) {
+          prefetchedFieldsRef.current.add(fieldName)
+          // If autoplay is waiting for this field, play it now
+          if (autoplayPendingRef.current === fieldName) {
+            autoplayPendingRef.current = null
+            handleIframeTtsPlay(fieldName)
+          }
+          return
+        }
+        if (cancelled) return
       } catch { return }
 
       // Has existing audio URL? Pre-cache it
@@ -213,6 +229,11 @@ export function StudyCard({
           if (resp.ok && !cancelled) {
             const blob = await resp.blob()
             await saveAudioCache(noteId, fieldName, blob, audioUrls[fieldName])
+            prefetchedFieldsRef.current.add(fieldName)
+            if (autoplayPendingRef.current === fieldName) {
+              autoplayPendingRef.current = null
+              handleIframeTtsPlay(fieldName)
+            }
           }
         } catch { /* non-critical */ }
         return
@@ -240,9 +261,17 @@ export function StudyCard({
         if (audioResp.ok && !cancelled) {
           const blob = await audioResp.blob()
           await saveAudioCache(noteId, fieldName, blob, data.audioUrl)
+          prefetchedFieldsRef.current.add(fieldName)
+          if (autoplayPendingRef.current === fieldName) {
+            autoplayPendingRef.current = null
+            handleIframeTtsPlay(fieldName)
+          }
         }
       } catch { /* non-critical */ }
-    })
+    }
+
+    // Start prefetch for all fields simultaneously
+    Array.from(fieldsToPreload).forEach(prefetchField)
 
     return () => { cancelled = true }
   }, [noteId]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -302,11 +331,17 @@ export function StudyCard({
     if (!ttsAutoplay) return
     const fieldsToPlay = isFlipped ? backAutoplayFields : frontAutoplayFields
     if (fieldsToPlay.length === 0) return
-    // Small delay to let card render first
-    const timer = setTimeout(() => {
-      handleIframeTtsPlay(fieldsToPlay[0])
-    }, 200)
-    return () => clearTimeout(timer)
+    const fieldName = fieldsToPlay[0]
+
+    // If already prefetched/cached, play immediately
+    if (prefetchedFieldsRef.current.has(fieldName)) {
+      const timer = setTimeout(() => handleIframeTtsPlay(fieldName), 100)
+      return () => clearTimeout(timer)
+    }
+
+    // Otherwise, register as pending — prefetch will play when ready
+    autoplayPendingRef.current = fieldName
+    return () => { autoplayPendingRef.current = null }
   }, [isFlipped, noteId, ttsAutoplay]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-flip when triggered by timer
