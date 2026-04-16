@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createServerClient } from '@supabase/ssr'
+import {
+  deriveLineEmail,
+  deriveLinePassword,
+  findOrCreateSRSUser,
+  type ValidRole,
+} from '@/lib/auth/line-user'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -23,12 +29,12 @@ export async function GET(request: NextRequest) {
   }
 
   // 1. Validate JWT
-  const secret = new TextEncoder().encode(authSecret)
   let lineUserId: string
   let name: string
   let role: string
 
   try {
+    const secret = new TextEncoder().encode(authSecret)
     const { payload } = await jwtVerify(token, secret, { algorithms: ['HS256'] })
     lineUserId = payload.sub as string
     name = payload.name as string
@@ -42,29 +48,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/login?error=invalid_token`)
   }
 
-  // 2. Derive deterministic credentials from LINE user ID
-  const lineEmail = `line_${lineUserId}@tsubame-srs.local`
-  const cryptoKey = await crypto.subtle.importKey(
-    'raw',
-    secret,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  )
-  const passwordBytes = await crypto.subtle.sign(
-    'HMAC',
-    cryptoKey,
-    new TextEncoder().encode(lineUserId)
-  )
-  const password = Array.from(new Uint8Array(passwordBytes))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('')
-
+  const validRole: ValidRole = role === 'teacher' || role === 'admin' ? role : 'student'
   const adminClient = createSupabaseClient(supabaseUrl, serviceRoleKey)
-  const validRole = role === 'teacher' || role === 'admin' ? role : 'student'
 
-  // 3. Find existing user: try signInWithPassword first (fast path for normal users),
-  //    then fall back to metadata search (for users whose email was changed)
+  // 2. Find or create user via shared utility
+  const result = await findOrCreateSRSUser(adminClient, lineUserId, name, validRole, authSecret)
+
+  if (result.error || !result.userId) {
+    console.error('[LINE Auth] findOrCreateSRSUser failed:', result.error)
+    return NextResponse.redirect(`${origin}/login?error=server_error`)
+  }
+
+  // 3. Establish session — sign in with LINE-derived credentials
+  const lineEmail = deriveLineEmail(lineUserId)
+  const password = await deriveLinePassword(lineUserId, authSecret)
+
   const response = NextResponse.redirect(`${origin}/`)
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
@@ -79,15 +77,13 @@ export async function GET(request: NextRequest) {
     },
   })
 
-  // Try A: Sign in with LINE-derived email + password (works for most users)
+  // Try password sign-in first
   const { data: passwordSession } = await supabase.auth.signInWithPassword({
     email: lineEmail,
     password,
   })
 
   if (passwordSession?.user) {
-    // Success — update profile name if needed
-    await updateProfileName(supabaseUrl, serviceRoleKey, passwordSession.user.id, name)
     response.cookies.set('has_profile', passwordSession.user.id, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -98,119 +94,40 @@ export async function GET(request: NextRequest) {
     return response
   }
 
-  // Try B: Search by line_user_id in metadata (handles email-changed users like teachers)
-  console.log('[LINE Auth] Password sign-in failed, searching by metadata for', lineUserId)
+  // Fallback: magic link for email-changed users
+  console.log('[LINE Auth] Password sign-in failed, trying magic link for', result.userId)
   try {
     const { data: { users: allUsers } } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
-    const existingUser = allUsers.find(
-      (u) => u.user_metadata?.line_user_id === lineUserId
-    )
+    const existingUser = allUsers.find(u => u.id === result.userId)
 
-    if (existingUser) {
-      console.log('[LINE Auth] Found existing user by metadata:', existingUser.id, existingUser.email)
-
-      // Generate magic link to create session without password
+    if (existingUser?.email) {
       const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
         type: 'magiclink',
-        email: existingUser.email!,
+        email: existingUser.email,
       })
 
-      if (linkError || !linkData.properties?.hashed_token) {
-        console.error('[LINE Auth] Failed to generate magic link:', linkError)
-        return NextResponse.redirect(`${origin}/login?error=server_error`)
+      if (!linkError && linkData.properties?.hashed_token) {
+        const { data: otpSession, error: otpError } = await supabase.auth.verifyOtp({
+          token_hash: linkData.properties.hashed_token,
+          type: 'magiclink',
+        })
+
+        if (!otpError && otpSession.user) {
+          response.cookies.set('has_profile', otpSession.user.id, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24,
+            path: '/',
+          })
+          return response
+        }
       }
-
-      const { data: otpSession, error: otpError } = await supabase.auth.verifyOtp({
-        token_hash: linkData.properties.hashed_token,
-        type: 'magiclink',
-      })
-
-      if (otpError || !otpSession.user) {
-        console.error('[LINE Auth] OTP verification failed:', otpError)
-        return NextResponse.redirect(`${origin}/login?error=server_error`)
-      }
-
-      await updateProfileName(supabaseUrl, serviceRoleKey, otpSession.user.id, name)
-      response.cookies.set('has_profile', otpSession.user.id, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24,
-        path: '/',
-      })
-      return response
     }
   } catch (err) {
-    console.error('[LINE Auth] Metadata search failed, proceeding to create new user:', err)
+    console.error('[LINE Auth] Magic link fallback failed:', err)
   }
 
-  // Try C: New user — create account
-  console.log('[LINE Auth] Creating new user for', lineUserId)
-  const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
-    email: lineEmail,
-    password,
-    email_confirm: true,
-    user_metadata: { line_user_id: lineUserId, name, role: validRole },
-  })
-
-  if (createError || !newUser?.user) {
-    console.error('[LINE Auth] Failed to create user:', createError)
-    return NextResponse.redirect(`${origin}/login?error=server_error`)
-  }
-
-  // Create profile
-  const { error: profileError } = await adminClient
-    .from('profiles')
-    .insert({
-      id: newUser.user.id,
-      email: lineEmail,
-      name,
-      role: validRole,
-    })
-
-  if (profileError) {
-    console.error('[LINE Auth] Failed to create profile:', profileError)
-  }
-
-  // Sign in the new user
-  const { data: newSession, error: newSignInError } = await supabase.auth.signInWithPassword({
-    email: lineEmail,
-    password,
-  })
-
-  if (newSignInError || !newSession.user) {
-    console.error('[LINE Auth] New user sign-in failed:', newSignInError)
-    return NextResponse.redirect(`${origin}/login?error=server_error`)
-  }
-
-  response.cookies.set('has_profile', newSession.user.id, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24,
-    path: '/',
-  })
-
-  return response
-}
-
-async function updateProfileName(
-  supabaseUrl: string,
-  serviceRoleKey: string,
-  userId: string,
-  newName: string,
-) {
-  const client = createSupabaseClient(supabaseUrl, serviceRoleKey)
-  const { data: profile } = await client
-    .from('profiles')
-    .select('id, name')
-    .eq('id', userId)
-    .single()
-
-  if (profile && profile.name !== newName) {
-    await client
-      .from('profiles')
-      .update({ name: newName })
-      .eq('id', profile.id)
-  }
+  console.error('[LINE Auth] All sign-in methods failed for', lineUserId)
+  return NextResponse.redirect(`${origin}/login?error=server_error`)
 }

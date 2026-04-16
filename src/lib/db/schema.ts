@@ -284,6 +284,25 @@ class TsubameSRSDatabase extends Dexie {
         if (deck.filter_tags === undefined) deck.filter_tags = []
       })
     })
+
+    // Version 10: Add billing_template_id to classes for billing sync
+    this.version(10).stores({
+      profiles: 'id',
+      noteTypes: 'id',
+      cardTemplates: 'id, note_type_id',
+      decks: 'id, owner_id, parent_deck_id',
+      notes: 'id, deck_id, *tags',
+      cards: 'id, note_id, deck_id',
+      cardStates: 'id, user_id, card_id, due, [user_id+card_id]',
+      reviewLogs: 'id, user_id, card_id, synced_at',
+      syncQueue: '++id, table, created_at, attempts',
+      syncMetadata: 'key',
+      audioCache: 'id, noteId, cachedAt',
+      userDeckSettings: 'id, user_id, deck_id, [user_id+deck_id]',
+      classes: 'id, teacher_id, billing_template_id',
+      classMembers: '[class_id+user_id], class_id, user_id',
+      deckAssignments: 'id, deck_id, class_id, user_id',
+    })
   }
 }
 

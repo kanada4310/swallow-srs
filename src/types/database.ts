@@ -15,7 +15,8 @@ export interface Profile {
 export interface Class {
   id: string
   name: string
-  teacher_id: string
+  teacher_id: string | null
+  billing_template_id: string | null
   created_at: string
   updated_at: string
 }
