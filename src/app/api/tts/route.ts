@@ -247,6 +247,24 @@ export async function POST(request: NextRequest) {
       auth: { autoRefreshToken: false, persistSession: false },
     })
 
+    // Ensure audio bucket exists
+    const { data: buckets } = await adminClient.storage.listBuckets()
+    const audioBucketExists = buckets?.some(b => b.name === 'audio')
+    if (!audioBucketExists) {
+      const { error: createBucketError } = await adminClient.storage.createBucket('audio', {
+        public: true,
+        fileSizeLimit: 10485760, // 10MB
+      })
+      if (createBucketError) {
+        console.error('Error creating audio bucket:', createBucketError)
+        return NextResponse.json(
+          { error: `Failed to create audio bucket: ${createBucketError.message}` },
+          { status: 500 }
+        )
+      }
+      console.log('Created audio storage bucket')
+    }
+
     const { error: uploadError } = await adminClient.storage
       .from('audio')
       .upload(fileName, audioBuffer, {
@@ -255,9 +273,9 @@ export async function POST(request: NextRequest) {
       })
 
     if (uploadError) {
-      console.error('Error uploading audio:', uploadError)
+      console.error('Error uploading audio:', JSON.stringify(uploadError))
       return NextResponse.json(
-        { error: 'Failed to upload audio file' },
+        { error: `Failed to upload audio file: ${uploadError.message}` },
         { status: 500 }
       )
     }
