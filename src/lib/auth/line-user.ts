@@ -2,7 +2,7 @@
  * LINE ユーザーの Supabase Auth アカウント管理ユーティリティ
  * LINE auth route と billing-sync API で共有
  */
-import { createClient as createSupabaseClient, type SupabaseClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type ValidRole = 'student' | 'teacher' | 'admin'
 
