@@ -729,15 +729,27 @@ export async function getStudyCardsOffline(
   // Get current deck info (for filter_tags)
   const currentDeck = await db.decks.get(deckId)
 
-  // Get all descendant deck IDs (for subdeck support)
-  const descendantIds = await getDescendantDeckIds(deckId)
-  const allDeckIds = [deckId, ...descendantIds]
-
   // Resolve root deck for centralized new-card quota
   const rootDeckId = await getRootDeckId(deckId)
   const isRootDeck = rootDeckId === deckId
 
-  // Get all cards in the deck and its subdecks
+  // For filter decks (subdecks with filter_tags), fetch cards from the root tree
+  // because cards belong to the parent deck, not the filter subdeck
+  const filterTags = currentDeck?.filter_tags || []
+  const isFilterDeck = filterTags.length > 0 && !isRootDeck
+
+  let allDeckIds: string[]
+  if (isFilterDeck) {
+    // Filter deck: get cards from entire root tree
+    const rootDescendantIds = await getDescendantDeckIds(rootDeckId)
+    allDeckIds = [rootDeckId, ...rootDescendantIds]
+  } else {
+    // Normal deck: get cards from this deck and its subdecks
+    const descendantIds = await getDescendantDeckIds(deckId)
+    allDeckIds = [deckId, ...descendantIds]
+  }
+
+  // Get all cards in the deck tree
   const deckCards = await db.cards.where('deck_id').anyOf(allDeckIds).toArray()
   if (deckCards.length === 0) return []
 
@@ -882,7 +894,6 @@ export async function getStudyCardsOffline(
   }
 
   // Filter new cards by tags if this is a filter deck
-  const filterTags = currentDeck?.filter_tags || []
   const filteredNewCards = filterTags.length > 0
     ? newCards.filter(card => {
         const note = noteMap.get(card.noteId)
