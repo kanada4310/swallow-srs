@@ -77,12 +77,10 @@ export async function POST(request: NextRequest) {
     .eq('owner_id', user.id)
 
   // Get assigned decks through deck_assignments (direct user + class membership)
-  const { data: memberAssignments, error: memberError } = await supabase
+  const { data: memberAssignments } = await supabase
     .from('class_members')
     .select('class_id')
     .eq('user_id', user.id)
-
-  console.log(`[pull] user=${user.id} class_members=${memberAssignments?.length ?? 0} error=${memberError?.message ?? 'none'}`)
 
   const userClassIdsForAssign = (memberAssignments || []).map(m => m.class_id)
 
@@ -91,23 +89,20 @@ export async function POST(request: NextRequest) {
     assignFilters.push(`class_id.in.(${userClassIdsForAssign.join(',')})`)
   }
 
-  const { data: assignments, error: assignError } = await supabase
+  const { data: assignments } = await supabase
     .from('deck_assignments')
     .select('deck_id')
     .or(assignFilters.join(','))
-
-  console.log(`[pull] user=${user.id} classIds=${JSON.stringify(userClassIdsForAssign)} assignments=${assignments?.length ?? 0} assignError=${assignError?.message ?? 'none'}`)
 
   const assignedDeckIds = assignments?.map((a) => a.deck_id) ?? []
 
   let assignedDecks: typeof ownDecks = []
   if (assignedDeckIds.length > 0) {
-    const { data, error: deckError } = await supabase
+    const { data } = await supabase
       .from('decks')
       .select('*')
       .in('id', assignedDeckIds)
 
-    console.log(`[pull] user=${user.id} assignedDeckIds=${JSON.stringify(assignedDeckIds)} fetchedDecks=${data?.length ?? 0} deckError=${deckError?.message ?? 'none'}`)
     assignedDecks = data ?? []
   }
 

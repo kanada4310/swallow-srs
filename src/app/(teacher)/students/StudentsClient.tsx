@@ -56,12 +56,20 @@ export function StudentsClient({ initialClasses }: StudentsClientProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">クラス管理</h1>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-        >
-          新規クラス作成
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/students/progress"
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+          >
+            取組状況
+          </Link>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+          >
+            新規クラス作成
+          </button>
+        </div>
       </div>
 
       {/* Class List */}
