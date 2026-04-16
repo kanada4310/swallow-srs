@@ -91,9 +91,7 @@
 
 ## 既知の課題
 - billing側のビルドがWindows環境でOOMになることがある（`--max-old-space-size=4096` で回避）
-- Google OAuthコールバック（`/callback/route.ts`）がまだ残存（LINE認証安定後に削除予定）
 - LINE端末のIndexedDBに古いユーザーIDがキャッシュされる場合がある（pull APIで対処済み、push APIも同様の対処が必要かもしれない）
-- Pull APIにデバッグログ（`[pull]`）が残っている（次セッションで削除推奨）
 
 ## 今後のロードマップ概要（優先度順、詳細は ROADMAP.md）
 - **生徒取組状況UI**: 講師が生徒ごとの学習状況を確認 ★次

@@ -19,7 +19,7 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 // Public paths that don't require auth
-const publicPaths = ['/login', '/callback', '/setup']
+const publicPaths = ['/login', '/setup']
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
