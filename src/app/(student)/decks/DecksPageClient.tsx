@@ -294,7 +294,11 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
   const ownDeckTree = buildDeckTree(ownDecks)
   const flatOwnDecks = flattenTree(ownDeckTree)
 
-  const hasResults = flatOwnDecks.length > 0 || assignedDecks.length > 0
+  // Build tree for assigned decks (includes subdecks)
+  const assignedDeckTree = buildDeckTree(assignedDecks)
+  const flatAssignedDecks = flattenTree(assignedDeckTree)
+
+  const hasResults = flatOwnDecks.length > 0 || flatAssignedDecks.length > 0
   const hasDecks = decks.length > 0
 
   return (
@@ -373,16 +377,23 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
       )}
 
       {/* 配布されたデッキ */}
-      {assignedDecks.length > 0 && (
+      {flatAssignedDecks.length > 0 && (
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-gray-700 mb-4">配布デッキ</h2>
           <div className="space-y-3">
-            {assignedDecks.map((deck) => (
+            {flatAssignedDecks.map((node) => (
               <DeckCard
-                key={deck.id}
-                deck={deck}
+                key={node.id}
+                deck={node}
+                depth={node.depth}
+                aggregatedStats={node.children.length > 0 ? {
+                  total_cards: node.aggregated_total_cards,
+                  new_count: node.aggregated_new_count,
+                  learning_count: node.aggregated_learning_count,
+                  review_count: node.aggregated_review_count,
+                } : undefined}
                 canSettings={true}
-                onSettings={() => handleOpenSettings(deck.id)}
+                onSettings={() => handleOpenSettings(node.id)}
               />
             ))}
           </div>

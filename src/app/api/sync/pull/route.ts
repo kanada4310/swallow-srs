@@ -75,11 +75,23 @@ export async function POST(request: NextRequest) {
     .select('*')
     .eq('owner_id', user.id)
 
-  // Get assigned decks through deck_assignments
+  // Get assigned decks through deck_assignments (direct user + class membership)
+  const { data: memberAssignments } = await supabase
+    .from('class_members')
+    .select('class_id')
+    .eq('user_id', user.id)
+
+  const userClassIdsForAssign = (memberAssignments || []).map(m => m.class_id)
+
+  const assignFilters = [`user_id.eq.${user.id}`]
+  if (userClassIdsForAssign.length > 0) {
+    assignFilters.push(`class_id.in.(${userClassIdsForAssign.join(',')})`)
+  }
+
   const { data: assignments } = await supabase
     .from('deck_assignments')
     .select('deck_id')
-    .eq('user_id', user.id)
+    .or(assignFilters.join(','))
 
   const assignedDeckIds = assignments?.map((a) => a.deck_id) ?? []
 
@@ -91,6 +103,29 @@ export async function POST(request: NextRequest) {
       .in('id', assignedDeckIds)
 
     assignedDecks = data ?? []
+  }
+
+  // Also fetch child decks of assigned decks (subdecks auto-inherit distribution)
+  if (assignedDeckIds.length > 0) {
+    const { data: childDecks } = await supabase
+      .from('decks')
+      .select('*')
+      .in('parent_deck_id', assignedDeckIds)
+
+    if (childDecks && childDecks.length > 0) {
+      assignedDecks = [...(assignedDecks ?? []), ...childDecks]
+
+      // Also fetch grandchildren (depth 2)
+      const childIds = childDecks.map(d => d.id)
+      const { data: grandchildDecks } = await supabase
+        .from('decks')
+        .select('*')
+        .in('parent_deck_id', childIds)
+
+      if (grandchildDecks && grandchildDecks.length > 0) {
+        assignedDecks = [...assignedDecks, ...grandchildDecks]
+      }
+    }
   }
 
   const allDecks = [...(ownDecks ?? []), ...assignedDecks]
