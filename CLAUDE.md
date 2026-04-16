@@ -167,12 +167,22 @@ npm run test:watch   # Vitest 監視モード
 - **TTSプリフェッチ**: カード表示時にバックグラウンドでTTS生成・IndexedDBキャッシュ
 - **TTS API skipSave**: テスト再生用にnote不要のbase64データURL返却モード
 
+## フィルタデッキ ✅ 完了
+
+- **概要**: サブデッキにタグフィルタを設定し、新規カード導入をタグで絞り込む
+- **設計**: 復習カードはフィルタ無視（親デッキ全体から）、新規カードのみフィルタ適用
+- **新規カード枠**: ルート親デッキの`new_cards_per_day`で一元管理、全子孫で共有消費
+- **DB**: `decks.filter_tags TEXT[]` カラム + `get_root_deck_id` RPC（015_filter_decks.sql 実行済み）
+- **Dexie v9**: filter_tags対応、`getRootDeckId()` ヘルパー
+- **配布サブデッキ同期**: pull APIが配布デッキの子・孫デッキも自動取得（深度2まで）
+- **動詞の語法**: 13セクション別フィルタサブデッキ作成済み（スクリプト: `data/create-filter-subdecks.mjs`）
+
 ## 現在の進捗
 
 詳細は @docs/progress.md を参照。
 
-- **最終更新**: 2026-04-10
-- **次にやること**: フィルタデッキ機能の実装（計画書: `.claude/plans/scalable-sniffing-journal.md`） → 生徒配布 → Phase 9.3-9.4
+- **最終更新**: 2026-04-16
+- **次にやること**: フィルタデッキ本番動作確認 → Phase 9.3-9.4（学習時間トラッキング、習熟度スコア）
 
 ## 参照ドキュメント
 
