@@ -232,9 +232,10 @@ export async function POST(request: NextRequest) {
     // Get audio as buffer
     const audioBuffer = Buffer.from(await mp3Response.arrayBuffer())
 
-    // Generate unique filename
+    // Generate unique filename (encode field name to avoid non-ASCII chars)
     const timestamp = Date.now()
-    const fileName = `${noteId}/${fieldName}_${timestamp}.mp3`
+    const safeFieldName = encodeURIComponent(fieldName).replace(/%/g, '_')
+    const fileName = `${noteId}/${safeFieldName}_${timestamp}.mp3`
 
     // Upload to Supabase Storage using service role (bypass RLS)
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
