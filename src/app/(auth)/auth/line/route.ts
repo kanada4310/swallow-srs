@@ -8,10 +8,12 @@ import {
   findOrCreateSRSUser,
   type ValidRole,
 } from '@/lib/auth/line-user'
+import { safeNext } from '@/lib/auth/safe-next'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const token = searchParams.get('token')
+  const next = safeNext(searchParams.get('next'))
   const origin = request.nextUrl.origin
 
   if (!token) {
@@ -63,7 +65,7 @@ export async function GET(request: NextRequest) {
   const lineEmail = deriveLineEmail(lineUserId)
   const password = await deriveLinePassword(lineUserId, authSecret)
 
-  const response = NextResponse.redirect(`${origin}/`)
+  const response = NextResponse.redirect(`${origin}${next}`)
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {

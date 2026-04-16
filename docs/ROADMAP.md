@@ -573,10 +573,12 @@ Web Push API で学習リマインダーを送信。
 ### 12.4 LINE通知連携（billing経由）
 billing側のLINE Bot経由で復習カード通知を送信する。
 
-- [x] SRS側データAPI `GET /api/admin/due-cards-summary`（Bearer認証、line_user_id + dueCount + 代表カードfrontText）
-- [ ] billing側の送信ジョブ（Flexメッセージ生成 + LINE Messaging API 呼び出し）
+- [x] SRS側データAPI `GET /api/admin/due-cards-summary`（Bearer認証、line_user_id + dueCount + 代表カードfrontText + deckId）
+- [x] `/auth/line?next=<path>` 深いリンク対応（`safeNext` で open redirect 防止）
+- [x] billing側実装スペック書き下ろし（`docs/billing-line-notification-spec.md`）
+- [ ] billing側の送信ジョブ実装（Flexメッセージ生成 + LINE Messaging API 呼び出し）
+- [ ] billing側のLIFF経由 `/auth/line` リダイレクト
 - [ ] 通知時刻のユーザー設定（SRSの`notification_settings`と連携するかbilling側で別管理か方針決定）
-- [ ] 学習開始リンクで直接`/study?deckId=xxx`に遷移（LINE LIFF経由）
 
 ---
 

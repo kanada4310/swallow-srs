@@ -196,9 +196,13 @@ npm run test:watch   # Vitest 監視モード
 - **共通統計モジュール**: `src/lib/stats/calculations.ts`（生徒/講師で共有）
 - **RLS**: `017_teacher_student_progress.sql`（card_states に `is_student_of_teacher` 基準のSELECTポリシー追加）
 - **LINE通知データAPI**: `GET /api/admin/due-cards-summary`（Bearer認証、billing側から呼び出し）
-  - レスポンス: `{ students: [{ lineUserId, name, dueCount, frontText, deckName }] }`
+  - レスポンス: `{ students: [{ lineUserId, name, dueCount, frontText, deckName, deckId }] }`
+  - `dueCount` は実枚数（`count: 'exact'` で取得、上限なし）。`deckId` は深いリンク用
   - `middleware.ts` の publicPaths に追加済み
-  - billing側でFlexメッセージ生成 + LINE Messaging API 送信する実装はまだ未
+  - billing側のFlex送信実装スペック: `docs/billing-line-notification-spec.md`
+- **`/auth/line` 深いリンク対応**: `?next=<path>` で SRS 内任意パスへ遷移可能
+  - `safeNext` ヘルパーで open redirect を防止（`/path` のみ許可）
+  - LIFF 経由で Flex メッセージから `/study?deckId=xxx` に直接遷移できる
 
 ## 現在の進捗
 

@@ -1,14 +1,35 @@
 # 進捗管理
 
 ## 現在の作業
-- Phase: 生徒取組状況UI完了 + LINE通知データAPI完了 → 次は billing側LINE送信 / Phase 9.3-9.4
+- Phase: SRS側LINE通知準備完了（API改善 + `/auth/line` 深いリンク + billing実装スペック） → 次は billing側で実装
 - 最終更新: 2026-04-16
 - 次にやること:
-  1. **billing側のLINE送信ジョブ**: `/api/admin/due-cards-summary` を叩いてFlexメッセージ生成→LINE Messaging API送信（SRS側は完了済み）
+  1. **billing側のLINE送信ジョブ実装**: `docs/billing-line-notification-spec.md` の手順で billing リポジトリに実装
   2. Phase 9.3-9.4: 学習時間トラッキング、習熟度スコア
   3. Phase 10: ゲーミフィケーション（ストリーク、デイリーゴール、リーダーボード）
 
 ## セッション引継ぎメモ
+
+### 2026-04-16 夜2（SRS側 LINE通知準備 + billing実装スペック）
+- **やったこと**:
+  - **due-cards-summary API 改善** (`src/app/api/admin/due-cards-summary/route.ts`)
+    - レスポンスに `deckId` を追加（Flex ボタンから `/study?deckId=xxx` に深いリンク用）
+    - `dueCount` を `count: 'exact'` で実枚数取得（旧: `.limit(10)` で上限10）
+    - サンプル抽出は別クエリで最大10枚に制限（プレビュー用1枚を選ぶため）
+  - **`/auth/line` の `next` パラメータ対応**
+    - `?next=/study?deckId=xxx` で SRS 内任意パスへ遷移可能
+    - `safeNext` ヘルパー (`src/lib/auth/safe-next.ts`) で open redirect 防止
+    - 5件のテスト追加（null/相対/protocol-relative/絶対URL/javascript: スキーム）
+  - **billing 側実装スペック書き下ろし** (`docs/billing-line-notification-spec.md`)
+    - 全体フロー図、API 仕様、環境変数、Flex メッセージ JSON、サービスコード雛形
+    - Cron 設定（Vercel Cron 22:00 UTC = 07:00 JST）
+    - LIFF 経由の SRS 自動ログインフロー
+    - 運用注意（レート制限、重複防止、オプトアウト、JST/UTC）
+- **次のセッションで注意すべきこと**:
+  - billing 側コードは `kanada4310/swallow-billing` リポジトリで実装（このセッションからは触れない）
+  - billing 側で必要な環境変数: `SRS_BASE_URL`, `SRS_AUTH_SECRET`（既存）, `LINE_CHANNEL_ACCESS_TOKEN`, `LIFF_NOTIFICATION_URL`
+  - Flex メッセージのボタン URI は LIFF URL（直接 `/auth/line` には飛ばせない、JWT 必要）
+  - billing 側にすでに LIFF 自動ログイン用 JWT 発行 API があれば再利用可
 
 ### 2026-04-16 夜（生徒取組状況UI + LINE通知データAPI + 掃除）
 - **やったこと**:
