@@ -174,15 +174,26 @@ npm run test:watch   # Vitest 監視モード
 - **新規カード枠**: ルート親デッキの`new_cards_per_day`で一元管理、全子孫で共有消費
 - **DB**: `decks.filter_tags TEXT[]` カラム + `get_root_deck_id` RPC（015_filter_decks.sql 実行済み）
 - **Dexie v9**: filter_tags対応、`getRootDeckId()` ヘルパー
-- **配布サブデッキ同期**: pull APIが配布デッキの子・孫デッキも自動取得（深度2まで）
+- **配布サブデッキ同期**: pull APIが配布デッキの子・孫デッキも自動取得（深度2まで、admin clientでRLSバイパス）
 - **動詞の語法**: 13セクション別フィルタサブデッキ作成済み（スクリプト: `data/create-filter-subdecks.mjs`）
+
+## billing-SRSミラーリング同期 ✅ 完了
+
+- **概要**: billingの生徒・授業テンプレート・受講登録をSRSに自動同期
+- **SRS Admin API**: `POST /api/admin/billing-sync`（SRS_AUTH_SECRET認証）
+- **共通ユーティリティ**: `src/lib/auth/line-user.ts`（findOrCreateSRSUser, banUser, unbanUser）
+- **billing側**: `srs-sync.service.ts` + daily cron + 手動同期ボタン（ダッシュボード）
+- **データマッピング**: students→profiles, class_templates→classes, registrations→class_members
+- **退塾処理**: ban_duration='876000h'でアカウント無効化（データ保持）
+- **DBマイグレーション**: `016_billing_sync.sql`（billing_template_id + teacher_id nullable + RLSポリシー）実行済み
+- **Dexie v10**: classes に billing_template_id インデックス追加
 
 ## 現在の進捗
 
 詳細は @docs/progress.md を参照。
 
 - **最終更新**: 2026-04-16
-- **次にやること**: フィルタデッキ本番動作確認 → Phase 9.3-9.4（学習時間トラッキング、習熟度スコア）
+- **次にやること**: 生徒取組状況UI + LINE通知 → Phase 9.3-9.4（学習時間トラッキング、習熟度スコア）
 
 ## 参照ドキュメント
 
