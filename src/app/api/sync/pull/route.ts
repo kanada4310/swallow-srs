@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminSupabase } from '@supabase/supabase-js'
 import { requireAuth } from '@/lib/api/auth'
 
 interface PullRequest {
@@ -111,8 +112,15 @@ export async function POST(request: NextRequest) {
   }
 
   // Also fetch child decks of assigned decks (subdecks auto-inherit distribution)
+  // Use admin client to bypass RLS — subdecks don't have their own deck_assignments,
+  // so the normal RLS policy "is_deck_assigned_to_user" would block them.
   if (assignedDeckIds.length > 0) {
-    const { data: childDecks } = await supabase
+    const adminClient = createAdminSupabase(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    )
+
+    const { data: childDecks } = await adminClient
       .from('decks')
       .select('*')
       .in('parent_deck_id', assignedDeckIds)
@@ -122,7 +130,7 @@ export async function POST(request: NextRequest) {
 
       // Also fetch grandchildren (depth 2)
       const childIds = childDecks.map(d => d.id)
-      const { data: grandchildDecks } = await supabase
+      const { data: grandchildDecks } = await adminClient
         .from('decks')
         .select('*')
         .in('parent_deck_id', childIds)
