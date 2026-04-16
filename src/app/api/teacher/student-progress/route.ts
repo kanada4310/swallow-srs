@@ -27,13 +27,20 @@ export async function GET(request: NextRequest) {
     const targetUserId = searchParams.get('userId')
     const period = parseInt(searchParams.get('period') || '7', 10)
 
-    // Get all student IDs in teacher's classes (own + billing-synced)
-    const { data: classMembers } = await supabase
-      .from('class_members')
-      .select('user_id, classes!inner(teacher_id, billing_template_id)')
-      .or('classes.teacher_id.eq.' + user.id + ',classes.billing_template_id.not.is.null')
+    // Get all classes (own + billing-synced), then get members
+    // Using classes-first approach (same as StudentsClient) to avoid RLS issues
+    const { data: classes } = await supabase
+      .from('classes')
+      .select('id, class_members(user_id)')
+      .or(`teacher_id.eq.${user.id},billing_template_id.not.is.null`)
 
-    const uniqueStudentIds = Array.from(new Set(classMembers?.map(m => m.user_id) || []))
+    interface ClassWithMembers {
+      id: string
+      class_members: { user_id: string }[]
+    }
+
+    const allMembers = (classes as ClassWithMembers[] || []).flatMap(c => c.class_members || [])
+    const uniqueStudentIds = Array.from(new Set(allMembers.map(m => m.user_id)))
 
     if (targetUserId) {
       // Detailed stats for one student
