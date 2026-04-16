@@ -15,13 +15,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const { user, error: authError } = await requireAuth(supabase)
     if (authError) return authError
 
-    // Get class with members
+    // Get class with members (own classes + billing-synced classes)
     const { data: classData, error } = await supabase
       .from('classes')
       .select(`
         id,
         name,
         teacher_id,
+        billing_template_id,
         created_at,
         updated_at,
         class_members (
@@ -35,8 +36,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         )
       `)
       .eq('id', id)
-      .eq('teacher_id', user.id)
       .single()
+
+    // Verify access: must be owner or billing-synced class
+    if (classData && classData.teacher_id !== user.id && !classData.billing_template_id) {
+      return NextResponse.json({ error: 'Class not found' }, { status: 404 })
+    }
 
     if (error || !classData) {
       return NextResponse.json({ error: 'Class not found' }, { status: 404 })
@@ -82,6 +87,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Class name is required' }, { status: 400 })
     }
 
+    // Check if billing-synced (read-only)
+    const { data: existing } = await supabase
+      .from('classes')
+      .select('id, billing_template_id')
+      .eq('id', id)
+      .single()
+
+    if (existing?.billing_template_id) {
+      return NextResponse.json({ error: 'billing連携クラスは編集できません' }, { status: 403 })
+    }
+
     const { data: updatedClass, error } = await supabase
       .from('classes')
       .update({ name: name.trim() })
@@ -109,6 +125,17 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     const { user, error: authError } = await requireAuth(supabase)
     if (authError) return authError
+
+    // Check if billing-synced (cannot delete)
+    const { data: existing } = await supabase
+      .from('classes')
+      .select('id, billing_template_id')
+      .eq('id', id)
+      .single()
+
+    if (existing?.billing_template_id) {
+      return NextResponse.json({ error: 'billing連携クラスは削除できません' }, { status: 403 })
+    }
 
     const { error } = await supabase
       .from('classes')

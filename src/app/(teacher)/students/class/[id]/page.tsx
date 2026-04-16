@@ -43,6 +43,7 @@ export default function ClassDetailPage() {
             id,
             name,
             teacher_id,
+            billing_template_id,
             created_at,
             class_members (
               user_id,
@@ -55,8 +56,13 @@ export default function ClassDetailPage() {
             )
           `)
           .eq('id', id)
-          .eq('teacher_id', profile.id)
           .single()
+
+        // Verify access: own class or billing-synced
+        if (cls && cls.teacher_id !== profile.id && !cls.billing_template_id) {
+          setNotFound(true)
+          return
+        }
 
         if (!cls) {
           setNotFound(true)

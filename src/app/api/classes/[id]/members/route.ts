@@ -18,13 +18,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Verify teacher owns the class
     const { data: classData } = await supabase
       .from('classes')
-      .select('id')
+      .select('id, billing_template_id')
       .eq('id', classId)
       .eq('teacher_id', user.id)
       .single()
 
     if (!classData) {
       return NextResponse.json({ error: 'Class not found or access denied' }, { status: 404 })
+    }
+
+    if (classData.billing_template_id) {
+      return NextResponse.json({ error: 'billing連携クラスのメンバーは変更できません' }, { status: 403 })
     }
 
     const body = await request.json()
@@ -114,13 +118,17 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     // Verify teacher owns the class
     const { data: classData } = await supabase
       .from('classes')
-      .select('id')
+      .select('id, billing_template_id')
       .eq('id', classId)
       .eq('teacher_id', user.id)
       .single()
 
     if (!classData) {
       return NextResponse.json({ error: 'Class not found or access denied' }, { status: 404 })
+    }
+
+    if (classData.billing_template_id) {
+      return NextResponse.json({ error: 'billing連携クラスのメンバーは変更できません' }, { status: 403 })
     }
 
     const { searchParams } = new URL(request.url)

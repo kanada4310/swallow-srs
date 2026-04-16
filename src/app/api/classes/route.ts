@@ -9,17 +9,18 @@ export async function GET() {
     const { user, error: authError } = await requireTeacher(supabase)
     if (authError) return authError
 
-    // Get classes with member count
+    // Get classes: teacher's own + billing-synced (teacher_id is null)
     const { data: classes, error } = await supabase
       .from('classes')
       .select(`
         id,
         name,
+        billing_template_id,
         created_at,
         updated_at,
         class_members (user_id)
       `)
-      .eq('teacher_id', user.id)
+      .or(`teacher_id.eq.${user.id},billing_template_id.not.is.null`)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -34,6 +35,7 @@ export async function GET() {
       created_at: c.created_at,
       updated_at: c.updated_at,
       memberCount: c.class_members?.length || 0,
+      isBillingSync: !!c.billing_template_id,
     })) || []
 
     return NextResponse.json({ classes: classesWithCount })

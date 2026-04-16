@@ -9,17 +9,17 @@ export async function GET() {
     const { user, error: authError } = await requireTeacher(supabase)
     if (authError) return authError
 
-    // Get class count
+    // Get class count (own + billing-synced)
     const { count: classCount } = await supabase
       .from('classes')
       .select('*', { count: 'exact', head: true })
-      .eq('teacher_id', user.id)
+      .or(`teacher_id.eq.${user.id},billing_template_id.not.is.null`)
 
-    // Get student count (unique students in teacher's classes)
+    // Get student count (unique students in teacher's + billing-synced classes)
     const { data: classMembers } = await supabase
       .from('class_members')
-      .select('user_id, classes!inner(teacher_id)')
-      .eq('classes.teacher_id', user.id)
+      .select('user_id, classes!inner(teacher_id, billing_template_id)')
+      .or('classes.teacher_id.eq.' + user.id + ',classes.billing_template_id.not.is.null')
 
     const uniqueStudentIds = new Set(classMembers?.map(m => m.user_id) || [])
     const studentCount = uniqueStudentIds.size

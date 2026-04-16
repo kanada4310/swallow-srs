@@ -24,10 +24,11 @@ export default function StudentsPage() {
     const loadClasses = async () => {
       // Try loading from Dexie first (instant)
       try {
-        const localClasses = await db.classes
-          .where('teacher_id')
-          .equals(profile.id)
-          .toArray()
+        // Own classes + billing-synced classes (teacher_id is null but billing_template_id is set)
+        const ownClasses = await db.classes.where('teacher_id').equals(profile.id).toArray()
+        const billingClasses = await db.classes.where('billing_template_id').above('').toArray()
+        const allLocalClasses = [...ownClasses, ...billingClasses.filter(bc => !ownClasses.some(oc => oc.id === bc.id))]
+        const localClasses = allLocalClasses
 
         if (localClasses.length > 0) {
           const localMembers = await db.classMembers.toArray()
@@ -59,11 +60,12 @@ export default function StudentsPage() {
           .select(`
             id,
             name,
+            billing_template_id,
             created_at,
             updated_at,
             class_members (user_id)
           `)
-          .eq('teacher_id', profile.id)
+          .or(`teacher_id.eq.${profile.id},billing_template_id.not.is.null`)
           .order('created_at', { ascending: false })
 
         interface ClassWithMembers {

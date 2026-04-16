@@ -206,11 +206,11 @@ export async function POST(request: NextRequest) {
     response.userDeckSettings = userDeckSettings
   }
 
-  // Fetch classes (teacher's own classes + classes user is a member of)
+  // Fetch classes (teacher's own classes + billing-synced classes + classes user is a member of)
   const { data: teacherClasses } = await supabase
     .from('classes')
     .select('*')
-    .eq('teacher_id', user.id)
+    .or(`teacher_id.eq.${user.id},billing_template_id.not.is.null`)
 
   const { data: membershipClasses } = await supabase
     .from('class_members')
