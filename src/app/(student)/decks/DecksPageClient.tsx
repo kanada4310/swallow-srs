@@ -13,6 +13,7 @@ interface DeckWithStats {
   owner_id: string
   is_distributed: boolean
   parent_deck_id: string | null
+  filter_tags?: string[]
   is_own: boolean
   total_cards: number
   new_count: number
@@ -539,6 +540,18 @@ function DeckCard({ deck, depth = 0, aggregatedStats, canDelete, onDelete, canSe
             )}
             <h3 className="font-medium text-gray-900">{deck.name}</h3>
           </div>
+          {deck.filter_tags && deck.filter_tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              <span className="px-1.5 py-0.5 bg-purple-50 text-purple-600 rounded text-xs font-medium">
+                フィルタ
+              </span>
+              {deck.filter_tags.map(tag => (
+                <span key={tag} className="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
           <p className="text-sm text-gray-500 mt-1">
             {aggregatedStats
               ? `${deck.total_cards} 枚 (計 ${aggregatedStats.total_cards} 枚)`

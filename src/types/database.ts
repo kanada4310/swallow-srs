@@ -126,6 +126,7 @@ export interface Deck {
   owner_id: string
   is_distributed: boolean
   parent_deck_id: string | null
+  filter_tags: string[]
   settings: Partial<DeckSettings>
   created_at: string
   updated_at: string

@@ -16,7 +16,7 @@ export async function PUT(
     if (authError) return authError
 
     const body = await request.json()
-    const { name, settings } = body
+    const { name, settings, filterTags } = body
 
     // Get deck and verify ownership
     const { data: deck, error: deckError } = await supabase
@@ -64,10 +64,18 @@ export async function PUT(
       }
     }
 
+    // Validate filterTags if provided
+    if (filterTags !== undefined) {
+      if (!Array.isArray(filterTags) || filterTags.some((t: unknown) => typeof t !== 'string' || !(t as string).trim())) {
+        return NextResponse.json({ error: 'filter_tags must be an array of non-empty strings' }, { status: 400 })
+      }
+    }
+
     // Build update object
     const updateData: Record<string, unknown> = {}
     if (name !== undefined) updateData.name = name
     if (settings !== undefined) updateData.settings = settings
+    if (filterTags !== undefined) updateData.filter_tags = filterTags
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: 'No fields to update' }, { status: 400 })

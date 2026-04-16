@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     if (error) return error
 
     const body = await request.json()
-    const { name, parentDeckId } = body
+    const { name, parentDeckId, filterTags } = body
 
     // Support both legacy (newCardsPerDay) and new (settings) format
     let settings = body.settings || {}
@@ -65,6 +65,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Validate filterTags if provided
+    if (filterTags !== undefined) {
+      if (!Array.isArray(filterTags) || filterTags.some((t: unknown) => typeof t !== 'string' || !(t as string).trim())) {
+        return NextResponse.json({ error: 'filter_tags must be an array of non-empty strings' }, { status: 400 })
+      }
+      if (!parentDeckId) {
+        return NextResponse.json({ error: 'フィルタータグはサブデッキにのみ設定できます' }, { status: 400 })
+      }
+    }
+
     // Ensure new_cards_per_day is set (backward compat)
     if (settings.new_cards_per_day === undefined) {
       settings.new_cards_per_day = 20
@@ -78,6 +88,7 @@ export async function POST(request: NextRequest) {
         owner_id: user.id,
         is_distributed: false,
         parent_deck_id: parentDeckId || null,
+        filter_tags: filterTags || [],
         settings,
       })
       .select()

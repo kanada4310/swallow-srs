@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import type { DeckSettings } from '@/types/database'
 import { DeckAdvancedSettings } from './DeckAdvancedSettings'
@@ -18,6 +18,7 @@ interface DeckFormProps {
     name: string
     newCardsPerDay: number
     settings?: Partial<DeckSettings>
+    filterTags?: string[]
   }
   parentDecks?: ParentDeckOption[]
   defaultParentId?: string
@@ -27,6 +28,9 @@ export function DeckForm({ mode, initialData, parentDecks, defaultParentId }: De
   const router = useRouter()
   const [name, setName] = useState(initialData?.name || '')
   const [parentDeckId, setParentDeckId] = useState(defaultParentId || '')
+  const [filterTags, setFilterTags] = useState<string[]>(initialData?.filterTags || [])
+  const [filterTagInput, setFilterTagInput] = useState('')
+  const [availableTags, setAvailableTags] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -38,6 +42,46 @@ export function DeckForm({ mode, initialData, parentDecks, defaultParentId }: De
     }
     return {}
   })
+
+  // Load available tags from parent deck's notes
+  useEffect(() => {
+    if (!parentDeckId) {
+      setAvailableTags([])
+      return
+    }
+    const loadTags = async () => {
+      try {
+        const { getDescendantDeckIds } = await import('@/lib/db/schema')
+        const descendantIds = await getDescendantDeckIds(parentDeckId)
+        const allDeckIds = [parentDeckId, ...descendantIds]
+        const notes = await db.notes.where('deck_id').anyOf(allDeckIds).toArray()
+        const tagSet = new Set<string>()
+        for (const note of notes) {
+          if (note.tags) {
+            for (const tag of note.tags) {
+              tagSet.add(tag)
+            }
+          }
+        }
+        setAvailableTags(Array.from(tagSet).sort())
+      } catch {
+        // Non-critical
+      }
+    }
+    loadTags()
+  }, [parentDeckId])
+
+  const addFilterTag = useCallback((tag: string) => {
+    const trimmed = tag.trim()
+    if (trimmed && !filterTags.includes(trimmed)) {
+      setFilterTags(prev => [...prev, trimmed])
+    }
+    setFilterTagInput('')
+  }, [filterTags])
+
+  const removeFilterTag = useCallback((tag: string) => {
+    setFilterTags(prev => prev.filter(t => t !== tag))
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,6 +96,7 @@ export function DeckForm({ mode, initialData, parentDecks, defaultParentId }: De
           name,
           settings: advancedSettings,
           parentDeckId: parentDeckId || undefined,
+          filterTags: parentDeckId && filterTags.length > 0 ? filterTags : undefined,
         }),
       })
 
@@ -70,6 +115,7 @@ export function DeckForm({ mode, initialData, parentDecks, defaultParentId }: De
           owner_id: deck.owner_id,
           is_distributed: deck.is_distributed || false,
           parent_deck_id: deck.parent_deck_id || null,
+          filter_tags: deck.filter_tags || [],
           settings: deck.settings || {},
           created_at: deck.created_at,
           updated_at: deck.updated_at,
@@ -131,6 +177,80 @@ export function DeckForm({ mode, initialData, parentDecks, defaultParentId }: De
           <p className="mt-1 text-sm text-gray-500">
             サブデッキとして作成する場合は親デッキを選択（最大3段）
           </p>
+        </div>
+      )}
+
+      {/* Filter Tags (only for subdecks) */}
+      {parentDeckId && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            フィルタータグ
+          </label>
+          <p className="text-sm text-gray-500 mb-3">
+            新規カードをタグで絞り込みます。空の場合はすべての新規カードが対象です。復習カードはフィルタに関係なく表示されます。
+          </p>
+
+          {/* Current filter tags */}
+          {filterTags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {filterTags.map(tag => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full text-sm"
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => removeFilterTag(tag)}
+                    className="text-purple-500 hover:text-purple-800"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Tag input */}
+          <div className="relative">
+            <input
+              type="text"
+              value={filterTagInput}
+              onChange={(e) => setFilterTagInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  addFilterTag(filterTagInput)
+                }
+              }}
+              placeholder="タグを入力してEnter"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-colors text-sm"
+            />
+          </div>
+
+          {/* Available tags from parent deck */}
+          {availableTags.length > 0 && (
+            <div className="mt-2">
+              <p className="text-xs text-gray-400 mb-1">利用可能なタグ:</p>
+              <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+                {availableTags
+                  .filter(t => !filterTags.includes(t))
+                  .filter(t => !filterTagInput || t.toLowerCase().includes(filterTagInput.toLowerCase()))
+                  .map(tag => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => addFilterTag(tag)}
+                      className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs hover:bg-purple-100 hover:text-purple-700 transition-colors"
+                    >
+                      + {tag}
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

@@ -261,6 +261,29 @@ class TsubameSRSDatabase extends Dexie {
         if (cs.last_review === undefined) cs.last_review = null
       })
     })
+
+    // Version 9: Add filter_tags to decks (no index change needed)
+    this.version(9).stores({
+      profiles: 'id',
+      noteTypes: 'id',
+      cardTemplates: 'id, note_type_id',
+      decks: 'id, owner_id, parent_deck_id',
+      notes: 'id, deck_id, *tags',
+      cards: 'id, note_id, deck_id',
+      cardStates: 'id, user_id, card_id, due, [user_id+card_id]',
+      reviewLogs: 'id, user_id, card_id, synced_at',
+      syncQueue: '++id, table, created_at, attempts',
+      syncMetadata: 'key',
+      audioCache: 'id, noteId, cachedAt',
+      userDeckSettings: 'id, user_id, deck_id, [user_id+deck_id]',
+      classes: 'id, teacher_id',
+      classMembers: '[class_id+user_id], class_id, user_id',
+      deckAssignments: 'id, deck_id, class_id, user_id',
+    }).upgrade(tx => {
+      return tx.table('decks').toCollection().modify(deck => {
+        if (deck.filter_tags === undefined) deck.filter_tags = []
+      })
+    })
   }
 }
 
@@ -684,9 +707,16 @@ export async function getStudyCardsOffline(
 ): Promise<OfflineCardData[]> {
   const now = new Date()
 
+  // Get current deck info (for filter_tags)
+  const currentDeck = await db.decks.get(deckId)
+
   // Get all descendant deck IDs (for subdeck support)
   const descendantIds = await getDescendantDeckIds(deckId)
   const allDeckIds = [deckId, ...descendantIds]
+
+  // Resolve root deck for centralized new-card quota
+  const rootDeckId = await getRootDeckId(deckId)
+  const isRootDeck = rootDeckId === deckId
 
   // Get all cards in the deck and its subdecks
   const deckCards = await db.cards.where('deck_id').anyOf(allDeckIds).toArray()
@@ -727,34 +757,45 @@ export async function getStudyCardsOffline(
     .toArray()
   const stateMap = new Map(states.map(s => [s.card_id, s]))
 
-  // Get deck settings + user-specific overrides
-  const deck = await db.decks.get(deckId)
-  const userSettingsId = `${userId}:${deckId}`
+  // Get deck settings from ROOT deck (new_cards_per_day is shared across all descendants)
+  const rootDeck = isRootDeck ? currentDeck : await db.decks.get(rootDeckId)
+  const userSettingsId = `${userId}:${rootDeckId}`
   const userDeckSetting = await db.userDeckSettings.get(userSettingsId).catch(() => undefined)
   const mergedDeckSettings = {
-    ...(deck?.settings || {}),
+    ...(rootDeck?.settings || {}),
     ...(userDeckSetting?.settings || {}),
   }
   const settings = resolveDeckSettings(mergedDeckSettings)
 
-  // Count new cards introduced today
+  // Count new cards introduced today across the ENTIRE root tree (shared quota)
   const todayStart = new Date()
   todayStart.setHours(4, 0, 0, 0)
   if (now.getHours() < 4) {
     todayStart.setDate(todayStart.getDate() - 1)
   }
 
+  // For quota counting, use root tree card IDs (not just this subdeck)
+  let allRootCardIds: string[]
+  if (isRootDeck) {
+    allRootCardIds = cardIds
+  } else {
+    const rootDescendantIds = await getDescendantDeckIds(rootDeckId)
+    const allRootDeckIds = [rootDeckId, ...rootDescendantIds]
+    const allRootCards = await db.cards.where('deck_id').anyOf(allRootDeckIds).toArray()
+    allRootCardIds = allRootCards.map(c => c.id)
+  }
+
   const todayLogs = await db.reviewLogs
     .where('user_id')
     .equals(userId)
     .filter(log =>
-      cardIds.includes(log.card_id) &&
+      allRootCardIds.includes(log.card_id) &&
       log.reviewed_at >= todayStart
     )
     .toArray()
 
   const newCardLogs = todayLogs.filter(l => l.last_interval === 0)
-  const reviewCardLogs = todayLogs.filter(l => l.last_interval > 0)
+  const reviewCardLogs = todayLogs.filter(l => l.last_interval > 0 && cardIds.includes(l.card_id))
   const remainingNewCards = Math.max(0, settings.new_cards_per_day - newCardLogs.length)
 
   // Categorize cards
@@ -821,7 +862,17 @@ export async function getStudyCardsOffline(
     }
   }
 
-  return orderStudyCards(dueCards, newCards, remainingNewCards, reviewCardLogs.length, settings)
+  // Filter new cards by tags if this is a filter deck
+  const filterTags = currentDeck?.filter_tags || []
+  const filteredNewCards = filterTags.length > 0
+    ? newCards.filter(card => {
+        const note = noteMap.get(card.noteId)
+        const noteTags = note?.tags || []
+        return noteTags.some((t: string) => filterTags.includes(t))
+      })
+    : newCards
+
+  return orderStudyCards(dueCards, filteredNewCards, remainingNewCards, reviewCardLogs.length, settings)
 }
 
 // Offline deck with stats type
@@ -831,6 +882,7 @@ export interface OfflineDeckWithStats {
   owner_id: string
   is_distributed: boolean
   parent_deck_id: string | null
+  filter_tags: string[]
   is_own: boolean
   total_cards: number
   new_count: number
@@ -894,6 +946,7 @@ export async function getDecksWithStatsOffline(
       owner_id: deck.owner_id,
       is_distributed: deck.is_distributed,
       parent_deck_id: deck.parent_deck_id || null,
+      filter_tags: deck.filter_tags || [],
       is_own: deck.owner_id === userId,
       total_cards: cardIds.length,
       new_count: newCount,
@@ -1015,6 +1068,19 @@ export async function getDescendantDeckIds(deckId: string): Promise<string[]> {
   }
 
   return result
+}
+
+/**
+ * Walk up the parent chain to find the root (top-level) deck ID.
+ * If the deck has no parent, it IS the root.
+ */
+export async function getRootDeckId(deckId: string): Promise<string> {
+  let currentId = deckId
+  while (true) {
+    const deck = await db.decks.get(currentId)
+    if (!deck || !deck.parent_deck_id) return currentId
+    currentId = deck.parent_deck_id
+  }
 }
 
 /**
