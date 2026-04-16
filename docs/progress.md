@@ -1,14 +1,39 @@
 # 進捗管理
 
 ## 現在の作業
-- Phase: billing-SRS同期完了 + フィルタデッキ修正完了 → 次は生徒取組状況UI + LINE通知
+- Phase: 生徒取組状況UI完了 + LINE通知データAPI完了 → 次は billing側LINE送信 / Phase 9.3-9.4
 - 最終更新: 2026-04-16
 - 次にやること:
-  1. 生徒ごとの取組状況確認UI（いつ・どのくらい・デッキ/ノートごとの習熟状況）
-  2. SRS→LINE取り組み通知（Flexメッセージで復習カードの表面を通知、リンクから学習開始）
-  3. Phase 9.3-9.4: 学習時間トラッキング、習熟度スコア
+  1. **billing側のLINE送信ジョブ**: `/api/admin/due-cards-summary` を叩いてFlexメッセージ生成→LINE Messaging API送信（SRS側は完了済み）
+  2. Phase 9.3-9.4: 学習時間トラッキング、習熟度スコア
+  3. Phase 10: ゲーミフィケーション（ストリーク、デイリーゴール、リーダーボード）
 
 ## セッション引継ぎメモ
+
+### 2026-04-16 夜（生徒取組状況UI + LINE通知データAPI + 掃除）
+- **やったこと**:
+  - **生徒取組状況UI**:
+    - 一覧ページ `/students/progress`（今日の復習数、累計、期限切れ、最終活動、全体正答率を表示）
+    - 詳細ページ `/students/progress/[userId]`（StatsOverview + 各種グラフ + デッキ別進捗）
+    - ノート別ドリルダウン（デッキクリックで各ノートの状態/正答率/最終レビューを表示）
+    - API `/api/teacher/student-progress`（バッチクエリでN+1回避、?deckId=xxx でノート一覧モード）
+    - 共通統計モジュール `src/lib/stats/calculations.ts`（生徒/講師で共有）
+    - DBマイグレーション `017_teacher_student_progress.sql`（card_states に講師閲覧RLS追加）
+    - クラス管理ページに「取組状況」ボタン追加
+  - **LINE通知データAPI**:
+    - `GET /api/admin/due-cards-summary`（Bearer認証、期限切れカードを持つ全生徒のサマリー返却）
+    - レスポンス: `{ students: [{ lineUserId, name, dueCount, frontText, deckName }] }`
+    - `middleware.ts` の publicPaths に追加
+    - extract-text ユーティリティで frontText を生成
+  - **掃除**:
+    - 未使用の Google OAuth コールバック `/callback/route.ts` 削除 + publicPaths から除去
+    - progress.md の既知の課題から解消済み項目を削除
+- **次のセッションで注意すべきこと**:
+  - `017_teacher_student_progress.sql` 実行済み
+  - 生徒取組状況UIは講師ロールのみアクセス可（card_states RLSで制御）
+  - LINE通知送信本体（Flexメッセージ生成 + Messaging API呼び出し）は**billing側に未実装**
+  - billing側は SRS_AUTH_SECRET + `GET /api/admin/due-cards-summary` で呼び出す
+  - FSRS card_states の `lapses` カラムはノート別進捗で正答率計算に使用
 
 ### 2026-04-16 後半（billing-SRS同期 + フィルタデッキ修正 + 設定継承）
 - **やったこと**:
@@ -94,9 +119,8 @@
 - LINE端末のIndexedDBに古いユーザーIDがキャッシュされる場合がある（pull APIで対処済み、push APIも同様の対処が必要かもしれない）
 
 ## 今後のロードマップ概要（優先度順、詳細は ROADMAP.md）
-- **生徒取組状況UI**: 講師が生徒ごとの学習状況を確認 ★次
-- **LINE通知**: SRSからLINEにFlexメッセージで復習カード通知 ★次
+- **Phase 12.4**: billing側でLINE Flex送信（SRS側データAPIは完了）★次
 - **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア
 - **Phase 10**: ゲーミフィケーション
-- **Phase 11**: 講師ツール強化
+- **Phase 11.1/11.3/11.4**: 宿題機能・クラス分析・保護者レポート
 - **Phase 13-14, 16**: コンテンツ効率化、学習モード拡張、コラボレーション

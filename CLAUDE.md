@@ -188,12 +188,24 @@ npm run test:watch   # Vitest 監視モード
 - **DBマイグレーション**: `016_billing_sync.sql`（billing_template_id + teacher_id nullable + RLSポリシー）実行済み
 - **Dexie v10**: classes に billing_template_id インデックス追加
 
+## 生徒取組状況UI + LINE通知データAPI ✅ 完了
+
+- **一覧ページ**: `/students/progress`（生徒ごとの今日の復習数/累計/期限切れ/最終活動/全体正答率）
+- **詳細ページ**: `/students/progress/[userId]`（StatsOverview + デッキ別進捗 + ノート別ドリルダウン）
+- **講師向けAPI**: `GET /api/teacher/student-progress`（バッチクエリでN+1回避、`?deckId=xxx` でノート一覧）
+- **共通統計モジュール**: `src/lib/stats/calculations.ts`（生徒/講師で共有）
+- **RLS**: `017_teacher_student_progress.sql`（card_states に `is_student_of_teacher` 基準のSELECTポリシー追加）
+- **LINE通知データAPI**: `GET /api/admin/due-cards-summary`（Bearer認証、billing側から呼び出し）
+  - レスポンス: `{ students: [{ lineUserId, name, dueCount, frontText, deckName }] }`
+  - `middleware.ts` の publicPaths に追加済み
+  - billing側でFlexメッセージ生成 + LINE Messaging API 送信する実装はまだ未
+
 ## 現在の進捗
 
 詳細は @docs/progress.md を参照。
 
 - **最終更新**: 2026-04-16
-- **次にやること**: 生徒取組状況UI + LINE通知 → Phase 9.3-9.4（学習時間トラッキング、習熟度スコア）
+- **次にやること**: billing側のLINE送信ジョブ（SRS側データAPIは完了） → Phase 9.3-9.4（学習時間トラッキング、習熟度スコア）
 
 ## 参照ドキュメント
 
