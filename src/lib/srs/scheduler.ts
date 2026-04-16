@@ -66,6 +66,8 @@ export function getDefaultDeckSettings(): DeckSettings {
     swipe_enabled: true,
     tts_voice: 'alloy',
     tts_speed: 1.0,
+    tts_autoplay: false,
+    tts_auto_button: true,
     algorithm: 'sm2',
     fsrs_desired_retention: 0.9,
     fsrs_maximum_interval: 36500,

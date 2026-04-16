@@ -30,6 +30,8 @@ interface StudyCardProps {
   swipeEnabled?: boolean
   ttsVoice?: string
   ttsSpeed?: number
+  ttsAutoplay?: boolean
+  ttsAutoButton?: boolean
 }
 
 export function StudyCard({
@@ -48,6 +50,8 @@ export function StudyCard({
   swipeEnabled = false,
   ttsVoice,
   ttsSpeed,
+  ttsAutoplay = false,
+  ttsAutoButton = true,
 }: StudyCardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
 
@@ -280,6 +284,31 @@ export function StudyCard({
     return []
   }, [ttsEnabledFields, fieldValues, frontTtsFields])
 
+  // Determine auto-play fields for each face
+  const frontAutoplayFields = useMemo(() => {
+    const fromTemplate = extractTtsFieldNames(template.front)
+    if (fromTemplate.length > 0) return fromTemplate.filter(name => fieldValues[name])
+    return frontTtsFields
+  }, [template.front, fieldValues, frontTtsFields])
+
+  const backAutoplayFields = useMemo(() => {
+    const fromTemplate = extractTtsFieldNames(template.back)
+    if (fromTemplate.length > 0) return fromTemplate.filter(name => fieldValues[name])
+    return backTtsFields
+  }, [template.back, fieldValues, backTtsFields])
+
+  // Auto-play TTS when card face changes
+  useEffect(() => {
+    if (!ttsAutoplay) return
+    const fieldsToPlay = isFlipped ? backAutoplayFields : frontAutoplayFields
+    if (fieldsToPlay.length === 0) return
+    // Small delay to let card render first
+    const timer = setTimeout(() => {
+      handleIframeTtsPlay(fieldsToPlay[0])
+    }, 200)
+    return () => clearTimeout(timer)
+  }, [isFlipped, noteId, ttsAutoplay]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Auto-flip when triggered by timer
   useEffect(() => {
     if (autoFlip && !isFlipped) {
@@ -326,7 +355,7 @@ export function StudyCard({
           /* Front only */
           <div className="flex-1 p-8 flex flex-col items-center justify-center relative">
             <CardIframe key="front" html={renderedFront} css={template.css} className="text-xl" onTtsPlay={handleIframeTtsPlay} />
-            {!templateHasTts && frontTtsFields.length > 0 && (
+            {!templateHasTts && ttsAutoButton && frontTtsFields.length > 0 && (
               <div className="mt-4 flex gap-2">
                 {frontTtsFields.map(fieldName => (
                   <AudioButton
@@ -347,7 +376,7 @@ export function StudyCard({
           /* Back only (back template is self-contained, includes front content) */
           <div className="flex-1 p-8 flex flex-col items-center justify-center">
             <CardIframe key="back" html={renderedBack} css={template.css} className="text-xl" onTtsPlay={handleIframeTtsPlay} />
-            {!templateHasTts && backTtsFields.length > 0 && (
+            {!templateHasTts && ttsAutoButton && backTtsFields.length > 0 && (
               <div className="mt-4 flex gap-2">
                 {backTtsFields.map(fieldName => (
                   <AudioButton

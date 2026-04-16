@@ -714,6 +714,8 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
         swipeEnabled={settings.swipe_enabled}
         ttsVoice={settings.tts_voice}
         ttsSpeed={settings.tts_speed}
+        ttsAutoplay={settings.tts_autoplay}
+        ttsAutoButton={settings.tts_auto_button}
       />
     </div>
   )

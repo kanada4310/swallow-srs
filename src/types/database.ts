@@ -111,6 +111,8 @@ export interface DeckSettings {
   // === 音声 (TTS) ===
   tts_voice: TTSVoice                              // デフォルト: 'alloy'
   tts_speed: number                                // デフォルト: 1.0
+  tts_autoplay: boolean                            // 自動再生。デフォルト: false
+  tts_auto_button: boolean                         // テンプレート外ボタン自動表示。デフォルト: true
 
   // === アルゴリズム ===
   algorithm: 'sm2' | 'fsrs'                      // デフォルト: 'sm2'

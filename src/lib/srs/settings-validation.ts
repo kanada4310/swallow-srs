@@ -151,6 +151,18 @@ export function validateDeckSettings(raw: Partial<DeckSettings>): ValidationErro
     }
   }
 
+  if (raw.tts_autoplay !== undefined) {
+    if (typeof raw.tts_autoplay !== 'boolean') {
+      errors.push({ field: 'tts_autoplay', message: '自動再生はtrue/falseで指定してください' })
+    }
+  }
+
+  if (raw.tts_auto_button !== undefined) {
+    if (typeof raw.tts_auto_button !== 'boolean') {
+      errors.push({ field: 'tts_auto_button', message: 'テンプレート外ボタンはtrue/falseで指定してください' })
+    }
+  }
+
   // === FSRS settings ===
 
   if (raw.algorithm !== undefined) {

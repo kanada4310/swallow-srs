@@ -662,6 +662,34 @@ function TTSTab({
       >
         {isPlaying ? '再生中...' : 'テスト再生'}
       </button>
+
+      <SettingField label="自動再生" description="カード表示時にTTS音声を自動再生">
+        <button
+          type="button"
+          onClick={() => update('tts_autoplay', !resolved.tts_autoplay)}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+            resolved.tts_autoplay ? 'bg-blue-600' : 'bg-gray-300'
+          }`}
+        >
+          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+            resolved.tts_autoplay ? 'translate-x-6' : 'translate-x-1'
+          }`} />
+        </button>
+      </SettingField>
+
+      <SettingField label="自動ボタン表示" description="テンプレートに {{tts:...}} がない場合、カード下部にボタンを自動表示">
+        <button
+          type="button"
+          onClick={() => update('tts_auto_button', !resolved.tts_auto_button)}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+            resolved.tts_auto_button ? 'bg-blue-600' : 'bg-gray-300'
+          }`}
+        >
+          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+            resolved.tts_auto_button ? 'translate-x-6' : 'translate-x-1'
+          }`} />
+        </button>
+      </SettingField>
     </>
   )
 }
