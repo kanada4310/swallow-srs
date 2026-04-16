@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 // 認証不要のパス
-const publicPaths = ['/login', '/callback', '/auth/line']
+const publicPaths = ['/login', '/callback', '/auth/line', '/api/admin/billing-sync']
 
 // プロフィール設定ページ
 const setupPath = '/setup'
