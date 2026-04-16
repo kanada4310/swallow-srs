@@ -42,6 +42,7 @@ interface SyncSummary {
 }
 
 export async function POST(request: Request) {
+  try {
   // 1. Authenticate with shared secret
   const authHeader = request.headers.get('authorization')
   const authSecret = process.env.SRS_AUTH_SECRET
@@ -298,4 +299,12 @@ export async function POST(request: Request) {
     { success: !hasErrors, summary },
     { status: hasErrors ? 207 : 200 }
   )
+
+  } catch (err) {
+    console.error('[billing-sync] Unhandled error:', err)
+    return NextResponse.json(
+      { error: `Internal server error: ${String(err)}` },
+      { status: 500 }
+    )
+  }
 }
