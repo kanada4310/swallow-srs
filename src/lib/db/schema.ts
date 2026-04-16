@@ -953,8 +953,60 @@ export async function getDecksWithStatsOffline(
     stateByCard.set(cs.card_id, cs.state)
   }
 
+  // Build note lookup for filter deck tag matching
+  const allNotes = await db.notes.toArray()
+  const noteMap = new Map(allNotes.map(n => [n.id, n]))
+  const cardToNote = new Map<string, string>()
+  for (const card of allCards) {
+    cardToNote.set(card.id, card.note_id)
+  }
+
+  // Build deck parent map for root deck resolution
+  const deckMap = new Map(allDecks.map(d => [d.id, d]))
+
   return allDecks.map(deck => {
-    const cardIds = cardsByDeck.get(deck.id) || []
+    const filterTags = deck.filter_tags || []
+    const isFilterDeck = filterTags.length > 0 && deck.parent_deck_id
+
+    let cardIds: string[]
+
+    if (isFilterDeck) {
+      // Filter deck: count cards from parent deck that match filter tags
+      // Walk up to find root deck
+      let rootId = deck.parent_deck_id!
+      while (true) {
+        const parent = deckMap.get(rootId)
+        if (!parent || !parent.parent_deck_id) break
+        rootId = parent.parent_deck_id
+      }
+
+      // Get all cards from root tree
+      const rootTreeIds = new Set<string>()
+      const collectDescendants = (id: string) => {
+        rootTreeIds.add(id)
+        for (const d of allDecks) {
+          if (d.parent_deck_id === id) collectDescendants(d.id)
+        }
+      }
+      collectDescendants(rootId)
+
+      // Filter cards by tags
+      cardIds = []
+      for (const treeId of Array.from(rootTreeIds)) {
+        for (const cid of (cardsByDeck.get(treeId) || [])) {
+          const noteId = cardToNote.get(cid)
+          if (!noteId) continue
+          const note = noteMap.get(noteId)
+          const noteTags = note?.tags || []
+          if (noteTags.some((t: string) => filterTags.includes(t))) {
+            cardIds.push(cid)
+          }
+        }
+      }
+    } else {
+      cardIds = cardsByDeck.get(deck.id) || []
+    }
+
     let newCount = 0
     let learningCount = 0
     let reviewCount = 0
