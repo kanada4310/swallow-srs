@@ -53,6 +53,7 @@ export function StudyPageClient({
   const [offlineDecks, setOfflineDecks] = useState<
     Array<{ id: string; name: string; total_cards: number; new_count: number; learning_count: number; review_count: number }>
   >([])
+  const [offlineDeckSettings, setOfflineDeckSettings] = useState<Partial<DeckSettings> | undefined>(undefined)
   const [isLoadingOffline, setIsLoadingOffline] = useState(false)
   const [offlineError, setOfflineError] = useState<string | null>(null)
 
@@ -90,9 +91,21 @@ export function StudyPageClient({
           const cards = await getStudyCardsOffline(resolvedUserId, deckId)
           setOfflineCards(cards)
 
-          // Get deck name
+          // Get deck name and settings (use root deck settings for filter subdecks)
           const deck = await db.decks.get(deckId)
           setOfflineDeckName(deck?.name || 'デッキ')
+
+          // Load deck settings from root deck
+          const { getRootDeckId } = await import('@/lib/db/schema')
+          const rootId = await getRootDeckId(deckId)
+          const rootDeck = rootId !== deckId ? await db.decks.get(rootId) : deck
+          const userSettingsId = `${resolvedUserId}:${rootId}`
+          const userDeckSetting = await db.userDeckSettings.get(userSettingsId).catch(() => undefined)
+          const merged = {
+            ...(rootDeck?.settings || {}),
+            ...(userDeckSetting?.settings || {}),
+          }
+          setOfflineDeckSettings(merged as Partial<DeckSettings>)
         } else {
           // Show deck selection from offline data
           const decks = await getDecksWithStatsOffline(resolvedUserId)
@@ -200,7 +213,7 @@ export function StudyPageClient({
         deckName={resolvedDeckName}
         initialCards={cards}
         userId={userId}
-        deckSettings={deckSettings}
+        deckSettings={deckSettings || offlineDeckSettings}
       />
     </div>
   )

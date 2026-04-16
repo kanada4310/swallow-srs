@@ -9,6 +9,7 @@ import type {
   NoteType,
   CardTemplate,
   Deck,
+  DeckSettings,
   Note,
   Card,
   CardState,
@@ -918,6 +919,7 @@ export interface OfflineDeckWithStats {
   new_count: number
   learning_count: number
   review_count: number
+  settings?: Partial<DeckSettings>
 }
 
 /**
@@ -1034,6 +1036,7 @@ export async function getDecksWithStatsOffline(
       new_count: newCount,
       learning_count: learningCount,
       review_count: reviewCount,
+      settings: deck.settings as Partial<DeckSettings> | undefined,
     }
   })
 }
