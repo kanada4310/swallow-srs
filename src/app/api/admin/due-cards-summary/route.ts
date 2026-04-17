@@ -103,7 +103,23 @@ export async function GET(request: NextRequest) {
       let deckId: string | null = null
 
       if (cardData) {
+        // Default to card's own deck
         deckId = cardData.deck_id
+
+        // Check review_logs for the last studied deck (may be a filter subdeck)
+        const { data: lastReview } = await supabase
+          .from('review_logs')
+          .select('deck_id')
+          .eq('user_id', userId)
+          .eq('card_id', randomCard.card_id)
+          .not('deck_id', 'is', null)
+          .order('reviewed_at', { ascending: false })
+          .limit(1)
+          .single()
+
+        if (lastReview?.deck_id) {
+          deckId = lastReview.deck_id
+        }
 
         const { data: noteData } = await supabase
           .from('notes')
@@ -116,7 +132,7 @@ export async function GET(request: NextRequest) {
         const { data: deckData } = await supabase
           .from('decks')
           .select('name')
-          .eq('id', cardData.deck_id)
+          .eq('id', deckId)
           .single()
 
         deckName = deckData?.name || ''

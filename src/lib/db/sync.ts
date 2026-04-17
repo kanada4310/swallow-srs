@@ -370,7 +370,8 @@ export async function saveAnswerLocally(
   },
   lastInterval: number,
   timeMs: number | null,
-  reviewLogId?: string
+  reviewLogId?: string,
+  deckId?: string
 ): Promise<void> {
   const now = new Date()
   const logId = reviewLogId || crypto.randomUUID()
@@ -403,6 +404,7 @@ export async function saveAnswerLocally(
       id: logId,
       user_id: userId,
       card_id: cardId,
+      deck_id: deckId,
       ease,
       interval: newSchedule.interval,
       last_interval: lastInterval,
@@ -446,6 +448,7 @@ export async function saveAnswerLocally(
         id: logId,
         user_id: userId,
         card_id: cardId,
+        deck_id: deckId || null,
         ease,
         interval: newSchedule.interval,
         last_interval: lastInterval,

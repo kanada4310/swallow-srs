@@ -49,6 +49,7 @@ export interface LocalReviewLog {
   id: string
   user_id: string
   card_id: string
+  deck_id?: string
   ease: 1 | 2 | 3 | 4
   interval: number
   last_interval: number
@@ -288,6 +289,25 @@ class TsubameSRSDatabase extends Dexie {
 
     // Version 10: Add billing_template_id to classes for billing sync
     this.version(10).stores({
+      profiles: 'id',
+      noteTypes: 'id',
+      cardTemplates: 'id, note_type_id',
+      decks: 'id, owner_id, parent_deck_id',
+      notes: 'id, deck_id, *tags',
+      cards: 'id, note_id, deck_id',
+      cardStates: 'id, user_id, card_id, due, [user_id+card_id]',
+      reviewLogs: 'id, user_id, card_id, synced_at',
+      syncQueue: '++id, table, created_at, attempts',
+      syncMetadata: 'key',
+      audioCache: 'id, noteId, cachedAt',
+      userDeckSettings: 'id, user_id, deck_id, [user_id+deck_id]',
+      classes: 'id, teacher_id, billing_template_id',
+      classMembers: '[class_id+user_id], class_id, user_id',
+      deckAssignments: 'id, deck_id, class_id, user_id',
+    })
+
+    // Version 11: Add deck_id to reviewLogs (no index change, field-only addition)
+    this.version(11).stores({
       profiles: 'id',
       noteTypes: 'id',
       cardTemplates: 'id, note_type_id',

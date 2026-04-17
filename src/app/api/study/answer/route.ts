@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     if (authError) return authError
 
     const body = await request.json()
-    const { cardId, ease } = body
+    const { cardId, ease, deckId } = body
 
     if (!cardId || ease === undefined || ease < 1 || ease > 4) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
@@ -121,12 +121,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to update card state' }, { status: 500 })
     }
 
-    // Log the review
+    // Log the review (deck_id = study context deck, e.g. filter subdeck)
     const { error: logError } = await supabase
       .from('review_logs')
       .insert({
         user_id: user.id,
         card_id: cardId,
+        deck_id: deckId || cardData?.deck_id || null,
         ease: ease,
         interval: newSchedule.interval,
         last_interval: schedule.interval,

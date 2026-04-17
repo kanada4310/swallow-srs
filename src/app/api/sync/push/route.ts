@@ -29,6 +29,7 @@ interface ReviewLogPayload {
   id: string
   user_id: string
   card_id: string
+  deck_id?: string | null
   ease: 1 | 2 | 3 | 4
   interval: number
   last_interval: number
@@ -111,6 +112,7 @@ export async function POST(request: NextRequest) {
           id: l.id,
           user_id: l.user_id,
           card_id: l.card_id,
+          deck_id: l.deck_id || null,
           ease: l.ease,
           interval: l.interval,
           last_interval: l.last_interval,

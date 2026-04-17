@@ -210,6 +210,7 @@ export function StudyPageClient({
     <div className="py-0">
       {!isOnline && <OfflineBadge />}
       <StudySession
+        deckId={deckId || undefined}
         deckName={resolvedDeckName}
         initialCards={cards}
         userId={userId}

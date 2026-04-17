@@ -54,13 +54,14 @@ interface UndoSnapshot {
 }
 
 interface StudySessionProps {
+  deckId?: string
   deckName: string
   initialCards: CardData[]
   userId: string
   deckSettings?: Partial<DeckSettings>
 }
 
-export function StudySession({ deckName, initialCards, userId, deckSettings }: StudySessionProps) {
+export function StudySession({ deckId, deckName, initialCards, userId, deckSettings }: StudySessionProps) {
   // Queue-based state
   const [mainQueue] = useState<CardData[]>(initialCards)
   const [mainIndex, setMainIndex] = useState(0)
@@ -381,7 +382,8 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
           },
           lastInterval,
           timeMs,
-          reviewLogId
+          reviewLogId,
+          deckId
         ).then(() => {
           // Set undo snapshot after local save completes
           setUndoSnapshot(prev => {
@@ -395,7 +397,7 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
             fetch('/api/study/answer', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ cardId, ease, timeMs }),
+              body: JSON.stringify({ cardId, ease, timeMs, deckId }),
             }).catch(syncError => {
               console.warn('Server sync failed, will retry later:', syncError)
             })
@@ -428,13 +430,14 @@ export function StudySession({ deckName, initialCards, userId, deckSettings }: S
           },
           lastInterval,
           timeMs,
-          reviewLogId
+          reviewLogId,
+          deckId
         ).then(() => {
           if (isOnline) {
             fetch('/api/study/answer', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ cardId, ease, timeMs }),
+              body: JSON.stringify({ cardId, ease, timeMs, deckId }),
             }).catch(syncError => {
               console.warn('Server sync failed, will retry later:', syncError)
             })
