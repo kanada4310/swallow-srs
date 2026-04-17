@@ -127,7 +127,7 @@ export default function StudentProgressPage() {
         <div className="grid grid-cols-3 gap-3 mb-4">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 text-center">
             <div className="text-2xl font-bold text-blue-600">{students.length}</div>
-            <div className="text-xs text-gray-500">生徒数</div>
+            <div className="text-xs text-gray-500">直近7日</div>
           </div>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 text-center">
             <div className="text-2xl font-bold text-green-600">
@@ -147,7 +147,7 @@ export default function StudentProgressPage() {
         <div className="space-y-2">
           {filteredStudents && filteredStudents.length === 0 && (
             <div className="text-center text-gray-500 py-8">
-              {searchQuery ? '該当する生徒がいません' : '生徒がいません'}
+              {searchQuery ? '該当する生徒がいません' : '直近7日間に学習した生徒がいません'}
             </div>
           )}
 

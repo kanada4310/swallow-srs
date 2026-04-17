@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { NoteEditor } from '@/components/deck/NoteEditor'
 import { NoteBrowser } from '@/components/deck/NoteBrowser'
 import { NoteEditModal } from '@/components/deck/NoteEditModal'
@@ -53,6 +53,7 @@ interface DeckDetailClientProps {
 
 export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettings, allDeckIds, notes: initialNotes, totalNoteCount: initialTotal, noteTypes, deckTags, canEdit, isOwner, userRole }: DeckDetailClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [notes, setNotes] = useState<BrowsableNote[]>(initialNotes)
   const [totalNoteCount, setTotalNoteCount] = useState(initialTotal)
   const [isAddingNote, setIsAddingNote] = useState(false)
@@ -70,6 +71,40 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
   const [deckSettings, setDeckSettings] = useState<Partial<DeckSettings>>(initialSettings)
   const [isSavingSettings, setIsSavingSettings] = useState(false)
   const [settingsError, setSettingsError] = useState<string | null>(null)
+
+  // Auto-open note edit modal when ?note=xxx is in URL (from student progress page)
+  useEffect(() => {
+    const noteId = searchParams.get('note') || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('note') : null)
+    if (!noteId || !notes.length) return
+
+    const note = notes.find(n => n.id === noteId)
+    if (note) {
+      setEditingNote(note)
+    } else {
+      // Note may not be in the first page of results — fetch it directly
+      const supabase = createClient()
+      supabase
+        .from('notes')
+        .select('id, field_values, note_type_id, generated_content, tags, created_at, cards(id)')
+        .eq('id', noteId)
+        .single()
+        .then(({ data }) => {
+          if (data) {
+            const browsable: BrowsableNote = {
+              id: data.id,
+              field_values: data.field_values as Record<string, string>,
+              note_type_id: data.note_type_id,
+              generated_content: data.generated_content as BrowsableNote['generated_content'],
+              tags: (data.tags as string[]) || [],
+              created_at: data.created_at,
+              cards: Array.isArray(data.cards) ? data.cards.map((c: { id: string }) => ({ id: c.id })) : [],
+            }
+            setEditingNote(browsable)
+          }
+        })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notes.length])
 
   const refreshNotes = useCallback(async () => {
     const supabase = createClient()

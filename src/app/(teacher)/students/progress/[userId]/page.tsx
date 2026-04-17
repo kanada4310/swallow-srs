@@ -247,7 +247,11 @@ export default function StudentProgressDetailPage({ params }: { params: { userId
                             {noteProgress.map(note => {
                               const statusInfo = STATUS_LABELS[note.status] || STATUS_LABELS.new
                               return (
-                                <tr key={note.noteId} className="border-b border-gray-50 last:border-0">
+                                <tr
+                                  key={note.noteId}
+                                  className="border-b border-gray-50 last:border-0 cursor-pointer hover:bg-blue-50 transition-colors"
+                                  onClick={() => window.location.href = `/decks/${selectedDeck.id}?note=${note.noteId}`}
+                                >
                                   <td className="py-2 pr-2">
                                     <div className="text-gray-800 truncate max-w-[200px] sm:max-w-[300px]">
                                       {note.displayText || '(空)'}

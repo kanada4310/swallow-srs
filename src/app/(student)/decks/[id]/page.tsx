@@ -25,6 +25,7 @@ interface DeckData {
   childDecks: Array<{ id: string; name: string }>
   canEdit: boolean
   userRole: string
+  isFilterDeck: boolean
 }
 
 function DeckDetailSkeleton() {
@@ -175,6 +176,7 @@ export default function DeckDetailPage() {
         childDecks.sort((a, b) => a.name.localeCompare(b.name))
 
         const isOwner = deck.owner_id === profile!.id
+        const isFilterDeck = !!(deck.filter_tags && deck.filter_tags.length > 0 && deck.parent_deck_id)
 
         // Get user-specific deck settings override
         let mergedSettings: Partial<DeckSettings> = (deck.settings || {}) as Partial<DeckSettings>
@@ -206,6 +208,7 @@ export default function DeckDetailPage() {
             childDecks: childDecks.map(d => ({ id: d.id, name: d.name })),
             canEdit: isOwner,
             userRole: profile!.role,
+            isFilterDeck,
           })
           setIsLoading(false)
         }
@@ -286,8 +289,8 @@ export default function DeckDetailPage() {
           </div>
         </div>
 
-        {/* Study Button */}
-        {deckData.totalCards > 0 && (
+        {/* Study Button (also shown for filter subdecks whose cards belong to parent) */}
+        {(deckData.totalCards > 0 || deckData.isFilterDeck) && (
           <Link
             href={`/study?deck=${deckId}`}
             className="block w-full py-4 bg-blue-600 text-white text-center rounded-lg hover:bg-blue-700 transition-colors font-medium mb-6"

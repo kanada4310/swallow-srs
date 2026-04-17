@@ -170,10 +170,21 @@ export async function GET(request: NextRequest) {
       accuracyMap.set(userId, data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0)
     }
 
+    // Filter to students with activity in the last 7 days
+    const sevenDaysAgo = new Date()
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+    const sevenDaysAgoStr = sevenDaysAgo.toISOString()
+
     const students: StudentOverview[] = uniqueStudentIds
       .map(studentId => {
         const profile = profileMap.get(studentId)
         if (!profile) return null
+
+        const lastActivity = lastActivityMap.get(studentId) || null
+
+        // Only include students with activity in the last 7 days
+        if (!lastActivity || lastActivity < sevenDaysAgoStr) return null
+
         return {
           id: profile.id,
           name: profile.name,
@@ -181,9 +192,9 @@ export async function GET(request: NextRequest) {
           reviewsToday: reviewsTodayMap.get(studentId) || 0,
           totalReviews: totalReviewsMap.get(studentId) || 0,
           dueCards: dueCardsMap.get(studentId) || 0,
-          lastActivity: lastActivityMap.get(studentId) || null,
+          lastActivity: lastActivity as string | null,
           overallAccuracy: accuracyMap.get(studentId) || 0,
-        }
+        } as StudentOverview
       })
       .filter((s): s is StudentOverview => s !== null)
       .sort((a, b) => b.reviewsToday - a.reviewsToday)
