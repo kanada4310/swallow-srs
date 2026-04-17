@@ -55,18 +55,33 @@ interface UndoSnapshot {
 
 interface StudySessionProps {
   deckId?: string
+  priorityCardId?: string
   deckName: string
   initialCards: CardData[]
   userId: string
   deckSettings?: Partial<DeckSettings>
 }
 
-export function StudySession({ deckId, deckName, initialCards, userId, deckSettings }: StudySessionProps) {
-  // Queue-based state
-  const [mainQueue] = useState<CardData[]>(initialCards)
+/**
+ * Reorder cards so that priorityCardId is first (if found).
+ * Used when launching from LINE notification to show the previewed card first.
+ */
+function reorderWithPriority(cards: CardData[], priorityCardId?: string): CardData[] {
+  if (!priorityCardId) return cards
+  const idx = cards.findIndex(c => c.id === priorityCardId)
+  if (idx <= 0) return cards // not found or already first
+  const reordered = [...cards]
+  const [priorityCard] = reordered.splice(idx, 1)
+  reordered.unshift(priorityCard)
+  return reordered
+}
+
+export function StudySession({ deckId, priorityCardId, deckName, initialCards, userId, deckSettings }: StudySessionProps) {
+  // Queue-based state (reorder to put priority card first if specified)
+  const [mainQueue] = useState<CardData[]>(() => reorderWithPriority(initialCards, priorityCardId))
   const [mainIndex, setMainIndex] = useState(0)
   const [learningQueue, setLearningQueue] = useState<LearningQueueItem[]>([])
-  const [currentCard, setCurrentCard] = useState<CardData | null>(initialCards[0] ?? null)
+  const [currentCard, setCurrentCard] = useState<CardData | null>(() => reorderWithPriority(initialCards, priorityCardId)[0] ?? null)
   const [fromLearningQueue, setFromLearningQueue] = useState(false)
   const [totalCards] = useState(initialCards.length)
   const [graduatedCount, setGraduatedCount] = useState(0)

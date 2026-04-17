@@ -46,6 +46,9 @@ export function StudyPageClient({
   // Resolve deckId: prop takes precedence, then URL param
   const deckId = deckIdProp ?? searchParams.get('deck') ?? null
 
+  // Priority card ID from LINE notification deep link
+  const priorityCardId = searchParams.get('card') ?? (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('card') : null)
+
   // State for data loaded from IndexedDB
   const [offlineUserId, setOfflineUserId] = useState<string | null>(null)
   const [offlineCards, setOfflineCards] = useState<CardData[] | null>(null)
@@ -211,6 +214,7 @@ export function StudyPageClient({
       {!isOnline && <OfflineBadge />}
       <StudySession
         deckId={deckId || undefined}
+        priorityCardId={priorityCardId || undefined}
         deckName={resolvedDeckName}
         initialCards={cards}
         userId={userId}

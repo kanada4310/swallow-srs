@@ -66,7 +66,8 @@ SRS の `due-cards-summary` API を叩いて、期限切れカードがある生
       "dueCount": 42,
       "frontText": "apple",
       "deckName": "英単語ターゲット1900",
-      "deckId": "8e1c..."
+      "deckId": "8e1c...",
+      "cardId": "a3f2..."
     }
   ]
 }
@@ -75,7 +76,8 @@ SRS の `due-cards-summary` API を叩いて、期限切れカードがある生
 **注意点**:
 - `dueCount` は実際の枚数（上限なし）
 - `frontText` はランダムに選ばれた1枚の表面テキスト（プレーンテキスト化済み）
-- `deckId` はその代表カードが属するデッキ ID。`/study?deckId=xxx` で深いリンク可
+- `deckId` はその代表カードが属するデッキ ID（最後に学習したフィルタサブデッキがあればそちら）。`/study?deck=xxx` で深いリンク可
+- `cardId` は `frontText` に対応するカード ID。`/study?deck=xxx&card=yyy` で学習開始時にそのカードを最初に表示
 - `students` は期限切れカードがあるユーザーのみ返る（0枚は除外）
 
 ### 2-2. `GET /auth/line?token=<JWT>&next=<path>`
@@ -126,6 +128,7 @@ interface DueCardStudent {
   frontText: string
   deckName: string
   deckId: string | null
+  cardId: string | null
 }
 
 interface SummaryResponse {
@@ -151,9 +154,14 @@ export async function fetchDueSummary(): Promise<DueCardStudent[]> {
 
 export function buildFlexMessage(student: DueCardStudent) {
   // LIFF URL に state を仕込み、LIFF 側で SRS の /auth/line?next=... を組む
-  const startUrl = student.deckId
-    ? `${LIFF_URL}?next=${encodeURIComponent(`/study?deckId=${student.deckId}`)}`
-    : `${LIFF_URL}?next=${encodeURIComponent('/study')}`
+  let studyPath = '/study'
+  if (student.deckId) {
+    studyPath = `/study?deck=${student.deckId}`
+    if (student.cardId) {
+      studyPath += `&card=${student.cardId}`
+    }
+  }
+  const startUrl = `${LIFF_URL}?next=${encodeURIComponent(studyPath)}`
 
   // 安全な表示用に長文/改行を抑制
   const previewText = student.frontText.length > 60

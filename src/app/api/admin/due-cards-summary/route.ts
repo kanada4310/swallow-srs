@@ -16,6 +16,7 @@
  *       frontText: "apple",
  *       deckName: "英単語ターゲット1900",
  *       deckId: "uuid"          // 代表カードが属するデッキの ID（深いリンク用）
+ *       cardId: "uuid"          // 代表カードの ID（学習開始時に優先表示用）
  *     }
  *   ]
  * }
@@ -31,6 +32,7 @@ interface DueCardStudent {
   frontText: string
   deckName: string
   deckId: string | null
+  cardId: string | null
 }
 
 export async function GET(request: NextRequest) {
@@ -152,6 +154,7 @@ export async function GET(request: NextRequest) {
         frontText,
         deckName,
         deckId,
+        cardId: randomCard.card_id,
       })
     }
 
