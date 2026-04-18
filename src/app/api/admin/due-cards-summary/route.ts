@@ -70,6 +70,19 @@ export async function GET(request: NextRequest) {
       const userId = user.id
       const lineUserId = user.user_metadata.line_user_id as string
 
+      // Skip users with no review history.
+      // A first-time user who only has distributed decks but has never
+      // reviewed a card should not receive a reminder — they have no
+      // context for the notification and it causes confusion.
+      const { data: historyRow } = await supabase
+        .from('review_logs')
+        .select('id')
+        .eq('user_id', userId)
+        .limit(1)
+        .maybeSingle()
+
+      if (!historyRow) continue
+
       // Exact count of due cards
       const { count: totalDue } = await supabase
         .from('card_states')
