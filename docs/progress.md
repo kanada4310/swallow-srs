@@ -1,14 +1,40 @@
 # 進捗管理
 
 ## 現在の作業
-- Phase: SRS側LINE通知準備完了（API改善 + `/auth/line` 深いリンク + billing実装スペック） → 次は billing側で実装
-- 最終更新: 2026-04-16
+- Phase: SRS側LINE通知 frontText 改善完了 + billing引き継ぎメモ整備 → 次は billing側で実装
+- 最終更新: 2026-04-18
 - 次にやること:
-  1. **billing側のLINE送信ジョブ実装**: `docs/billing-line-notification-spec.md` の手順で billing リポジトリに実装
+  1. **billing側のLINE送信ジョブ実装**: `docs/billing-line-notification-handoff.md` に従って billing リポジトリで実装
   2. Phase 9.3-9.4: 学習時間トラッキング、習熟度スコア
   3. Phase 10: ゲーミフィケーション（ストリーク、デイリーゴール、リーダーボード）
 
 ## セッション引継ぎメモ
+
+### 2026-04-18（LINE通知 frontText カードテンプレートレンダリング化）
+- **やったこと**:
+  - **frontText 生成ロジック刷新** (`src/lib/push/extract-text.ts`)
+    - 旧: `field_values` から `Front/Text/Expression/Word` の優先順位で1フィールド抽出
+      → 「動詞の語法」のように該当しないノートタイプでは挿入順次第で `ID` などが拾われていた
+    - 新: `card_templates.front_template` を取得し `renderTemplate` でAnki互換レンダリング
+      → Cloze穴埋め、`{{#Field}}`条件分岐、`{{tts:}}`、`{{Field}}`置換すべて対応
+    - HTMLタグ剥ぎ（`<br>`/`</p>` 等は改行に変換）、HTMLエンティティデコード、空白圧縮、100字制限
+    - 旧 `extractFrontText` はフォールバック用に残置
+  - **due-cards-summary API 更新** (`src/app/api/admin/due-cards-summary/route.ts`)
+    - `cards` から `template_index` 取得追加
+    - `notes` から `note_type_id` 取得追加
+    - `card_templates` を `(note_type_id, ordinal=template_index)` で1クエリ追加
+    - `renderCardFrontText(frontTemplate, fieldValues, templateIndex)` に置換
+  - **Flex 仕様書から補足キャプション削除** (`docs/billing-line-notification-spec.md`)
+    - 「↑ こんなカードが待ってます」のテキストブロック削除
+  - **billing 側引き継ぎメモ作成** (`docs/billing-line-notification-handoff.md`)
+    - SRS 側変更点、billing 側で必要な調整、未実装分の進め方
+    - API レスポンス例、関連ファイル一覧、動作確認チェックリスト
+- **次のセッションで注意すべきこと**:
+  - billing 側で `buildFlexMessage` を実装済みなら同じくキャプション削除が必要
+  - `frontText` に `\n` が含まれる可能性が増えた（Flex `wrap: true` で対応可）
+  - SRS 側のテンプレートクエリは1学生あたり1クエリ追加（学生40-50名なら問題なし）
+  - 大きく長い表面（`{{FrontSide}}` を多用するテンプレート）でも 100字 + Flex 側 maxLines で抑制
+  - `extract-text.ts` のテストは未追加（必要なら次回）
 
 ### 2026-04-16 夜2（SRS側 LINE通知準備 + billing実装スペック）
 - **やったこと**:

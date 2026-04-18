@@ -573,9 +573,11 @@ Web Push API で学習リマインダーを送信。
 ### 12.4 LINE通知連携（billing経由）
 billing側のLINE Bot経由で復習カード通知を送信する。
 
-- [x] SRS側データAPI `GET /api/admin/due-cards-summary`（Bearer認証、line_user_id + dueCount + 代表カードfrontText + deckId）
+- [x] SRS側データAPI `GET /api/admin/due-cards-summary`（Bearer認証、line_user_id + dueCount + 代表カードfrontText + deckId + cardId）
+- [x] `frontText` をカードテンプレートからレンダリングしてプレーンテキスト化（Cloze答えはマスク、`renderCardFrontText`）
 - [x] `/auth/line?next=<path>` 深いリンク対応（`safeNext` で open redirect 防止）
 - [x] billing側実装スペック書き下ろし（`docs/billing-line-notification-spec.md`）
+- [x] billing側引き継ぎメモ（`docs/billing-line-notification-handoff.md`、差分・対応手順）
 - [ ] billing側の送信ジョブ実装（Flexメッセージ生成 + LINE Messaging API 呼び出し）
 - [ ] billing側のLIFF経由 `/auth/line` リダイレクト
 - [ ] 通知時刻のユーザー設定（SRSの`notification_settings`と連携するかbilling側で別管理か方針決定）
@@ -680,8 +682,8 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 
 ## 現在の進捗
 
-**Phase**: 生徒取組状況UI完了 + LINE通知データAPI完了、次は Phase 12.4 billing側LINE送信 / Phase 9.3-9.4
-**最終更新**: 2026-04-16
+**Phase**: LINE通知データAPI完成度向上（frontTextテンプレートレンダリング化）、次は Phase 12.4 billing側LINE送信 / Phase 9.3-9.4
+**最終更新**: 2026-04-18
 **次のタスク**: billing側のLINE Flexメッセージ送信実装 または Phase 9.3-9.4
 
 ### 次回セッションでやること
