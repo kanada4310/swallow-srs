@@ -23,7 +23,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
-import { extractFrontText } from '@/lib/push/extract-text'
+import { renderCardFrontText } from '@/lib/push/extract-text'
 
 interface DueCardStudent {
   lineUserId: string
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
       // Get card -> note -> field_values and deck info
       const { data: cardData } = await supabase
         .from('cards')
-        .select('id, deck_id, note_id')
+        .select('id, deck_id, note_id, template_index')
         .eq('id', randomCard.card_id)
         .single()
 
@@ -125,11 +125,24 @@ export async function GET(request: NextRequest) {
 
         const { data: noteData } = await supabase
           .from('notes')
-          .select('field_values')
+          .select('field_values, note_type_id')
           .eq('id', cardData.note_id)
           .single()
 
-        frontText = extractFrontText(noteData?.field_values as Record<string, string> | null)
+        // Render the actual card front using the matching card_template
+        const fieldValues = (noteData?.field_values ?? null) as Record<string, string> | null
+        let frontTemplate: string | null = null
+        if (noteData?.note_type_id) {
+          const { data: tmpl } = await supabase
+            .from('card_templates')
+            .select('front_template')
+            .eq('note_type_id', noteData.note_type_id)
+            .eq('ordinal', cardData.template_index ?? 0)
+            .maybeSingle()
+          frontTemplate = tmpl?.front_template ?? null
+        }
+
+        frontText = renderCardFrontText(frontTemplate, fieldValues, cardData.template_index ?? 0)
 
         const { data: deckData } = await supabase
           .from('decks')

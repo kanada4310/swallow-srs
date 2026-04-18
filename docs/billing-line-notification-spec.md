@@ -215,13 +215,6 @@ export function buildFlexMessage(student: DueCardStudent) {
             weight: 'bold',
             wrap: true,
           },
-          {
-            type: 'text',
-            text: '↑ こんなカードが待ってます',
-            size: 'xxs',
-            color: '#aaaaaa',
-            margin: 'sm',
-          },
         ],
       },
       footer: {
