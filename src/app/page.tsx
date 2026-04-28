@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useLiveQuery } from 'dexie-react-hooks'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { db } from '@/lib/db/schema'
@@ -196,20 +196,10 @@ export default function DashboardPage() {
 }
 
 function StudentDashboard({ userId }: { userId: string }) {
-  const [stats, setStats] = useState<StudentStats | null>(null)
-  const [recentDecks, setRecentDecks] = useState<RecentDeck[]>([])
-
-  useEffect(() => {
-    const load = async () => {
-      const [s, rd] = await Promise.all([
-        getStudentStatsLocal(userId),
-        getRecentDecksLocal(userId),
-      ])
-      setStats(s)
-      setRecentDecks(rd)
-    }
-    load()
-  }, [userId])
+  // liveQuery re-runs whenever cardStates / cards / reviewLogs / decks change in IndexedDB.
+  // This is what makes the dashboard auto-refresh when the first sync after LINE login completes.
+  const stats = useLiveQuery(() => getStudentStatsLocal(userId), [userId])
+  const recentDecks = useLiveQuery(() => getRecentDecksLocal(userId), [userId]) ?? []
 
   return (
     <div className="space-y-6">
@@ -333,11 +323,7 @@ function StudentDashboard({ userId }: { userId: string }) {
 }
 
 function TeacherDashboard({ userId }: { userId: string }) {
-  const [stats, setStats] = useState<TeacherStats | null>(null)
-
-  useEffect(() => {
-    getTeacherStatsLocal(userId).then(setStats)
-  }, [userId])
+  const stats = useLiveQuery(() => getTeacherStatsLocal(userId), [userId])
 
   return (
     <div className="space-y-6">

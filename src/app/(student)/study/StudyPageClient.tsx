@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useLiveQuery } from 'dexie-react-hooks'
 import { StudySession } from '@/components/card/StudySession'
+import { useAuth } from '@/contexts/AuthContext'
 import { useOnlineStatus } from '@/lib/db/hooks'
-import { getStudyCardsOffline, getDecksWithStatsOffline, db } from '@/lib/db/schema'
+import { getStudyCardsOffline, getDecksWithStatsOffline, getRootDeckId, db } from '@/lib/db/schema'
 import Link from 'next/link'
 import type { FieldDefinition, GeneratedContent, DeckSettings } from '@/types/database'
 import type { CardSchedule } from '@/lib/srs/scheduler'
@@ -33,6 +34,12 @@ interface StudyPageClientProps {
   deckSettings?: Partial<DeckSettings>
 }
 
+interface OfflineStudyData {
+  cards: CardData[]
+  deckName: string
+  deckSettings: Partial<DeckSettings>
+}
+
 export function StudyPageClient({
   deckId: deckIdProp,
   deckName,
@@ -42,100 +49,84 @@ export function StudyPageClient({
 }: StudyPageClientProps) {
   const isOnline = useOnlineStatus()
   const searchParams = useSearchParams()
+  const { userId: authUserId } = useAuth()
 
-  // Resolve deckId: prop takes precedence, then URL param
-  const deckId = deckIdProp ?? searchParams.get('deck') ?? null
+  // Resolve deckId: prop takes precedence, then URL param.
+  // Accept both `deck` (SRS internal convention) and `deckId` (billing LINE deep-link convention).
+  const deckId = deckIdProp ?? searchParams.get('deck') ?? searchParams.get('deckId') ?? null
 
-  // Priority card ID from LINE notification deep link
-  const priorityCardId = searchParams.get('card') ?? (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('card') : null)
+  // Priority card ID from LINE notification deep link. Same dual-key compat.
+  const priorityCardId =
+    searchParams.get('card') ??
+    searchParams.get('cardId') ??
+    (typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('card') ??
+        new URLSearchParams(window.location.search).get('cardId')
+      : null)
 
-  // State for data loaded from IndexedDB
-  const [offlineUserId, setOfflineUserId] = useState<string | null>(null)
-  const [offlineCards, setOfflineCards] = useState<CardData[] | null>(null)
-  const [offlineDeckName, setOfflineDeckName] = useState<string | null>(null)
-  const [offlineDecks, setOfflineDecks] = useState<
-    Array<{ id: string; name: string; total_cards: number; new_count: number; learning_count: number; review_count: number }>
-  >([])
-  const [offlineDeckSettings, setOfflineDeckSettings] = useState<Partial<DeckSettings> | undefined>(undefined)
-  const [isLoadingOffline, setIsLoadingOffline] = useState(false)
-  const [offlineError, setOfflineError] = useState<string | null>(null)
-
-  // Determine if we have server-provided data
   const hasServerData = initialCards !== undefined && userIdProp !== undefined
 
-  // Resolved values (server data or offline data)
-  const userId = userIdProp || offlineUserId
+  // Resolve userId: prop > auth context > first IndexedDB profile (true offline).
+  // Wrapped in liveQuery so an arriving profile from sync auto-updates the page.
+  const offlineUserId = useLiveQuery(
+    async () => {
+      if (userIdProp || authUserId) return null
+      const p = await db.profiles.toCollection().first()
+      return p?.id ?? null
+    },
+    [userIdProp, authUserId],
+  )
+  const userId = userIdProp || authUserId || offlineUserId || null
 
+  // Live query: study cards + deck name + merged settings for the chosen deck.
+  // Returns:
+  //   - undefined while loading
+  //   - null if no userId or no deckId
+  //   - { cards, deckName, deckSettings } once data is available
+  const offlineStudyData = useLiveQuery<OfflineStudyData | null>(
+    async () => {
+      if (hasServerData || !userId || !deckId) return null
 
-  // Load offline data when server data is unavailable
-  useEffect(() => {
-    if (hasServerData) return
-
-    const loadOfflineData = async () => {
-      setIsLoadingOffline(true)
-      setOfflineError(null)
-
-      try {
-        // Load profile from IndexedDB if not provided
-        let resolvedUserId = userIdProp || null
-        if (!resolvedUserId) {
-          const profile = await db.profiles.toCollection().first()
-          if (profile) {
-            resolvedUserId = profile.id
-            setOfflineUserId(profile.id)
-          } else {
-            setOfflineError('オフラインデータがありません。オンラインでログインしてください。')
-            return
-          }
-        }
-
-        if (deckId) {
-          // Load study cards for specific deck
-          const cards = await getStudyCardsOffline(resolvedUserId, deckId)
-          setOfflineCards(cards)
-
-          // Get deck name and settings (use root deck settings for filter subdecks)
-          const deck = await db.decks.get(deckId)
-          setOfflineDeckName(deck?.name || 'デッキ')
-
-          // Load deck settings from root deck
-          const { getRootDeckId } = await import('@/lib/db/schema')
-          const rootId = await getRootDeckId(deckId)
-          const rootDeck = rootId !== deckId ? await db.decks.get(rootId) : deck
-          const userSettingsId = `${resolvedUserId}:${rootId}`
-          const userDeckSetting = await db.userDeckSettings.get(userSettingsId).catch(() => undefined)
-          const merged = {
-            ...(rootDeck?.settings || {}),
-            ...(userDeckSetting?.settings || {}),
-          }
-          setOfflineDeckSettings(merged as Partial<DeckSettings>)
-        } else {
-          // Show deck selection from offline data
-          const decks = await getDecksWithStatsOffline(resolvedUserId)
-          setOfflineDecks(decks)
-        }
-      } catch (err) {
-        console.error('Failed to load offline data:', err)
-        setOfflineError('オフラインデータの読み込みに失敗しました')
-      } finally {
-        setIsLoadingOffline(false)
+      const cards = await getStudyCardsOffline(userId, deckId)
+      const deck = await db.decks.get(deckId)
+      const rootId = await getRootDeckId(deckId)
+      const rootDeck = rootId !== deckId ? await db.decks.get(rootId) : deck
+      const userSettingsId = `${userId}:${rootId}`
+      const userDeckSetting = await db.userDeckSettings.get(userSettingsId).catch(() => undefined)
+      const merged = {
+        ...(rootDeck?.settings || {}),
+        ...(userDeckSetting?.settings || {}),
       }
-    }
 
-    loadOfflineData()
-  }, [hasServerData, deckId, userIdProp])
+      return {
+        cards,
+        deckName: deck?.name || 'デッキ',
+        deckSettings: merged as Partial<DeckSettings>,
+      }
+    },
+    [hasServerData, userId, deckId],
+  )
 
-  // Loading state for offline
-  if (!hasServerData && isLoadingOffline) {
+  // Live query: deck list when no specific deck is chosen
+  const offlineDecks = useLiveQuery(
+    async () => {
+      if (hasServerData || deckId || !userId) return null
+      return await getDecksWithStatsOffline(userId)
+    },
+    [hasServerData, deckId, userId],
+  )
+
+  // Loading: still resolving userId or live queries
+  if (!hasServerData && !userId && offlineUserId === undefined) {
     return <StudyLoadingSkeleton />
   }
 
-  // Error state
-  if (!hasServerData && offlineError) {
+  // Definitively no profile available, even after Dexie check
+  if (!hasServerData && !userId && offlineUserId === null) {
     return (
       <div className="py-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-          {offlineError}
+          オフラインデータがありません。オンラインでログインしてください。
         </div>
       </div>
     )
@@ -147,15 +138,19 @@ export function StudyPageClient({
       return null
     }
 
-    // Offline deck selection
+    if (offlineDecks === undefined) {
+      return <StudyLoadingSkeleton />
+    }
+
+    const decks = offlineDecks ?? []
     return (
       <div className="py-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">学習</h1>
         <OfflineBadge />
 
-        {offlineDecks.length > 0 ? (
+        {decks.length > 0 ? (
           <div className="space-y-3">
-            {offlineDecks.map(deck => (
+            {decks.map(deck => (
               <Link
                 key={deck.id}
                 href={`/study?deck=${deck.id}`}
@@ -190,10 +185,12 @@ export function StudyPageClient({
         ) : (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
             <h2 className="text-lg font-medium text-gray-900 mb-2">
-              オフラインデータがありません
+              {isOnline ? '同期中…' : 'オフラインデータがありません'}
             </h2>
             <p className="text-gray-500">
-              オンライン時にデッキを開くと、データが自動的にキャッシュされます。
+              {isOnline
+                ? 'デッキを取得しています。少々お待ちください。'
+                : 'オンライン時にデッキを開くと、データが自動的にキャッシュされます。'}
             </p>
           </div>
         )}
@@ -201,9 +198,10 @@ export function StudyPageClient({
     )
   }
 
-  // Determine which cards to use
-  const cards = hasServerData ? initialCards : offlineCards
-  const resolvedDeckName = deckName || offlineDeckName || 'デッキ'
+  // Specific deck chosen
+  const cards = hasServerData ? initialCards : offlineStudyData?.cards
+  const resolvedDeckName = deckName || offlineStudyData?.deckName || 'デッキ'
+  const resolvedSettings = deckSettings || offlineStudyData?.deckSettings
 
   if (!cards || !userId) {
     return <StudyLoadingSkeleton />
@@ -218,7 +216,7 @@ export function StudyPageClient({
         deckName={resolvedDeckName}
         initialCards={cards}
         userId={userId}
-        deckSettings={deckSettings || offlineDeckSettings}
+        deckSettings={resolvedSettings}
       />
     </div>
   )

@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { useAuth } from '@/contexts/AuthContext'
 import { useOnlineStatus, usePrefetchAllDecks } from '@/lib/db/hooks'
 import { getDecksWithStatsOffline, db } from '@/lib/db/schema'
 import { DeckAdvancedSettings } from '@/components/deck/DeckAdvancedSettings'
@@ -138,15 +140,14 @@ function filterDecksByQuery(decks: DeckWithStats[], query: string): DeckWithStat
 }
 
 interface DecksPageClientProps {
+  /** @deprecated kept for backwards compatibility — page now reads from Dexie via liveQuery */
   initialDecks?: DeckWithStats[]
   userProfile?: { id: string; name: string; role: string }
 }
 
-export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: DecksPageClientProps) {
+export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClientProps) {
   const isOnline = useOnlineStatus()
-  const [offlineDecks, setOfflineDecks] = useState<DeckWithStats[] | null>(null)
-  const [offlineProfile, setOfflineProfile] = useState<{ id: string; name: string; role: string } | null>(null)
-  const [isLoadingOffline, setIsLoadingOffline] = useState(false)
+  const { userId: authUserId, profile: authProfile } = useAuth()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [isDeletingDeck, setIsDeletingDeck] = useState(false)
   const [deckDeleteError, setDeckDeleteError] = useState<string | null>(null)
@@ -158,56 +159,36 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
   const [settingsError, setSettingsError] = useState<string | null>(null)
   const [isSavingSettings, setIsSavingSettings] = useState(false)
 
-  const hasServerData = initialDecks !== undefined && userProfileProp !== undefined
+  // Resolved profile (auth context, prop fallback, or first IndexedDB profile via liveQuery)
+  const fallbackProfile = useLiveQuery(
+    async () => {
+      if (authProfile || userProfileProp) return null
+      const p = await db.profiles.toCollection().first()
+      return p ? { id: p.id, name: p.name, role: p.role } : null
+    },
+    [authProfile?.id, userProfileProp?.id],
+  )
+  const userProfile =
+    userProfileProp ||
+    (authProfile ? { id: authProfile.id, name: authProfile.name, role: authProfile.role } : null) ||
+    fallbackProfile ||
+    null
 
-  // Resolved profile (server or offline)
-  const userProfile = userProfileProp || offlineProfile
+  const userId = authUserId || userProfile?.id || null
+
+  // Live query: re-runs whenever decks/cards/cardStates/notes change in IndexedDB.
+  // This is what makes the page auto-refresh when fullSync writes new data.
+  const decks = useLiveQuery(
+    async () => {
+      if (!userId) return null
+      return await getDecksWithStatsOffline(userId)
+    },
+    [userId],
+  )
 
   // Prefetch deck data for offline use
-  const deckIds = (hasServerData ? initialDecks : offlineDecks)?.map(d => d.id) || []
+  const deckIds = decks?.map(d => d.id) || []
   usePrefetchAllDecks(deckIds)
-
-  // Load offline data when server data unavailable
-  useEffect(() => {
-    if (hasServerData) return
-
-    const loadOfflineData = async () => {
-      setIsLoadingOffline(true)
-      try {
-        // Load profile from IndexedDB if not provided
-        let resolvedUserId: string | null = userProfileProp?.id || null
-        if (!resolvedUserId) {
-          const profile = await db.profiles.toCollection().first()
-          if (profile) {
-            resolvedUserId = profile.id
-            setOfflineProfile({ id: profile.id, name: profile.name, role: profile.role })
-          } else {
-            setOfflineDecks([])
-            return
-          }
-        }
-
-        const decks = await getDecksWithStatsOffline(resolvedUserId)
-        setOfflineDecks(decks)
-      } catch (err) {
-        console.error('Failed to load offline decks:', err)
-        setOfflineDecks([])
-      } finally {
-        setIsLoadingOffline(false)
-      }
-    }
-
-    loadOfflineData()
-  }, [hasServerData, userProfileProp?.id])
-
-  const [localDecks, setLocalDecks] = useState<DeckWithStats[] | null>(null)
-  const sourceDecks = hasServerData ? initialDecks : offlineDecks
-  const decks = localDecks ?? sourceDecks
-
-  // Sync localDecks when source changes
-  useEffect(() => {
-    setLocalDecks(null)
-  }, [sourceDecks])
 
   const handleDeleteDeck = async (deckId: string) => {
     setIsDeletingDeck(true)
@@ -218,13 +199,10 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
         const data = await response.json()
         throw new Error(data.error || 'デッキの削除に失敗しました')
       }
-      // Optimistic update
-      setLocalDecks(prev => (prev ?? sourceDecks ?? []).filter(d => d.id !== deckId))
       setShowDeleteConfirm(null)
-      // Clean up IndexedDB in background
-      import('@/lib/db/schema').then(({ deleteDeckLocally }) => {
-        deleteDeckLocally(deckId).catch(console.error)
-      })
+      // Delete from IndexedDB; liveQuery re-renders the list automatically.
+      const { deleteDeckLocally } = await import('@/lib/db/schema')
+      await deleteDeckLocally(deckId).catch(console.error)
     } catch (err) {
       setDeckDeleteError(err instanceof Error ? err.message : 'デッキの削除に失敗しました')
     } finally {
@@ -253,17 +231,10 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
       if (!response.ok) {
         throw new Error(data.error || '設定の保存に失敗しました')
       }
-      // Update Dexie so reopening shows saved settings
+      // Update Dexie; liveQuery picks up the change automatically.
       if (data.deck) {
         try { await db.decks.put(data.deck) } catch { /* ignore */ }
       }
-      // Update local state
-      setLocalDecks(prev => {
-        const current = prev ?? sourceDecks ?? []
-        return current.map(d =>
-          d.id === settingsDeckId ? { ...d, settings: settingsValues } : d
-        )
-      })
       setSettingsDeckId(null)
     } catch (err) {
       setSettingsError(err instanceof Error ? err.message : '設定の保存に失敗しました')
@@ -280,7 +251,11 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
     ? decks?.find(d => d.id === settingsDeckId)?.name || ''
     : ''
 
-  if (isLoadingOffline || !decks) {
+  if (decks === undefined) {
+    return <DecksLoadingSkeleton />
+  }
+  if (decks === null) {
+    // No userId yet — AuthContext is still resolving or user is logged out
     return <DecksLoadingSkeleton />
   }
 

@@ -10,8 +10,12 @@ function StudyPageInner() {
   const { userId, isLoading } = useAuth()
   const searchParams = useSearchParams()
   const router = useRouter()
-  // Fallback to window.location when rendered outside Next.js routing (offline mode)
-  const deckId = searchParams.get('deck') || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('deck') : null)
+  // Fallback to window.location when rendered outside Next.js routing (offline mode).
+  // Accept both `deck` (SRS internal convention) and `deckId` (billing LINE deep-link convention).
+  const getParam = (key: string) =>
+    searchParams.get(key) ??
+    (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get(key) : null)
+  const deckId = getParam('deck') ?? getParam('deckId')
 
   if (isLoading) {
     return (

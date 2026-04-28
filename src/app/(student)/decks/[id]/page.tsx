@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
+import { useLiveQuery } from 'dexie-react-hooks'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppLayout } from '@/components/layout/AppLayout'
@@ -59,41 +59,34 @@ function DeckDetailSkeleton() {
   )
 }
 
+type DeckDetailResult =
+  | { kind: 'found'; data: DeckData }
+  | { kind: 'not_found' }
+
 export default function DeckDetailPage() {
   const params = useParams()
   // Fallback to window.location when rendered outside Next.js routing (offline mode)
   const deckId = (params.id as string) || (typeof window !== 'undefined' ? window.location.pathname.split('/decks/')[1]?.split('/')[0] : '') || ''
   const { profile, isLoading: authLoading } = useAuth()
-  const [deckData, setDeckData] = useState<DeckData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
 
-  useEffect(() => {
-    if (authLoading || !profile || !deckId) return
-
-    let cancelled = false
-
-    async function loadDeckData() {
+  // liveQuery: re-runs whenever any read table changes in IndexedDB.
+  // This is what makes the page auto-refresh when sync brings in deck/cards/notes
+  // for a LINE deep-link landing on an empty IndexedDB.
+  const result = useLiveQuery<DeckDetailResult | null>(
+    async () => {
+      if (authLoading || !profile || !deckId) return null
       try {
-        // Get deck from Dexie
         const deck = await db.decks.get(deckId)
-        if (!deck) {
-          if (!cancelled) setNotFound(true)
-          if (!cancelled) setIsLoading(false)
-          return
-        }
+        if (!deck) return { kind: 'not_found' }
 
-        // Get descendant deck IDs
         const descendantIds = await getDescendantDeckIds(deckId)
         const allDeckIds = [deckId, ...descendantIds]
 
-        // Get notes (first 50) from all deck IDs
         const allNotes = await db.notes
           .where('deck_id')
           .anyOf(allDeckIds)
           .toArray()
 
-        // Sort by created_at descending
         allNotes.sort((a, b) => {
           const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
           const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
@@ -103,7 +96,6 @@ export default function DeckDetailPage() {
         const totalNoteCount = allNotes.length
         const pagedNotes = allNotes.slice(0, 50)
 
-        // Get cards for paged notes
         const noteIds = pagedNotes.map(n => n.id)
         const allCards = noteIds.length > 0
           ? await db.cards.where('note_id').anyOf(noteIds).toArray()
@@ -125,18 +117,15 @@ export default function DeckDetailPage() {
           cards: cardsMap.get(n.id) || [],
         }))
 
-        // Get total card count for this deck (not subdecks)
         const deckCards = await db.cards.where('deck_id').equals(deckId).toArray()
         const totalCards = deckCards.length
 
-        // Get card states for user
         const cardIds = deckCards.map(c => c.id)
         const cardStates = cardIds.length > 0
           ? await db.cardStates.where('card_id').anyOf(cardIds).toArray()
           : []
-        const cardStateMap = new Map(cardStates.filter(cs => cs.user_id === profile!.id).map(cs => [cs.card_id, cs]))
+        const cardStateMap = new Map(cardStates.filter(cs => cs.user_id === profile.id).map(cs => [cs.card_id, cs]))
 
-        // Calculate due and new counts
         const now = new Date()
         let dueCount = 0
         let newCount = 0
@@ -149,17 +138,14 @@ export default function DeckDetailPage() {
           }
         }
 
-        // Get unique note type IDs
         const noteTypeIdSet = new Set(allNotes.map(n => n.note_type_id))
-        // Also get system and user-owned note types
         const allNoteTypes = await db.noteTypes.toArray()
         const noteTypes = allNoteTypes.filter(nt =>
           noteTypeIdSet.has(nt.id) ||
           nt.is_system ||
-          nt.owner_id === profile!.id
+          nt.owner_id === profile.id
         ) as NoteType[]
 
-        // Get unique tags from notes
         const tagSet = new Set<string>()
         for (const n of allNotes) {
           if (n.tags) {
@@ -168,21 +154,19 @@ export default function DeckDetailPage() {
         }
         const deckTags = Array.from(tagSet).sort()
 
-        // Get child decks
         const childDecks = await db.decks
           .where('parent_deck_id')
           .equals(deckId)
           .toArray()
         childDecks.sort((a, b) => a.name.localeCompare(b.name))
 
-        const isOwner = deck.owner_id === profile!.id
+        const isOwner = deck.owner_id === profile.id
         const isFilterDeck = !!(deck.filter_tags && deck.filter_tags.length > 0 && deck.parent_deck_id)
 
-        // Get user-specific deck settings override
         let mergedSettings: Partial<DeckSettings> = (deck.settings || {}) as Partial<DeckSettings>
         if (!isOwner) {
           try {
-            const settingsKey = `${profile!.id}:${deckId}`
+            const settingsKey = `${profile.id}:${deckId}`
             const userSettings = await db.userDeckSettings.get(settingsKey)
             if (userSettings?.settings) {
               mergedSettings = { ...mergedSettings, ...userSettings.settings } as Partial<DeckSettings>
@@ -192,8 +176,9 @@ export default function DeckDetailPage() {
           }
         }
 
-        if (!cancelled) {
-          setDeckData({
+        return {
+          kind: 'found',
+          data: {
             deckName: deck.name,
             deckSettings: mergedSettings,
             allDeckIds,
@@ -207,25 +192,19 @@ export default function DeckDetailPage() {
             deckTags,
             childDecks: childDecks.map(d => ({ id: d.id, name: d.name })),
             canEdit: isOwner,
-            userRole: profile!.role,
+            userRole: profile.role,
             isFilterDeck,
-          })
-          setIsLoading(false)
+          },
         }
       } catch (error) {
         console.error('Failed to load deck data from Dexie:', error)
-        if (!cancelled) {
-          setNotFound(true)
-          setIsLoading(false)
-        }
+        return { kind: 'not_found' }
       }
-    }
+    },
+    [deckId, profile?.id, authLoading],
+  )
 
-    loadDeckData()
-    return () => { cancelled = true }
-  }, [deckId, profile, authLoading])
-
-  if (authLoading || isLoading) {
+  if (authLoading || result === undefined || result === null) {
     return (
       <AppLayout>
         <DeckDetailSkeleton />
@@ -235,7 +214,7 @@ export default function DeckDetailPage() {
 
   if (!profile) return null
 
-  if (notFound || !deckData) {
+  if (result.kind === 'not_found') {
     return (
       <AppLayout>
         <div className="max-w-4xl mx-auto px-4 py-6 text-center">
@@ -251,6 +230,8 @@ export default function DeckDetailPage() {
       </AppLayout>
     )
   }
+
+  const deckData = result.data
 
   return (
     <AppLayout>
