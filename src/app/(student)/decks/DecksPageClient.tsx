@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { useOnlineStatus, usePrefetchAllDecks } from '@/lib/db/hooks'
+import { useOnlineStatus, usePrefetchAllDecks, useSyncStatus } from '@/lib/db/hooks'
 import { getDecksWithStatsOffline, db } from '@/lib/db/schema'
 import { DeckAdvancedSettings } from '@/components/deck/DeckAdvancedSettings'
 import type { DeckSettings } from '@/types/database'
@@ -144,9 +144,11 @@ interface DecksPageClientProps {
 
 export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: DecksPageClientProps) {
   const isOnline = useOnlineStatus()
+  const { lastSyncAt } = useSyncStatus()
   const [offlineDecks, setOfflineDecks] = useState<DeckWithStats[] | null>(null)
   const [offlineProfile, setOfflineProfile] = useState<{ id: string; name: string; role: string } | null>(null)
   const [isLoadingOffline, setIsLoadingOffline] = useState(false)
+  const hasLoadedOnceRef = useRef(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [isDeletingDeck, setIsDeletingDeck] = useState(false)
   const [deckDeleteError, setDeckDeleteError] = useState<string | null>(null)
@@ -167,12 +169,15 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
   const deckIds = (hasServerData ? initialDecks : offlineDecks)?.map(d => d.id) || []
   usePrefetchAllDecks(deckIds)
 
-  // Load offline data when server data unavailable
+  // Load offline data when server data unavailable.
+  // Re-runs when lastSyncAt changes so the list refreshes after background
+  // sync populates Dexie (e.g. first-time login on a new device).
   useEffect(() => {
     if (hasServerData) return
 
     const loadOfflineData = async () => {
-      setIsLoadingOffline(true)
+      const isFirstLoad = !hasLoadedOnceRef.current
+      if (isFirstLoad) setIsLoadingOffline(true)
       try {
         // Load profile from IndexedDB if not provided
         let resolvedUserId: string | null = userProfileProp?.id || null
@@ -189,16 +194,17 @@ export function DecksPageClient({ initialDecks, userProfile: userProfileProp }: 
 
         const decks = await getDecksWithStatsOffline(resolvedUserId)
         setOfflineDecks(decks)
+        hasLoadedOnceRef.current = true
       } catch (err) {
         console.error('Failed to load offline decks:', err)
-        setOfflineDecks([])
+        if (isFirstLoad) setOfflineDecks([])
       } finally {
-        setIsLoadingOffline(false)
+        if (isFirstLoad) setIsLoadingOffline(false)
       }
     }
 
     loadOfflineData()
-  }, [hasServerData, userProfileProp?.id])
+  }, [hasServerData, userProfileProp?.id, lastSyncAt])
 
   const [localDecks, setLocalDecks] = useState<DeckWithStats[] | null>(null)
   const sourceDecks = hasServerData ? initialDecks : offlineDecks
