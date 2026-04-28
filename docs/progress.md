@@ -1,14 +1,48 @@
 # 進捗管理
 
 ## 現在の作業
-- Phase: SRS側LINE通知準備完了（API改善 + `/auth/line` 深いリンク + billing実装スペック） → 次は billing側で実装
-- 最終更新: 2026-04-16
+- Phase: デッキ表示バグ修正完了（Dexie liveQuery 化 + 同期 UI フィードバック） → 次は billing 側 LINE 送信実装
+- 最終更新: 2026-04-28
 - 次にやること:
-  1. **billing側のLINE送信ジョブ実装**: `docs/billing-line-notification-spec.md` の手順で billing リポジトリに実装
-  2. Phase 9.3-9.4: 学習時間トラッキング、習熟度スコア
-  3. Phase 10: ゲーミフィケーション（ストリーク、デイリーゴール、リーダーボード）
+  1. **林奏太さんに動作確認依頼**: LINE Flex ディープリンクから `/decks` を開いて FirstSyncOverlay → デッキ表示の流れが正常に動くか
+  2. **billing側のLINE送信ジョブ実装**: `docs/billing-line-notification-spec.md` の手順で billing リポジトリに実装
+  3. Phase 9.3-9.4: 学習時間トラッキング、習熟度スコア
+  4. Phase 10: ゲーミフィケーション（ストリーク、デイリーゴール、リーダーボード）
 
 ## セッション引継ぎメモ
+
+### 2026-04-28（デッキ表示バグ修正 — Dexie liveQuery 化）
+- **背景**: 林奏太さん（LINE 経由ログイン）が「デッキ一覧が空」と報告
+- **調査結果**:
+  - 林奏太のサーバーデータは完全に正常（クラス所属 2、配布デッキ 1=動詞の語法 + 13サブデッキ、review_logs 398件、最終学習 4/23）
+  - アカウント重複なし、ban されていない、配布忘れでもない
+  - **真因**: `DecksPageClient.tsx` 等が `useEffect + useState` で Dexie を一度しか読まず、バックグラウンド sync が IndexedDB を更新しても画面が再描画されない設計
+  - 特に LIFF in-app browser は通常ブラウザと別 storage で IndexedDB が空、初回アクセスで「デッキがありません」が固定表示される
+- **やったこと**:
+  - **`dexie-react-hooks` 導入** で `useLiveQuery` パターンに移行
+  - **5 ページを liveQuery 化**:
+    - `DecksPageClient.tsx`（デッキ一覧）
+    - `StudyPageClient.tsx`（学習画面 — LINE Flex 着地で最重要）
+    - `src/app/page.tsx`（ダッシュボード — `/auth/line?next=/` のデフォルト着地点）
+    - `decks/[id]/page.tsx`（デッキ詳細）
+    - `decks/page.tsx`（薄ラッパー、Server-data 経由を廃止）
+  - **`SyncErrorBanner.tsx` 新規作成**: `fullSync` エラーを画面上部に赤バナーで表示（再試行ボタン付き）
+  - **`FirstSyncOverlay.tsx` 新規作成**: IndexedDB 空 + オンライン + 初回 sync 未完了の時、全画面オーバーレイで「データを取得しています…」を表示。8 秒以上で「再読み込み」ボタン出現
+  - **AppLayout.tsx に組み込み**
+  - **調査スクリプト 3 本** を `data/debug-{student-decks,deck-tree,student-activity}.mjs` として残置（今後の同類調査でも使える）
+  - 269 / 269 テスト通過、typecheck クリーン、ESLint クリーン、dev server 起動 OK
+  - **コミット b8722d9 / プッシュ済み**
+- **未着手の Audit 結果（中優先度、次セッション以降）**:
+  - `src/app/(student)/notes/page.tsx` — liveQuery 化候補（中優先度）
+  - `src/app/(teacher)/students/page.tsx` — billing 同期反映に liveQuery が望ましい
+  - `src/app/(teacher)/note-types/page.tsx` + `[id]/page.tsx` — 編集後の反映タイムラグあり
+  - `src/app/(student)/decks/new/page.tsx` — 親デッキドロップダウン（低優先度）
+- **次のセッションで注意すべきこと**:
+  - **林奏太さんの動作確認待ち**。LINE 経由で `/decks` を開いて自動表示されることを本人に確認してもらう必要あり
+  - `dexie-react-hooks` の `useLiveQuery` 内ではトランザクションを開始できない（同期的な read のみ）。書き込みは外側で `db.xxx.put()` を直接呼ぶ
+  - `useLiveQuery` の戻り値は `T | undefined`（loading）。`null` を返したい場合は明示的に return null
+  - StudySession の内部 state は `useState(() => initialCards)` で lazy 初期化なので、liveQuery で props が変わっても学習中のセッションはリセットされない（確認済み）
+  - 残った orphan 変更（`docs/billing-line-notification-spec.md`、`data/create-teacher-account.mjs`、`data/update-teacher-email.mjs`、`docs/srs-due-cards-summary-history-filter.md`、`.claude/settings.local.json`）は今回スコープ外で未コミット
 
 ### 2026-04-16 夜2（SRS側 LINE通知準備 + billing実装スペック）
 - **やったこと**:

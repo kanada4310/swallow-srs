@@ -558,6 +558,9 @@ stale-while-revalidate パターンで、表示はローカル即時 → 裏で�
 - [x] 同期状態インジケーター（最終同期時刻表示、SyncIndicatorコンポーネント）
 - [x] Pull API拡張（classes, classMembers, deckAssignments, userDeckSettings）
 - [x] バックグラウンド同期（5分間隔 + タブフォーカス + 初回ログイン）
+- [x] **liveQuery 化**（2026-04-28）: `dexie-react-hooks` で `useLiveQuery` 導入。バックグラウンド sync が IndexedDB を更新すると画面が自動再描画。対象ページ: デッキ一覧、学習、ダッシュボード、デッキ詳細
+- [x] **SyncErrorBanner**（2026-04-28）: `fullSync` エラーを画面上部に赤バナーで表示（再試行ボタン付き）
+- [x] **FirstSyncOverlay**（2026-04-28）: IndexedDB 空 + 初回 sync 未完了時の全画面ローディング。LIFF in-app browser からの初回着地で「デッキがありません」誤表示を防止
 
 ### 12.3 プッシュ通知（学習リマインダー） ✅ 完了
 Web Push API で学習リマインダーを送信。
@@ -680,15 +683,17 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 
 ## 現在の進捗
 
-**Phase**: 生徒取組状況UI完了 + LINE通知データAPI完了、次は Phase 12.4 billing側LINE送信 / Phase 9.3-9.4
-**最終更新**: 2026-04-16
-**次のタスク**: billing側のLINE Flexメッセージ送信実装 または Phase 9.3-9.4
+**Phase**: デッキ表示バグ修正完了（Dexie liveQuery 化）。次は林奏太さんの動作確認 + Phase 12.4 billing側LINE送信
+**最終更新**: 2026-04-28
+**次のタスク**: 林奏太さんに動作確認依頼 → billing側のLINE Flexメッセージ送信実装 または Phase 9.3-9.4
 
 ### 次回セッションでやること
 
-1. **Phase 12.4**: billing側のLINE送信ジョブ（Flexメッセージ + Messaging API）
-2. **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア
-3. **Phase 10**: ゲーミフィケーション
+1. **動作確認**: 林奏太さんが LINE 経由で `/decks` を開いて FirstSyncOverlay → デッキ自動表示を確認
+2. **Phase 12.4**: billing側のLINE送信ジョブ（Flexメッセージ + Messaging API）
+3. **liveQuery 化の横展開（中優先度）**: notes/page.tsx、(teacher)/students/page.tsx、(teacher)/note-types/page.tsx
+4. **Phase 9.3-9.4**: 学習時間トラッキング、習熟度スコア
+5. **Phase 10**: ゲーミフィケーション
 
 ### 今後のロードマップ（優先度順）
 - **Phase 12.4**: billing側LINE送信（SRS側データAPIは実装済み）★次
@@ -710,3 +715,4 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 - [x] Phase 12.4（部分）: SRS側LINE通知データAPI
 - [x] Phase 15: FSRS導入（15.1）
 - [x] フィルタデッキ機能（タグベースサブデッキ + 配布サブデッキ自動同期）
+- [x] **Dexie liveQuery 化 + 同期 UI フィードバック**（2026-04-28）: バックグラウンド sync 完了で画面自動再描画、SyncErrorBanner、FirstSyncOverlay

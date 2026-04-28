@@ -128,8 +128,11 @@ npm run test:watch   # Vitest 監視モード
 
 - **AuthProvider**: グローバル認証コンテキスト（`src/contexts/AuthContext.tsx`）。Dexie即時ロード + Supabase更新
 - **useDexieQuery**: stale-while-revalidate パターンの汎用フック（`src/lib/db/useDexieQuery.ts`）
+- **useLiveQuery**: Dexie 変更を購読する反応的フック（`dexie-react-hooks`）。デッキ一覧/学習/ダッシュボード/デッキ詳細で使用。バックグラウンド sync で IndexedDB が更新されると自動再描画
 - **全ページClient Component化**: 全13ページを`'use client'`に変換、Dexie.jsプライマリ
 - **SyncIndicator**: ヘッダーに同期状態インジケーター（`src/components/ui/SyncIndicator.tsx`）
+- **SyncErrorBanner**: 同期失敗時に画面上部に再試行ボタン付き赤バナー（`src/components/ui/SyncErrorBanner.tsx`）
+- **FirstSyncOverlay**: IndexedDB 空 + 初回 sync 未完了時の全画面ローディング（`src/components/ui/FirstSyncOverlay.tsx`）。LIFF in-app browser からの初回着地で「デッキがありません」誤表示を防ぐ
 - **Dexie v7**: classes, classMembers, deckAssignments テーブル追加
 - **Pull API拡張**: classes, classMembers, deckAssignments, userDeckSettings を同期対象に追加
 - **バックグラウンド同期**: 5分間隔 + タブフォーカス時 + 初回ログイン時
@@ -208,8 +211,12 @@ npm run test:watch   # Vitest 監視モード
 
 詳細は @docs/progress.md を参照。
 
-- **最終更新**: 2026-04-16
-- **次にやること**: billing側のLINE送信ジョブ（SRS側データAPIは完了） → Phase 9.3-9.4（学習時間トラッキング、習熟度スコア）
+- **最終更新**: 2026-04-28
+- **直近の修正**: デッキ表示バグ修正（Dexie liveQuery 化 + SyncErrorBanner + FirstSyncOverlay）
+- **次にやること**:
+  1. 林奏太さんの動作確認待ち（LINE 経由 `/decks` 表示）
+  2. billing側のLINE送信ジョブ（SRS側データAPIは完了）
+  3. Phase 9.3-9.4（学習時間トラッキング、習熟度スコア）
 
 ## 参照ドキュメント
 
