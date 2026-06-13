@@ -27,15 +27,25 @@ export async function GET(
     return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
   }
 
-  // Get notes, cards, note types, card templates, card states in parallel
-  const [
-    { data: notes },
-    { data: cards },
-    { data: cardStates },
-  ] = await Promise.all([
-    supabase.from('notes').select('*').eq('deck_id', deckId),
-    supabase.from('cards').select('*').eq('deck_id', deckId),
-    supabase.from('card_states').select('*').eq('user_id', user.id),
+  // Get notes, cards, card states — paginate (PostgREST caps responses at 1000
+  // rows; large decks like 中学英単語(6858) would otherwise be truncated).
+  const fetchAllBy = async (table: string, col: string, val: string, orderCol: string) => {
+    const PAGE = 1000
+    const out: Record<string, unknown>[] = []
+    for (let from = 0; ; from += PAGE) {
+      const { data } = await supabase.from(table).select('*').eq(col, val)
+        .order(orderCol, { ascending: true }).range(from, from + PAGE - 1)
+      if (!data || data.length === 0) break
+      out.push(...(data as Record<string, unknown>[]))
+      if (data.length < PAGE) break
+    }
+    return out
+  }
+
+  const [notes, cards, cardStates] = await Promise.all([
+    fetchAllBy('notes', 'deck_id', deckId, 'id'),
+    fetchAllBy('cards', 'deck_id', deckId, 'id'),
+    fetchAllBy('card_states', 'user_id', user.id, 'card_id'),
   ])
 
   // Get unique note type IDs from notes

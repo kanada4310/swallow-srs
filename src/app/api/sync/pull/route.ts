@@ -155,52 +155,50 @@ export async function POST(request: NextRequest) {
   const deckIds = body.deckIds ?? uniqueDecks.map((d) => d.id)
 
   if (deckIds.length > 0) {
-    // Fetch notes
-    let notesQuery = supabase
-      .from('notes')
-      .select('*')
-      .in('deck_id', deckIds)
+    // Fetch notes — paginate (PostgREST caps responses at 1000 rows, so large
+    // decks like 中学英単語(6858) would otherwise sync only the first 1000 notes).
+    const PAGE = 1000
 
-    if (lastSyncAt) {
-      notesQuery = notesQuery.gt('updated_at', lastSyncAt.toISOString())
+    const notes: Record<string, unknown>[] = []
+    for (let from = 0; ; from += PAGE) {
+      let q = supabase.from('notes').select('*').in('deck_id', deckIds)
+      if (lastSyncAt) q = q.gt('updated_at', lastSyncAt.toISOString())
+      const { data } = await q.order('id', { ascending: true }).range(from, from + PAGE - 1)
+      if (!data || data.length === 0) break
+      notes.push(...(data as Record<string, unknown>[]))
+      if (data.length < PAGE) break
     }
-
-    const { data: notes } = await notesQuery
-
-    if (notes && notes.length > 0) {
+    if (notes.length > 0) {
       response.notes = notes
     }
 
-    // Fetch cards
-    let cardsQuery = supabase
-      .from('cards')
-      .select('*')
-      .in('deck_id', deckIds)
-
-    if (lastSyncAt) {
-      cardsQuery = cardsQuery.gt('updated_at', lastSyncAt.toISOString())
+    // Fetch cards — paginate for the same reason.
+    const cards: Record<string, unknown>[] = []
+    for (let from = 0; ; from += PAGE) {
+      let q = supabase.from('cards').select('*').in('deck_id', deckIds)
+      if (lastSyncAt) q = q.gt('updated_at', lastSyncAt.toISOString())
+      const { data } = await q.order('id', { ascending: true }).range(from, from + PAGE - 1)
+      if (!data || data.length === 0) break
+      cards.push(...(data as Record<string, unknown>[]))
+      if (data.length < PAGE) break
     }
-
-    const { data: cards } = await cardsQuery
-
-    if (cards && cards.length > 0) {
+    if (cards.length > 0) {
       response.cards = cards
     }
   }
 
-  // Fetch card states for the user
-  let cardStatesQuery = supabase
-    .from('card_states')
-    .select('*')
-    .eq('user_id', user.id)
-
-  if (lastSyncAt) {
-    cardStatesQuery = cardStatesQuery.gt('updated_at', lastSyncAt.toISOString())
+  // Fetch card states for the user — paginate (a heavy user can exceed 1000 states).
+  const cardStates: Record<string, unknown>[] = []
+  for (let from = 0; ; from += 1000) {
+    let q = supabase.from('card_states').select('*').eq('user_id', user.id)
+    if (lastSyncAt) q = q.gt('updated_at', lastSyncAt.toISOString())
+    const { data } = await q.order('card_id', { ascending: true }).range(from, from + 999)
+    if (!data || data.length === 0) break
+    cardStates.push(...(data as Record<string, unknown>[]))
+    if (data.length < 1000) break
   }
 
-  const { data: cardStates } = await cardStatesQuery
-
-  if (cardStates && cardStates.length > 0) {
+  if (cardStates.length > 0) {
     response.cardStates = cardStates
   }
 
