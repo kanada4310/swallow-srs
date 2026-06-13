@@ -13,22 +13,8 @@ result.json 形式: {"items":[{"id","word","sentences":[{"collocation","en","ja"
   - タグ: 品詞:xxx|単語:xxx
 """
 import json, sys, csv, re, html
-
-result_path, out_path = sys.argv[1], sys.argv[2]
-# 任意: idioms.json（[{"w":単語,"c":コロケーション}, ...]）= イディオムタグを付与する対象
-idiom_set = set()
-if len(sys.argv) > 3:
-    for d in json.load(open(sys.argv[3], encoding='utf-8')):
-        idiom_set.add((d['w'], d['c']))
-
-# words.tsv で id -> (pos, word, meaning)
-meta = {}
-with open('words.tsv', encoding='utf-8') as f:
-    for row in csv.DictReader(f, delimiter='\t'):
-        meta[row['id']] = (row['pos'], row['word'], row['meaning'] or '')
-
-data = json.load(open(result_path, encoding='utf-8'))
-items = data.get('items', data) if isinstance(data, dict) else data
+# 実行部（TSV組み立て）は末尾の if __name__ == '__main__' に集約。
+# emphasize() などの関数は他スクリプト（build_colloc_notes.py）から import して再利用する。
 
 # 不規則変化（活用形 -> 原形）。中学レベルで頻出するもの中心。
 _IRR_PAIRS = [
@@ -197,40 +183,57 @@ def emphasize(en, collo, word=''):
     en_blank = f"{html.escape(en[:s])}{_blank_for(en[s:e])}{html.escape(en[e:])}"
     return en_html, en_blank, True
 
-rows = []
-warn = {'missing_meta': 0, 'collo_not_found': 0, 'dup_collo': 0, 'not_three': 0}
-seen_ids = set()
-for it in items:
-    wid = it['id']
-    if wid not in meta:
-        warn['missing_meta'] += 1
-        continue
-    pos, word, meaning = meta[wid]
-    sents = it.get('sentences', [])
-    if len(sents) != 3:
-        warn['not_three'] += 1
-    collos_lower = set()
-    for n, s in enumerate(sents[:3], 1):
-        collo = (s.get('collocation') or '').strip()
-        en = (s.get('en') or '').strip()
-        ja = (s.get('ja') or '').strip()
-        if collo.lower() in collos_lower:
-            warn['dup_collo'] += 1
-        collos_lower.add(collo.lower())
-        en_html, en_blank, found = emphasize(en, collo, word)
-        if not found:
-            warn['collo_not_found'] += 1
-        note_id = f"{wid}-{n}"
-        seen_ids.add(note_id)
-        tags = f"品詞:{pos}|単語:{word}"
-        if (word, collo) in idiom_set:
-            tags += "|イディオム"
-        rows.append([note_id, word, pos, meaning, collo, ja, en_html, en_blank, tags])
+if __name__ == '__main__':
+    result_path, out_path = sys.argv[1], sys.argv[2]
+    # 任意: idioms.json（[{"w":単語,"c":コロケーション}, ...]）= イディオムタグを付与する対象
+    idiom_set = set()
+    if len(sys.argv) > 3:
+        for d in json.load(open(sys.argv[3], encoding='utf-8')):
+            idiom_set.add((d['w'], d['c']))
 
-with open(out_path, 'w', encoding='utf-8', newline='') as f:
-    w = csv.writer(f, delimiter='\t')
-    w.writerow(['ID', '単語', '品詞', '意味', 'コロケーション', '和文', '英文', '英文穴埋め', 'タグ'])
-    w.writerows(rows)
+    # words.tsv で id -> (pos, word, meaning)
+    meta = {}
+    with open('words.tsv', encoding='utf-8') as f:
+        for row in csv.DictReader(f, delimiter='\t'):
+            meta[row['id']] = (row['pos'], row['word'], row['meaning'] or '')
 
-print(f"単語 {len(items)} 件 → ノート {len(rows)} 件 を {out_path} に出力")
-print("警告:", json.dumps(warn, ensure_ascii=False))
+    data = json.load(open(result_path, encoding='utf-8'))
+    items = data.get('items', data) if isinstance(data, dict) else data
+
+    rows = []
+    warn = {'missing_meta': 0, 'collo_not_found': 0, 'dup_collo': 0, 'not_three': 0}
+    seen_ids = set()
+    for it in items:
+        wid = it['id']
+        if wid not in meta:
+            warn['missing_meta'] += 1
+            continue
+        pos, word, meaning = meta[wid]
+        sents = it.get('sentences', [])
+        if len(sents) != 3:
+            warn['not_three'] += 1
+        collos_lower = set()
+        for n, s in enumerate(sents[:3], 1):
+            collo = (s.get('collocation') or '').strip()
+            en = (s.get('en') or '').strip()
+            ja = (s.get('ja') or '').strip()
+            if collo.lower() in collos_lower:
+                warn['dup_collo'] += 1
+            collos_lower.add(collo.lower())
+            en_html, en_blank, found = emphasize(en, collo, word)
+            if not found:
+                warn['collo_not_found'] += 1
+            note_id = f"{wid}-{n}"
+            seen_ids.add(note_id)
+            tags = f"品詞:{pos}|単語:{word}"
+            if (word, collo) in idiom_set:
+                tags += "|イディオム"
+            rows.append([note_id, word, pos, meaning, collo, ja, en_html, en_blank, tags])
+
+    with open(out_path, 'w', encoding='utf-8', newline='') as f:
+        w = csv.writer(f, delimiter='\t')
+        w.writerow(['ID', '単語', '品詞', '意味', 'コロケーション', '和文', '英文', '英文穴埋め', 'タグ'])
+        w.writerows(rows)
+
+    print(f"単語 {len(items)} 件 → ノート {len(rows)} 件 を {out_path} に出力")
+    print("警告:", json.dumps(warn, ensure_ascii=False))

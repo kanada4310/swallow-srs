@@ -82,22 +82,49 @@ export function StudyCard({
     onSwipe: handleSwipe,
   })
 
+  // コロケーション構文ノート: 例文プール(JSON配列)からレビューごとに1本を選び、
+  // 表示用フィールド(英文穴埋め/和文/英文)に展開する。
+  // SRSスケジュールはノート(=コロケーション)単位のまま、表示する例文だけを毎回入れ替える。
+  const poolPickRef = useRef<{ noteId: string; idx: number } | null>(null)
+  const effectiveFieldValues = useMemo<FieldValues>(() => {
+    const raw = fieldValues['例文プール']
+    if (!raw) return fieldValues
+    let pool: Array<{ en?: string; blank?: string; ja?: string }>
+    try {
+      pool = JSON.parse(raw)
+    } catch {
+      return fieldValues
+    }
+    if (!Array.isArray(pool) || pool.length === 0) return fieldValues
+    // このカード表示につき1回だけランダムに選ぶ（次に出題されると別の例文になる）
+    if (!poolPickRef.current || poolPickRef.current.noteId !== noteId) {
+      poolPickRef.current = { noteId, idx: Math.floor(Math.random() * pool.length) }
+    }
+    const ex = pool[poolPickRef.current.idx % pool.length] ?? pool[0]
+    return {
+      ...fieldValues,
+      '英文穴埋め': ex.blank ?? '',
+      '和文': ex.ja ?? '',
+      '英文': ex.en ?? '',
+    }
+  }, [fieldValues, noteId])
+
   // Render templates (pure template processing, no sanitization)
   const renderedFront = useMemo(() => {
     return renderTemplate(
       template.front,
-      fieldValues,
+      effectiveFieldValues,
       { side: 'front', clozeNumber }
     )
-  }, [template.front, fieldValues, clozeNumber])
+  }, [template.front, effectiveFieldValues, clozeNumber])
 
   const renderedBack = useMemo(() => {
     return renderTemplate(
       template.back,
-      fieldValues,
+      effectiveFieldValues,
       { side: 'back', clozeNumber, renderedFront }
     )
-  }, [template.back, fieldValues, clozeNumber, renderedFront])
+  }, [template.back, effectiveFieldValues, clozeNumber, renderedFront])
 
   // Check if templates use inline {{tts:...}} placeholders
   const templateHasTts = useMemo(() => {
