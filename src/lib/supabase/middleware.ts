@@ -53,6 +53,12 @@ export async function updateSession(request: NextRequest) {
 
   // 未認証の場合はログインページへリダイレクト
   if (!user) {
+    // API ルートはリダイレクトしない。各ルートの requireAuth が 401(JSON) を返す。
+    // ここで /login にリダイレクトすると、POST は 307 でメソッドが保持され
+    // POST /login（GET専用ページ）→ 405 となり、同期が「405」で失敗してしまう。
+    if (pathname.startsWith('/api/')) {
+      return supabaseResponse
+    }
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
