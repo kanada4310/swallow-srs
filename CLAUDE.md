@@ -162,6 +162,17 @@ npm run test:watch   # Vitest 監視モード
 - **タグ体系**: セクション | サブセクション | v:動詞 | 文型:パターン | 前置詞:パターン
 - **582ノート**: 13セクション（自動詞vs他動詞、SVO、SVC、SVOO、tell型、rob型、etc.）
 
+## 中学英単語 暗誦例文デッキ ✅ 完了
+
+- **データ**: `data/中学英単語/`（元xlsxは `raw/` で未追跡、`words.tsv`=全2286語にid付与、生成・後処理・インポート各スクリプト）
+- **単語リスト**: 学習指導要領 全2286語（青森県教委ベース・全国6社教科書分析 / CEFR A1〜A2相当）。品詞別: 名詞1254・動詞343・形容詞361・副詞148・代名詞60・前置詞42・接続詞42・助動詞19・間投詞14・冠詞3
+- **例文生成**: 1語×3つの異なるコロケーション例文を AI(Sonnet) ワークフロー並列生成 → `build_workflow.py` がデータ埋め込み .js を生成 → `Workflow` 実行 → `full_result.json`
+- **後処理** `build_deck_tsv.py`: コロケーション部の `<strong>` 強調＋空所化。語幹・不規則動詞・重子音・ss・e脱落・A/Bプレースホルダ対応のアンカー一致。空所は最大4語（超過は見出し語のみ）
+- **ノートタイプ**「中学英単語（暗誦）」: 単語/品詞/意味/コロケーション/和文/英文/英文穴埋め
+- **カード（穴埋め型）**: 表=英文（暗誦対象を空所）＋和訳ヒント / 裏=完成英文（答え緑下線）＋和訳＋語義
+- **6858ノート**（2286語×3）。`import-chu-eitango.mjs`（既定オーナー=gaimon.maam）。品詞別フィルタサブデッキ10個（`create-pos-subdecks.mjs`、filter_tags=[品詞:◯◯]）
+- **同期ページング修正**: `/api/sync/pull` と `/api/decks/[id]/offline-data` の notes/cards/card_states を1000件ずつ `.range()` で全件取得（PostgREST の1000行上限対策、大規模デッキ必須）
+
 ## TTS設定（デッキ単位）
 
 - **DeckSettings**: `tts_voice`（6種: alloy/echo/fable/onyx/nova/shimmer）、`tts_speed`（0.25〜4.0）
@@ -211,10 +222,10 @@ npm run test:watch   # Vitest 監視モード
 
 詳細は @docs/progress.md を参照。
 
-- **最終更新**: 2026-04-28
-- **直近の修正**: デッキ表示バグ修正（Dexie liveQuery 化 + SyncErrorBanner + FirstSyncOverlay）
+- **最終更新**: 2026-06-13
+- **直近の修正**: 中学英単語 暗誦例文デッキ作成（6858ノート）+ 同期ページングバグ修正（pull/offline-data の1000行上限）
 - **次にやること**:
-  1. 林奏太さんの動作確認待ち（LINE 経由 `/decks` 表示）
+  1. Vercel デプロイ後、金田アカウントでログアウト→再ログイン → 中学英単語デッキ（品詞別10サブデッキ・穴埋めカード）の動作確認
   2. billing側のLINE送信ジョブ（SRS側データAPIは完了）
   3. Phase 9.3-9.4（学習時間トラッキング、習熟度スコア）
 
