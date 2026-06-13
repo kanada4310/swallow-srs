@@ -1,0 +1,7 @@
+# 再取得・再生成できる大きな中間物は除外
+raw/
+gen-pilot.js
+gen-full.js
+gen-patch.js
+pilot_result.json
+deck_pilot.tsv

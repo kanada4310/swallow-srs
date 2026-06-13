@@ -1,0 +1,2287 @@
+id	pos	word	meaning
+w0001	名詞	academy	学院、専門学校
+w0002	名詞	accident	事故
+w0003	名詞	acid rain	酸性雨
+w0004	名詞	action	1. 動き、演技 / 2. 行動、(一時の)行為、行い
+w0005	名詞	activity	活動
+w0006	名詞	actor	俳優
+w0007	名詞	addition	つけ加えること　〔in addition to ～で〕～に加えて
+w0008	名詞	address	あて名、住所
+w0009	名詞	adult	大人、成人
+w0010	名詞	advantage	有利な立場、利点
+w0011	名詞	adventure	冒険
+w0012	名詞	advertisement	広告、宣伝
+w0013	名詞	advice	忠告、助言、アドバイス
+w0014	名詞	Africa	アフリカ、アフリカ大陸
+w0015	名詞	afternoon	午後
+w0016	名詞	age	年齢、歳
+w0017	名詞	air	空中、空気
+w0018	名詞	air pollution	大気汚染
+w0019	名詞	airport	空港
+w0020	名詞	album	(写真、ＣＤ、レコードなどの) アルバム
+w0021	名詞	ambulance	救急車
+w0022	名詞	America	アメリカ合衆国 〔正式名称はthe United States of America〕
+w0023	名詞	American	アメリカ人、米国人
+w0024	名詞	amusement park	遊園地
+w0025	名詞	ancestor	祖先、先祖
+w0026	名詞	animal	《植物に対して》 動物
+w0027	名詞	animation	動画、アニメーション
+w0028	名詞	anime	（日本の）アニメ
+w0029	名詞	answer	答え、応答、返事
+w0030	名詞	apartment	アパート
+w0031	名詞	apple	リンゴ
+w0032	名詞	April	4月
+w0033	名詞	aquarium	水族館
+w0034	名詞	architect	（建物の）建設者、建築家
+w0035	名詞	area	（大小さまざまの）場所、区域、地域、地方
+w0036	名詞	arena	競技場、アリーナ
+w0037	名詞	arm	腕
+w0038	名詞	arrest	逮捕
+w0039	名詞	art	1. 美術、芸術 / 2. 技術
+w0040	名詞	artist	芸術家
+w0041	名詞	Asia	アジア（大陸）
+w0042	名詞	astronaut	宇宙飛行士
+w0043	名詞	attention	注意、注目
+w0044	名詞	attitude	態度、考え方、見方
+w0045	名詞	audience	聴衆、観客
+w0046	名詞	August	8月
+w0047	名詞	aunt	おば、おばさん
+w0048	名詞	Australia	オーストラリア
+w0049	名詞	autumn	秋
+w0050	名詞	baby	赤ちゃん
+w0051	名詞	backyard	裏庭
+w0052	名詞	bag	かばん、バッグ、袋
+w0053	名詞	balance	つり合い、バランス、（からだや心の）安定
+w0054	名詞	ball	ボール、球
+w0055	名詞	balloon	風船
+w0056	名詞	bamboo	竹
+w0057	名詞	banana	バナナ
+w0058	名詞	band	楽団、バンド
+w0059	名詞	bank	銀行
+w0060	名詞	barrier	壁、障壁
+w0061	名詞	baseball	野球
+w0062	名詞	basketball	バスケットボール
+w0063	名詞	bat	（野球の）バット
+w0064	名詞	bath	入浴　 〔take a bath の形で〕 入浴する
+w0065	名詞	bathroom	トイレ、浴室
+w0066	名詞	beach	浜、浜辺、海辺、なぎさ
+w0067	名詞	bear	クマ
+w0068	名詞	beauty	美しさ
+w0069	名詞	bed	ベッド 　〔go to bed の形で〕 寝る、床につく
+w0070	名詞	bedroom	寝室
+w0071	名詞	beef	牛肉
+w0072	名詞	bell	鈴、鐘
+w0073	名詞	belt	ベルト、（ズボンの）バンド、帯
+w0074	名詞	bench	長いす、ベンチ
+w0075	名詞	best	最高（のもの）
+w0076	名詞	bicycle	自転車
+w0077	名詞	bike	自転車　　〔bicycle ともいう〕
+w0078	名詞	billion	10億
+w0079	名詞	bird	鳥
+w0080	名詞	birthday	誕生日
+w0081	名詞	black	黒、黒人
+w0082	名詞	blackboard	黒板
+w0083	名詞	block	かたまり、ブロック
+w0084	名詞	blog	(コンピュータ)ブログ
+w0085	名詞	blossom	(特に果樹の)花
+w0086	名詞	blue	青
+w0087	名詞	blueberry	ブルーベリー
+w0088	名詞	board	板、掲示板、黒板
+w0089	名詞	boat	ボート、小舟、船
+w0090	名詞	body	からだ、肉体
+w0091	名詞	bomb	爆弾
+w0092	名詞	book	本、書物
+w0093	名詞	bookcase	本箱
+w0094	名詞	bookstore	本屋、書店
+w0095	名詞	border	国境
+w0096	名詞	bottle	びん
+w0097	名詞	box	箱
+w0098	名詞	boy	男の子、少年、青年
+w0099	名詞	Braille	点字
+w0100	名詞	branch	1. 支社 / 2. 枝
+w0101	名詞	Brazil	ブラジル
+w0102	名詞	bread	パン
+w0103	名詞	break	休けい、中休み、中断
+w0104	名詞	breakfast	朝食、朝ごはん
+w0105	名詞	bridge	橋
+w0106	名詞	brightness	明るさ
+w0107	名詞	British	英国人、イギリス人
+w0108	名詞	brother	兄、弟、兄弟
+w0109	名詞	brown	茶色
+w0110	名詞	brush	筆
+w0111	名詞	bubble	泡、あぶく
+w0112	名詞	builder	建造者
+w0113	名詞	building	建物、ビル
+w0114	名詞	bump	でこぼこ
+w0115	名詞	burn	やけど
+w0116	名詞	bus	バス
+w0117	名詞	business	商売、事業
+w0118	名詞	butter	バター
+w0119	名詞	button	ボタン
+w0120	名詞	buzzer	ブザー
+w0121	名詞	cacao	カカオ（の実）
+w0122	名詞	cafeteria	カフェテリア、学食
+w0123	名詞	cake	ケーキ
+w0124	名詞	calendar	暦、カレンダー
+w0125	名詞	call	電話(すること)
+w0126	名詞	calligraphy	書道
+w0127	名詞	Cambodia	カンボジア
+w0128	名詞	camera	カメラ
+w0129	名詞	can	（金属製の）缶
+w0130	名詞	Canada	カナダ
+w0131	名詞	Canberra	キャンベラ（オーストラリアの首都）
+w0132	名詞	cap	1. ぼうし 《つばがないか、つばが前だけにあるもの》 / 2. びんのふた
+w0133	名詞	capital	～の首都、中心地
+w0134	名詞	captain	（チームの）キャプテン
+w0135	名詞	car	自動車、車
+w0136	名詞	card	カード、はがき、トランプの札　 〔たとえば play cards の形で〕 トランプをする
+w0137	名詞	cardboard	段ボール、ボール紙
+w0138	名詞	care	1. 世話　〔take care of ～の形で〕 ～の面倒をみる / 2. 注意、関心、保護、用心
+w0139	名詞	career	職業、経歴
+w0140	名詞	carpenter	大工
+w0141	名詞	carport	車庫、カーポート
+w0142	名詞	carrot	ニンジン
+w0143	名詞	case	1. ケース、箱、～入れ / 2. 場合、実例、実情、事実
+w0144	名詞	castle	城 〔たとえば Hirosaki Castle の形で〕 弘前城
+w0145	名詞	cat	ネコ
+w0146	名詞	catalog	カタログ
+w0147	名詞	catch	（ボールなどを）とらえること、キャッチボール　　〔play catch の形で〕　キャッチボールをする
+w0148	名詞	cause	原因
+w0149	名詞	cave	洞窟、ほら穴、横穴
+w0150	名詞	CD	CD、コンパクトディスク 〔compact disc ［disk］の略〕
+w0151	名詞	ceiling	天井
+w0152	名詞	cell phone	携帯電話
+w0153	名詞	cent	セント（アメリカ合衆国の通貨。100 cents = 1 dollar）
+w0154	名詞	center	中心、中央、真ん中
+w0155	名詞	century	世紀、100年
+w0156	名詞	chair	（１人用で、背もたれのある） 椅子
+w0157	名詞	challenge	挑戦、やりがい
+w0158	名詞	champion	優勝者、選手権保持者、チャンピオン
+w0159	名詞	championship	選手権（大会）、優勝
+w0160	名詞	chance	機会、可能性、チャンス
+w0161	名詞	change	おつり、つり銭、小銭
+w0162	名詞	character	1. (人の)性格、人格、(物の)特色 / 2. 人物、登場人物
+w0163	名詞	charity	慈善、チャリティー、慈善団体
+w0164	名詞	chart	図表
+w0165	名詞	cheese	チーズ
+w0166	名詞	cheeseburger	チーズバーガー
+w0167	名詞	chef	シェフ、コック長
+w0168	名詞	cherry	サクランボ、サクラ（の木）
+w0169	名詞	cherry blossom	サクラの花
+w0170	名詞	chess	チェス
+w0171	名詞	chest	胸
+w0172	名詞	child	子ども
+w0173	名詞	childhood	幼少時代
+w0174	名詞	children	child の複数形
+w0175	名詞	chimney	煙突
+w0176	名詞	China	中国
+w0177	名詞	Chinese	中国語、中国人
+w0178	名詞	chocolate	チョコレート
+w0179	名詞	choice	選ぶこと、選択、選ぶ自由
+w0180	名詞	chorus	合唱
+w0181	名詞	Christmas	クリスマス
+w0182	名詞	church	教会
+w0183	名詞	circle	円
+w0184	名詞	city	市、都市、都会 〔city hall の形で〕 市役所
+w0185	名詞	class	1. 授業 / 2. 学級、組、クラス
+w0186	名詞	classmate	同級生、クラスメート、級友
+w0187	名詞	classroom	教室
+w0188	名詞	clean energy	再生可能エネルギー
+w0189	名詞	clerk	係員、店員、係
+w0190	名詞	climate	気候
+w0191	名詞	clock	時計《置時計、掛け時計・柱時計》
+w0192	名詞	cloth	布
+w0193	名詞	clothes	衣服、服
+w0194	名詞	cloud	雲
+w0195	名詞	club	クラブ、部
+w0196	名詞	coach	コーチ
+w0197	名詞	coat	コート、上着
+w0198	名詞	coffee	コーヒー
+w0199	名詞	coin	硬貨、コイン
+w0200	名詞	cola	コーラ
+w0201	名詞	cold	かぜ　〔have a cold の形で〕 かぜをひいている
+w0202	名詞	college	大学
+w0203	名詞	color	色、肌の色
+w0204	名詞	comic	マンガ
+w0205	名詞	comment	コメント
+w0206	名詞	communication	コミュニケーション、意思伝達、情報の伝達
+w0207	名詞	community	地域社会
+w0208	名詞	company	会社
+w0209	名詞	compartment	もの入れ
+w0210	名詞	computer	コンピュータ
+w0211	名詞	concert	コンサート、演奏会、音楽会
+w0212	名詞	conclusion	結論
+w0213	名詞	condition	状態、容態、環境、状況
+w0214	名詞	conditioner	ヘアコンディショナー、リンス
+w0215	名詞	conditioner	冷暖房装置　〔air conditioner で〕エアコン
+w0216	名詞	condominium	分譲マンション
+w0217	名詞	conference	会議、会談、協議
+w0218	名詞	connection	接続（すること）、つながり、関係
+w0219	名詞	content	内容、中身
+w0220	名詞	contest	コンテスト、コンクール
+w0221	名詞	control	制御　〔out of controlで〕制御しきれなくなって
+w0222	名詞	convenience	便利なこと（もの）
+w0223	名詞	convenience store	コンビニエンスストア、コンビニ
+w0224	名詞	cook	料理をする人
+w0225	名詞	cooking	料理
+w0226	名詞	corner	（道路の）曲がり角
+w0227	名詞	costume	服装、衣装、コスチューム
+w0228	名詞	cotton	綿
+w0229	名詞	cough	せき
+w0230	名詞	country	国
+w0231	名詞	courage	勇気
+w0232	名詞	course	1. 〔Of course.の形で〕 もちろん / 2. 方向、進路 / 3. 講座、コース
+w0233	名詞	court	（テニスなどの）コート
+w0234	名詞	cousin	いとこ
+w0235	名詞	cow	牛（雌牛、乳牛）
+w0236	名詞	cracker	（菓子の）クラッカー
+w0237	名詞	craftsperson	職人
+w0238	名詞	crane	ツル
+w0239	名詞	creativity	創造性[力]、独創[力]
+w0240	名詞	culture	文化、土壌、習慣、風習、知的産物
+w0241	名詞	cup	（紅茶・コーヒー用などの）カップ、茶わん、賞杯
+w0242	名詞	curry	カレー、カレー料理
+w0243	名詞	cushion	ざぶとん、クッション
+w0244	名詞	custom	風習、習慣
+w0245	名詞	customer	客、顧客
+w0246	名詞	cycling	サイクリング
+w0247	名詞	dad	パパ、お父さん　《家庭内で子どもが父親を呼ぶのに使う。呼びかけの時にはしばしば大文字で始めて Dad とする。》
+w0248	名詞	dance	踊り、ダンス
+w0249	名詞	dancer	踊る人、舞踏家、ダンサー
+w0250	名詞	danger	危険（な状態）
+w0251	名詞	date	日付、月日、日時
+w0252	名詞	daughter	娘
+w0253	名詞	day	1. 日、1日 / 2. 日中、昼間
+w0254	名詞	day-at-work program	職業体験プログラム
+w0255	名詞	death	死、死亡
+w0256	名詞	decade	10年間
+w0257	名詞	December	12月
+w0258	名詞	decision	決断
+w0259	名詞	degree(s) Celsius	〔5℃ = five degrees Celsius で摂氏5度〕
+w0260	名詞	democracy	民主主義
+w0261	名詞	demonstration	（集会・行進などによる〕デモ、デモンストレーション
+w0262	名詞	dentist	歯医者
+w0263	名詞	department store	デパート
+w0264	名詞	design	デザイン、設計
+w0265	名詞	designer	デザイナー、設計者
+w0266	名詞	desk	机
+w0267	名詞	developing country	発展途上国
+w0268	名詞	diary	日記、日記帳
+w0269	名詞	dictionary	辞書
+w0270	名詞	difference	ちがい、相違（点）、差
+w0271	名詞	difficulty	苦しさ、困難、苦労
+w0272	名詞	dining	食事
+w0273	名詞	dinner	ディナー、夕食
+w0274	名詞	dinosaur	恐竜
+w0275	名詞	director	(映画)監督
+w0276	名詞	disaster	災害
+w0277	名詞	discount	割引
+w0278	名詞	disease	病気
+w0279	名詞	dish	1. 皿、食器類 / 2. 一皿、料理
+w0280	名詞	doctor	医者、医師、博士
+w0281	名詞	dog	イヌ
+w0282	名詞	doggy bag	ドギーバッグ
+w0283	名詞	dollar	ドル　　　《米国・カナダなどの貨幣で、1ドルは100セント》
+w0284	名詞	dolphin	イルカ
+w0285	名詞	dome	丸屋根、ドーム
+w0286	名詞	donut	ドーナツ
+w0287	名詞	door	戸、ドア、戸口、玄関
+w0288	名詞	dot	点
+w0289	名詞	Dr. (Dr)	～博士　Doctorの短縮形
+w0290	名詞	drama	（テレビの）ドラマ、劇
+w0291	名詞	dream	夢、希望、理想
+w0292	名詞	dress	衣装、ドレス
+w0293	名詞	driftwood	流木
+w0294	名詞	drill	訓練
+w0295	名詞	drink	飲み物　　〔たとえば soft drinks の形で〕清涼（せいりょう）飲料
+w0296	名詞	drinking fountain	水飲み場[器]
+w0297	名詞	driver	（車を）運転する人、運転手
+w0298	名詞	driveway	（道から車庫または玄関までの）車道
+w0299	名詞	drop	しずく
+w0300	名詞	drugstore	ドラッグストア、薬局
+w0301	名詞	drum	太鼓、ドラム
+w0302	名詞	duck	カモ、アヒル
+w0303	名詞	DVD	デジタルビデオディスク　〔digital video disc ［disk］の略〕
+w0304	名詞	e-mail (email)	Eメール、電子メール
+w0305	名詞	ear	耳
+w0306	名詞	earth	地球　〔the をつけないで、Earth と大文字ではじめることもある〕
+w0307	名詞	earthquake	地震
+w0308	名詞	east	東
+w0309	名詞	effort	努力
+w0310	名詞	egg	卵、玉子
+w0311	名詞	eight	8
+w0312	名詞	eighteen	18
+w0313	名詞	eighteenth	18番め、（月の）18日
+w0314	名詞	eighth	8番め、（月の）8日
+w0315	名詞	eighty	80
+w0316	名詞	electricity	電気
+w0317	名詞	elementary school	小学校
+w0318	名詞	elephant	ゾウ
+w0319	名詞	elevator	エレベーター
+w0320	名詞	eleven	11
+w0321	名詞	eleventh	11番め、（月の）１１日
+w0322	名詞	emergency	緊急事態、非常時
+w0323	名詞	end	終わり、最後、端
+w0324	名詞	endangered animal	絶滅の危機にひんしている動物
+w0325	名詞	ending	終わり、結末、エンディング
+w0326	名詞	energy	エネルギー
+w0327	名詞	engineer	技師、エンジニア
+w0328	名詞	engineering	工学
+w0329	名詞	England	イングランド
+w0330	名詞	English	英語
+w0331	名詞	entertainment	娯楽
+w0332	名詞	entrance	入り口、玄関
+w0333	名詞	environment	環境
+w0334	名詞	era	時代　〔Nara era で〕奈良時代
+w0335	名詞	eraser	消しゴム
+w0336	名詞	Europe	ヨーロッパ
+w0337	名詞	evacuation	避難
+w0338	名詞	evening	夕方、晩、夜 《通例、日没から寝る時間までを言う》
+w0339	名詞	event	行事、出来事、イベント
+w0340	名詞	exam	試験
+w0341	名詞	example	例、実例　〔for example の形で〕たとえば
+w0342	名詞	exhibition	展覧会
+w0343	名詞	experience	経験
+w0344	名詞	expert	専門家、エキスパート
+w0345	名詞	express	急行列車、速達便
+w0346	名詞	expression	表現、言い回し、（顔などの）表情
+w0347	名詞	eye	目、視力、視線
+w0348	名詞	eyesight	視力
+w0349	名詞	face	顔、表情
+w0350	名詞	facility	設備、施設
+w0351	名詞	fact	事実
+w0352	名詞	fall	1. 秋 / 2. 滝 / 3. 落下
+w0353	名詞	family	家族、一家、家族の者たち
+w0354	名詞	fan	1. (スポーツなどの) ファン / 2. 扇、扇子、うちわ
+w0355	名詞	farewell	別れ
+w0356	名詞	farm	農場、農園
+w0357	名詞	farmer	農家、農業をする人、農業主、農業経営者
+w0358	名詞	farming	農業、農場経営
+w0359	名詞	fashion	流行、はやり、ファッション、流行の服装
+w0360	名詞	fate	運命
+w0361	名詞	father	父、お父さん
+w0362	名詞	favor	親切な行為　〔ask … a favor で〕　…にお願いする
+w0363	名詞	favorite	お気に入りのもの［人］
+w0364	名詞	February	2月
+w0365	名詞	fee	料金、入場料
+w0366	名詞	feeling	感情、考え、感覚
+w0367	名詞	feet	〔foot の複数形〕
+w0368	名詞	fence	垣根
+w0369	名詞	Ferris wheel	観覧車
+w0370	名詞	festival	お祭り、祭典　　〔たとえば the Aomori Nebuta Festival の形で〕 青森ねぶた祭り
+w0371	名詞	fever	熱
+w0372	名詞	fiction	小説、フィクション
+w0373	名詞	field	運動場、フィールド、野原、畑、田、牧草地
+w0374	名詞	fifteen	15
+w0375	名詞	fifteenth	15番め、（月の）15日
+w0376	名詞	fifth	5番め、（月の）5日
+w0377	名詞	fifty	50
+w0378	名詞	fight	戦い、口げんか
+w0379	名詞	fighting spirit	闘志
+w0380	名詞	film	映画
+w0381	名詞	fine arts	芸術、(教科の) 美術
+w0382	名詞	finger	(手の) 指
+w0383	名詞	Finland	フィンランド
+w0384	名詞	fire	火
+w0385	名詞	fireplace	暖炉
+w0386	名詞	firewood	まき、たきぎ
+w0387	名詞	firework	花火
+w0388	名詞	first	1番め、最初、（月の）ついたち
+w0389	名詞	fish	魚 〔複数形も fish 〕
+w0390	名詞	fitting room	試着室
+w0391	名詞	five	5
+w0392	名詞	five-story pagoda	五重塔
+w0393	名詞	flash	ぱっと発する光、(撮影用の)フラッシュ
+w0394	名詞	flight	フライト、飛行機旅行
+w0395	名詞	float	山車
+w0396	名詞	floor	1. 床（ゆか） / 2. ～階
+w0397	名詞	flower	花、草花
+w0398	名詞	flute	フルート
+w0399	名詞	food	食べ物、食糧
+w0400	名詞	foot	足 《足首から下の部分》
+w0401	名詞	football	フットボール(用のボール)、サッカー(用のボール)、アメリカンフットボール(用のボール)
+w0402	名詞	forest	森、森林
+w0403	名詞	fork	フォーク
+w0404	名詞	forty	40
+w0405	名詞	fossil fuel	化石燃料
+w0406	名詞	four	4
+w0407	名詞	fourteen	14
+w0408	名詞	fourth	4番め、（月の）4日
+w0409	名詞	fox	キツネ
+w0410	名詞	France	フランス
+w0411	名詞	freedom	自由
+w0412	名詞	French	フランス語
+w0413	名詞	French fries	（細長い）フライドポテト
+w0414	名詞	Friday	金曜日
+w0415	名詞	fridge	冷蔵庫
+w0416	名詞	friend	友達、友人
+w0417	名詞	friendship	友情、友愛、親交
+w0418	名詞	front	前面、前部、前　　〔in front of ～の形で〕～の前に
+w0419	名詞	fruit	果物、フルーツ
+w0420	名詞	fuel	燃料
+w0421	名詞	fun	楽しいこと、面白いこと、楽しさ
+w0422	名詞	furniture	家具
+w0423	名詞	futon	フトン、ソファーベッド
+w0424	名詞	future	未来、将来
+w0425	名詞	game	1. （一定のルールを持った）ゲーム、遊び / 2. 試合、競技
+w0426	名詞	garbage	生ごみ、くず
+w0427	名詞	garden	1. 庭、庭園 / 2. 畑､野菜園
+w0428	名詞	gas	1. 気体 / 2. (燃料用の)ガス / 3. ガソリン　〔gas stationの形で〕　ガソリンスタンド
+w0429	名詞	gate	門、出入口
+w0430	名詞	geese	〔gooseの複数形〕
+w0431	名詞	generation	世代、同世代の人々
+w0432	名詞	gentleman	紳士　〔複数形は gentlemen〕
+w0433	名詞	gentlemen	〔gentlemanの複数形〕
+w0434	名詞	ger	ゲル（モンゴルの伝統的な移動式住居）
+w0435	名詞	German	1. ドイツ語 / 2. ドイツ人
+w0436	名詞	Germany	ドイツ
+w0437	名詞	gesture	身ぶり、ジェスチャー
+w0438	名詞	Ghana	ガーナ
+w0439	名詞	gift	贈り物
+w0440	名詞	girl	女の子、少女
+w0441	名詞	glacier	氷河
+w0442	名詞	global warming	地球温暖化
+w0443	名詞	glove	手袋
+w0444	名詞	goal	1. ゴール、決勝点 / 2. 目標、目的地
+w0445	名詞	goalball	ゴールボール《３人ずつの２チームで音の出るボールを用いて行う球技》
+w0446	名詞	God	神
+w0447	名詞	gold	金
+w0448	名詞	goodness	善良さ、親切
+w0449	名詞	goods	商品、品物
+w0450	名詞	goose	ガン〔動物名〕
+w0451	名詞	government	政府
+w0452	名詞	grade	1. 学年 / 2. 評定､点数
+w0453	名詞	granddaughter	孫娘、女の孫
+w0454	名詞	grandfather	おじいさん，祖父
+w0455	名詞	grandmother	おばあさん、祖母
+w0456	名詞	grandson	孫息子
+w0457	名詞	grape	ブドウ
+w0458	名詞	grass	1.　草 / 2.　草地、芝生
+w0459	名詞	gray	灰色、ねずみ色
+w0460	名詞	Greece	ギリシャ
+w0461	名詞	green	緑（色）
+w0462	名詞	greenhouse gas	温室効果ガス
+w0463	名詞	greeting	挨拶
+w0464	名詞	ground	地面、大地
+w0465	名詞	group	グループ、団体
+w0466	名詞	guide	（旅行などの）人、ガイド
+w0467	名詞	guitar	ギター
+w0468	名詞	gun	銃
+w0469	名詞	gym	体育館、ジム
+w0470	名詞	habit	習慣、くせ
+w0471	名詞	habitat	生息地
+w0472	名詞	hair	毛、髪の毛
+w0473	名詞	half	半分
+w0474	名詞	hall	会館、役所　〔city hallの形で〕市役所
+w0475	名詞	hallway	（ビルなどの）廊下、通路
+w0476	名詞	ham	ハム
+w0477	名詞	hamburger	ハンバーガー
+w0478	名詞	hand	手
+w0479	名詞	handle	取っ手、柄
+w0480	名詞	handout	配付印刷物、ビラ、プリント
+w0481	名詞	happiness	幸福
+w0482	名詞	hardship	苦難
+w0483	名詞	harvest	収穫
+w0484	名詞	hatred	憎しみ
+w0485	名詞	haunted house	お化け屋敷
+w0486	名詞	Hawaii	ハワイ（太平洋にある米国の州、州都はホノルル）
+w0487	名詞	hawk	タカ
+w0488	名詞	hay fever	花粉症
+w0489	名詞	head	頭、頭部
+w0490	名詞	headache	頭痛
+w0491	名詞	health	健康
+w0492	名詞	heart	心
+w0493	名詞	heat	熱
+w0494	名詞	heater	暖房器具
+w0495	名詞	help	助け､援助
+w0496	名詞	here	ここ、この場所
+w0497	名詞	heritage	（祖先から伝わる精神的・文化的）遺産
+w0498	名詞	hero	ヒーロー、英雄
+w0499	名詞	high school	高等学校
+w0500	名詞	highlight	ハイライト、見せ場
+w0501	名詞	hill	丘、小山
+w0502	名詞	history	歴史
+w0503	名詞	hit	ヒット（曲）
+w0504	名詞	hobby	趣味
+w0505	名詞	hole	穴
+w0506	名詞	holiday	休日、祝日
+w0507	名詞	home	1. 家、家庭 / 2. 故郷 / 3. 〔at home の形で〕家に、在宅して、くつろいで / 4. （野球の）本塁
+w0508	名詞	homeland	本国、母国
+w0509	名詞	homestay	ホームステイ
+w0510	名詞	hometown	故郷
+w0511	名詞	homework	宿題
+w0512	名詞	honesty	正直（であること）、誠実さ
+w0513	名詞	hope	希望、望
+w0514	名詞	horizon	（人の）視野
+w0515	名詞	horse	ウマ
+w0516	名詞	hospital	病院、総合病院
+w0517	名詞	host	（客を接待する）主人（役）
+w0518	名詞	hot dog	ホットドッグ
+w0519	名詞	hot spring	温泉
+w0520	名詞	hotel	ホテル
+w0521	名詞	hour	１時間
+w0522	名詞	house	家、住宅
+w0523	名詞	hula	フラ（ダンス）〈ハワイの民族舞踊〉
+w0524	名詞	human	人、人間
+w0525	名詞	humor	ユーモア
+w0526	名詞	hundred	100
+w0527	名詞	hunter	ハンター、猟師
+w0528	名詞	hunting	さがし求めること
+w0529	名詞	husband	夫
+w0530	名詞	hymn	賛美歌
+w0531	名詞	ice	氷
+w0532	名詞	idea	考え、思いつき、アイディア
+w0533	名詞	image	像、イメージ画像、絵
+w0534	名詞	importance	重要性、重大さ、大切さ
+w0535	名詞	India	インド
+w0536	名詞	industrial arts and homemaking	（教科の）技術・家庭科
+w0537	名詞	industry	工業
+w0538	名詞	information	情報
+w0539	名詞	injury	けが、不調
+w0540	名詞	ink	インク
+w0541	名詞	insect	昆虫
+w0542	名詞	insult	屈辱
+w0543	名詞	interest	興味、関心
+w0544	名詞	Internet	インターネット
+w0545	名詞	interpreter	通訳者
+w0546	名詞	interview	インタビュー、会見、面接
+w0547	名詞	interviewer	インタビューする人、インタビュワー、面接官
+w0548	名詞	island	島
+w0549	名詞	jacket	ジャケット、上着
+w0550	名詞	January	１月
+w0551	名詞	Japan	日本
+w0552	名詞	Japanese	日本、日本人、日本語、（教科の日本語にとっての）国語
+w0553	名詞	Japanese-Brazilian	日系ブラジル人
+w0554	名詞	job	仕事、職務
+w0555	名詞	joke	冗談、しゃれ
+w0556	名詞	Jones	ジョーンズ(姓）
+w0557	名詞	journalist	記者、ジャーナリスト
+w0558	名詞	joy	喜び
+w0559	名詞	Judy	ジュディ〔女性名〕
+w0560	名詞	juice	ジュース
+w0561	名詞	July	７月
+w0562	名詞	June	６月
+w0563	名詞	jungle	〔ふつうthe～で〕(熱帯地方の)密林、ジャングル
+w0564	名詞	junior high school	中学校
+w0565	名詞	justice	正義、正しさ、公平
+w0566	名詞	kangaroo	カンガルー
+w0567	名詞	karaoke	カラオケ
+w0568	名詞	Kenya	ケニヤ(アフリカ東部にある共和国）
+w0569	名詞	key	かぎ
+w0570	名詞	keyhole	鍵穴
+w0571	名詞	kid	子ども
+w0572	名詞	kilogram	キログラム
+w0573	名詞	kilometer	キロメートル
+w0574	名詞	kind	種類　　〔a kind of ～の形で〕　一種の～、～のようなもの
+w0575	名詞	king	王、国王
+w0576	名詞	kitchen	台所、キッチン
+w0577	名詞	kite	(空にあげる)凧
+w0578	名詞	koala	コアラ
+w0579	名詞	Korea	韓国・朝鮮　　〔たとえば South Korea, North Korea の形で〕 韓国、北朝鮮
+w0580	名詞	Korean	韓国・朝鮮語、韓国人・朝鮮人
+w0581	名詞	lady	婦人
+w0582	名詞	lake	湖 〔たとえば Lake Towada の形で〕 十和田湖
+w0583	名詞	lamp	ランプ、明かり
+w0584	名詞	land	土地、陸地
+w0585	名詞	landing card	入国カード
+w0586	名詞	landmine	地雷
+w0587	名詞	language	ことば、言語
+w0588	名詞	language arts	言語技術(米国の多くの小・中学校で仮名部科目の一つ）
+w0589	名詞	lap	ひざ（の上）
+w0590	名詞	last	最後
+w0591	名詞	laughter	笑い
+w0592	名詞	law	法律
+w0593	名詞	lawyer	弁護士、法律家
+w0594	名詞	leader	指導者、リーダー
+w0595	名詞	left	左、左側
+w0596	名詞	leg	あし 《ももの付け根から下全部あるいは足首までの部分》
+w0597	名詞	lemon	レモン
+w0598	名詞	leopard	ヒョウ
+w0599	名詞	lesson	1. (教科書などの)課、授業、勉強、けいこ、レッスン / 2. 教訓
+w0600	名詞	letter	手紙、文字、字
+w0601	名詞	level	水平（面）、水位、高さ
+w0602	名詞	library	図書館，図書室
+w0603	名詞	life	1. 生命、いのち（複 lives） / 2. 終生、一生 / 3. 人生 / 4. 生活、暮らし
+w0604	名詞	light	1. 光、光線 / 2. 明かり、電灯
+w0605	名詞	line	1. 線、電話線 / 2. （文字の）行　 / 3. (バス・列車・飛行機などの)路線 / 4. (役者の)せりふ、(文章などの)行
+w0606	名詞	lion	ライオン
+w0607	名詞	lives	lifeの複数形
+w0608	名詞	living room	居間、リビングルーム
+w0609	名詞	locker	ロッカー
+w0610	名詞	London	ロンドン
+w0611	名詞	look	見ること、一見　　〔 have ［take］ a look at ～の形で〕～を見る
+w0612	名詞	lot	1. 〔a lot of ～ の形で〕 たくさんの、多数の / 2. たくさん、多数、多量 〔a lot〕
+w0613	名詞	love	1. 愛、恋愛 / 2. 《手紙などの結びのことば》 〔たとえば Love, Lisa の形で〕 リサより
+w0614	名詞	luck	運
+w0615	名詞	lucky break	成功のきっかけ
+w0616	名詞	lullaby	子守歌
+w0617	名詞	lunch	昼食、(お昼の）弁当
+w0618	名詞	machine	機械
+w0619	名詞	magazine	雑誌
+w0620	名詞	magic	手品
+w0621	名詞	maker	製作者
+w0622	名詞	man	男の人、(一般的に)人
+w0623	名詞	manga	（日本の）マンガ
+w0624	名詞	manner	（mannersで）行儀、マナー
+w0625	名詞	map	地図
+w0626	名詞	March	３月
+w0627	名詞	market	市場
+w0628	名詞	marsh	沼
+w0629	名詞	mask	(顔を保護する）防具、マスク
+w0630	名詞	master	主人、住職、和尚(ときに固有名詞のように使い、大文字で書き始めてMasterで「和尚さま」
+w0631	名詞	match	試合、勝負
+w0632	名詞	math	数学 〔mathematicsを短くした形〕
+w0633	名詞	matter	問題、困ったこと、事情
+w0634	名詞	May	５月
+w0635	名詞	mayor	村長
+w0636	名詞	meal	食事
+w0637	名詞	meaning	意味
+w0638	名詞	meat	食用肉、肉
+w0639	名詞	meat loaf	ミートローフ
+w0640	名詞	medal	メダル
+w0641	名詞	medicine	薬　〔take medicineの形で〕 薬を飲む
+w0642	名詞	meeting	集会、会議
+w0643	名詞	member	一員、メンバー
+w0644	名詞	memorial	記念日、記念碑、記念館
+w0645	名詞	memory	記憶、記憶力、思い出
+w0646	名詞	men	〔manの複数形〕
+w0647	名詞	menu	献立表、メニュー
+w0648	名詞	message	伝言，メッセージ
+w0649	名詞	meter	メートル
+w0650	名詞	mid-1900s	1900年代半ば
+w0651	名詞	middle	真ん中、中間
+w0652	名詞	milk	牛乳、ミルク
+w0653	名詞	million	百万
+w0654	名詞	mind	心　[keep A in mindの形で］Aを心に留めておく / 　　 [make up my mindの形で］決心する
+w0655	名詞	minister	牧師
+w0656	名詞	minute	1. (時間の)分 / 2. ちょっとの間　 〔Just a minute. の形で〕ちょっと待ってください
+w0657	名詞	mirror	鏡
+w0658	名詞	mistake	まちがい　［by mistakeの形で］誤って、間違って
+w0659	名詞	mom	ママ、お母さん 《家庭内で子どもが母親を呼ぶのに使う。呼びかけの時にはしばしば大文字で始めて Mom とする。》
+w0660	名詞	moment	ちょっとの時間、瞬間
+w0661	名詞	mommy	お母ちゃん
+w0662	名詞	Monday	月曜日
+w0663	名詞	money	お金
+w0664	名詞	Mongolia	モンゴル(中国の北方に位置する国）
+w0665	名詞	monkey	サル
+w0666	名詞	month	(暦の)月
+w0667	名詞	moon	月
+w0668	名詞	morning	朝、午前
+w0669	名詞	mother	母、お母さん
+w0670	名詞	motto	標語、モットー
+w0671	名詞	mountain	山
+w0672	名詞	mouth	口
+w0673	名詞	movement	動き、(社会的)運動
+w0674	名詞	movie	映画
+w0675	名詞	Mr. (Mr.)	《男性の姓・姓名の前につけて》 ～さん、先生
+w0676	名詞	Mrs. (Mrs.)	《結婚している女性の姓・姓名の前につけて》 ～さん、先生
+w0677	名詞	Ms. (Ms.)	《女性の姓・姓名の前につけて》 ～さん、先生
+w0678	名詞	Mt.	〔mountain （山）の略〕 ～山　 〔例えば Mt. Iwaki の形で〕 岩木山
+w0679	名詞	much	多量、たくさん
+w0680	名詞	museum	博物館、美術館
+w0681	名詞	music	音楽
+w0682	名詞	music club	(学校の）音楽部
+w0683	名詞	musician	音楽家、ミュージシャン
+w0684	名詞	Myanmar	ミャンマー
+w0685	名詞	mystery	謎
+w0686	名詞	name	名前
+w0687	名詞	nation	国家
+w0688	名詞	national holiday	国民の休日
+w0689	名詞	national park	国立公園
+w0690	名詞	natural gas	天然ガス
+w0691	名詞	nature	自然、自然界
+w0692	名詞	neck	首
+w0693	名詞	need	必要　〔in needの形で〕必要で、困って
+w0694	名詞	neighbor	隣人
+w0695	名詞	nest	巣
+w0696	名詞	New Year's Day	元日
+w0697	名詞	New Year's Eve	大晦日
+w0698	名詞	New York	ニューヨーク
+w0699	名詞	New York City	ニューヨーク市
+w0700	名詞	news	ニュース、知らせ
+w0701	名詞	newspaper	新聞、新聞紙
+w0702	名詞	night	夜
+w0703	名詞	nine	９
+w0704	名詞	nineteen	19
+w0705	名詞	nineteenth	19番目の、１９日
+w0706	名詞	ninety	90
+w0707	名詞	ninth	9番め、（月の）9日
+w0708	名詞	No.	…番、第…号
+w0709	名詞	Nobel Peace Prize	ノーベル平和賞
+w0710	名詞	non-white	白人以外の人
+w0711	名詞	noodle	麺、ヌードル
+w0712	名詞	noon	正午
+w0713	名詞	north	北、北方、北部
+w0714	名詞	North Carolina	ノース・カロライナ(アメリカ合衆国の州名）
+w0715	名詞	nose	鼻
+w0716	名詞	note	メモ、覚え書き
+w0717	名詞	notebook	ノート
+w0718	名詞	November	11月
+w0719	名詞	now	今
+w0720	名詞	number	～番、番号、数、数字
+w0721	名詞	nun	尼僧
+w0722	名詞	nurse	看護師、保健の先生
+w0723	名詞	nurse's office	保健室
+w0724	名詞	nursery	託児所
+w0725	名詞	nursing	看護、介護
+w0726	名詞	nursing home	高齢者福祉施設、療養所
+w0727	名詞	ocean	大洋、海
+w0728	名詞	October	10月
+w0729	名詞	octopus	タコ
+w0730	名詞	office	事務所､役所
+w0731	名詞	officer	係員、役人、警察官
+w0732	名詞	official	係官、職員
+w0733	名詞	oil	油、石油
+w0734	名詞	Olympics	(theをつけて）オリンピック
+w0735	名詞	one	１つ､１人
+w0736	名詞	opinion	意見、考え、判断
+w0737	名詞	orange	オレンジ（色）
+w0738	名詞	orchestra	オーケストラ
+w0739	名詞	order	1. 命令 / 2. 注文 / 3. 順序
+w0740	名詞	origin	（～の)起源、由来
+w0741	名詞	outlook	見方、考え方
+w0742	名詞	owl	フクロウ
+w0743	名詞	oxygen	酸素
+w0744	名詞	P.E. (PE)	体育 　〔physical educationの略〕
+w0745	名詞	pack	1パック、１箱
+w0746	名詞	page	ページ
+w0747	名詞	pain	1. 痛み / 2. 苦心
+w0748	名詞	painter	画家
+w0749	名詞	painting	絵、絵画
+w0750	名詞	pair	１組、対
+w0751	名詞	palace	御殿
+w0752	名詞	palm	手のひら
+w0753	名詞	pamphlet	パンフレット
+w0754	名詞	panda	パンダ
+w0755	名詞	panel	パネル
+w0756	名詞	paper	紙、折り紙、レポート、論文
+w0757	名詞	paper crane	折り鶴
+w0758	名詞	Paralympics	(theをつけて）パラリンピック
+w0759	名詞	pardon	許し、許すこと　〔I beg your pardon.（最後を上げて発音して）/Beg your pardon?/Pardon?の形で〕 すみませんが、もう一度言ってください。
+w0760	名詞	parent	親
+w0761	名詞	Paris	パリ
+w0762	名詞	park	公園、遊園地
+w0763	名詞	part	1.一部 / 2.役割、役目
+w0764	名詞	particular	項目、細部
+w0765	名詞	partner	仲間、パートナー
+w0766	名詞	party	パーティー
+w0767	名詞	passion	熱中（しているもの）、情熱
+w0768	名詞	passport	パスポート
+w0769	名詞	past	過去
+w0770	名詞	pastry shop	洋菓子店
+w0771	名詞	patient	患者、病人
+w0772	名詞	peace	平和
+w0773	名詞	peach	（果物の）モモ
+w0774	名詞	pen	ペン
+w0775	名詞	pencil	えんぴつ
+w0776	名詞	people	1. 《複数扱いで、２人以上を表して》 人、人々、人間 / 2.国民
+w0777	名詞	percent	パーセント
+w0778	名詞	performance	上演、演奏、演技
+w0779	名詞	performer	上演者、噺家、芸人
+w0780	名詞	period	時代
+w0781	名詞	person	人 〔２人以上を表すときは people がふつう〕
+w0782	名詞	Peru	ペルー（南米の国の名前）
+w0783	名詞	pet	ペット
+w0784	名詞	pharmacist	薬剤師、薬局
+w0785	名詞	Philippines	(the ～で）フィリピン共和国
+w0786	名詞	phone	電話　　〔 telephone の略〕
+w0787	名詞	phone call	電話をかけること
+w0788	名詞	photo	写真　 〔photograph の略〕
+w0789	名詞	photograph	写真
+w0790	名詞	photographer	写真家、カメラマン
+w0791	名詞	phrase	句、言い回し、フレーズ
+w0792	名詞	piano	ピアノ
+w0793	名詞	picnic	ピクニック、行楽
+w0794	名詞	picture	絵、写真
+w0795	名詞	pie	パイ（肉や果物などを練り粉で包んで焼いた菓子、料理）
+w0796	名詞	piece	〔a piece of ～の形で〕１つの～、ひとかけらの～
+w0797	名詞	pilot	パイロット
+w0798	名詞	pink	ピンク色（の）、もも色（の）
+w0799	名詞	pizza	ピザ
+w0800	名詞	place	1.場所､所 / 2.順位
+w0801	名詞	plan	1. 事業 / 2. 計画、案、考え、予定
+w0802	名詞	plane	飛行機
+w0803	名詞	plant	植物
+w0804	名詞	plastic	プラスチック
+w0805	名詞	plastic bag	ビニール袋
+w0806	名詞	plate	取り皿
+w0807	名詞	play	劇
+w0808	名詞	player	（楽器を）演奏する人、演奏家、（スポーツを）する人、選手
+w0809	名詞	pleasure	喜び
+w0810	名詞	pocket	ポケット
+w0811	名詞	poem	詩
+w0812	名詞	point	1. 箇所、点、地点 / 2. 言おうとしていること、要点、考え / 3. 特徴、特質
+w0813	名詞	poison	毒薬、毒
+w0814	名詞	polar bear	ホッキョクグマ
+w0815	名詞	police	〔しばしばthe policeで、複数扱い〕警察 〔（一人の）警官をさす場合は a police officer〕
+w0816	名詞	police officer	(一人の）警官
+w0817	名詞	politician	政治家
+w0818	名詞	pollution	汚染
+w0819	名詞	polo	（馬に乗って行う競技）ポロ
+w0820	名詞	pond	池
+w0821	名詞	poodle	プードル（犬の１品種）
+w0822	名詞	pool	（水泳用の）プール
+w0823	名詞	popular culture	大衆文化、ポップカルチャー
+w0824	名詞	population	人口
+w0825	名詞	Portuguese	ポルトガル語
+w0826	名詞	post	郵便、郵便物
+w0827	名詞	post office	郵便局
+w0828	名詞	postcard	郵便はがき、絵はがき
+w0829	名詞	poster	ポスター
+w0830	名詞	pot	（深い）なべ
+w0831	名詞	pouch	袋
+w0832	名詞	pound	ポンド(イギリスの通貨）
+w0833	名詞	power	力、能力
+w0834	名詞	prefecture	県
+w0835	名詞	present	1.「現在」 / 2.プレゼント、贈り物
+w0836	名詞	presentation	（意見・提案などの）発表、プレゼンテーション
+w0837	名詞	pressure	圧力、せまられること、プレッシャー
+w0838	名詞	price	値段
+w0839	名詞	prince	王子
+w0840	名詞	principal	校長
+w0841	名詞	principal's office	校長室
+w0842	名詞	print	印刷、版画
+w0843	名詞	prize	賞、賞品
+w0844	名詞	problem	(困難を引き起こす)問題、障害、課題
+w0845	名詞	product	製品、生産物
+w0846	名詞	professor	教授
+w0847	名詞	program	1. 番組（表）、プログラム / 2. 計画、予定（表）
+w0848	名詞	programmer	プログラマー
+w0849	名詞	promise	約束
+w0850	名詞	prop	小道具
+w0851	名詞	public hall	公会堂
+w0852	名詞	purple	紫色（の）
+w0853	名詞	purpose	目的
+w0854	名詞	question	1. 質問、問い / 2. 問題、論点
+w0855	名詞	quiz	簡単な口頭（筆記）のテスト、質問、（ラジオ・テレビの）クイズ
+w0856	名詞	rabbit	ウサギ
+w0857	名詞	race	競争、競走
+w0858	名詞	racket	ラケット
+w0859	名詞	radio	ラジオ
+w0860	名詞	radish	ハツカダイコン
+w0861	名詞	rain	雨
+w0862	名詞	rain forest	熱帯雨林
+w0863	名詞	rainbow	虹
+w0864	名詞	ramp	スロープ
+w0865	名詞	reading	読むこと
+w0866	名詞	reality	現実、実際
+w0867	名詞	reason	理由
+w0868	名詞	recipe	（料理などの）作り方、レシピ
+w0869	名詞	red	赤い、赤色（の）、赤
+w0870	名詞	refugee	難民、避難者
+w0871	名詞	relay	リレー競走
+w0872	名詞	report	レポート、報告
+w0873	名詞	reporter	リポーター
+w0874	名詞	research	研究、調査
+w0875	名詞	resource	〔通常は複数形で〕資源、財源
+w0876	名詞	respect	尊敬、尊重
+w0877	名詞	rest	休み
+w0878	名詞	restaurant	レストラン、食堂、料理屋
+w0879	名詞	restroom	（デパート・劇場などの）洗面所、トイレ
+w0880	名詞	result	結果
+w0881	名詞	return	再び巡ってくること
+w0882	名詞	reuse	再利用
+w0883	名詞	rhythm	リズム
+w0884	名詞	rice	ご飯、米
+w0885	名詞	rice ball	おにぎり
+w0886	名詞	rice cake	もち
+w0887	名詞	right	1.（利益などを得る）権利、法的権利 / 2. 右、右側
+w0888	名詞	rise	上昇、増加、昇進
+w0889	名詞	river	川　　　〔たとえば the Mabechi River の形で馬淵川〕
+w0890	名詞	road	道路
+w0891	名詞	robot	ロボット
+w0892	名詞	rock	1. ロック（音楽） / 2. 岩、岩石
+w0893	名詞	roll	巻いたもの、－巻
+w0894	名詞	Roman	古代ローマ人、現代のローマ市民
+w0895	名詞	Rome	ローマ〔イタリアの首都、古代ローマ帝国の首都〕
+w0896	名詞	roof	屋上、屋根
+w0897	名詞	room	部屋
+w0898	名詞	rope	綱、縄、ロープ
+w0899	名詞	rule	決まり、規則
+w0900	名詞	ruler	ものさし、定規
+w0901	名詞	Russia	ロシア
+w0902	名詞	sadness	悲しみ
+w0903	名詞	salad	サラダ
+w0904	名詞	sale	安売り、バーゲンセール
+w0905	名詞	salt	塩
+w0906	名詞	sandwich	サンドイッチ
+w0907	名詞	Saturday	土曜日
+w0908	名詞	scene	（劇・映画・小説の）場面
+w0909	名詞	scenery	風景、景色
+w0910	名詞	schedule	予定（表）
+w0911	名詞	school	学校　　〔たとえばgo to school の形で〕 学校へ行く、学校に通っている
+w0912	名詞	schoolyard	校庭、運動場
+w0913	名詞	science	理科、科学、自然科学
+w0914	名詞	scientist	科学者
+w0915	名詞	Scotland	スコットランド
+w0916	名詞	scrambled egg	スクランブルエッグ
+w0917	名詞	sculpture	彫刻
+w0918	名詞	sea	海 〔たとえば go to the sea の形で (海水浴などの目的で）海岸へ行く
+w0919	名詞	sea level rise	海面上昇
+w0920	名詞	seal	アザラシ
+w0921	名詞	season	季節
+w0922	名詞	seat	席
+w0923	名詞	second	1.（時間の）秒 / 2.２番め､（月の）２日 / 3.少しの間
+w0924	名詞	section	部分、部門、〔会社、官庁などの〕課
+w0925	名詞	seed	種
+w0926	名詞	sense	意味、感覚
+w0927	名詞	September	９月
+w0928	名詞	serve	（テニスなどの）サーブ
+w0929	名詞	set	（テニスなどの）セット
+w0930	名詞	seven	7、７つの
+w0931	名詞	seventeen	17
+w0932	名詞	seventeenth	17の番目の、１７日
+w0933	名詞	seventh	７番め、（月の）７日
+w0934	名詞	seventy	70、７０の
+w0935	名詞	shade	陰
+w0936	名詞	shampoo	シャンプー
+w0937	名詞	shape	形、姿
+w0938	名詞	shelf	棚
+w0939	名詞	ship	船
+w0940	名詞	shirt	シャツ
+w0941	名詞	shock	（精神的な）ショック
+w0942	名詞	shoe	くつ　　〔たとえば a pair of shoes の形で〕　くつ１足
+w0943	名詞	shop	(ものを売る)店、小売店
+w0944	名詞	shopping	買い物
+w0945	名詞	short	〔in short の形で）手短に言うと
+w0946	名詞	shoulder	肩
+w0947	名詞	show	ショー
+w0948	名詞	shower	シャワー
+w0949	名詞	shrine	神社
+w0950	名詞	shyness	内気、はにかみ
+w0951	名詞	sickness	病気
+w0952	名詞	side	1.面、局面、味方 / 2.横、脇　〔side by side で〕並んで
+w0953	名詞	sightseeing	観光、見物
+w0954	名詞	sign	1. 標識、看板 / 2. 身ぶり、合図
+w0955	名詞	singer	歌う人、歌手
+w0956	名詞	singing	歌うこと、歌唱
+w0957	名詞	sister	姉、妹
+w0958	名詞	site	（重大なできごとが起こった）場所、遺跡
+w0959	名詞	situation	状況、状態
+w0960	名詞	six	6
+w0961	名詞	sixteen	16
+w0962	名詞	sixth	6番め、（月の）6日
+w0963	名詞	sixty	60
+w0964	名詞	size	大きさ、サイズ
+w0965	名詞	skill	技術、技能
+w0966	名詞	skin	皮膚、肌
+w0967	名詞	sky	空、大空
+w0968	名詞	slump	不振、不調
+w0969	名詞	smell	におい
+w0970	名詞	smile	ほほえみ
+w0971	名詞	smog	スモッグ
+w0972	名詞	smoke	煙
+w0973	名詞	snack	（正規の食事の間の）軽食、おやつ
+w0974	名詞	snake	へび
+w0975	名詞	sneaker	スニーカー
+w0976	名詞	snow	雪
+w0977	名詞	soccer	サッカー
+w0978	名詞	social studies	(教科の）社会科
+w0979	名詞	sock	ソックス、（短い）くつ下　　〔a pair of socks の形で〕　くつ下１足
+w0980	名詞	sofa	ソファー
+w0981	名詞	softball	ソフトボール
+w0982	名詞	solar cooker	ソーラークッカー
+w0983	名詞	soldier	（陸軍の）兵士、軍人
+w0984	名詞	son	息子
+w0985	名詞	song	歌
+w0986	名詞	sound	音、響き
+w0987	名詞	soup	スープ
+w0988	名詞	south	南
+w0989	名詞	South Africa	南アフリカ共和国
+w0990	名詞	southwest	南西
+w0991	名詞	soybean	大豆
+w0992	名詞	space	1. 宇宙、宇宙空間 / 2. 空間、場所、スペース
+w0993	名詞	Spain	スペイン
+w0994	名詞	Spanish	スペイン語
+w0995	名詞	speaker	話す人
+w0996	名詞	speech	演説、スピーチ
+w0997	名詞	spirit	1. 気力、勇気　〔fighting spirit の形で〕闘志 / 2. 心、精神、霊
+w0998	名詞	spoon	スプーン
+w0999	名詞	sport	スポーツ、運動
+w1000	名詞	sports day	運動会
+w1001	名詞	spring	1. 春 / 2. 泉　〔hot spring の形で〕　温泉
+w1002	名詞	sprint	短距離走
+w1003	名詞	square	四角形
+w1004	名詞	stable master	（相撲部屋の）親方
+w1005	名詞	stadium	スタジアム、競技場
+w1006	名詞	staff	〔集合的に〕職員、社員
+w1007	名詞	stage	舞台、ステージ
+w1008	名詞	stair	階段
+w1009	名詞	stairs	〔stairsで〕階段
+w1010	名詞	stand	スタンド、台
+w1011	名詞	star	1. 星 / 2. (映画・スポーツなどの)スター
+w1012	名詞	starvation	飢餓、ききん
+w1013	名詞	station	駅
+w1014	名詞	stationery	文房具
+w1015	名詞	statue	像、彫刻
+w1016	名詞	Statue of Liberty	自由の女神像
+w1017	名詞	stay	滞在
+w1018	名詞	step	1. （階段の）踏み段 / 2. 段階
+w1019	名詞	stew	シチュー
+w1020	名詞	stomach	おなか、胃
+w1021	名詞	stomachache	腹痛
+w1022	名詞	stop	駅、停留所
+w1023	名詞	store	店
+w1024	名詞	story	話、物語
+w1025	名詞	storytelling	物語を語ること 　〔comic storytellingで〕話芸
+w1026	名詞	stream	小川、川
+w1027	名詞	street	通り
+w1028	名詞	stringed instrument	弦楽器
+w1029	名詞	stroller	ベビーカー
+w1030	名詞	struggle	もがき、苦闘
+w1031	名詞	student	学生、生徒
+w1032	名詞	stuff	もの
+w1033	名詞	style	やり方、作風、型
+w1034	名詞	subject	1. (主）題、トピック、テーマ / 2.教科
+w1035	名詞	suburb	郊外
+w1036	名詞	subway	（アメリカ合衆国の）地下鉄
+w1037	名詞	success	成功
+w1038	名詞	sugar	砂糖
+w1039	名詞	summer	夏
+w1040	名詞	summer class	（勉強が遅れている生徒のための）夏の補習授業
+w1041	名詞	sumo stable	相撲部屋
+w1042	名詞	sumo wrestler	力士
+w1043	名詞	sun	1. 太陽 / 2. 日光、陽光
+w1044	名詞	sun flower	ひまわり
+w1045	名詞	Sunday	日曜日（複数形で毎週日曜日）
+w1046	名詞	sunlight	日光、陽光
+w1047	名詞	sunset	日の入り
+w1048	名詞	supermarket	スーパーマーケット
+w1049	名詞	support	支持、支援
+w1050	名詞	survival	生き残ること
+w1051	名詞	swimming	水泳
+w1052	名詞	swimming pool	水泳プール
+w1053	名詞	sword	剣
+w1054	名詞	Sydney	シドニー 《オーストラリア東岸にある都市》
+w1055	名詞	symbol	シンボル、しるし
+w1056	名詞	system	1.　組織　　　 / 2.　制度、システム
+w1057	名詞	T-shirt	Ｔシャツ
+w1058	名詞	table	テーブル、食卓
+w1059	名詞	table tennis	卓球
+w1060	名詞	tail	尾（ひれ）、しっぽ
+w1061	名詞	tale	物語、お話
+w1062	名詞	talk	話、スピーチ
+w1063	名詞	Tanzania	タンザニア
+w1064	名詞	task	仕事、任務
+w1065	名詞	taste	味
+w1066	名詞	taxi	タクシー
+w1067	名詞	tea	茶、紅茶
+w1068	名詞	teacher	教師、先生
+w1069	名詞	teachers' room	職員室
+w1070	名詞	team	チーム
+w1071	名詞	teammate	チームメイト
+w1072	名詞	teamwork	チームワーク
+w1073	名詞	tear	涙　【in tearsで】涙を流して
+w1074	名詞	technology	科学技術
+w1075	名詞	teeth	歯（toothの複数形）
+w1076	名詞	telescope	望遠鏡
+w1077	名詞	temperature	温度、気温
+w1078	名詞	temple	寺
+w1079	名詞	ten	10
+w1080	名詞	tennis	テニス
+w1081	名詞	tenth	10番め、（月の）１０日
+w1082	名詞	test	試験、テスト
+w1083	名詞	textbook	教科書、テキスト
+w1084	名詞	Thailand	タイ
+w1085	名詞	thank	〔Thanks の形で〕ありがとう
+w1086	名詞	theater	劇場、映画館〔movie theaterともいう〕
+w1087	名詞	theme	主題、テーマ
+w1088	名詞	then	そのとき、当時
+w1089	名詞	thing	もの、こと
+w1090	名詞	thinking	考え、思考
+w1091	名詞	third	３番目、３日
+w1092	名詞	thirteen	13
+w1093	名詞	thirteenth	13番め、（月の）13日
+w1094	名詞	thirtieth	30番目（の）、30日
+w1095	名詞	thirty	30
+w1096	名詞	thought	1. 考えること、思考 / 2. 考え､思想
+w1097	名詞	thousand	1000
+w1098	名詞	three	3
+w1099	名詞	throat	のど
+w1100	名詞	Thursday	木曜日
+w1101	名詞	ticket	切符、チケット、券
+w1102	名詞	tie	ネクタイ
+w1103	名詞	time	1. 回、度 / 2. 時間、期間、暇 / 3. 時刻 / 4. 〔しばしば複数形で〕 時代
+w1104	名詞	timing	タイミング、時機を選ぶこと
+w1105	名詞	title	題名、タイトル
+w1106	名詞	toast	トースト
+w1107	名詞	today	今日
+w1108	名詞	toilet	トイレ、化粧室
+w1109	名詞	tomorrow	明日
+w1110	名詞	tongue	国語、母語
+w1111	名詞	tool	手段、道具
+w1112	名詞	tooth	歯 〔複数形は teeth〕
+w1113	名詞	toothache	歯痛
+w1114	名詞	toothbrush	歯ブラシ
+w1115	名詞	top	1. 一番上の部分、頂上 / 2. 最高位、トップ
+w1116	名詞	total	総合、合計　〔in total〕合計で、全部で
+w1117	名詞	touch	接触　　〔keep in touchで〕連絡をとり続ける
+w1118	名詞	tour	旅行
+w1119	名詞	tourism	観光事業、観光、旅行
+w1120	名詞	tournament	トーナメント、勝ち抜き試合
+w1121	名詞	towel	手拭い、タオル
+w1122	名詞	tower	塔、タワー
+w1123	名詞	town	町、市、都会
+w1124	名詞	toy	おもちゃ
+w1125	名詞	track	線路
+w1126	名詞	track and field	陸上競技
+w1127	名詞	trade	貿易
+w1128	名詞	tradition	伝統
+w1129	名詞	traffic	交通 〔traffic light〕交通信号（灯）
+w1130	名詞	tragedy	悲劇、悲しいできごと
+w1131	名詞	train	列車、電車
+w1132	名詞	trainer	トレーナー
+w1133	名詞	transportation	輸送機関
+w1134	名詞	treasure	宝物
+w1135	名詞	tree	木、樹木
+w1136	名詞	trip	旅行 《比較的短期間のものについていう》　　〔たとえば go on a school trip の形で〕修学旅行に行く
+w1137	名詞	trophy	優勝記念品、トロフィー
+w1138	名詞	trouble	1. 心配 / 2. もめごと / 3.余分な手間、めんどう
+w1139	名詞	Tube	チューブ（ロンドンの地下鉄のニックネーム）
+w1140	名詞	Tuesday	火曜日
+w1141	名詞	tug-of-war	綱引き
+w1142	名詞	tuna	マグロ
+w1143	名詞	turkey	七面鳥
+w1144	名詞	turn	番、順番　　〔in turnで〕代わって今度は
+w1145	名詞	turning	曲がり角、回転 〔turning pointで〕転機
+w1146	名詞	turtle	カメ
+w1147	名詞	TV	テレビ（番組）
+w1148	名詞	twelfth	12番め、（月の）12日
+w1149	名詞	twelve	12
+w1150	名詞	twentieth	20番目
+w1151	名詞	twenty	20
+w1152	名詞	twenty-eighth	28番目（の）、28日
+w1153	名詞	twenty-fifth	25番目（の）、25日
+w1154	名詞	twenty-first	21番目（の）、21日
+w1155	名詞	twenty-fourth	24番目（の）、24日
+w1156	名詞	twenty-ninth	29番目（の）、29日
+w1157	名詞	twenty-second	22番目（の）、22日
+w1158	名詞	twenty-seventh	27番目（の）、27日
+w1159	名詞	twenty-sixth	26番目（の）、26日
+w1160	名詞	twenty-third	23番目（の）、23日
+w1161	名詞	two	2
+w1162	名詞	type	型、タイプ、種類
+w1163	名詞	U.K.	イギリス〔The United Kingdom（連合王国）の略でイギリスの正式国名は The United Kingdom of Great Britain and Northern Ireland 〕
+w1164	名詞	U.S.	〔通常はtheを付けて〕アメリカ合衆国
+w1165	名詞	umbrella	かさ
+w1166	名詞	uncle	おじ、おじさん
+w1167	名詞	underground	〔通常はtheを付けて、イギリスの〕地下鉄
+w1168	名詞	unicycle	一輪車
+w1169	名詞	uniform	制服、ユニフォーム
+w1170	名詞	United Nations	〔通例はtheを付けて〕国際連合
+w1171	名詞	United States	アメリカ合衆国
+w1172	名詞	universal design	ユニバーサルデザイン
+w1173	名詞	university	大学
+w1174	名詞	US(U.S.)	《略》〔the ～で〕アメリカ合衆国、米国　《the U.S.とも》
+w1175	名詞	USA(U.S.A.)	《略》〔the ～で〕アメリカ合衆国、米国　《the U.S.A.とも》
+w1176	名詞	use	使用、使い道
+w1177	名詞	vacation	休暇、休み
+w1178	名詞	Valentine	Happy Valentine's Day!　〔バレンタインデーのメッセージ〕
+w1179	名詞	vegetable	野菜
+w1180	名詞	vending machine	自動販売機
+w1181	名詞	Venezuela	ベネズエラ〔南米の国の名〕
+w1182	名詞	vet	獣医（veterinarianの略）
+w1183	名詞	victory	勝利、優勝
+w1184	名詞	video	ビデオ 〔 video game の形で〕　テレビゲーム
+w1185	名詞	video game	映像、動画　〔video game 〕テレビゲーム
+w1186	名詞	Vietnam	ベトナム〔東南アジアの国の名〕
+w1187	名詞	view	1. ながめ、景色 / 2. 考え、見方
+w1188	名詞	village	村
+w1189	名詞	vinegar	食用酢、ビネガー
+w1190	名詞	violin	バイオリン
+w1191	名詞	visit	訪問 〔 pay a visit to の形で「～を訪問する」〕
+w1192	名詞	visitor	訪問者
+w1193	名詞	voice	声
+w1194	名詞	volleyball	バレーボール
+w1195	名詞	volume	〔書物の〕巻、冊
+w1196	名詞	volunteer	ボランティア、志願者
+w1197	名詞	waitress	ウエイトレス
+w1198	名詞	walk	1. 歩くこと、散歩 / 2. 歩行距離、道のり
+w1199	名詞	Walker	ウォーカー（姓）
+w1200	名詞	wall	壁、へい、城壁
+w1201	名詞	war	戦争
+w1202	名詞	ware	～焼、～製品
+w1203	名詞	warming	〔global warming で〕地球温暖化
+w1204	名詞	warrior	武人、軍人
+w1205	名詞	Washington, D.C.	ワシントンD.C.（米国の首都）
+w1206	名詞	waste	浪費
+w1207	名詞	watch	腕時計
+w1208	名詞	water	水、水中
+w1209	名詞	waterfall	滝
+w1210	名詞	wave	波
+w1211	名詞	way	1. 方向 / 2. 道 / 3. 方法、手段
+w1212	名詞	weather	天気、気象
+w1213	名詞	website	ウェブサイト
+w1214	名詞	Wednesday	水曜日
+w1215	名詞	week	週
+w1216	名詞	weekend	週末
+w1217	名詞	whale	クジラ
+w1218	名詞	wheel	車輪
+w1219	名詞	wheelchair	車イス
+w1220	名詞	while	間、しばらく 〔たとえば for a while の形で〕 しばらくの間
+w1221	名詞	white	白、白人
+w1222	名詞	wife	妻
+w1223	名詞	wild	〔the wild で〕野生
+w1224	名詞	wildcat	ヤマネコ　〔Wildcat House〕山猫軒
+w1225	名詞	wilderness	荒野
+w1226	名詞	wildlife	野生動物
+w1227	名詞	will	意志
+w1228	名詞	wind	風
+w1229	名詞	windmill	風車
+w1230	名詞	window	窓
+w1231	名詞	winner	勝つ〔勝った〕人、勝利者
+w1232	名詞	winter	冬
+w1233	名詞	wire	針金、ワイヤー
+w1234	名詞	wish	願い、望み
+w1235	名詞	woman	女性、女の人　　〔複数形は women 〕
+w1236	名詞	women	〔woman 〕の複数形
+w1237	名詞	wonder	驚き
+w1238	名詞	wood	まき、木
+w1239	名詞	word	1. ことば、発言 / 2. 語、単語
+w1240	名詞	work	1. 仕事、勉強 / 2. 作品
+w1241	名詞	worker	労働者
+w1242	名詞	world	世界（の人たち）
+w1243	名詞	World Cup	〔the　～で〕ワールドカップ
+w1244	名詞	World Heritage Site	世界遺産
+w1245	名詞	wrestling	レスリング
+w1246	名詞	writer	作家、著述家
+w1247	名詞	writing	書かれた文字、筆跡、書くこと
+w1248	名詞	yacht	ヨット
+w1249	名詞	year	1. 年、1年 / 2. ～歳、年齢
+w1250	名詞	yellow	黄色
+w1251	名詞	yesterday	昨日
+w1252	名詞	yogurt	ヨーグルト
+w1253	名詞	zero	0、ゼロ
+w1254	名詞	zoo	動物園
+w1255	代名詞	all	1. 全部、全員、すべて、みな / 2. 〔not ～ at all の形で〕 少しも～でない。
+w1256	代名詞	another	もう１つのもの［人］、別のもの［人］　〔one after another の形で〕 次々と
+w1257	代名詞	any	〔疑問文で〕 いくらか
+w1258	代名詞	anyone	1. 〔肯定文で〕 だれでも / 2. 〔疑問文で〕 だれか / 3. 〔否定文で〕 だれも
+w1259	代名詞	anything	1. 〔肯定文で〕 何でも / 2. 〔疑問文で〕 何か / 3. 〔否定文で〕 何も
+w1260	代名詞	as	〔such ～ as … の形で〕 …ような～
+w1261	代名詞	both	両方、2 人［2つ］とも
+w1262	代名詞	each	それぞれ、めいめい 〔each other で〕 お互いに
+w1263	代名詞	everybody	だれでも、みんな
+w1264	代名詞	everyone	みなさん、みんな、だれでも　〔単数扱いで、everybody という言い方もある〕
+w1265	代名詞	everything	あらゆること［もの］、何もかも　　〔単数扱い〕
+w1266	代名詞	he	彼は［が］、その（男の）人は［が］
+w1267	代名詞	her	1. 彼女を［に］ / 2. 彼女の
+w1268	代名詞	hers	彼女のもの
+w1269	代名詞	herself	彼女自身を［に］、彼女自身で
+w1270	代名詞	him	彼を［に］
+w1271	代名詞	himself	彼自身を［に］、彼自身で
+w1272	代名詞	his	1. 彼の / 2. 彼のもの
+w1273	代名詞	I	私は［が］
+w1274	代名詞	it	1. 《前に出た語句や文の内容を受けて》それは［が］ / 2. 《前に出た語句や文の内容を受けて》それを［に］ / 3. 〔It is ～ (for Ａ）to do…の形で〕 Ａ［人］が…するのは～だ / 4. 《時・天候・季節・距離などを表して、日本語では「それ」とは訳さない》
+w1275	代名詞	its	その、それの
+w1276	代名詞	least	いちばん少ないもの [at leastの形で]少なくても
+w1277	代名詞	little	1. 〔 a littleの形で〕 少量、いくらか / 2. 〔 a をつけないで〕 ほとんど～ない
+w1278	代名詞	many	たくさん（の人、物）
+w1279	代名詞	me	わたしに［を］
+w1280	代名詞	mine	わたしのもの
+w1281	代名詞	more	もっと多くの数（量）、もっと多くのこと（もの、人）
+w1282	代名詞	most	大部分、大多数
+w1283	代名詞	my	私の
+w1284	代名詞	myself	私自身（で）　〔by myselfの形で〕 （私）ひとりで
+w1285	代名詞	next	次の（人）
+w1286	代名詞	nobody	だれも～ない
+w1287	代名詞	nothing	何も～ない
+w1288	代名詞	one	1. １つ､１人､～なもの / 2. （一般に）人､だれでも / 3. 〔one after another の形で〕次々と
+w1289	代名詞	other	1. 〔複数形 others の形で〕 ほかのもの、ほかの人たち / 2. 〔the other の形で〕 《２つのものについて》 もう一方 《３つ以上のものについて》 残りの１つ / 3. 〔複数形 the others の形で〕 《３つ以上のものについて》 残りのもの（全部）
+w1290	代名詞	our	私たちの、ぼくたちの
+w1291	代名詞	ours	私たちのもの、ぼくたちのもの
+w1292	代名詞	ourselves	私たち自身に［を］、ぼくたち自身に［を］
+w1293	代名詞	some	1. （全体の中の）一部分、一部の人々 / 2. いくつか、いくらか、いく人か
+w1294	代名詞	someone	だれか
+w1295	代名詞	something	何かあるもの［こと］
+w1296	代名詞	that	1. あれ、それ / 2. あの［その］こと / 3. あの［その］人、あちら、そちら / 4. 〔関係代名詞で〕～である［する］（ところの）
+w1297	代名詞	their	彼らの、彼女らの、それらの
+w1298	代名詞	theirs	彼らのもの、彼女らのもの、それらのもの
+w1299	代名詞	them	それらを［に］、彼らを［に］、彼女たちを［に］
+w1300	代名詞	themselves	彼ら〔彼女ら〕自身（で）
+w1301	代名詞	these	これらが［は］[を][に]
+w1302	代名詞	they	彼らが［は］、彼女たちが［は］、それらが［は］
+w1303	代名詞	this	1. これ / 2. 《電話やテレビ・ラジオの放送などで話している本人をさして》こちら、《同様の状況で話している相手をさして》そちら / 3. この人、こちら / 4. すでに述べたこと、このこと、これから述べること
+w1304	代名詞	those	あれら、それら
+w1305	代名詞	us	私たちを［に］
+w1306	代名詞	we	私たちは［が］
+w1307	代名詞	what	何が［を、に］
+w1308	代名詞	which	1.〔関係代名詞で〕～である［する］(ところの) / 2. どちら、どれ
+w1309	代名詞	who	1. だれ / 2.〔関係代名詞で〕～である[する](ところの)
+w1310	代名詞	whose	だれのもの、だれの
+w1311	代名詞	you	1. あなた(たち)に［を］ / 2. あなた(たち)は［が］ / 3. 《話し相手を含めた一般の人をさして》　(広く一般の)あなたたちは［が］
+w1312	代名詞	your	1. あなた（たち）の / 2. 《話し相手を含めた一般の人をさして》 (広く一般の) あなたたちの
+w1313	代名詞	yours	あなた（たち）のもの
+w1314	代名詞	yourself	あなた自身を［に］
+w1315	動詞	accept	受け入れる
+w1316	動詞	act	（役を） 演じる
+w1317	動詞	add	加える
+w1318	動詞	agree	賛成する、同意する、意見が一致する　〔agree with ～の形で〕 ～に賛成する
+w1319	動詞	allow	～を許可する
+w1320	動詞	am	〔必ず I とともに使って〕 ～です、～だ、～である、（～に）いる
+w1321	動詞	amaze	～を驚嘆させる、びっくりさせる
+w1322	動詞	answer	～に答える、応答する　〔answer the phone の形で〕 電話に出る
+w1323	動詞	are	1. 〔you, we, they や複数名詞とともに使って〕 ～です / 2. 〔there, here とともに使って〕 （～に）…がいる［ある］
+w1324	動詞	arrest	逮捕する
+w1325	動詞	arrive	着く、到着する　〔たとえば arrive at school, arrive in New York などの形で〕 学校に到着する、ニューヨークに到着する
+w1326	動詞	ask	1. ～をたずねる、問う / 2. 求める 〔ask A for B の形で〕 A［人］にB［ものごと］を求める / 3. たのむ　〔May I ask you a favor? の形で〕 あなたに一つお願いしてもよろしいですか / 4. 〔ask A to do ～ の形で〕　Ａ［人］に～するように頼む
+w1327	動詞	assist	（人を）助ける、手伝う
+w1328	動詞	attend	出席する、参加する
+w1329	動詞	attract	1.（人を）ひきつける / 2.（注意などを）ひく
+w1330	動詞	bake	～を焼く
+w1331	動詞	base	基礎［根拠］を置く　〔be based on ～で〕～に基づく
+w1332	動詞	be	1. ～になる、～である / 2. 〔Be ～の形で命令文を作る〕 ～で［て］いなさい / 3. ～にいる、～にある
+w1333	動詞	become	〔名詞・形容詞・過去分詞などをあとにつけて〕 ～になる、～に変わる 〔過去分詞形もbecome〕
+w1334	動詞	begin	1. はじまる〔自動詞〕 / 2. ～をはじめる〔他動詞〕
+w1335	動詞	believe	～を信じる
+w1336	動詞	belong	〔belong to～の形で〕～の一員である
+w1337	動詞	blow	1. （風が）ふく / 2. （人・動物などが息・水など）を吐く
+w1338	動詞	blush	顔を赤らめる
+w1339	動詞	boil	～をゆでる、沸騰させる
+w1340	動詞	born	〔be bornの形で〕 誕生する、生まれる
+w1341	動詞	borrow	～を借りる
+w1342	動詞	bother	じゃまをする
+w1343	動詞	break	～をこわす、折る、破る
+w1344	動詞	bring	《向こうからこちらへ》 ～を持ってくる、つれてくる
+w1345	動詞	broaden	～を広くする、広げる
+w1346	動詞	brush	（ブラシで）みがく
+w1347	動詞	build	～を建てる、～を築き上げる
+w1348	動詞	burn	～を燃やす
+w1349	動詞	bury	埋める
+w1350	動詞	buy	～を買う
+w1351	動詞	call	1. （大声で）呼ぶ / 2. ～を呼び寄せる 　 / 3. 電話をかける / 4. 〔call A B の形で〕 ＡをＢと呼ぶ、名づける / 5. [call ～ backの形で] ～におりかえし電話する
+w1352	動詞	calm	静まる、落ち着く
+w1353	動詞	camp	キャンプ（生活）する
+w1354	動詞	care	[care for ～の形で]　～の世話をする
+w1355	動詞	carry	運ぶ、持って行く、持ち歩く
+w1356	動詞	catch	～をとらえる、つかまえる
+w1357	動詞	cause	～を引き起こす、～の原因となる
+w1358	動詞	celebrate	～を祝う
+w1359	動詞	change	1. 変わる〔自動詞〕 / 2. ～を変える 〔他動詞〕 / 3. （電車など） を乗り換える
+w1360	動詞	check	～を調べる、チェックする、確認する、照合する
+w1361	動詞	cheer	～を元気づける、声援を送る、応援する、励ます
+w1362	動詞	choose	～を選ぶ
+w1363	動詞	clap	（手を）たたく、拍手する
+w1364	動詞	clean	～をきれいにする、そうじする
+w1365	動詞	climb	（高いところ） に登る、よじ登る
+w1366	動詞	close	（窓、ドアなど） を閉める、閉じる、閉まる
+w1367	動詞	collect	（～を）集める、収集する
+w1368	動詞	come	1. 来る　〔come and ～ の形で〕 ～しに来る 〔come to school の形で〕 学校に来る 〔come back の形で〕 戻ってくる / 2. (相手のいる所へ・相手と同方向へ) 行く / 3. (時・季節などが) 巡ってくる / 4. 〔Come on.の形で〕 さあ急げ、さあ / 5. 〔come from～ の形で〕 ～から来ている、～出身である　 〔過去分詞形もcome〕 / 6. [～の状態に]なる　〔come trueの形で〕実現する
+w1369	動詞	communicate	(知識・情報・人の気持ちなど) を伝える、意思を伝え合う
+w1370	動詞	compare	比較する、比べる
+w1371	動詞	complain	不平を言う
+w1372	動詞	connect	結びつける、つながる
+w1373	動詞	contact	（人と）連絡をとる、接続する
+w1374	動詞	continue	～を続ける、続く
+w1375	動詞	cook	（～を）料理する
+w1376	動詞	cost	（金額・費用）がかかる
+w1377	動詞	count	（～を）数える
+w1378	動詞	cover	（物の外側）をおおう
+w1379	動詞	create	～をつくり出す
+w1380	動詞	cross	～を横切る
+w1381	動詞	cry	1. （大声で）叫ぶ、大声で言う / 2. （声をあげて）泣く
+w1382	動詞	cut	～を切る 　〔過去形、過去分詞形も cut〕
+w1383	動詞	dance	踊る、ダンスをする
+w1384	動詞	decide	決める　〔decide to ～〕 ～しようと決心する
+w1385	動詞	depend	～による、～しだいである
+w1386	動詞	design	～をデザインする、設計する
+w1387	動詞	despair	絶望する
+w1388	動詞	destroy	破壊する、こわす
+w1389	動詞	did	〔do （する) の過去形〕
+w1390	動詞	die	（人や動物が） 死ぬ、亡くなる、（植物が） 枯れる
+w1391	動詞	direct	(映画などを)監督する、演出する
+w1392	動詞	disagree	意見が合わない、賛成しない、反対する
+w1393	動詞	disappear	消える、なくなる、消滅する、存在しなくなる、見えなくなる
+w1394	動詞	discover	～を見つける、～を見いだす
+w1395	動詞	do	～をする
+w1396	動詞	done	〔doの過去分詞形〕
+w1397	動詞	drank	drinkの過去形
+w1398	動詞	draw	1. （鉛筆、ペンなどで絵など）をかく、（線）を引く / 2. ～を引く、引っ張る
+w1399	動詞	drink	～を飲む
+w1400	動詞	drive	(自動車)を運転する
+w1401	動詞	drop	～を落とす、落ちる
+w1402	動詞	eat	～を食べる、食事をする
+w1403	動詞	encourage	勇気づける、はげます、激励する
+w1404	動詞	end	終わる、終える
+w1405	動詞	enjoy	～を楽しむ、～を楽しんでいる
+w1406	動詞	enter	（建物・部屋・場所など）に入る
+w1407	動詞	excuse	許す　〔Excuse me.の形で〕 失礼ですが、すみませんが
+w1408	動詞	experience	経験する
+w1409	動詞	explain	～を説明する
+w1410	動詞	express	～を表現する、言い表す
+w1411	動詞	face	（危険・困難などに)立ち向かう、直面する
+w1412	動詞	fade	消えていく
+w1413	動詞	faint	気をうしなう、気絶する
+w1414	動詞	fall	落ちる
+w1415	動詞	fascinate	魅了する、うっとりさせる
+w1416	動詞	feed	えさをやる、食物を与える
+w1417	動詞	feel	1. ～と感じる、～と思う / 2. ～を感じる
+w1418	動詞	fight	戦う
+w1419	動詞	fill	いっぱいになる
+w1420	動詞	find	～を見つける、見いだす
+w1421	動詞	finish	～を終える、終わらせる、終わる
+w1422	動詞	fish	魚釣りをする
+w1423	動詞	fit	（サイズ、形が）合う
+w1424	動詞	fly	飛ぶ、（飛行機で）行く
+w1425	動詞	follow	～についていく、（～と一緒に）異動する、～に従う
+w1426	動詞	force	強制する、無理に～させる[する]
+w1427	動詞	forget	～を忘れる、思い出せない
+w1428	動詞	form	（人がもの）を形作る
+w1429	動詞	fulfill	（望みなどを）実現する
+w1430	動詞	gather	～を集める、集まる
+w1431	動詞	get	1. ～を得る、手に入れる / 2. ～（の状態）になる / 3. わかる、理解する / 4. 着く、到着する　〔たとえばget to Shiriyazaki, get home の形で〕 尻屋崎に着く、家に着く / 5. 〔get up の形で〕起きる / 6. (タクシーなどを)ひろう、利用する / 7. 〔get together の形で〕集まる
+w1432	動詞	give	1. ～を与える、贈る　〔give A B, give B to A の形で〕ＡにＢを与える / 2. (会などを)開く、もよおす、演ずる、行う
+w1433	動詞	go	1. 行く　〔たとえばgo to school の形で〕学校へ行く / 2. 〔be going to do ～ の形で〕 ～するつもりである / 3. 〔go doing ～ の形で〕～しに行く
+w1434	動詞	graduate	卒業する
+w1435	動詞	greet	～に挨拶する、～をむかえる
+w1436	動詞	grin	にこっと笑う、にやっと笑う
+w1437	動詞	grow	1. 成長する、大きくなる、育つ / 2. ～を栽培する、育てる / 3. （しだいに）～になる
+w1438	動詞	guess	～をあてる、推測する
+w1439	動詞	happen	(事件などが) 起こる、生じる
+w1440	動詞	hate	～するのが嫌いだ、～したくはない
+w1441	動詞	have	1. ～をもっている、～がある、～がいる / 2. ～を食べる、飲む / 3. ～を過ごす、経験する / 4. (病気)にかかっている、～が痛む / 5. 〔have to do ～ の形で〕 ～しなければならない / 6. ～を飼っている
+w1442	動詞	head	～向かう
+w1443	動詞	heal	～をいやす
+w1444	動詞	hear	1. ～を聞く、～が聞こえる / 2. 《情報・うわさなど》を耳にする / 3. 〔hear from～の形で〕 ～から返信［便り］をもらう
+w1445	動詞	heat	熱する、あたためる
+w1446	動詞	help	1. ～を助ける、援助する / 2. （～を）手伝う、助ける　〔May I help you? の形で〕 《店員が客に対して》 いらっしゃいませ　〔help A with B の形で〕 ＡのＢを手伝う　 / 3.〔Please help yourself. の形で〕 どうぞご自由にとって食べて（飲んで）ください
+w1447	動詞	hit	～に当たる、ぶつかる　〔過去形、過去分詞形もhit〕
+w1448	動詞	hold	1. (手などでしっかりと）持つ、にぎる、抱く、抱きかかえる / 2. 開催する、催す / 3.（電話を）切らないで待つ
+w1449	動詞	hope	～を望む、～だとよいと思う
+w1450	動詞	hug	（愛情を込めて）抱きしめる
+w1451	動詞	hunt	狩りをする
+w1452	動詞	hurry	急ぐ
+w1453	動詞	hurt	1. 痛む 〔過去形、過去分詞形もhurt〕 / 2. ～を傷つける、～にケガをさせる
+w1454	動詞	imagine	想像する
+w1455	動詞	impress	感銘を与える、印象づける
+w1456	動詞	improve	よくなる、改善される
+w1457	動詞	increase	増やす
+w1458	動詞	influence	～に影響を与える
+w1459	動詞	injure	傷つける、けがをさせる
+w1460	動詞	interview	インタビューする、面接する
+w1461	動詞	introduce	～を紹介する、～を取り入れる、導入する
+w1462	動詞	invite	～を招く
+w1463	動詞	is	〔he, she, it や単数名詞等とともに使って〕 1. ～です、～だ、～である / 2. 〔there, here とともに使って〕（～に）…がいる［ある］
+w1464	動詞	join	1. ～に加わる、参加する / 2. ～をつなぐ
+w1465	動詞	judge	(物のよしあしを)判断する
+w1466	動詞	jump	とぶ、とび超える、はねる
+w1467	動詞	keep	1. (法律・慣習・命令など)を守る、保存する、保つ、しまっておく / 2. ～をもち続ける、ずっと～である、～している
+w1468	動詞	kick	～を蹴る
+w1469	動詞	kid	からかう、冗談を言う
+w1470	動詞	kill	～を殺す
+w1471	動詞	knit	編む、編み物をする
+w1472	動詞	knock	ノックする、たたく
+w1473	動詞	know	～を知っている、わかる
+w1474	動詞	land	着陸する
+w1475	動詞	last	続く
+w1476	動詞	laugh	笑う
+w1477	動詞	lay	(卵を)産む
+w1478	動詞	lead	指揮をする、先頭に立つ
+w1479	動詞	learn	1. ～を学ぶ、習う、覚える / 2. 知る、聞く
+w1480	動詞	leave	1. ～を出発する、出る、去る / 2. ～を残す、～を置いていく / 3. （学校・仕事など）をやめる
+w1481	動詞	lend	～を貸す
+w1482	動詞	let's	（let us を短くした形）～しましょう
+w1483	動詞	lie	（人・動物が）横たわる、横になる
+w1484	動詞	lift	持ち上げる
+w1485	動詞	like	～を好む、～が好きだ
+w1486	動詞	listen	〔listen to ～ の形で〕 ～を聞く、耳を傾ける
+w1487	動詞	live	1. 住んでいる、暮らしている、生活する / 2. 生きる、生きている
+w1488	動詞	locate	(何かをある場所に)置く、be　located in ～で　～に位置する、、～にある
+w1489	動詞	lock	lock up~で　～を閉じ込める、監禁する
+w1490	動詞	look	1. （意識的に）見る 〔look at ～ の形で〕～を見る / 2. 〔look + 形容詞の形で〕　（外見が）～に見える / 3. 〔look for ～ の形で〕～をさがす / 4. 《人の注意をひくときに使って》 ねぇ、ほら見て
+w1491	動詞	lose	1. ～を失う　[lose one's wayの形で]道に迷う / 2. (勝負に）負ける
+w1492	動詞	love	1. ～を愛する、～が大好きである / 2.　〔I would love to do ～の形で〕～したいと思う
+w1493	動詞	make	1. ～を作る / 2. ～を…にする　〔make A B の形で〕 Ａ［人・ものなど］をＢにする　〔ただし A＝B の関係が成り立たない場合は、「ＡにＢを作ってあげる」の意味になる〕 / 3. 〔動作を表す名詞を目的語として〕～をする　〔たとえば make a wish の形で〕 願いごとをする / 4. ～を得る、作る　〔たとえば make friends （with ～) の形で〕 (～と）仲良しになる / 5. ～を整える、用意する 〔たとえば make tea の形で〕 お茶を入れる / 6.［たとえばmake A of Bの形で］BでAを作る / 7.［たとえばmake A from Bの形で］BからAを作る / 8.［たとえばmake A into Bの形で］AでBを作る / 9.～をもたらす、生じさせる
+w1494	動詞	manage	どうにかやっていく、なんとかうまく～する
+w1495	動詞	marry	結婚する
+w1496	動詞	mean	1. ～を意味する、表す / 2. ～のつもりで言う、～をさして言う
+w1497	動詞	meet	1.～に会う、面会する / 2.～と知り合いになる
+w1498	動詞	melt	溶ける
+w1499	動詞	miss	1.　乗りそこなう、取り［見・聞き］そこなう､欠席する / 2.　～がいなくてさびしく思う
+w1500	動詞	mistake	～を間違える　［mistake A for Bの形で］AをBと間違える
+w1501	動詞	mix	～を混ぜる
+w1502	動詞	move	1. 動く、移動する / 2. ～を感動させる / 3.引っ越す
+w1503	動詞	name	〔name A B の形で〕ＡをＢと名づける、呼ぶ
+w1504	動詞	need	～が必要である　　[need to～の形で］～する必要がある
+w1505	動詞	nod	うなずく
+w1506	動詞	notice	気がつく
+w1507	動詞	open	1. あける、広げる / 2. 開く、あく / 3. 開始する
+w1508	動詞	order	命ずる、注文する
+w1509	動詞	organize	組織する、準備する
+w1510	動詞	overcome	打ち勝つ、乗り越える
+w1511	動詞	package	(製品など)(…で）包装する
+w1512	動詞	paint	(絵の具で絵)をかく
+w1513	動詞	panic	うろたえる、あわてふためく
+w1514	動詞	pardon	～を許す 〔Pardon me?の形で〕 すみませんが、もう一度言ってください。
+w1515	動詞	park	(自動車）をとめておく､駐車する
+w1516	動詞	pass	1. ～を手渡す､回す / 2. ～経過する / 3. 通り過ぎる、通る
+w1517	動詞	pay	支払う、払う
+w1518	動詞	perform	演じる、演奏する
+w1519	動詞	photograph	写真を撮る
+w1520	動詞	pick	1. ～を摘む、つみ取る / 2. ～を選ぶ / 3. 〔pick up ～ の形で〕～を拾い上げる、～を車で迎えに行く
+w1521	動詞	place	置く、並べる
+w1522	動詞	plan	～を計画する
+w1523	動詞	plant	～を植える
+w1524	動詞	play	1. (スポーツ・ゲームなど)をする / 2. (曲・楽器など)を演奏する / 3. 遊ぶ / 4. ～（の役）を演じる
+w1525	動詞	point	指さす､さし示す
+w1526	動詞	post	（ウエブ上に写真などを）投稿する、投函する
+w1527	動詞	practice	（～を）練習する
+w1528	動詞	pray	祈る
+w1529	動詞	prefer	（～のほうを）好む、選ぶ
+w1530	動詞	prepare	準備をする
+w1531	動詞	produce	～を産み出す、生産する
+w1532	動詞	protect	～を守る、保護する
+w1533	動詞	pull	～を引く
+w1534	動詞	punish	罰する
+w1535	動詞	push	～を押す
+w1536	動詞	put	～を置く、つける　 　〔過去形、過去分詞形も put〕
+w1537	動詞	quit	やめる、去る　〔過去形、過去分詞形もquit〕
+w1538	動詞	quiz	～に簡単なテストを行う、～に質問する
+w1539	動詞	rain	雨が降る 　〔it が主語になる〕
+w1540	動詞	raise	1.～を上げる　 　〔たとえば Raise your hand. の形で〕 手を上げなさい / 2. （子どもを）育てる
+w1541	動詞	read	～を読む 〔発音は ［ri:d］〕
+w1542	動詞	realize	実感する、理解する
+w1543	動詞	receive	～を受け取る、もらう
+w1544	動詞	recognize	～を認める、評価する
+w1545	動詞	recycle	～を再生する、～を再利用する
+w1546	動詞	reduce	～を小さくする、下げる、減らす
+w1547	動詞	relax	くつろぐ、リラックスする
+w1548	動詞	release	〔ＣＤ／レコードを〕発売する
+w1549	動詞	remain	残る、とどまる
+w1550	動詞	remember	～を思い出す、覚えている、忘れない
+w1551	動詞	remind	思い出させる、気づかせる
+w1552	動詞	remove	～を取りはずす、～を取り除く、～をかたづける
+w1553	動詞	reply	～と答える
+w1554	動詞	report	～を報告する、報道する
+w1555	動詞	rescue	救い出す、救助する
+w1556	動詞	respect	～を尊敬する、～を大切にする
+w1557	動詞	respond	こたえる
+w1558	動詞	rest	休む、横になる
+w1559	動詞	return	帰る、戻る
+w1560	動詞	reuse	～を再利用する
+w1561	動詞	ride	～に乗る
+w1562	動詞	ring	鳴る　〔過去形rang〕
+w1563	動詞	rise	（太陽などが）のぼる
+w1564	動詞	roll	巻く、くるむ
+w1565	動詞	rule	～を支配する、統治する
+w1566	動詞	run	1. (人・動物が）走る　　〔過去分詞もrun〕 / 2. ～を経営する / 3. （川などが）流れる
+w1567	動詞	save	1. (危害・困難などから人・物・自然など)を救う / 2. (エネルギー･時間など)を節約する、無駄にしない
+w1568	動詞	say	1. 〔人が主語で〕～と言う / 2. 〔物が主語で〕～と書いてある、示している
+w1569	動詞	scare	～を怖がらせる
+w1570	動詞	score	〔競技、試験などで～点を〕取る、得点する
+w1571	動詞	search	さがす 〔search for ～で〕～をさがす
+w1572	動詞	see	1. ～を見る、見物する / 2. ～が見える / 3. ～が分かる、理解する / 4. ～に会う
+w1573	動詞	seem	～のように見える、～のように思われる
+w1574	動詞	select	選ぶ、選択する
+w1575	動詞	sell	～を売る
+w1576	動詞	send	～を送る
+w1577	動詞	sent	〔sendの過去形、過去分詞形〕
+w1578	動詞	separate	～を分ける
+w1579	動詞	set	～を準備する
+w1580	動詞	shake	～を振る
+w1581	動詞	share	いっしょに使う、共有する、互いに分け合う
+w1582	動詞	she	彼女は［が］、あの女の人は［が］、あの女の子は［が］
+w1583	動詞	shine	光る、輝く
+w1584	動詞	shock	ショックを与える
+w1585	動詞	shoot	～を撃つ
+w1586	動詞	shop	買い物をする　〔例えば go shopping の形で〕 買い物に行く
+w1587	動詞	shout	～と叫ぶ、大声で言う
+w1588	動詞	show	1. ～を見せる、示す、教える 〔show A B の形で〕ＡにＢを見せる / 2. ～を案内する
+w1589	動詞	shut	～を閉める、閉まる 　〔過去形、過去分詞形もshut〕
+w1590	動詞	sigh	ため息をつく
+w1591	動詞	sing	（～を）歌う
+w1592	動詞	sit	すわる、腰をおろす
+w1593	動詞	skate	スケートですべる、スケートをする
+w1594	動詞	sleep	眠る
+w1595	動詞	smell	～のにおいがする
+w1596	動詞	smile	ほほえむ、にっこり笑う、微笑する
+w1597	動詞	solve	～を解決する
+w1598	動詞	sort	～を分類する、えり分ける
+w1599	動詞	sound	～に聞こえる、～に思われる
+w1600	動詞	speak	(ことば)を話す、話をする
+w1601	動詞	spell	(文字など)をつづる
+w1602	動詞	spend	1. (お金）を使う、費やす / 2. (時間・日など) を過ごす、送る
+w1603	動詞	spread	広がる
+w1604	動詞	stand	1. 立っている / 2. 立つ / 3.我慢する､耐える
+w1605	動詞	start	1. 始まる 〔自動詞〕 / 2. ～を始める 〔他動詞〕
+w1606	動詞	stay	1. (場所に)とどまる / 2. 滞在する、泊まる
+w1607	動詞	step	（一歩・少し）歩む
+w1608	動詞	stop	1. とまる 〔自動詞〕 / 2. ～をやめる、とめる 〔他動詞〕
+w1609	動詞	strive	懸命に努力する
+w1610	動詞	study	～を勉強する、調べる、研究する
+w1611	動詞	suffer	苦しむ
+w1612	動詞	suggest	提案する
+w1613	動詞	support	(人や考え)を支持する、支援する
+w1614	動詞	surf	サーフィン〔波乗り〕をする
+w1615	動詞	surprise	～を驚かす、びっくりさせる　 〔be surprised at ～ の形で〕 (知らせなど)に驚いている
+w1616	動詞	surround	～を囲む、取り巻く
+w1617	動詞	survive	生き残る
+w1618	動詞	swallow	～をごくりと飲み込む
+w1619	動詞	swim	泳ぐ
+w1620	動詞	take	1. (時間、労力)がかかる / 2. ～を持っていく、連れて行く / 3. (乗り物)に乗る、乗っていく / 4. (写真)をとる / 5. 買う / 6. 服用する / 7. ～をする、行う　〔take a bathの形で〕風呂に入る / 8. （試験、授業などを）受ける / 9. 持って行く、持ち去る / 10. 受け取る
+w1621	動詞	talk	話す、話をする
+w1622	動詞	taste	1. 味わう、食べる / 2. （～の）味がする
+w1623	動詞	teach	～を教える　 〔teach A B の形で〕 ＡにＢを教える
+w1624	動詞	tell	1. ～に話す、～を話す、教える　〔tell Ａ Ｂの形で〕 Ａ［人］にＢ［ものごとなど］を話す / 2. 〔tell Ａ to do ～の形で〕 Ａ［人］に～するように言う
+w1625	動詞	thank	～に感謝する
+w1626	動詞	think	～と考える、思う
+w1627	動詞	touch	～にさわる、触れる
+w1628	動詞	train	1. ～を訓練する / 2. 練習する
+w1629	動詞	translate	～を翻訳する、訳す
+w1630	動詞	trap	～をわなで捕まえる、閉じこめる
+w1631	動詞	travel	旅する、移動する
+w1632	動詞	trust	～を信頼する
+w1633	動詞	try	～をやってみる、挑戦する、ためしてみる、(try to～の形で）～しようとする
+w1634	動詞	turn	1. 曲がる、向きを変える / 2. 回る、回転する / 3. 回す、ひねる
+w1635	動詞	understand	～を理解する、～がわかる
+w1636	動詞	unplug	（～の）プラグを（コンセントから）抜く
+w1637	動詞	upset	気を動転させる、うろたえさせる
+w1638	動詞	use	～を使う
+w1639	動詞	visit	1. (場所、人など)をおとずれる / 2. (ウェブサイトなど)をおとずれる
+w1640	動詞	wait	待つ　　〔wait for ～の形で〕～を待つ
+w1641	動詞	wake	〔wake you up〕あなたを起こす
+w1642	動詞	walk	1. 歩く、歩いて行く［来る］ / 2. 散歩させる
+w1643	動詞	want	1. ～がほしい / 2. 〔want to do ～の形で〕 ～したい / 3. 〔want A to do ～の形で〕 Ａ［人］に～してほしい
+w1644	動詞	wash	～を洗う
+w1645	動詞	watch	1. (注意して、動いているもの)を見る / 2. ～見はる
+w1646	動詞	water	～に水をやる
+w1647	動詞	wear	～を着ている、身につけている
+w1648	動詞	welcome	歓迎する
+w1649	動詞	whisper	（～と）ささやく、ひそひそ声でで言う
+w1650	動詞	whistle	口笛を吹く、口笛を吹くように鳴く
+w1651	動詞	win	勝つ、～を勝ち取る
+w1652	動詞	wish	～を願う、望む　〔たとえば I wish you a happy new year.の形で〕新年おめでとう
+w1653	動詞	wonder	（～する）かしら（と思う）、～かどうかを知りたいと思う
+w1654	動詞	work	1. 働く、勉強する / 2. うまくいく、機能する、作動する、動く
+w1655	動詞	worry	心配する、悩む
+w1656	動詞	wrap	包む、包装する
+w1657	動詞	write	～を書く
+w1658	助動詞	am	1. 〔現在進行形やbe going to do ～の形で用いる〕 / 2. 〔受け身の文を作る〕
+w1659	助動詞	are	1. 〔現在進行形やbe going to do ～の形で用いる〕 / 2. 〔受け身の文を作る〕
+w1660	助動詞	be	1. 〔進行形 (be+doing) や be going to do ～の形で用いる〕 / 2. 〔受け身(be+ 過去分詞) の形で用いる〕
+w1661	助動詞	can	1. ～できる、～してもよい / 2. 《許可を表して》 〔Can I ～? の形で〕 ～してもよいですか / 3. 《依頼を表して》 〔Can you～? の形で〕 ～してくれますか / 4. よく～である、～でありうる
+w1662	助動詞	cannot	～できない
+w1663	助動詞	could	〔can の過去形〕 / 1. 《ていねいな依頼として》 〔Could you ～? の形で〕 ～していただけませんか / 2. 《能力・可能を表して》 ～することができた
+w1664	助動詞	did	〔doの過去形で、疑問文や否定文を作るのに使う〕
+w1665	助動詞	do	1. 〔疑問文と応答に用いる〕 / 2. 〔否定文に用いる〕 / 3. 〔否定の命令文を作る〕 / 4. 〔前に出た動詞句をくり返す代わりに用いる〕 / 5. [付加疑問文で]　(～は…する)ね。
+w1666	助動詞	does	〔主語が3人称単数の時の do の形で、疑問文や否定文を作るのに使う〕
+w1667	助動詞	has	〔現在完了の文において、主語が３人称単数の時の has の形で、疑問文や否定文を作るのに使う〕
+w1668	助動詞	have	1. 〔have＋過去分詞の形で〕 《ある動作や状態が、過去から現在までずっと続いていることを表して》 ずっと～している、ずっと～だ / 2. 〔have＋過去分詞の形で〕 《ある動作や状態が終わったこと、またそれが終わった今の状態を示して》 （ちょうど）～したところだ、（もう、すでに）～してしまった / 3. 〔have＋過去分詞の形で〕 《過去から現在までにした経験を表して》 ～したことがある
+w1669	助動詞	is	1. 〔現在進行形やbe going to do～ の形で用いる〕 / 2. 〔受け身の文を作る〕
+w1670	助動詞	may	1. ～かもしれない、することがある / 2. 〔May I ～? の形で〕 ～してもよいですか
+w1671	助動詞	must	1.～しなければならない / 2.～に違いない / 3. (must notの形で)～してはならない
+w1672	助動詞	shall	《相手の意思をたずねて》　〔Shall I do ～ ?の形で〕 (私が）～しましょうか　　《Weの中に相手を含め、相手の意思をたずねて》　〔Shall we do ～?〕　(私たちは）～しましょうか
+w1673	助動詞	should	～したほうがよい、～すべきである
+w1674	助動詞	shouldn't	〔should notの短縮形〕～するべきではない
+w1675	助動詞	will	1. 《意思未来を表して》 ～するつもりである / 2. 《単純未来を表して》 ～でしょう / 3. 《習性・真理・必然性を表して》 ～するものだ、決まって～する
+w1676	助動詞	would	1. 〔would like to do～ の形で〕～したいと思う / 2. 〔Would you like ～? の形で〕～はいかがですか / 3. [Would you～？の形で]～してくださいますか？ / 4. [過去の否定文で]どうしても～しようとしなかった
+w1677	形容詞	able	〔be able toの形で〕 ～することができる
+w1678	形容詞	afraid	1. 〔be afraid of ～ の形で〕 ～をおそれる、こわがる、心配する / 2. 〔I am afraid ～の形で〕　残念ですが［すみませんが］ ～（と思います）
+w1679	形容詞	African-American	アフリカ系アメリカ人の
+w1680	形容詞	all	1. 全～、～全体 / 2. 全ての、あらゆる
+w1681	形容詞	alone	ただ１人の
+w1682	形容詞	amazing	驚くべき、目を見張らせる
+w1683	形容詞	American	アメリカ人の、アメリカの
+w1684	形容詞	ancient	古代の
+w1685	形容詞	angry	怒った、腹を立てた
+w1686	形容詞	another	1. もう１つの / 2. 別の、異なった、ほかの
+w1687	形容詞	any	1. 〔疑問文で〕 何か（の）、少しでも / 2. 〔肯定文で〕 どのような～でも　　 / 3. 〔否定文で〕 少しも、だれも、何も（～ない）
+w1688	形容詞	artificial	人工の
+w1689	形容詞	atomic	原子（力）の　〔atomic bombで〕原子爆弾、原爆
+w1690	形容詞	bad	1. 悪い / 2. 〔That's too bad. の形で〕 残念だ。お気の毒に。
+w1691	形容詞	beautiful	美しい、きれいな、すばらしい
+w1692	形容詞	best	1. 〔goodの最上級〕最もよい / 2. 〔（With) Best wishesの形で〕
+w1693	形容詞	better	〔good, well (具合がよい）の比較級として〕 よりよい、より優れた、より具合［体の状態］がよい、より上手な
+w1694	形容詞	big	1. 大きい / 2. （程度が）すごい、大～ 〔たとえば a big fan の形で〕 大ファン
+w1695	形容詞	billion	10億の
+w1696	形容詞	black	黒い、黒人の
+w1697	形容詞	blind	目の不自由な
+w1698	形容詞	blue	1. 青い / 2. 青ざめた、ゆううつな
+w1699	形容詞	boring	たいくつな
+w1700	形容詞	brave	勇敢な
+w1701	形容詞	bright	かがやいている、明るい
+w1702	形容詞	British	英国（人）の、イギリス（人）の
+w1703	形容詞	brown	茶色の
+w1704	形容詞	busy	忙しい
+w1705	形容詞	capital	大文字の
+w1706	形容詞	careful	注意深い、慎重な
+w1707	形容詞	cheap	安い、安っぽい
+w1708	形容詞	cheerful	（生活などが）明るい、快活・陽気な
+w1709	形容詞	Chinese	中国の、中国人の、中国語の
+w1710	形容詞	classic	古典的な、代表的な
+w1711	形容詞	clean	きれいな、清潔な、クリーンな
+w1712	形容詞	clear	1. 澄んだ、晴れた / 2. はっきりした、（話しの内容・事実など）明らかな
+w1713	形容詞	clever	りこうな
+w1714	形容詞	close	1. 近い、接近した、親密な、親しい / 2. 接戦の、互角の
+w1715	形容詞	cloudy	曇りの
+w1716	形容詞	cold	寒い、冷たい
+w1717	形容詞	comic	喜劇の　〔comic storytelling で〕話芸
+w1718	形容詞	common	ふつうの、よくある、ありふれた、平凡な
+w1719	形容詞	convenient	便利な、使いやすい、好都合な
+w1720	形容詞	cool	1. 涼しい / 2. かっこいい、すてきな
+w1721	形容詞	crowded	混雑した、満員の
+w1722	形容詞	cute	かわいい、かわいらしい
+w1723	形容詞	daily	毎日の、日々の、日常の
+w1724	形容詞	dangerous	危ない、危険な
+w1725	形容詞	dark	1. （光がなくて）暗い / 2. （色が）濃い
+w1726	形容詞	dead	死んだ、死んでいる
+w1727	形容詞	dear	《手紙の書き出しとして》 ～様、拝啓、親愛なる
+w1728	形容詞	deep	深い
+w1729	形容詞	delicious	おいしい
+w1730	形容詞	depressed	落胆した、元気をなくした
+w1731	形容詞	different	1. さまざまな、いろいろな、別々の / 2. ちがった、異なる
+w1732	形容詞	difficult	難しい、困難な
+w1733	形容詞	displaced	故国を追われた、難民の
+w1734	形容詞	down	元気のない
+w1735	形容詞	dressed	服を着た　〔get dressed で〕服を着る
+w1736	形容詞	each	それぞれの、各～
+w1737	形容詞	early	早い
+w1738	形容詞	eastern	東の、東部の、東方の
+w1739	形容詞	easy	やさしい、簡単な
+w1740	形容詞	efficient	効率のよい、能率的な
+w1741	形容詞	eight	8つの
+w1742	形容詞	eighteen	18の
+w1743	形容詞	eighteenth	18番めの
+w1744	形容詞	eighth	8番めの
+w1745	形容詞	eighty	80の
+w1746	形容詞	elderly	年配の、高齢の
+w1747	形容詞	elementary	基本の、初級の
+w1748	形容詞	eleven	11の
+w1749	形容詞	eleventh	11番めの
+w1750	形容詞	embarrassed	恥ずかしい、気まずい
+w1751	形容詞	empty	からの、からっぽの
+w1752	形容詞	English	英語の、英国の、イングランドの
+w1753	形容詞	enough	十分な、必要なだけの、ちょうどいい数［量］の
+w1754	形容詞	equal	平等な
+w1755	形容詞	every	〔名詞の単数形につけて〕 どの～もみな、～ごとに、毎～
+w1756	形容詞	excellent	非常に優れた、優秀な
+w1757	形容詞	excited	わくわくした、興奮した
+w1758	形容詞	exciting	とてもおもしろい、わくわくするような
+w1759	形容詞	expensive	高価な
+w1760	形容詞	fair	公正な
+w1761	形容詞	famous	有名な
+w1762	形容詞	fast	(速度が) 速い、短時間で終わる
+w1763	形容詞	favorite	いちばん好きな、お気に入りの、大好きな
+w1764	形容詞	fifteen	15の
+w1765	形容詞	fifteenth	15番目の
+w1766	形容詞	fifth	5番目の
+w1767	形容詞	fifty	50の
+w1768	形容詞	final	最後の、最終の
+w1769	形容詞	fine	1. すばらしい / 2. 晴れた　 / 3. 元気な、調子のよい / 4. 結構な、構わない
+w1770	形容詞	first	1番目の、最初の
+w1771	形容詞	five	5つの
+w1772	形容詞	fluffy	ふわふわした、柔らかい
+w1773	形容詞	foreign	外国の
+w1774	形容詞	former	以前の、前の、昔の
+w1775	形容詞	forty	40の
+w1776	形容詞	four	4つの
+w1777	形容詞	fourteen	14の
+w1778	形容詞	fourth	4番目の
+w1779	形容詞	free	1. 自由な［で］ / 2. ひまな［で］、時間がある / 3. 無料の［で］
+w1780	形容詞	French	フランスの、フランス人の、フランス語の
+w1781	形容詞	fresh	新鮮な、新しい
+w1782	形容詞	friendly	親しみのある、好意的な、友好的な
+w1783	形容詞	full	いっぱいの
+w1784	形容詞	funny	面白い、愉快な
+w1785	形容詞	future	未来の、将来の
+w1786	形容詞	glad	うれしい
+w1787	形容詞	global	地球の,地球規模の、世界規模の
+w1788	形容詞	gold	金の
+w1789	形容詞	good	1. よい、すぐれた / 2. 行儀がよい / 3. おいしい / 4. りっぱな、正しい / 5. 十分な / 6. 〔Good morning.〕おはようございます / 7. 非常に親しい 〔a good friendの形で〕仲良し / 8. ためになる、よい / 9. 楽しい､愉快な / 10. 上手な、うまい、得意な　(特にbe good at ～の形で)
+w1790	形容詞	gray	灰色の、ねずみ色の
+w1791	形容詞	great	1. すばらしい、みごとな / 2. 《程度を示して》多大な、非常な、（びっくりするほど）大きい
+w1792	形容詞	green	1. 緑（色）の / 2. 植物の生えた
+w1793	形容詞	happy	1. 幸せな､うれしい､たのしい / 2. おめでとう 〔たとえば Happy New Year! 等の形で〕 新年おめでとう
+w1794	形容詞	hard	1. 難しい、骨の折れる、困難だ / 2. つらい、耐えがたい、苦しい / 3. 一生懸命な / 4.固い
+w1795	形容詞	Hawaiian	ハワイの,ハワイ人の,ハワイ語の
+w1796	形容詞	heavy	重い
+w1797	形容詞	helpful	役に立つ、助けになる
+w1798	形容詞	high	1. （高さ・値段・程度・地位が）高い / 2. 高さが～で
+w1799	形容詞	home	家庭の、家庭用の
+w1800	形容詞	homesick	うちを恋しがる、故郷を慕う、ホームシックの
+w1801	形容詞	hopeless	絶望した
+w1802	形容詞	hot	1. 熱い / 2. 暑い
+w1803	形容詞	huge	巨大な
+w1804	形容詞	humid	蒸し暑い
+w1805	形容詞	hundred	100の
+w1806	形容詞	hungry	お腹がすいた、飢えた
+w1807	形容詞	iced	〔飲みものが〕(氷で)冷やした
+w1808	形容詞	important	重要な、重大な、大切な
+w1809	形容詞	impossible	不可能な、ありえない
+w1810	形容詞	impressive	印象的な、深い感動を与える
+w1811	形容詞	Indian	インド(人）の
+w1812	形容詞	industrial	産業の
+w1813	形容詞	intense	激しい、厳しい、強烈な
+w1814	形容詞	interested	興味をもった､関心がある　〔be interested in～の形で〕 ～に興味がある
+w1815	形容詞	interesting	《人に知的な興味をあたえるような意味で》 おもしろい、興味深い
+w1816	形容詞	international	国際的な、万国共通の
+w1817	形容詞	Italian	イタリアの、イタリア人の
+w1818	形容詞	itchy	かゆい
+w1819	形容詞	Japanese	日本の、日本人の、日本語の
+w1820	形容詞	junior	下級の、年下の
+w1821	形容詞	kind	親切な、やさしい
+w1822	形容詞	Korean	韓国・朝鮮（人）の、韓国・朝鮮語の
+w1823	形容詞	large	（広くて）大きい
+w1824	形容詞	last	1. 先～、昨～、（時間的に）この前の / 2. 最後の
+w1825	形容詞	late	遅れた、遅刻した、遅い、最近の
+w1826	形容詞	latest	最新の
+w1827	形容詞	least	littleの最上級
+w1828	形容詞	left	左の
+w1829	形容詞	less	littleの比較級、より少ない
+w1830	形容詞	light	1. 明るい / 2. 軽い
+w1831	形容詞	limited	限られた、有限の
+w1832	形容詞	little	1. 〔a little＋数えられない名詞で〕 (量が) 少しの、少量の / 2. 〔 a をつけないで〕 ほとんど～ない / 3. 小さい、かわいらしい / 4. 年少の、幼い / 5. ささいな
+w1833	形容詞	living	生きている
+w1834	形容詞	lonely	孤独な、さびしい
+w1835	形容詞	long	1. (時間・長さ・距離が)長い / 2. 長さが～で
+w1836	形容詞	loud	（声、音などが）大きい
+w1837	形容詞	low	低い
+w1838	形容詞	lucky	運のいい、ついている
+w1839	形容詞	magic	手品の
+w1840	形容詞	main	おもな、主要な
+w1841	形容詞	majestic	荘厳な、堂々とした
+w1842	形容詞	major	(他と比べて)大きな、主要な、重要な
+w1843	形容詞	many	多くの、多数の
+w1844	形容詞	memorial	記念の
+w1845	形容詞	million	百万の
+w1846	形容詞	missing	紛失した、行方不明の
+w1847	形容詞	model	模型の
+w1848	形容詞	more	1. もっと多くの 〔many, much の比較級〕 / 2. 〔しばしば数詞または some のあとで〕あと～の
+w1849	形容詞	most	1. 最も多くの〔many, much の最上級〕 / 2. ほとんどの、たいていの
+w1850	形容詞	much	1. (量が)多くの、たくさんの / 2. 〔How much～? の形で〕 いくら～か
+w1851	形容詞	mysterious	ふしぎな、不可解な
+w1852	形容詞	narrow	(幅が)せまい
+w1853	形容詞	national	1. 国の、国民の / 2. 全国的な
+w1854	形容詞	native	(国、言語などが)生まれたときからの
+w1855	形容詞	natural	自然な、当然の、普通の
+w1856	形容詞	naughty	いたずらな、わんぱくな
+w1857	形容詞	necessary	必要な、なくてはならない
+w1858	形容詞	nervous	緊張して、神経質な、ドキドキして、臆病な
+w1859	形容詞	new	新しい、新任の、見慣れない
+w1860	形容詞	next	次の、今度の
+w1861	形容詞	nice	1. よい、すてきな / 2. 〔Nice to meet you. の形で〕 はじめまして / 3. （～に対して）親切な、優しい、思いやりがある
+w1862	形容詞	nine	９つの
+w1863	形容詞	nineteen	19の
+w1864	形容詞	ninety	90の
+w1865	形容詞	ninth	9番目の
+w1866	形容詞	no	１人［１つ］も～ない、少しの～もない
+w1867	形容詞	non-native	(話し手が）母語によらない
+w1868	形容詞	northern	北部の
+w1869	形容詞	OK	よくて､だいじょうぶで
+w1870	形容詞	old	1. 古い､古くからの､昔の / 2. ～歳の(years oldの形で）､創立～年の / 3. 年をとった、年上の
+w1871	形容詞	one	1. １つの､１人の / 2. ある～
+w1872	形容詞	only	唯一の､ただ１つ［１人］の
+w1873	形容詞	open	あいている、（店などが）営業中の［で］
+w1874	形容詞	opposite	反対の
+w1875	形容詞	ordinary	普通の
+w1876	形容詞	original	独自の
+w1877	形容詞	other	1. 〔the other～ の形で〕 《２つのものについて》 もう一方の～ 《３つ以上のものについて》 残りの～ / 2. ほかの、他の
+w1878	形容詞	own	～自身の　 〔たとえば my own house の形で〕 私自身の家
+w1879	形容詞	pale	顔色の悪い
+w1880	形容詞	paralyzed	麻痺した
+w1881	形容詞	peaceful	平和な、穏やかな
+w1882	形容詞	perfect	完全な、完璧な
+w1883	形容詞	personal	個人的な
+w1884	形容詞	physically challenged	身体に障害のある
+w1885	形容詞	pink	ピンク色（の）、もも色（の）
+w1886	形容詞	plastic	プラスチック製の、ビニール製の
+w1887	形容詞	playful	楽しげな、陽気な
+w1888	形容詞	political	政治の、政治に関する
+w1889	形容詞	poor	1. 貧しい / 2. かわいそうな、へたな / 3. 劣った、優れない
+w1890	形容詞	pop	大衆的な
+w1891	形容詞	popular	人気がある、流行している､大衆的な
+w1892	形容詞	positive	積極的な、肯定的な、前向きな
+w1893	形容詞	possible	可能な、実行できる
+w1894	形容詞	powerful	力強い、迫力のある
+w1895	形容詞	pretty	かわいい、きれいな、感じのよい
+w1896	形容詞	professional	専門（職）の、プロの
+w1897	形容詞	proud	〔be proud of ～の形で〕～に誇りを持っている
+w1898	形容詞	public	公の、公共の
+w1899	形容詞	purple	紫色（の）
+w1900	形容詞	quick	すばやい、速い
+w1901	形容詞	quiet	静かな
+w1902	形容詞	rainy	雨の多い、雨降りの
+w1903	形容詞	ready	準備ができている
+w1904	形容詞	real	本当の、本物の
+w1905	形容詞	red	赤い、赤色（の）、赤
+w1906	形容詞	regular	正規の、レギュラーの
+w1907	形容詞	renewable	〔renewable energy で〕再生可能エネルギー
+w1908	形容詞	responsible	責任を負うべき
+w1909	形容詞	return	帰りの
+w1910	形容詞	rich	豊かな、金持ちの
+w1911	形容詞	ridiculous	とんでもない、ばかげた
+w1912	形容詞	right	1. 正しい / 2. 健康な、正常な / 3. 〔All right.の形で〕 よろしい、わかった / 4. 右の
+w1913	形容詞	roast	焼いた、あぶった
+w1914	形容詞	round	丸い
+w1915	形容詞	runny	鼻水が出る
+w1916	形容詞	sacred	神聖な
+w1917	形容詞	sad	悲しい
+w1918	形容詞	safe	安全な
+w1919	形容詞	same	〔the same の形で〕 同じ、同一の
+w1920	形容詞	scared	（～が）こわい　〔be scared of で〕～がこわい
+w1921	形容詞	scary	これい
+w1922	形容詞	second	第２の、２番めの
+w1923	形容詞	senior	年上の、上級の
+w1924	形容詞	serious	（病気などが）重い、重大な
+w1925	形容詞	seven	7、７つの
+w1926	形容詞	seventeen	17の
+w1927	形容詞	seventeenth	17の番目の、１７日
+w1928	形容詞	seventh	７番めの
+w1929	形容詞	seventy	70、70の
+w1930	形容詞	several	いくつかの
+w1931	形容詞	severe	厳しい
+w1932	形容詞	shiny	輝く、光る
+w1933	形容詞	short	短い､背が低い
+w1934	形容詞	shy	内気な、恥ずかしがりの
+w1935	形容詞	sick	病気の［に］、気分が悪い
+w1936	形容詞	silent	静かな、沈黙の
+w1937	形容詞	similar	似ている
+w1938	形容詞	simple	簡単な、わかりやすい
+w1939	形容詞	single	たったひとつの
+w1940	形容詞	six	6の
+w1941	形容詞	sixteen	16の
+w1942	形容詞	sixth	6番めの
+w1943	形容詞	sixty	60の
+w1944	形容詞	skillful	熟練した
+w1945	形容詞	sleepy	ねむい、ねむそうな
+w1946	形容詞	slow	ゆっくりとした、のろい、遅い
+w1947	形容詞	small	小さい、小さな
+w1948	形容詞	smart	利口な、賢い
+w1949	形容詞	snowy	雪の多い、雪の降っている
+w1950	形容詞	soft	柔らかい
+w1951	形容詞	solar	太陽の、〔solar power で〕太陽エネルギー
+w1952	形容詞	some	1. 一部の、中には～もいる［ある］ / 2. いくつかの、いくらかの
+w1953	形容詞	sore	痛い、ヒリヒリする
+w1954	形容詞	sorry	1. すまなく思って、残念に思って / 2. 〔疑問文で〕なんとおっしゃいましたか。
+w1955	形容詞	southeastern	南東の、南東地方の
+w1956	形容詞	southern	南の
+w1957	形容詞	special	特別の、特殊な
+w1958	形容詞	sport	スポーツ（用）の
+w1959	形容詞	square	四角の、（面積の単位として）…平方
+w1960	形容詞	stiff	かたい
+w1961	形容詞	straight	まっすぐな
+w1962	形容詞	strange	変な、変わった、なじみのない
+w1963	形容詞	strong	強い
+w1964	形容詞	successful	成功した
+w1965	形容詞	such	そのような、このような
+w1966	形容詞	sunny	晴れた、天気のよい
+w1967	形容詞	sure	2. 確かな 〔I'm sure ～ の形で〕 ～を確信している
+w1968	形容詞	surprised	びっくりした、おどろいた
+w1969	形容詞	surprising	驚くべき、すばらしい
+w1970	形容詞	sweet	1. (味が)甘い / 2. (音、香りなどが)美しい、心地よい
+w1971	形容詞	tall	1. 高い、背の高い / 2. 〔高さを表す表現のあとに置いて〕 身長［高さ］が～で
+w1972	形容詞	ten	10の
+w1973	形容詞	tender	やさしい
+w1974	形容詞	tenth	10番めの
+w1975	形容詞	terrible	ひどい、恐ろしい、こわい
+w1976	形容詞	Thai	タイの、タイ人の
+w1977	形容詞	that	その、あの
+w1978	形容詞	these	1. これらの / 2. 近頃の、〔these days で〕近頃、最近
+w1979	形容詞	thin	やせた
+w1980	形容詞	third	３番目の　　　〔third floor で〕３階
+w1981	形容詞	thirsty	のどが渇いた
+w1982	形容詞	thirteen	13の
+w1983	形容詞	thirteenth	13番めの
+w1984	形容詞	thirtieth	30番目（の）、30日
+w1985	形容詞	thirty	30の
+w1986	形容詞	this	1. この / 2.今の、今日の、今度の
+w1987	形容詞	those	あれらの、それらの
+w1988	形容詞	thousand	1000の
+w1989	形容詞	three	3つの
+w1990	形容詞	tired	1. つかれた / 2. あきた 〔be tired of ～の形で〕～にあきる
+w1991	形容詞	tough	〔仕事などが〕困難な
+w1992	形容詞	traditional	伝統的な
+w1993	形容詞	traveling	巡業する、旅する
+w1994	形容詞	true	ほんとうの、真実の
+w1995	形容詞	twelfth	12番めの
+w1996	形容詞	twelve	12の
+w1997	形容詞	twentieth	20番目の
+w1998	形容詞	twenty	20の
+w1999	形容詞	twenty-eighth	28番目（の）、28日
+w2000	形容詞	twenty-fifth	25番目（の）、25日
+w2001	形容詞	twenty-first	21番目（の）、21日
+w2002	形容詞	twenty-fourth	24番目（の）、24日
+w2003	形容詞	twenty-second	22番目（の）、22日
+w2004	形容詞	twenty-ninth	29番目（の）、29日
+w2005	形容詞	twenty-seventh	27番目（の）、27日
+w2006	形容詞	twenty-sixth	26番目（の）、26日
+w2007	形容詞	twenty-third	23番目（の）、23日
+w2008	形容詞	two	2つの
+w2009	形容詞	two-year-old	2歳（の）
+w2010	形容詞	unclean	〔宗教上の〕不浄な、汚い、不潔な
+w2011	形容詞	unfair	不公平な、不正な
+w2012	形容詞	unique	独特の、めずらしい
+w2013	形容詞	upset	気が動転した、取り乱した
+w2014	形容詞	used	使用済みの、使い古した
+w2015	形容詞	useful	役に立つ
+w2016	形容詞	various	様々な
+w2017	形容詞	vast	広大な
+w2018	形容詞	warm	暖かい
+w2019	形容詞	weak	1. 弱い、かすかな / 2. （液体などが）薄い　〔たとえば weak tea の形で〕 薄いお茶
+w2020	形容詞	welcome	歓迎される　〔You're welcome. の形で〕 どういたしまして
+w2021	形容詞	well	（体の状態、具合が）よい、健康である
+w2022	形容詞	western	西の、西部の　(Western で）欧米の
+w2023	形容詞	what	1. 何の、どんな / 2. （感嘆を表して）なんという～
+w2024	形容詞	which	どちらの、どの
+w2025	形容詞	white	白い､白人の
+w2026	形容詞	whole	（まとまった）全体の、すべての、全～
+w2027	形容詞	wide	幅の広い
+w2028	形容詞	wonderful	すばらしい、すてきな、みごとな
+w2029	形容詞	wooden	木製の、木造の
+w2030	形容詞	worried	心配した、不安な
+w2031	形容詞	worse	もっと悪い〔下手な、ひどい〕《 bad の比較級》
+w2032	形容詞	worst	もっとも悪い〔下手な、ひどい〕《 bad の最上級》
+w2033	形容詞	worth	〔worth ～ing で〕～するだけの価値がある
+w2034	形容詞	wrong	1. 間違った / 2. 具合･調子の悪い
+w2035	形容詞	yellow	黄色い(の)
+w2036	形容詞	young	若い
+w2037	形容詞	zero	0の、ゼロの
+w2038	副詞	a.m.	午前 〔6:45a.m.のように、時刻の後に付ける〕
+w2039	副詞	about	約～、およそ～、だいたい、ほぼ
+w2040	副詞	abroad	外国に［へ、で］
+w2041	副詞	across	横切って、横断して、向こう側に
+w2042	副詞	actually	実際に(は), 本当に, 現実に
+w2043	副詞	again	ふたたび、もう一度、また、≪否定文で≫二度と
+w2044	副詞	ago	（今から） ～前（に）
+w2045	副詞	ahead	～の前方に
+w2046	副詞	all	1. 〔all over～ の形で〕　～の至る所で、～一面に / 2. 〔all right の形で〕だいじょうぶな / 3. 〔All right の形で〕 よろしい。わかった。了解した。 / 4. まったく、すっかり、すべて 〔all alone の形で〕 １人ぼっちの / 5. [all about～の形で] ～次第
+w2047	副詞	all right	よろしい、わかった、了解した
+w2048	副詞	almost	ほとんど
+w2049	副詞	alone	1人で
+w2050	副詞	already	〔ふつうは肯定文で〕すでに、もう
+w2051	副詞	also	〔ふつうは一般動詞の直前、be動詞・助動詞のあとに用いて〕 ～も（また）
+w2052	副詞	always	いつも、常に
+w2053	副詞	any	[not ～ any moreの形で]　もう～ない
+w2054	副詞	anymore	〔否定文・疑問文で〕今（で）はもう・・・（でない）
+w2055	副詞	anytime	いつでも
+w2056	副詞	anyway	とにかく
+w2057	副詞	anywhere	どこでも
+w2058	副詞	around	1. ひとまわりして、巡って 、〔たとえば pass around ～の形で〕　～を順々に回す / 2. 近くに、あたりに / 3. あちこち、ぐるりと 〔たとえば run around の形で〕 走り回る / 4. およそ、約～、～ごろ、～くらい
+w2059	副詞	as	《比較を表して》 〔 as A as B の形で、あとの as が接続詞 〕　Ｂと同じくらいＡな［で］
+w2060	副詞	away	離れて、去って、向こうへ
+w2061	副詞	back	戻って、もとの所に、戻して、かえって
+w2062	副詞	before	以前に、前に、すでに
+w2063	副詞	below	下の（に、を）　〔below zeroで〕氷点下
+w2064	副詞	best	〔wellの最上級〕最も上手に、最もよく
+w2065	副詞	better	〔well の比較級〕よりよく、より上手に
+w2066	副詞	both	〔both A and B の形で〕 ＡもＢも両方とも
+w2067	副詞	calmly	静かに
+w2068	副詞	carefully	注意深く
+w2069	副詞	certainly	確かに、きっと
+w2070	副詞	certainly	もちろん、承知しました
+w2071	副詞	cheerfully	元気よく、楽しそうに
+w2072	副詞	clearly	はっきり（と）
+w2073	副詞	close	すぐ近くで、接近して、ぴったりと
+w2074	副詞	closely	じっと、一心に
+w2075	副詞	deeply	深く
+w2076	副詞	differently	（～と）異なって
+w2077	副詞	down	1. 下へ［に］、下の方へ［に］ / 2. 落ち着いて
+w2078	副詞	downstairs	階下へ（に、で）
+w2079	副詞	early	(時間や時期が) 早く
+w2080	副詞	easily	容易に、簡単に、たやすく、楽々、わけなく
+w2081	副詞	either	1. 〔否定文の後で〕 ～もまた（…ない） / 2. （either ～ or … の形で） ～か…のどちらか
+w2082	副詞	else	（その）ほかに［の］ 　 〔たとえば something else の形で〕 何かほかのもの
+w2083	副詞	enough	(必要なだけ） 十分に、ちょうどよく
+w2084	副詞	especially	特に、とりわけ
+w2085	副詞	even	～さえ、～でも
+w2086	副詞	ever	〔疑問文・否定文で〕これまでに、いつか、かつて
+w2087	副詞	everywhere	いたるところに、どこでも、どこにも
+w2088	副詞	exactly	（あいづちとして）そうです、全くそのとおりです
+w2089	副詞	far	遠く、遠くに　〔far awayの形で〕 遠く離れて
+w2090	副詞	fast	速く
+w2091	副詞	finally	最後に、ついに
+w2092	副詞	first	最初に、第一に
+w2093	副詞	forever	永久に
+w2094	副詞	forward	前へ、前方へ / 〔look forward to ～ing の形で〕～するのを楽しみにする。
+w2095	副詞	hard	1. 熱心に、一生懸命に / 2. 激しく、強く
+w2096	副詞	here	1. ここで［に］ / 2. 〔Here is ［are］ ～の形で〕ここに～があります / 3. 〔Here's ～ の形で〕 《物を渡して》 はい、～をどうぞ　〔Here you are. の形で〕 《物を渡して》 はい、どうぞ / 4. 〔Here we are. の形で〕 さあ、着きました
+w2097	副詞	high	高く
+w2098	副詞	home	家庭（故郷）へ［に］
+w2099	副詞	how	1. 《状態などをたずねて》どんな状態で、どのように / 2. 《数量・程度などをたずねて》どれくらい、どれほど / 3. 《方法・手段などをたずねて》どうやって、どのように、どんなふうに / 4. 《あとに形容詞や副詞がきて》なんと
+w2100	副詞	however	≪接続詞的に≫しかしながら、けれども
+w2101	副詞	in	中へ［に］
+w2102	副詞	incredibly	信じられないほど、すごく
+w2103	副詞	indoors	屋内に(で)、家の中に（で）
+w2104	副詞	instead	（その）かわりに
+w2105	副詞	just	1. ちょっと、ほんの、ただ～だけ / 2. 〔過去形や現在完了形とともに用いて〕 たった今、ちょうど（～たばかりだ） / 3. ちょうど、まさに
+w2106	副詞	last	最後に、一番あとに、この前
+w2107	副詞	late	遅く、遅れて
+w2108	副詞	later	〔late の比較級のひとつ〕あとで、～後
+w2109	副詞	left	左に、左の方に
+w2110	副詞	less	littleの比較級、もっと少なく
+w2111	副詞	little	〔a littleの形で〕 (量・程度が)少しは、ちょっとは
+w2112	副詞	long	(時間・長さ・距離が)長く
+w2113	副詞	maybe	たぶん
+w2114	副詞	more	もっと〔much の比較級、つづりの長い語の比較級に使う〕
+w2115	副詞	most	最も〔much の最上級、つづりの長い語の最上級に使う〕
+w2116	副詞	much	1. 〔very muchの形で〕とても、たいへん、すごく / 2. 〔比較級を強めて〕ずっと、はるかに
+w2117	副詞	neither	(否定文のあとで）～もまた…（し）ない
+w2118	副詞	never	決して～ない、今まで（一度も）～ない
+w2119	副詞	next	1. 次に / 2. 〔next to ～ の形で〕～のとなりに
+w2120	副詞	no	いいえ、ちがいます、まさか
+w2121	副詞	north	北へ、北に
+w2122	副詞	not	～でない、～（し）ない
+w2123	副詞	now	1. 今、現在 / 2. さて、ところで / 3. 今すぐ / 4. そのとき、今や　*右記例文のnowは「現在」の意味。
+w2124	副詞	o'clock	～時
+w2125	副詞	off	《くっついた状態からはなれた状態への変化を表して》はなれて、外れて
+w2126	副詞	often	よく､しばしば
+w2127	副詞	OK	1.《提案・依頼などに対する返事として》よろしい、いいよ、わかった / 2. 問題ない、大丈夫
+w2128	副詞	on	1.《付着を表して》離れず、しっかり　〔たとえばのHold on.形で〕（何かに）つかまって、（電話を）切らないでそのまま待って / 2.《所持･着用を表して》～を身につけて / 3.《継続を表して》先へ、進んで、続けて　〔たとえば go on の形で〕 先を進む、続ける
+w2129	副詞	once	1. １度、１回 / 2. かつて、以前に
+w2130	副詞	only	ただ～だけ､ほんの～にすぎない
+w2131	副詞	originally	元々は、本来は
+w2132	副詞	out	1. なくなって / 2. 外出して､外に［へ］ / 3. 最後まで、徹底的に
+w2133	副詞	outside	外で、屋外で
+w2134	副詞	over	1. 上方に / 2. 向こう側へ、超えて / 3. 終わって / 4. 倒れて、ひっくり返して 〔たとえば Turn over the page. の形で〕 ページをめくりなさい
+w2135	副詞	overseas	海外へ、外国に
+w2136	副詞	p.m.	午後 〔2:30 p.m.のように、時刻の後に付ける〕
+w2137	副詞	past	すれ違って、通り過ぎて
+w2138	副詞	perfectly	完全に、申し分なく
+w2139	副詞	perhaps	たぶん
+w2140	副詞	please	《人に何かを頼む時に》 ～お願いします、どうぞ～してください
+w2141	副詞	precisely	正確に
+w2142	副詞	quickly	急いで､速く、すぐに
+w2143	副詞	quietly	静かに、黙って
+w2144	副詞	quite	とても、たいへん
+w2145	副詞	really	1. 非常に、実に､本当に、とても / 2.へぇ
+w2146	副詞	right	まさに、ちょうど
+w2147	副詞	right	右に、右側に
+w2148	副詞	safely	安全に
+w2149	副詞	second	第２に、２番目に
+w2150	副詞	short	急に､突然　　〔cut shortで〕～を急に終わらせる
+w2151	副詞	sincerely	《正式な手紙の結びのことばとして》 敬具
+w2152	副詞	slowly	ゆっくりと
+w2153	副詞	so	1. とても、非常に / 2. そんなに、それほど / 3. そう、そのように / 4. 〔～ and so on の形で〕 ～など
+w2154	副詞	some	〔数詞の前で〕およそ～、約～
+w2155	副詞	sometimes	ときどき、ときには
+w2156	副詞	somewhere	どこかに、どこかで、どこかへ
+w2157	副詞	soon	まもなく、すぐに
+w2158	副詞	still	今でも、まだ
+w2159	副詞	still	それでも
+w2160	副詞	straight	まっすぐに
+w2161	副詞	strongly	強く
+w2162	副詞	suddenly	突然、急に、不意に
+w2163	副詞	sure	《返事に用いて》 いいとも、もちろん
+w2164	副詞	that	そんなに、それほど
+w2165	副詞	then	1. そのあとで、それから､次に / 2. そうすれば / 3. それでは / 4. そのとき
+w2166	副詞	there	1. 〔There is ［are］ ～ の形で〕 ～がある、いる / 2. そこに[で、へ]
+w2167	副詞	third	３番めに、第３に
+w2168	副詞	tightly	しっかりと
+w2169	副詞	today	今日（は）、このごろは
+w2170	副詞	together	いっしょに
+w2171	副詞	tomorrow	明日（は）
+w2172	副詞	tonight	今夜（は）
+w2173	副詞	too	1. ～もまた、同様に / 2.あまりにも、～すぎる
+w2174	副詞	truly	本当に、実に
+w2175	副詞	twice	2回、2度
+w2176	副詞	up	1. 上へ、上の方へ / 2. 立って、起きて、目覚めて / 3. すっかり、つきて　〔たとえば Time is up.の形で〕 もう時間です［時間切れです］
+w2177	副詞	usually	たいていは、ふつうは
+w2178	副詞	very	とても、非常に、たいへん
+w2179	副詞	well	1. 上手に、うまく / 2. 正しく、りっぱに
+w2180	副詞	when	いつ
+w2181	副詞	where	どこに［で、へ］
+w2182	副詞	why	なぜ、どうして
+w2183	副詞	yes	1. はい、そうです / 2. そうです、そのとおりです / 3. 《呼びかけなどを受けて》はい
+w2184	副詞	yesterday	昨日（は）
+w2185	副詞	yet	1.〔疑問文で〕もう / 2.〔否定文で〕 まだ（～しない）
+w2186	前置詞	aboard	（乗りものを使って）～に乗って
+w2187	前置詞	about	《関連を表して》 ～について
+w2188	前置詞	above	～の上に
+w2189	前置詞	across	1. 《位置を示して》 ～の向こう側に、～を横切って、（道などを横切った）反対側に / 2. ～のいたるところに、～（の一面）に
+w2190	前置詞	after	1. 《時間を表して》 ～のあとに［で］　 〔after school の形で〕 放課後 / 2. 《追求を表して》 ～を追って
+w2191	前置詞	against	1. 《敵対を表して》 ～にさからって、対して / 2. 《反対を表して》 ～に反対して
+w2192	前置詞	along	1. ～に沿って、～沿いに / 2. ～の上をずっと　〔たとえば　walk along the street　の形で〕　通りを歩く
+w2193	前置詞	among	～の中で［に］、～の間で［に］
+w2194	前置詞	around	1. ～の周りに［で］ / 2. ～中（ちゅう）に［で］、～のあちらこちらに［で］、いたるところに［で］
+w2195	前置詞	as	～として
+w2196	前置詞	at	1. 《時の一点を表して》 ～に、～時に / 2. 《方向・対象を表して》 ～を 〔たとえば look at ～ の形で〕 ～を見る / 3. 《場所を表して》～で、～に　〔たとえば at home の形で〕 自宅で　 / 4. ～に関して、～の点において、～の点で
+w2197	前置詞	before	《時間を表して》 ～（より）前に［の］
+w2198	前置詞	behind	～の後ろに、～の陰に
+w2199	前置詞	beside	～のそばに
+w2200	前置詞	between	《場所・時間・関係を表して》 ～の間に［で、の］
+w2201	前置詞	by	1. 《動作主を示して》 ～によって、～による〔主に受け身の文で〕 / 2. 《位置を表して》 ～のそばに / 3. 《交通・通信などの手段を示して》 ～で、～によって　 / 4. ～までには / 5. ～にもとづいて
+w2202	前置詞	down	～の下へ［に］、～を通って、～に沿って
+w2203	前置詞	during	《継続を表して》 ～の間は［に］
+w2204	前置詞	for	1. 《用途を表して》 ～のために［の］、～用の、～にふさわしい 〔For here. の形で〕 ここで食べます《ファストフード店での会話表現》 / 2. 〔for example の形で〕 たとえば / 3. 《目的を表して》 ～を求めて 〔ask Ａ for Ｂの形で〕 Ａ［人］にＢ［ものごと］を要求する 〔look for ～の形で〕 ～をさがす / 4. 《観点・規準を表して》 ～にとっては、～にしては / 5. 《期間を表して》 ～の間（ずっと） 〔for a long timeの形で〕 長い / 6. 《利益を表して》 ～のための［に］ / 7. 《対象を示して》～に（対して） / 8. 《資格・特性を表して》 ～として / 9. 〔It is ～ for Ａ to do…〕 Ａ［人］が･･･するのは～だ / 10. ≪同等を示して≫～を意味する / 11. ≪原因・理由を表して≫～のために、～が原因で / 12. ≪方向を表して≫～へ向かって / 13. ≪支持、賛成を表して≫～に賛成して / 14. ≪代理を表して≫～のかわりに
+w2205	前置詞	from	1. 《場所を示して》 ～から / 2. 《出所・起源・由来を示して》 ～から（の）、～出身の / 3. 《時間を示して》 ～から
+w2206	前置詞	in	1. 《場所・空間・位置・関係を示して》～の中に［で］、～に［で］、～では、～において / 2. 《時期・期間・年代などの時を示して》～に　 / 3. 《分野・限定を示して》～に関して、～について / 4. 《時間の経過を示して》～の後に、～たって、～のうちに / 5. 《状態を示して》～の状態に［で］ / 6. 《行為の対象を示して》～を、～に対して / 7. ≪手段を示して≫～で / 8. ≪着用を示して≫～を身につけて、～を着て / 9. ≪所属を示して≫～に所属して、～に従事して
+w2207	前置詞	including	（～を）含めて
+w2208	前置詞	into	1. ～へ［に］, ～の中へ［に、で］ / 2. ≪状態の変化を表して≫～へ、～に（変わって、なって）
+w2209	前置詞	like	～のような［に］、～に似ている、～に似た
+w2210	前置詞	near	～の近くの［に、で］
+w2211	前置詞	of	1. 《性質・属性・起源を表して》 ～の 〔たとえばthe leg of the tableの形で〕テーブルのあし / 2. 《単位・分量・容器などを表して》 ～の　〔たとえば a cup of coffee の形で〕一杯のコーヒー / 3. 《意味上の主語を示して》 ～の　〔たとえば the visit of an ALT〕 ALTの訪問　 / 4. 《意味上の目的語を示して》 ～の　〔たとえば her love of sports の形で〕 彼女のスポーツ愛好　　 / 5. 《同格の関係を表して》 ～の　〔たとえば the city of Goshogawara の形で〕 五所川原市 / 6. 《材料・構成物を表して》 ～の　〔たとえば a family of five の形で〕 ５人家族 / 7. 《全体に対する部分を表して》 ～の（中の） 〔たとえば a member of the baseball team の形で〕 野球部の一員 / 8.［it is A of B to～の形で］～するとはBはAである / 9.～から（離れて）　［たとえばin front of～の形で］～の前 / 10.～で（できている）、～（製）
+w2212	前置詞	off	～からはなれて
+w2213	前置詞	on	1. 《手段・方法を示して》 ～で　〔たとえばon TVの形で〕テレビで / 2. 《日付･曜日の前で》 ～に / 3. 《接触を表して》 （～の上）に[で]　〔たとえばa book on the desk の形で〕 机の上の本 / 4. 《状態を表して》 ～中（ちゅう）で、～して　〔たとえばの on my way to school 形で〕 学校へ行く途中で / 5. ～に面して、～に接して 〔たとえばthe building on your left〕 あなたの左手の建物 / 6. ～の一員で / 7.（影響・対象）に対して / 8.～について（の）、～に関する / 9.～で、～（のため）に[たとえばon a tripの形で]
+w2214	前置詞	over	1. 《ものの上や地域一帯を覆うことを示して》～の上に［で］ / 2. 〔over＋数字の形で〕～以上の / 3. ～の中（じゅう）の［に、を］、～の一面の［に、を］
+w2215	前置詞	plus	～を加えて
+w2216	前置詞	since	～以来（ずっと今まで）、～から今日まで
+w2217	前置詞	than	～よりも、～にくらべて
+w2218	前置詞	through	1. 《原因・手段を表して》 ～によって、～を通じて / 2. 《期間を表して》 ～の間中（じゅう） / 3. 《通過・貫通》 ～を通して
+w2219	前置詞	throw	～を投げる
+w2220	前置詞	to	1. 《動作の対象などを表して》 ～に、～に対して / 2. 《到達点、方向、行き先など》 ～に、～へ、～まで　　 / 3. 〔原因・理由を表す不定詞で〕 ～して / 4. 〔名詞のはたらきをする不定詞で〕 ～すること　　 / 5. 〔形容詞のはたらきをする不定詞で〕 ～するための、するべき / 6. 〔目的を表す不定詞で〕 ～するために / 7. ～にとって　〔たとえば important to all of us の形で〕 私たち全員にとって重要な / 8. ～に合わせて
+w2221	前置詞	toward	～の方へ、～に向かって
+w2222	前置詞	under	1. ～の下に［へ、で、の］ / 2．～のもとで、～に従って
+w2223	前置詞	until	～まで（ずっと）
+w2224	前置詞	up	～をあがって
+w2225	前置詞	upon	（基本的な意味は on とほぼ同じ）
+w2226	前置詞	with	1. 《手段・道具を表して》 ～で、～を使って / 2. 《関連を表して》 ～に関して、ついて / 3. 《付随･所有･属性を表して》 ～のある、を身につけて / 4. 《相手を表して》 ～と　 / 5. 《同伴を表して》 ～といっしょに / 6. 《原因・理由を表して》～が原因で
+w2227	前置詞	without	～なしで
+w2228	接続詞	after	(～が…した) あとに［で］
+w2229	接続詞	also	≪文頭で≫また、さらにその上
+w2230	接続詞	although	～だけれど
+w2231	接続詞	and	1. 〔語句を結ぶ〕 ～と… / 2. 〔文を結ぶ〕 そして～ / 3. 〔命令文のあとで〕 そうすれば / 4. 〔～and so on の形で〕 ～など / 5. [同一語を繰り返し用いて]　ますます～、どんどん～
+w2232	接続詞	as	1. 《比較を表して》 〔 as A as B の形で、前の as が副詞 〕　Ｂと同じくらいＡな［で］ / 2. 《様態を表して》 ～のとおり（に） / 3. 《時を表して》 ～のとき、～しながら
+w2233	接続詞	because	《理由を示して》（～が）･･･なので、（なぜなら）～が･･･だから
+w2234	接続詞	before	(～が･･･する）前に
+w2235	接続詞	but	1. しかし、でも、けれども、だが / 2. [not only～ but also…の形で]　ただ～だけでなくまた…
+w2236	接続詞	if	《条件・仮定を表して》もし～ならば、仮に～だとすれば
+w2237	接続詞	nor	～でも…でもない
+w2238	接続詞	once	一旦～したからには
+w2239	接続詞	or	1. 〔命令文に続けて〕そうしなければ、そうしないと / 2. 《選択を表して》 ～または・・・、～か・・・
+w2240	接続詞	since	(～が・・・して）以来、してから（今まで）
+w2241	接続詞	so	それで、そこで、だから
+w2242	接続詞	than	～が…する［である］よりも
+w2243	接続詞	that	～ということ　〔think, know, hope, say などの動詞のあとにきて、しばしば省略される〕
+w2244	接続詞	until	（～が・・・する）まで（ずっと）
+w2245	接続詞	when	（～する）ときに
+w2246	接続詞	while	～する間に（は）
+w2247	接続詞	from	1. 《場所を示して》 ～から / 2. 《出所・起源・由来を示して》 ～から（の）、～出身の / 3. 《時間を示して》 ～から
+w2248	接続詞	in	1. 《場所・空間・位置・関係を示して》～の中に［で］、～に［で］、～では、～において / 2. 《時期・期間・年代などの時を示して》～に　 / 3. 《分野・限定を示して》～に関して、～について / 4. 《時間の経過を示して》～の後に、～たって、～のうちに / 5. 《状態を示して》～の状態に［で］ / 6. 《行為の対象を示して》～を、～に対して / 7. ≪手段を示して≫～で / 8. ≪着用を示して≫～を身につけて、～を着て / 9. ≪所属を示して≫～に所属して、～に従事して
+w2249	接続詞	including	（～を）含めて
+w2250	接続詞	into	1. ～へ［に］, ～の中へ［に、で］ / 2. ≪状態の変化を表して≫～へ、～に（変わって、なって）
+w2251	接続詞	like	～のような［に］、～に似ている、～に似た
+w2252	接続詞	near	～の近くの［に、で］
+w2253	接続詞	of	1. 《性質・属性・起源を表して》 ～の 〔たとえばthe leg of the tableの形で〕テーブルのあし / 2. 《単位・分量・容器などを表して》 ～の　〔たとえば a cup of coffee の形で〕一杯のコーヒー / 3. 《意味上の主語を示して》 ～の　〔たとえば the visit of an ALT〕 ALTの訪問　 / 4. 《意味上の目的語を示して》 ～の　〔たとえば her love of sports の形で〕 彼女のスポーツ愛好　　 / 5. 《同格の関係を表して》 ～の　〔たとえば the city of Goshogawara の形で〕 五所川原市 / 6. 《材料・構成物を表して》 ～の　〔たとえば a family of five の形で〕 ５人家族 / 7. 《全体に対する部分を表して》 ～の（中の） 〔たとえば a member of the baseball team の形で〕 野球部の一員 / 8.［it is A of B to～の形で］～するとはBはAである / 9.～から（離れて）　［たとえばin front of～の形で］～の前 / 10.～で（できている）、～（製）
+w2254	接続詞	off	～からはなれて
+w2255	接続詞	on	1. 《手段・方法を示して》 ～で　〔たとえばon TVの形で〕テレビで / 2. 《日付･曜日の前で》 ～に / 3. 《接触を表して》 （～の上）に[で]　〔たとえばa book on the desk の形で〕 机の上の本 / 4. 《状態を表して》 ～中（ちゅう）で、～して　〔たとえばの on my way to school 形で〕 学校へ行く途中で / 5. ～に面して、～に接して 〔たとえばthe building on your left〕 あなたの左手の建物 / 6. ～の一員で / 7.（影響・対象）に対して / 8.～について（の）、～に関する / 9.～で、～（のため）に[たとえばon a tripの形で]
+w2256	接続詞	over	1. 《ものの上や地域一帯を覆うことを示して》～の上に［で］ / 2. 〔over＋数字の形で〕～以上の / 3. ～の中（じゅう）の［に、を］、～の一面の［に、を］
+w2257	接続詞	plus	～を加えて
+w2258	接続詞	since	～以来（ずっと今まで）、～から今日まで
+w2259	接続詞	than	～よりも、～にくらべて
+w2260	接続詞	through	1. 《原因・手段を表して》 ～によって、～を通じて / 2. 《期間を表して》 ～の間中（じゅう） / 3. 《通過・貫通》 ～を通して
+w2261	接続詞	throw	～を投げる
+w2262	接続詞	to	1. 《動作の対象などを表して》 ～に、～に対して / 2. 《到達点、方向、行き先など》 ～に、～へ、～まで　　 / 3. 〔原因・理由を表す不定詞で〕 ～して / 4. 〔名詞のはたらきをする不定詞で〕 ～すること　　 / 5. 〔形容詞のはたらきをする不定詞で〕 ～するための、するべき / 6. 〔目的を表す不定詞で〕 ～するために / 7. ～にとって　〔たとえば important to all of us の形で〕 私たち全員にとって重要な / 8. ～に合わせて
+w2263	接続詞	toward	～の方へ、～に向かって
+w2264	接続詞	under	1. ～の下に［へ、で、の］ / 2．～のもとで、～に従って
+w2265	接続詞	until	～まで（ずっと）
+w2266	接続詞	up	～をあがって
+w2267	接続詞	upon	（基本的な意味は on とほぼ同じ）
+w2268	接続詞	with	1. 《手段・道具を表して》 ～で、～を使って / 2. 《関連を表して》 ～に関して、ついて / 3. 《付随･所有･属性を表して》 ～のある、を身につけて / 4. 《相手を表して》 ～と　 / 5. 《同伴を表して》 ～といっしょに / 6. 《原因・理由を表して》～が原因で
+w2269	接続詞	without	～なしで
+w2270	冠詞	a	1.　～というもの / 2.　～につき / 3.　1 つの、1 人の〔数えられる名詞の前に置き、ふつう訳さない〕
+w2271	冠詞	an	1つの、1人の 〔母音ではじまる数えられる名詞の前に置き、ふつう訳さない〕
+w2272	冠詞	the	1. 〔特定のものや前後関係で何を指すかわかる名詞の前につける〕 / 2. 〔最上級の前につける〕 / 3. 〔唯一のものの前につける〕 / 4. 〔川・複数形の国名など、特定の固有名詞とともに〕
+w2273	間投詞	bye	じゃあね、バイバイ
+w2274	間投詞	dear	おや、まあ
+w2275	間投詞	good	《賛成・満足を表して》 よろしい、そのとおり
+w2276	間投詞	goodbye	さようなら
+w2277	間投詞	hello	1. こんにちは / 2. 《電話で》 もしもし 　　 / 3. やあ、あのー、もしもし
+w2278	間投詞	here	《相手の注意をうながして》ほら、さあ、はい
+w2279	間投詞	hey	（疑問を表して）えっ
+w2280	間投詞	hi	やあ、こんにちは
+w2281	間投詞	Oh	おや、まあ、おお
+w2282	間投詞	OK	《注意をうながして》ええと､それでは、よろしい、いいとも
+w2283	間投詞	welcome	ようこそ、いらっしゃい
+w2284	間投詞	well	1. 《ためらったり、考えるために間を置くときに用いて》 ええと、そうですね、うーん / 2. 《話を切り出すときに用いて》 さて、それでは / 3. まあ
+w2285	間投詞	what	《驚き、とまどいなどを表して》 えっ、何？
+w2286	間投詞	wow	〔驚きや喜びを表して〕うわあ、ああ、ま
