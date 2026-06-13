@@ -5,3 +5,4 @@ gen-full.js
 gen-patch.js
 pilot_result.json
 deck_pilot.tsv
+gen-classify.js

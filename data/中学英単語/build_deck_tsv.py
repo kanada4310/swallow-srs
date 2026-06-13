@@ -15,6 +15,11 @@ result.json 形式: {"items":[{"id","word","sentences":[{"collocation","en","ja"
 import json, sys, csv, re, html
 
 result_path, out_path = sys.argv[1], sys.argv[2]
+# 任意: idioms.json（[{"w":単語,"c":コロケーション}, ...]）= イディオムタグを付与する対象
+idiom_set = set()
+if len(sys.argv) > 3:
+    for d in json.load(open(sys.argv[3], encoding='utf-8')):
+        idiom_set.add((d['w'], d['c']))
 
 # words.tsv で id -> (pos, word, meaning)
 meta = {}
@@ -218,6 +223,8 @@ for it in items:
         note_id = f"{wid}-{n}"
         seen_ids.add(note_id)
         tags = f"品詞:{pos}|単語:{word}"
+        if (word, collo) in idiom_set:
+            tags += "|イディオム"
         rows.append([note_id, word, pos, meaning, collo, ja, en_html, en_blank, tags])
 
 with open(out_path, 'w', encoding='utf-8', newline='') as f:
