@@ -8,3 +8,4 @@ deck_pilot.tsv
 gen-classify.js
 gen-colloc.js
 gen-exemplar.js
+__pycache__/
