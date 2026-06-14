@@ -108,11 +108,30 @@ def _match(ct, st):
         return True
     return False
 
+_VOWELS = set("aeiou")
+
+def _onset_token(w):
+    """単語を「最初の音節の頭子音(クラスタ) + 残り文字数ぶんの下線」にする。
+    最初の母音までの子音をすべて見せる（th/sh/ch/str/sch 等のクラスタもまとめて表示）。
+    母音始まりの語は先頭1文字だけ見せる。記号(' -)は残す。"""
+    onset_end = len(w)
+    for i, ch in enumerate(w):
+        low = ch.lower()
+        if low in _VOWELS or (low == 'y' and i > 0):   # y は語頭では子音扱い
+            onset_end = i
+            break
+    if onset_end == 0:        # 母音始まり → 先頭1文字だけ見せる
+        onset_end = 1
+    shown = w[:onset_end]
+    rest = ''.join('_' if ch.isalpha() else ch for ch in w[onset_end:])
+    return shown + rest
+
 def _blank_for(phrase):
-    """空欄表現を作る。フレーズの単語数ぶんの下線を返す（語数ヒント）。"""
+    """空欄表現を作る。各単語を頭子音ヒント＋語長下線にする。
+    例: take the bus → t___ th_ b__ / think → th___ / school → sch___"""
     words = [w for w in re.split(r'\s+', phrase.strip()) if w]
-    n = max(1, len(words))
-    return '<span class="blank">' + ' '.join(['_____'] * n) + '</span>'
+    parts = [html.escape(_onset_token(w)) for w in words]
+    return '<span class="blank">' + ' '.join(parts) + '</span>'
 
 def _is_placeholder(tok):
     return tok in ('A', 'B') or tok.lower().strip(".") in _PLACEHOLDERS
