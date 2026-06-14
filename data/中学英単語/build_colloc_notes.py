@@ -66,7 +66,8 @@ for it in deck:
             en_html, en_blank, found = realize_blank(en, core, ex.get('filler', ''), it['w'])
             if not found:
                 stat['blank_fail'] += 1
-            pool.append({'en': en_html, 'blank': en_blank, 'ja': ja})
+            ctx = (ex.get('ctx') or '').strip()
+            pool.append({'en': en_html, 'blank': en_blank, 'ja': ja, 'ctx': ctx})
             stat['exemplars'] += 1
         if not pool:
             continue

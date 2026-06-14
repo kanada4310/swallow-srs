@@ -89,7 +89,7 @@ export function StudyCard({
   const effectiveFieldValues = useMemo<FieldValues>(() => {
     const raw = fieldValues['例文プール']
     if (!raw) return fieldValues
-    let pool: Array<{ en?: string; blank?: string; ja?: string }>
+    let pool: Array<{ en?: string; blank?: string; ja?: string; ctx?: string }>
     try {
       pool = JSON.parse(raw)
     } catch {
@@ -106,6 +106,7 @@ export function StudyCard({
       '英文穴埋め': ex.blank ?? '',
       '和文': ex.ja ?? '',
       '英文': ex.en ?? '',
+      '文脈': ex.ctx ?? '',
     }
   }, [fieldValues, noteId])
 

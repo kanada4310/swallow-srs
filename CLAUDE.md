@@ -182,6 +182,7 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 - **パイプライン**（`data/中学英単語/`）: `gen-colloc.js`(コロケーション選定)→`corpus_attest.py`→`gen-exemplar.js`(語彙統制例文プール5本)→`build_colloc_notes.py`(実現コロケーション全体を空所化)
 - **アプリ**: ノートタイプ「コロケーション構文」(見出し語/語義/コア/スロット型/例文プールJSON)。`StudyCard.tsx` がプールからレビュー毎に1本ランダム表示（`例文プール`フィールドが無い通常ノートは素通り）
 - **空欄ヒント**: `_blank_for` = 各語「最初の音節の頭子音クラスタ＋語長下線」（take the bus→`t___ th_ b__`, think→`th___`）
+- **文脈アシスト**: 例文プール1件を `{en, blank, ja, ctx}` に拡張。`ctx`＝日本語の場面リード文（例「私は荷物が多くて困っています。そのとき、」）を**表面の最上部**に表示しイメージ強化。`文脈` は StudyCard が合成する表示専用フィールド（保存フィールド非追加）。enrich-only パイプライン: `build_context_workflow.py`→`gen-context.js`(Workflow/Sonnet)→`merge_context.py`→`build_colloc_notes.py`。テンプレ定義は `colloc-template.mjs` に集約（`import-colloc-deck.mjs`/`update-colloc-template.mjs` 共有）。既存DB反映は `update-colloc-context.mjs`(例文プール in-place)＋`update-colloc-template.mjs`(front/css)
 - **未認証405修正**: ミドルウェアが未認証 `/api/*` を `/login` へ307→POST が405化していた問題を、`/api/*` はリダイレクトせず401返却に修正（`src/lib/supabase/middleware.ts`）
 
 ## TTS設定（デッキ単位）
