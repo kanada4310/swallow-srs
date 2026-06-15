@@ -5,10 +5,11 @@ import Link from 'next/link'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useAuth } from '@/contexts/AuthContext'
 import { getDecksWithStatsOffline } from '@/lib/db/schema'
-import { getGardenForDeck } from '@/lib/garden/garden-data'
+import { getGardenForDeck, getWitheredPlants } from '@/lib/garden/garden-data'
 import { derivePlantState, summarizeGarden, type GrowthStage, type CareState } from '@/lib/garden/plant-state'
 import { GardenField, type GardenFieldItem } from '@/components/garden/GardenField'
 import { IsoTile } from '@/components/garden/IsoTile'
+import { WitheredList } from '@/components/garden/WitheredList'
 import { AppLayout } from '@/components/layout/AppLayout'
 
 /** 一度に描画するタイル数の上限（超過分は PixiJS 化で対応予定） */
@@ -27,6 +28,7 @@ export default function GardenPage() {
 
   const [deckId, setDeckId] = useState<string | null>(null)
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
+  const [showWithered, setShowWithered] = useState(false)
 
   const decks = useLiveQuery(
     async () => (userId ? await getDecksWithStatsOffline(userId) : null),
@@ -40,6 +42,13 @@ export default function GardenPage() {
     async () => (userId && effectiveDeckId ? await getGardenForDeck(effectiveDeckId, userId) : null),
     [userId, effectiveDeckId],
   )
+
+  // 枯れ株は複数デッキに散るため全デッキ横断で取得（Phase 10.3）
+  const withered = useLiveQuery(
+    async () => (userId ? await getWitheredPlants(userId) : null),
+    [userId],
+  )
+  const witheredCount = withered?.length ?? 0
 
   const { items, summary, total } = useMemo(() => {
     if (!plants) return { items: [] as GardenFieldItem[], summary: null, total: 0 }
@@ -92,8 +101,13 @@ export default function GardenPage() {
           <span className="px-3 py-1 rounded-lg bg-gray-100 text-gray-700">株 {summary.total}</span>
           <span className="px-3 py-1 rounded-lg bg-sky-100 text-sky-700">水やりが必要 {summary.needWater}</span>
           <span className="px-3 py-1 rounded-lg bg-green-100 text-green-700">開花・結実 {summary.byStage.blooming}</span>
-          {summary.dead > 0 && (
-            <span className="px-3 py-1 rounded-lg bg-amber-100 text-amber-800">枯れ {summary.dead}</span>
+          {witheredCount > 0 && (
+            <button
+              onClick={() => setShowWithered(true)}
+              className="px-3 py-1 rounded-lg bg-amber-100 text-amber-800 font-medium hover:bg-amber-200"
+            >
+              🍂 枯れ株 {witheredCount}（全デッキ）
+            </button>
           )}
           {effectiveDeckId && summary.needWater > 0 && (
             <Link
@@ -115,6 +129,11 @@ export default function GardenPage() {
       <div className="bg-green-50/40 border border-green-100 rounded-xl p-2">
         <GardenField items={items} onSelect={setSelectedCardId} />
       </div>
+
+      {/* 枯れ株一覧（全デッキ横断・復活導線） */}
+      {showWithered && (
+        <WitheredList plants={withered ?? []} onClose={() => setShowWithered(false)} />
+      )}
 
       {/* 個別画面（1ブロック） */}
       {selected && (

@@ -245,6 +245,10 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
   - `src/components/garden/`: `PlantSprite`（手続き生成SVG・素朴トーン）/`IsoTile`（ブロック+株+水やりバッジ）/`GardenField`（自動レイアウト+揺れ/しずくアニメ）
   - `src/lib/garden/garden-data.ts` `getGardenForDeck(deckId, userId)`: デッキ配下の全カード×card_states を株データ化（オフライン可）
   - 大規模デッキは `MAX_TILES=150` で打ち切り表示（将来 PixiJS 化）
+- **枯れ株一覧・復活導線（10.3）✅**: 全デッキ横断で枯れ株を集め、水やり（=復習）で芽吹き直す導線
+  - `src/lib/garden/garden-data.ts` `getWitheredPlants(userId, now?)`: 全 card_states を走査 → `isDead` のみ抽出 → deckId/deckName/label/plant 付与・放置日数降順（Dexie のみ・オフライン可）
+  - `src/components/garden/WitheredList.tsx`: 枯れ株モーダル一覧。行ごとに「水やり」→ `/study?deck=X&card=cardId`（既存 `priorityCardId` で当該株を最優先表示）
+  - `/garden` のサマリー「🍂 枯れ株 N（全デッキ）」バッジから展開。枯れは見た目のみ・card_states 不変・永久ロストなし（安全弁）
 - **方針**: アートは当面**自前の手続き生成SVG**で世界観統制（CC0素材は絵柄不一致で見送り）。品種別スプライト/`user_creature_state` は 10.4。将来 PixiJS（大規模）/Rive（状態アニメ）
 
 ## 現在の進捗
@@ -252,13 +256,13 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 詳細は @docs/progress.md を参照。
 
 - **最終更新**: 2026-06-15
-- **直近の修正**: **Phase 10「記憶のいきもの育成」10.1/10.2 を実装・push 完了**。1ノート＝植物（果樹・花き）の育成ゲーム。アイソメ箱庭ビュー `/garden`（種→芽→苗→成株→開花/結実＋しおれ〜枯れ、水やり＝復習）。FSRS の card_states から導出する純コスメ層で学習エンジンは不変。設計は @docs/memory-creatures-design.md
+- **直近の修正**: **Phase 10.3「枯れ株一覧・復活導線」完了**（10.1/10.2 は実装・実機確認済み）。`/garden` の「🍂 枯れ株 N（全デッキ）」から全デッキ横断の枯れ株一覧モーダル → 「水やり」で当該株を最優先復習（`/study?...&card=`）→ FSRS が自然に芽吹き直し。枯れは見た目のみ・card_states 不変。設計は @docs/memory-creatures-design.md
 - **次にやること**:
-  1. **実機確認（デプロイ後）**: スマホ再ログイン→`/garden`。学習履歴のあるアカウント／小さいデッキで（新規は全部「種」）。枯れは長期放置アカウントで
+  1. **要デプロイ＆実機確認**: 10.3（新コンポーネント・新ロジック）。デプロイ後に再ログイン→`/garden`、枯れは長期放置アカウントで
   2. **Phase 10.4 品種選択（インプリント）**: `user_creature_state` テーブル＋品種カタログ＋初回選択UI（現状は汎用の木1種）
-  3. **Phase 10.3 枯れ株一覧（復活導線）** / 10.2残（大規模デッキ→PixiJS、学習完了→成長演出、しきい値の実データ調整）
+  3. **10.2 残**: 大規模デッキ→PixiJS、学習完了→成長演出、しきい値の実データ調整
   4. **Phase 13.4**: リッチコンテンツ表示（数式 KaTeX/MathJax・画像）→ 数学・理科へ科目拡張
-  5. billing側のLINE送信ジョブ / Phase 9.3-9.4 / 文脈アシストのデプロイ確認
+  5. billing側のLINE送信ジョブ / Phase 9.3-9.4
 
 ## 参照ドキュメント
 
