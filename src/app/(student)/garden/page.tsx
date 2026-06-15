@@ -11,6 +11,7 @@ import { GardenField, type GardenFieldItem } from '@/components/garden/GardenFie
 import { IsoTile } from '@/components/garden/IsoTile'
 import { WitheredList } from '@/components/garden/WitheredList'
 import { AchievementsModal } from '@/components/garden/AchievementsModal'
+import { DailyMissionCard } from '@/components/garden/DailyMissionCard'
 import { useStreak } from '@/lib/stats/useStreak'
 import { AppLayout } from '@/components/layout/AppLayout'
 
@@ -120,6 +121,8 @@ export default function GardenPage() {
           </select>
         )}
       </div>
+
+      <DailyMissionCard userId={userId} />
 
       {summary && (
         <div className="flex flex-wrap gap-2 mb-4 text-sm">

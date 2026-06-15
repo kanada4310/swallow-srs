@@ -8,7 +8,7 @@
 import { db, getDescendantDeckIds, getCreatureStatesMap } from '@/lib/db/schema'
 import { derivePlantState, type PlantCardInput, type PlantState } from './plant-state'
 import { getVariety, type Variety } from './varieties'
-import { computeStreak } from '@/lib/stats/streak'
+import { computeStreak, studyDayKey } from '@/lib/stats/streak'
 import type { AchievementInput } from './achievements'
 
 export interface GardenPlant {
@@ -219,4 +219,56 @@ export async function getAchievementInput(
     totalPlants,
     varietyCount,
   }
+}
+
+/** デイリーミッション（Phase 10.5・軽量版）。今日の水やり進捗。 */
+export interface DailyMission {
+  /** 今日 水やり（復習）した株数（distinct card_id・4時区切り） */
+  wateredToday: number
+  /** いま水やりが必要な株数（全デッキ・期限切れ） */
+  dueNow: number
+  /** 今日の目標（= wateredToday + dueNow） */
+  goal: number
+  /** 目標達成（要水やりが0、かつ今日やることがあった） */
+  done: boolean
+}
+
+/**
+ * 今日の水やりミッションを既存データから導出する（Phase 10.5）。
+ * reviewLogs（今日分）＋ card_states（全デッキの要水やり）から計算。オフライン可。
+ */
+export async function getDailyMission(
+  userId: string,
+  now: Date = new Date()
+): Promise<DailyMission> {
+  const [cardStates, reviewLogs] = await Promise.all([
+    db.cardStates.where('user_id').equals(userId).toArray(),
+    db.reviewLogs.where('user_id').equals(userId).toArray(),
+  ])
+
+  const todayKey = studyDayKey(now)
+  const wateredSet = new Set<string>()
+  for (const l of reviewLogs) {
+    const d = l.reviewed_at instanceof Date ? l.reviewed_at : new Date(l.reviewed_at)
+    if (studyDayKey(d) === todayKey) wateredSet.add(l.card_id)
+  }
+
+  let dueNow = 0
+  for (const cs of cardStates) {
+    const plant = derivePlantState(
+      {
+        state: cs.state,
+        stability: cs.stability ?? null,
+        interval: cs.interval,
+        due: cs.due,
+        lapses: cs.lapses ?? 0,
+      },
+      now
+    )
+    if (plant.needsWater) dueNow += 1
+  }
+
+  const wateredToday = wateredSet.size
+  const goal = wateredToday + dueNow
+  return { wateredToday, dueNow, goal, done: dueNow === 0 && goal > 0 }
 }

@@ -12,6 +12,7 @@ let cardStatesData: Row[] = []
 let cardsData: Row[] = []
 let notesData: Row[] = []
 let decksData: Row[] = []
+let reviewLogsData: Row[] = []
 
 /** Minimal Dexie query stub: .where(field).equals(v)|.anyOf(arr).toArray() */
 function makeTable(getData: () => Row[]) {
@@ -33,12 +34,13 @@ vi.mock('@/lib/db/schema', () => ({
     cards: makeTable(() => cardsData),
     notes: makeTable(() => notesData),
     decks: makeTable(() => decksData),
+    reviewLogs: makeTable(() => reviewLogsData),
   },
   getDescendantDeckIds: vi.fn().mockResolvedValue([]),
   getCreatureStatesMap: vi.fn().mockResolvedValue(new Map()),
 }))
 
-import { getWitheredPlants } from './garden-data'
+import { getWitheredPlants, getDailyMission } from './garden-data'
 
 const NOW = new Date('2026-06-15T12:00:00Z')
 
@@ -68,6 +70,7 @@ beforeEach(() => {
   cardsData = []
   notesData = []
   decksData = []
+  reviewLogsData = []
   vi.clearAllMocks()
 })
 
@@ -139,5 +142,46 @@ describe('getWitheredPlants', () => {
     cardsData = [] // 対応する card が無い
     const result = await getWitheredPlants('u1', NOW)
     expect(result).toEqual([])
+  })
+})
+
+/** reviewLog を作る（reviewed_at は NOW からの相対日数） */
+function makeLog(cardId: string, daysAgo: number): Row {
+  return {
+    user_id: 'u1',
+    card_id: cardId,
+    reviewed_at: new Date(NOW.getTime() - daysAgo * 86_400_000),
+  }
+}
+
+describe('getDailyMission', () => {
+  it('returns an empty goal when there is nothing to do today', async () => {
+    const m = await getDailyMission('u1', NOW)
+    expect(m).toEqual({ wateredToday: 0, dueNow: 0, goal: 0, done: false })
+  })
+
+  it('counts due plants and distinct cards watered today', async () => {
+    cardStatesData = [makeState('a', 5), makeState('b', 5)] // 2株が要水やり
+    reviewLogsData = [
+      makeLog('x', 0), // 今日
+      makeLog('x', 0), // 同じカード（distinct で1）
+      makeLog('y', 0), // 今日・別カード
+      makeLog('z', 3), // 3日前（今日ではない）
+    ]
+    const m = await getDailyMission('u1', NOW)
+    expect(m.dueNow).toBe(2)
+    expect(m.wateredToday).toBe(2) // x, y（z は対象外）
+    expect(m.goal).toBe(4)
+    expect(m.done).toBe(false)
+  })
+
+  it('marks the mission done when nothing is due but there was activity today', async () => {
+    cardStatesData = [makeState('a', -1)] // due は未来 → 要水やりではない
+    reviewLogsData = [makeLog('a', 0)]
+    const m = await getDailyMission('u1', NOW)
+    expect(m.dueNow).toBe(0)
+    expect(m.wateredToday).toBe(1)
+    expect(m.goal).toBe(1)
+    expect(m.done).toBe(true)
   })
 })
