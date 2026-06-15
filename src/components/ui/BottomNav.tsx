@@ -38,6 +38,12 @@ const StudentsIcon = () => (
   </svg>
 )
 
+const GardenIcon = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21v-9m0 0C12 8 9.5 6 6.5 6 6.5 9.5 9 12 12 12zm0 0c0-4 2.5-6 5.5-6C17.5 9.5 15 12 12 12z" />
+  </svg>
+)
+
 const NotesIcon = () => (
   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -53,6 +59,7 @@ const NoteTypesIcon = () => (
 const studentNavItems: NavItem[] = [
   { href: '/', label: 'ホーム', icon: <HomeIcon /> },
   { href: '/decks', label: 'デッキ', icon: <DecksIcon /> },
+  { href: '/garden', label: '庭', icon: <GardenIcon /> },
   { href: '/notes', label: 'ノート', icon: <NotesIcon /> },
   { href: '/note-types', label: 'テンプレート', icon: <NoteTypesIcon /> },
   { href: '/stats', label: '統計', icon: <StatsIcon /> },
