@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { NoteType, FieldDefinition, GenerationRule } from '@/types/database'
 import { CLOZE_NOTE_TYPE_ID } from '@/lib/constants'
+import { ImageUploadButton } from '@/components/ui/ImageUploadButton'
 import type { BrowsableNote } from './NoteCard'
 
 interface NoteEditModalProps {
@@ -251,10 +252,21 @@ export function NoteEditModal({ note, noteType, deckTags, onSave, onClose }: Not
 
             return (
               <div key={field.name}>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {field.name}
-                  {isRequired && <span className="text-red-500 ml-1">*</span>}
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    {field.name}
+                    {isRequired && <span className="text-red-500 ml-1">*</span>}
+                  </label>
+                  <ImageUploadButton
+                    label="画像"
+                    onUploaded={(url) =>
+                      handleFieldChange(
+                        field.name,
+                        `${fieldValues[field.name] || ''}<img src="${url}">`.trim()
+                      )
+                    }
+                  />
+                </div>
                 <textarea
                   value={fieldValues[field.name] || ''}
                   onChange={(e) => handleFieldChange(field.name, e.target.value)}

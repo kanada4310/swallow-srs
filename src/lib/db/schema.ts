@@ -87,6 +87,14 @@ export interface AudioCacheEntry {
   cachedAt: Date
 }
 
+// Image cache entry (Phase 13.4 画像) — オフラインでカード画像を表示するため
+// 画像URL（公開URL）をキーにバイナリを保持。複数ノートで同じURLを共有しうるので URL キー。
+export interface ImageCacheEntry {
+  id: string // = image URL（公開URL）
+  imageBlob: Blob
+  cachedAt: Date
+}
+
 // User-specific deck settings override
 export interface LocalUserDeckSettings {
   id: string // composite key: `${user_id}:${deck_id}`
@@ -119,6 +127,7 @@ class TsubameSRSDatabase extends Dexie {
   syncQueue!: Table<SyncQueueEntry>
   syncMetadata!: Table<SyncMetadata>
   audioCache!: Table<AudioCacheEntry>
+  imageCache!: Table<ImageCacheEntry>
   userDeckSettings!: Table<LocalUserDeckSettings>
   userCreatureState!: Table<LocalUserCreatureState>
   classes!: Table<Class>
@@ -356,6 +365,27 @@ class TsubameSRSDatabase extends Dexie {
       classMembers: '[class_id+user_id], class_id, user_id',
       deckAssignments: 'id, deck_id, class_id, user_id',
     })
+
+    // Version 13: Add imageCache table for offline card images (Phase 13.4)
+    this.version(13).stores({
+      profiles: 'id',
+      noteTypes: 'id',
+      cardTemplates: 'id, note_type_id',
+      decks: 'id, owner_id, parent_deck_id',
+      notes: 'id, deck_id, *tags',
+      cards: 'id, note_id, deck_id',
+      cardStates: 'id, user_id, card_id, due, [user_id+card_id]',
+      reviewLogs: 'id, user_id, card_id, synced_at',
+      syncQueue: '++id, table, created_at, attempts',
+      syncMetadata: 'key',
+      audioCache: 'id, noteId, cachedAt',
+      imageCache: 'id, cachedAt',
+      userDeckSettings: 'id, user_id, deck_id, [user_id+deck_id]',
+      userCreatureState: 'id, user_id, note_id, [user_id+note_id]',
+      classes: 'id, teacher_id, billing_template_id',
+      classMembers: '[class_id+user_id], class_id, user_id',
+      deckAssignments: 'id, deck_id, class_id, user_id',
+    })
   }
 }
 
@@ -512,6 +542,7 @@ export async function clearAllData(): Promise<void> {
       db.syncQueue,
       db.syncMetadata,
       db.audioCache,
+      db.imageCache,
       db.userDeckSettings,
       db.userCreatureState,
       db.classes,
@@ -531,6 +562,7 @@ export async function clearAllData(): Promise<void> {
         db.syncQueue.clear(),
         db.syncMetadata.clear(),
         db.audioCache.clear(),
+        db.imageCache.clear(),
         db.userDeckSettings.clear(),
         db.userCreatureState.clear(),
         db.classes.clear(),
@@ -633,6 +665,43 @@ export async function cleanupOldAudioCache(): Promise<number> {
 
   const ids = oldEntries.map((entry) => entry.id)
   await db.audioCache.bulkDelete(ids)
+
+  return ids.length
+}
+
+// Image cache helper functions (Phase 13.4 画像) — オフライン表示用
+
+/**
+ * Get cached image blob by URL
+ */
+export async function getCachedImage(url: string): Promise<ImageCacheEntry | undefined> {
+  return db.imageCache.get(url)
+}
+
+/**
+ * Save image blob to cache (keyed by URL)
+ */
+export async function saveImageCache(url: string, imageBlob: Blob): Promise<void> {
+  await db.imageCache.put({
+    id: url,
+    imageBlob,
+    cachedAt: new Date(),
+  })
+}
+
+/**
+ * Cleanup old image cache entries (older than 30 days)
+ */
+export async function cleanupOldImageCache(): Promise<number> {
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+  const oldEntries = await db.imageCache
+    .filter((entry) => entry.cachedAt < thirtyDaysAgo)
+    .toArray()
+
+  const ids = oldEntries.map((entry) => entry.id)
+  await db.imageCache.bulkDelete(ids)
 
   return ids.length
 }

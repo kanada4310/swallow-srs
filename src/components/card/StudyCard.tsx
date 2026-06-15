@@ -2,10 +2,10 @@
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { Ease } from '@/lib/srs/scheduler'
-import { renderTemplate, hasTtsPlaceholders, extractTtsFieldNames, type FieldValues } from '@/lib/template'
+import { renderTemplate, hasTtsPlaceholders, extractTtsFieldNames, extractImageUrls, rewriteImageSrcs, blobToDataUrl, type FieldValues } from '@/lib/template'
 import { CardIframe } from '@/components/card/CardIframe'
 import { AudioButton } from '@/components/audio/AudioButton'
-import { getCachedAudio, saveAudioCache } from '@/lib/db/schema'
+import { getCachedAudio, saveAudioCache, getCachedImage, saveImageCache } from '@/lib/db/schema'
 import { SwipeOverlay } from '@/components/card/SwipeOverlay'
 import { useSwipeGesture, type SwipeDirection } from '@/lib/swipe/useSwipeGesture'
 import type { GeneratedContent, FieldDefinition } from '@/types/database'
@@ -157,6 +157,58 @@ export function StudyCard({
 
   const displayedFront = mathHtml.front ?? renderedFront
   const displayedBack = mathHtml.back ?? renderedBack
+
+  // 画像（Phase 13.4）: カード内の <img> http(s) URL を、キャッシュ済み（or 取得した）
+  // 画像の data: URL に書き換える。sandbox iframe は親の blob: URL を参照できないため
+  // data: URL を srcdoc に直接埋め込む。これによりオフラインでも画像が表示できる。
+  const [imageHtml, setImageHtml] = useState<{ front: string | null; back: string | null }>({
+    front: null,
+    back: null,
+  })
+
+  useEffect(() => {
+    const urls = Array.from(
+      new Set([...extractImageUrls(displayedFront), ...extractImageUrls(displayedBack)])
+    )
+    if (urls.length === 0) {
+      setImageHtml({ front: null, back: null })
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      const urlMap = new Map<string, string>()
+      await Promise.all(
+        urls.map(async (url) => {
+          try {
+            const cached = await getCachedImage(url)
+            if (cached) {
+              urlMap.set(url, await blobToDataUrl(cached.imageBlob))
+              return
+            }
+            // 未キャッシュ: オンラインなら取得してキャッシュ（次回以降オフライン可）
+            const resp = await fetch(url)
+            if (!resp.ok) return
+            const blob = await resp.blob()
+            await saveImageCache(url, blob)
+            urlMap.set(url, await blobToDataUrl(blob))
+          } catch {
+            // 取得失敗（オフライン×未キャッシュ等）は元の URL のまま
+          }
+        })
+      )
+      if (cancelled || urlMap.size === 0) return
+      setImageHtml({
+        front: rewriteImageSrcs(displayedFront, urlMap),
+        back: rewriteImageSrcs(displayedBack, urlMap),
+      })
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [displayedFront, displayedBack])
+
+  const finalFront = imageHtml.front ?? displayedFront
+  const finalBack = imageHtml.back ?? displayedBack
 
   // Check if templates use inline {{tts:...}} placeholders
   const templateHasTts = useMemo(() => {
@@ -448,7 +500,7 @@ export function StudyCard({
         {!isFlipped ? (
           /* Front only */
           <div className="flex-1 p-8 flex flex-col items-center justify-center relative">
-            <CardIframe key="front" html={displayedFront} css={template.css} className="text-xl" onTtsPlay={handleIframeTtsPlay} math={frontHasMath} />
+            <CardIframe key="front" html={finalFront} css={template.css} className="text-xl" onTtsPlay={handleIframeTtsPlay} math={frontHasMath} />
             {!templateHasTts && ttsAutoButton && frontTtsFields.length > 0 && (
               <div className="mt-4 flex gap-2">
                 {frontTtsFields.map(fieldName => (
@@ -469,7 +521,7 @@ export function StudyCard({
         ) : (
           /* Back only (back template is self-contained, includes front content) */
           <div className="flex-1 p-8 flex flex-col items-center justify-center">
-            <CardIframe key="back" html={displayedBack} css={template.css} className="text-xl" onTtsPlay={handleIframeTtsPlay} math={backHasMath} />
+            <CardIframe key="back" html={finalBack} css={template.css} className="text-xl" onTtsPlay={handleIframeTtsPlay} math={backHasMath} />
             {!templateHasTts && ttsAutoButton && backTtsFields.length > 0 && (
               <div className="mt-4 flex gap-2">
                 {backTtsFields.map(fieldName => (
