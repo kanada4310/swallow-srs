@@ -17,6 +17,7 @@ import { isOnline as checkOnline } from '@/lib/db/utils'
 import { SyncStatusBadge } from '@/components/ui/SyncStatusBadge'
 import { ImprintPicker } from '@/components/garden/ImprintPicker'
 import { IsoTile } from '@/components/garden/IsoTile'
+import { PlantSprite } from '@/components/garden/PlantSprite'
 import { pickLabel } from '@/lib/garden/garden-data'
 import { pickVarietyByHash, getVariety, type Variety } from '@/lib/garden/varieties'
 import { derivePlantState, GROWTH_ORDER, type GrowthStage } from '@/lib/garden/plant-state'
@@ -134,6 +135,10 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
   // セッション中の成長（段階アップ）演出（Phase 10.2 残）
   const [grownEvents, setGrownEvents] = useState<GrowthEvent[]>([])
   const growthBaselineRef = useRef<Map<string, GrowthStage>>(new Map())
+  // 回答ごとの「水やり→成長」リアルタイム演出（非ブロッキング・一時オーバーレイ）
+  const [waterFx, setWaterFx] = useState<{ key: number; grewTo: GrowthStage | null; variety?: Variety } | null>(null)
+  const fxKeyRef = useRef(0)
+  const fxTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const cardStartTime = useRef<number>(Date.now())
   const waitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -230,6 +235,13 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
   useEffect(() => {
     getCreatureStatesMap(userId).then(setImprintMap).catch(() => {})
   }, [userId])
+
+  // FX タイマーのクリーンアップ
+  useEffect(() => {
+    return () => {
+      if (fxTimerRef.current) clearTimeout(fxTimerRef.current)
+    }
+  }, [])
 
   // 品種を確定して保存（Dexie 即時 ＋ サーバー upsert は fire-and-forget）
   const commitImprint = useCallback(
@@ -389,6 +401,7 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
         growthBaselineRef.current.set(growthNoteId, growthOf(currentCard.schedule, now))
       }
       const baselineStage = growthBaselineRef.current.get(growthNoteId)!
+      const preStage = growthOf(currentCard.schedule, now)
       const postStage = growthOf(newSchedule, now)
       if (GROWTH_ORDER[postStage] > GROWTH_ORDER[baselineStage]) {
         const label = pickLabel(currentCard.fieldValues)
@@ -399,6 +412,17 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
       } else {
         // Again などで基準まで戻った場合は演出から外す
         setGrownEvents((prev) => prev.filter((e) => e.noteId !== growthNoteId))
+      }
+
+      // 回答ごとの一時演出（非ブロッキング）。この回答で段階が上がれば「成長ポップ」、
+      // それ以外でも正答（Good/Easy）なら「水やり」しずく。Again/Hard は出さない（うるさくしない）。
+      const grewThisAnswer = GROWTH_ORDER[postStage] > GROWTH_ORDER[preStage]
+      if (grewThisAnswer || ease >= Ease.Good) {
+        const fxVariety = getVariety(imprintMap.get(growthNoteId)?.variety)
+        fxKeyRef.current += 1
+        setWaterFx({ key: fxKeyRef.current, grewTo: grewThisAnswer ? postStage : null, variety: fxVariety })
+        if (fxTimerRef.current) clearTimeout(fxTimerRef.current)
+        fxTimerRef.current = setTimeout(() => setWaterFx(null), 1100)
       }
 
       // Check for leech
@@ -871,6 +895,47 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
         ttsAutoplay={settings.tts_autoplay}
         ttsAutoButton={settings.tts_auto_button}
       />
+
+      {/* 回答ごとの「水やり→成長」演出（非ブロッキング・操作を妨げない） */}
+      {waterFx && (
+        <div
+          key={waterFx.key}
+          className="pointer-events-none fixed inset-x-0 top-1/3 flex justify-center z-40"
+          aria-hidden
+        >
+          {waterFx.grewTo ? (
+            <svg viewBox="-44 -64 88 80" width="96" height="88" className="study-grow-pop">
+              <PlantSprite stage={waterFx.grewTo} care="healthy" variety={waterFx.variety} />
+            </svg>
+          ) : (
+            <div className="study-water-drop text-4xl">💧</div>
+          )}
+        </div>
+      )}
+
+      <style jsx global>{`
+        .study-grow-pop {
+          transform-origin: 50% 90%;
+          animation: studyGrowPop 1.1s ease-out forwards;
+        }
+        @keyframes studyGrowPop {
+          0% { transform: scale(0.5) translateY(10px); opacity: 0; }
+          25% { transform: scale(1.12) translateY(0); opacity: 1; }
+          70% { transform: scale(1) translateY(-6px); opacity: 1; }
+          100% { transform: scale(1) translateY(-18px); opacity: 0; }
+        }
+        .study-water-drop {
+          animation: studyWaterDrop 1s ease-in forwards;
+        }
+        @keyframes studyWaterDrop {
+          0% { transform: translateY(-14px) scale(0.8); opacity: 0; }
+          30% { transform: translateY(0) scale(1); opacity: 1; }
+          100% { transform: translateY(14px) scale(0.9); opacity: 0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .study-grow-pop, .study-water-drop { animation-duration: 0.01s; }
+        }
+      `}</style>
     </div>
   )
 }
