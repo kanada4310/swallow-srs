@@ -2,10 +2,11 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { StreakHeatmap } from '@/components/stats'
 import { StatsContent } from './StatsContent'
 
 export default function StatsPage() {
-  const { isLoading } = useAuth()
+  const { isLoading, userId } = useAuth()
 
   if (isLoading) {
     return (
@@ -25,6 +26,9 @@ export default function StatsPage() {
     <AppLayout>
       <div className="max-w-4xl mx-auto px-4 py-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">学習統計</h1>
+        <div className="mb-6">
+          <StreakHeatmap userId={userId} />
+        </div>
         <StatsContent />
       </div>
     </AppLayout>

@@ -10,6 +10,7 @@ import { derivePlantState, summarizeGarden, type GrowthStage, type CareState } f
 import { GardenField, type GardenFieldItem } from '@/components/garden/GardenField'
 import { IsoTile } from '@/components/garden/IsoTile'
 import { WitheredList } from '@/components/garden/WitheredList'
+import { useStreak } from '@/lib/stats/useStreak'
 import { AppLayout } from '@/components/layout/AppLayout'
 
 /** 一度に描画するタイル数の上限（超過分は PixiJS 化で対応予定） */
@@ -50,6 +51,9 @@ export default function GardenPage() {
   )
   const witheredCount = withered?.length ?? 0
 
+  // 学習ストリーク（Phase 10.5）
+  const { current: streak } = useStreak(userId)
+
   const { items, summary, total } = useMemo(() => {
     if (!plants) return { items: [] as GardenFieldItem[], summary: null, total: 0 }
     const now = new Date()
@@ -80,9 +84,16 @@ export default function GardenPage() {
     <AppLayout>
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-        <h1 className="text-2xl font-bold text-gray-900">
-          <span className="mr-2" aria-hidden>🌱</span>わたしの庭
-        </h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-gray-900">
+            <span className="mr-2" aria-hidden>🌱</span>わたしの庭
+          </h1>
+          {streak > 0 && (
+            <span className="px-2.5 py-1 rounded-lg bg-orange-100 text-orange-700 text-sm font-medium whitespace-nowrap">
+              🔥 {streak}日
+            </span>
+          )}
+        </div>
         {decks && decks.length > 0 && (
           <select
             value={effectiveDeckId ?? ''}

@@ -254,6 +254,9 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
   - `src/components/garden/ImprintPicker.tsx`: 学習で new カード＋未刻印ノートのみ1度プロンプト（`StudySession` に統合）。「おまかせ」/「あとで」あり
   - DB: `user_creature_state`（`019_user_creature_state.sql`、imprint JSONB + nickname、RLS=自分のみ）。Dexie v12 `userCreatureState`＋`saveCreatureState`/`getCreatureState`/`getCreatureStatesMap`。pull API＋sync で同期、保存は `POST /api/garden/imprint`（オフラインは Dexie 即時・オンラインで upsert）
   - 庭/個別/枯れ株一覧はインプリント済みの品種で描画（未刻印は汎用の果樹）
+- **ストリーク/ヒートマップ（10.5 一部）✅**: review_logs から導出する継続フック
+  - `src/lib/stats/streak.ts`: `computeStreak`（current/longest・4時区切り、当日未学習でも継続）/`buildHeatmap`（週×7日）。純ロジック・テスト13件
+  - `src/lib/stats/useStreak.ts`（Dexie reviewLogs を liveQuery・オフライン可）＋`src/components/stats/StreakHeatmap.tsx`。`/stats` 上部に表示＋`/garden` ヘッダーに🔥連続日数
 - **方針**: アートは当面**自前の手続き生成SVG**で世界観統制（CC0素材は絵柄不一致で見送り）。将来 PixiJS（大規模）/Rive（状態アニメ）。品種別の5段階フルスプライトは後日
 
 ## 現在の進捗
@@ -261,12 +264,12 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 詳細は @docs/progress.md を参照。
 
 - **最終更新**: 2026-06-15
-- **直近の修正**: **Phase 10.4「品種インプリント」完了**（10.1/10.2/10.3 済み）。学習の初回出題時に「どの植物で育てる？」を選び、庭・枯れ株一覧が品種別の姿で描画。`user_creature_state`（019/Dexie v12/同期）＋`varieties.ts`（ベース形状＋色）＋`ImprintPicker`。設計は @docs/memory-creatures-design.md
+- **直近の修正**: **Phase 10.4 品種インプリント＋10.5 一部（ストリーク/ヒートマップ）完了**（10.1〜10.3 済み）。学習の初回出題時に品種を選び庭が品種別の姿に。`/stats` に学習ストリーク＆ヒートマップ、`/garden` ヘッダーに🔥連続日数。設計は @docs/memory-creatures-design.md
 - **次にやること**:
   1. **★`019_user_creature_state.sql` を Supabase 実行**（未実行だと品種保存が500）→ Vercel デプロイ → 再ログインで Dexie v12 マイグレーション
-  2. **実機確認**: 学習 new カード初回で品種ピッカー → `/garden` で品種別の姿。10.3 枯れ株一覧も
-  3. **10.2 残**: 大規模デッキ→PixiJS、学習完了→成長演出、しきい値の実データ調整
-  4. **Phase 10.5**: ストリーク/ヒートマップ・デイリーミッション・ランキング（成長率）・バッジ
+  2. **実機確認**: 品種ピッカー／品種別の庭／10.3 枯れ株一覧／`/stats` ストリーク・ヒートマップ／`/garden` の🔥連続日数
+  3. **Phase 10.5 残**: デイリーミッション＋プッシュ連携、クラスランキング（成長率・オプトアウト）、バッジ
+  4. **10.2 残**: 大規模デッキ→PixiJS、学習完了→成長演出、しきい値の実データ調整
   5. **Phase 13.4**: リッチコンテンツ表示（数式 KaTeX/MathJax・画像）→ 数学・理科へ科目拡張
 
 ## 参照ドキュメント

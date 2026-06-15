@@ -510,10 +510,10 @@ Anki本家と同様に、Again/Hardで評価したカードを同一セッショ
 - [x] DBマイグレーション: `user_creature_state`（`019_user_creature_state.sql`、imprint JSONB + nickname、RLS=自分のみ）**要 Supabase 実行**
 - [x] Dexie 対応（生徒ごと・オフライン。Dexie v12 `userCreatureState`、`saveCreatureState`/`getCreatureState`/`getCreatureStatesMap`、pull API＋sync 同期、`POST /api/garden/imprint`）
 
-### 10.5 集計・ランキングレイヤー
+### 10.5 集計・ランキングレイヤー ◧ 実装中
 継続のフック。公平性に配慮。
 
-- [ ] 学習ストリーク + ヒートマップカレンダー（review_logs 集計）
+- [x] 学習ストリーク + ヒートマップカレンダー（review_logs 集計・4時区切り）。`src/lib/stats/streak.ts`（純ロジック・テスト13件）＋`useStreak`（Dexie/オフライン）＋`StreakHeatmap`。`/stats` に表示＋`/garden` ヘッダーに 🔥連続日数
 - [ ] デイリーミッション（今日◯株の水やり）+ プッシュ通知連携（Phase 12.3）
 - [ ] クラスランキング（**絶対量でなく成長率**で競う／オプトアウト可）
 - [ ] アチーブメントバッジ（初の結実・100株の野原・枯れ株の復活 等）
@@ -716,16 +716,16 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 
 ## 現在の進捗
 
-**Phase**: Phase 10「記憶のいきもの育成」10.1/10.2/10.3/**10.4 完了**（10.4 品種インプリント）。残るは 10.2残/10.5
+**Phase**: Phase 10「記憶のいきもの育成」10.1〜10.4 完了＋**10.5 一部（ストリーク/ヒートマップ）**。残るは 10.2残/10.5残
 **最終更新**: 2026-06-15
-**次のタスク**: **`019_user_creature_state.sql` を Supabase 実行** → 10.3/10.4 デプロイ＆実機確認 → 10.2残 or 10.5
+**次のタスク**: **`019_user_creature_state.sql` を Supabase 実行** → 10.3/10.4/10.5 デプロイ＆実機確認 → 10.5残 or 10.2残
 
 ### 次回セッションでやること
 
 1. **★SQL実行**: `supabase/migrations/019_user_creature_state.sql`（未実行だと品種保存が500）→ Vercel デプロイ → 再ログインで Dexie v12 マイグレーション
-2. **実機確認**: 学習で new カード初回に品種ピッカー → `/garden` で品種別の姿。10.3 枯れ株一覧も
-3. **10.2 残**: 大規模デッキ→PixiJS化、学習完了→庭で成長を見せる演出、`GROWTH/CARE_THRESHOLDS` の実データ調整
-4. **Phase 10.5**: ストリーク/ヒートマップ・デイリーミッション・クラスランキング（成長率）・バッジ
+2. **実機確認**: 学習で new カード初回に品種ピッカー → `/garden` で品種別の姿。10.3 枯れ株一覧、`/stats` のストリーク/ヒートマップ＋`/garden` の🔥連続日数も
+3. **Phase 10.5 残**: デイリーミッション（今日◯株）＋プッシュ連携、クラスランキング（成長率・オプトアウト）、バッジ
+4. **10.2 残**: 大規模デッキ→PixiJS化、学習完了→庭で成長を見せる演出、`GROWTH/CARE_THRESHOLDS` の実データ調整
 5. **その後**: リッチコンテンツ表示（Phase 13.x 数式・画像）→ 数学・理科へ科目拡張
 
 ### 今後のロードマップ（優先度順）
@@ -758,3 +758,4 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 - [x] **Phase 10.1/10.2 記憶のいきもの育成**（2026-06-15）: 株のステータス導出（`plant-state.ts`）＋アイソメ箱庭ビュー `/garden`（実機確認済み）
 - [x] **Phase 10.3 枯れ株一覧・復活導線**（2026-06-15）: 全デッキ横断 `getWitheredPlants`＋`WitheredList` モーダル＋「水やり」で当該株を最優先復習（`/study?...&card=`）。枯れは見た目のみ・永久ロストなし
 - [x] **Phase 10.4 品種インプリント**（2026-06-15）: `varieties.ts`（果樹6＋花き5、ベース形状＋色）＋初回出題時 `ImprintPicker`＋`user_creature_state`（019/Dexie v12/pull同期/`/api/garden/imprint`）。庭・枯れ株一覧が品種別の姿で描画
+- [x] **Phase 10.5 一部 ストリーク/ヒートマップ**（2026-06-15）: `streak.ts`（4時区切りの連続日数/最長/ヒートマップ純ロジック・テスト13件）＋`useStreak`(Dexie/オフライン)＋`StreakHeatmap`。`/stats` に表示＋`/garden` ヘッダーに🔥連続日数
