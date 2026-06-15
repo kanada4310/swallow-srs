@@ -766,4 +766,4 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 - [x] **Phase 10.2 リアルタイム成長アニメ**（2026-06-15）: 回答ごとに非ブロッキングの一時演出（正答=💧／段階アップ=品種別スプライトのポップ、`StudySession`）
 - [x] **Phase 10.5 デイリーミッション（軽量版）**（2026-06-15）: `getDailyMission`（今日の水やり進捗を既存データから導出・テスト3件）＋`DailyMissionCard`（`/garden` 上部）。プッシュ連携は将来
 - [x] **Phase 10.2 PixiJS 大規模描画**（2026-06-15）: `GardenFieldPixi`（>150株を WebGL 全件描画・ドラッグ/ズーム・遅延ロード・SVG縮退）＋`tileTexture`（既存SVGを canvas 化キャッシュ）。pixi.js v8 導入。タップ選択のゴーストクリック不具合も修正済（実機でパン/ズーム/タップ確認済）
-- [x] **Phase 13.4 数式（KaTeX）**（2026-06-15）: `math.ts`（renderMath/containsMath・テスト7件）＋数式カードのみ動的import＋iframe に KaTeX CSS(自己ホスト/オフライン)。StudyCard/TemplatePreview 対応。画像は `<img>` で表示可（アップロード/オフラインキャッシュは次の増分）
+- [x] **Phase 13.4 数式（KaTeX→MathML）**（2026-06-15・実機確認済み）: `math.ts`（renderMath/containsMath・テスト7件）＋数式カードのみ動的import。**`output:'mathml'` でブラウザネイティブ描画＝CSS/フォント不要**（iframe での二重表示/空欄を根本解消）。StudyCard/TemplatePreview 対応。庭の名札は `見出し` フィールド優先＋タイル天面をベージュ土に。画像は `<img>` で表示可（アップロード/オフラインキャッシュは次の増分）
