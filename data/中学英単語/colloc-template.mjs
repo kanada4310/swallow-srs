@@ -14,7 +14,6 @@ export const FIELDS = [
 ]
 
 export const FRONT_TEMPLATE = `<div class="context">{{文脈}}</div>
-<div class="prompt">和訳を手がかりに、空所のまとまり（表現）を声に出して暗誦しよう。</div>
 <div class="cloze">{{英文穴埋め}}</div>
 <div class="hint">{{和文}}</div>`
 
@@ -26,10 +25,9 @@ export const BACK_TEMPLATE = `<div class="answer">{{英文}}</div>
   <div class="sense"><span class="w">{{見出し語}}</span> … {{語義}}</div>
 </div>`
 
-export const CSS = `.card { font-family:'Hiragino Sans','Noto Sans JP',sans-serif; padding:24px 20px; text-align:center; max-width:640px; margin:0 auto; }
+export const CSS = `.card { font-family:'Hiragino Sans','Noto Sans JP',sans-serif; padding:24px 20px; text-align:left; max-width:640px; margin:0 auto; }
 .context { font-size:15px; color:#374151; line-height:1.7; margin-bottom:14px; }
 .context:empty { display:none; }
-.prompt { color:#6b7280; font-size:13px; margin-bottom:20px; }
 .cloze { font-size:21px; line-height:2.0; color:#1f2937; margin-bottom:18px; }
 .cloze .blank { color:#2563eb; font-weight:700; letter-spacing:1px; border-bottom:2px solid #93c5fd; padding:0 2px; }
 .hint { font-size:16px; color:#6b7280; line-height:1.7; }
