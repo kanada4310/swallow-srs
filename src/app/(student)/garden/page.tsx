@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useAuth } from '@/contexts/AuthContext'
 import { getDecksWithStatsOffline } from '@/lib/db/schema'
@@ -15,8 +16,19 @@ import { DailyMissionCard } from '@/components/garden/DailyMissionCard'
 import { useStreak } from '@/lib/stats/useStreak'
 import { AppLayout } from '@/components/layout/AppLayout'
 
-/** 一度に描画するタイル数の上限（超過分は PixiJS 化で対応予定） */
+/** これを超えたら PixiJS（WebGL）で全体描画に切替（SVG は重いため） */
 const MAX_TILES = 150
+
+/** PixiJS 大規模描画は遅延ロード（バンドル分離・WebGL） */
+const GardenFieldPixi = dynamic(
+  () => import('@/components/garden/GardenFieldPixi').then((m) => m.GardenFieldPixi),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[460px] flex items-center justify-center text-sm text-gray-500">庭を描画中…</div>
+    ),
+  },
+)
 
 const GROWTH_LABEL: Record<GrowthStage, string> = {
   seed: '種', sprout: '芽', seedling: '苗', mature: '成株', blooming: '開花・結実',
@@ -66,10 +78,13 @@ export default function GardenPage() {
   const { items, summary, total } = useMemo(() => {
     if (!plants) return { items: [] as GardenFieldItem[], summary: null, total: 0 }
     const now = new Date()
-    const all = plants.map((p) => ({ ...p, state: derivePlantState(p.card, now) }))
-    const items: GardenFieldItem[] = all
-      .slice(0, MAX_TILES)
-      .map((p) => ({ id: p.cardId, label: p.label, plant: p.state, variety: p.variety }))
+    // 全株を items 化（SVG は MAX_TILES まで／超過は Pixi で全件描画）
+    const items: GardenFieldItem[] = plants.map((p) => ({
+      id: p.cardId,
+      label: p.label,
+      plant: derivePlantState(p.card, now),
+      variety: p.variety,
+    }))
     return {
       items,
       summary: summarizeGarden(plants.map((p) => p.card), now),
@@ -150,12 +165,16 @@ export default function GardenPage() {
 
       {total > MAX_TILES && (
         <p className="text-xs text-gray-500 mb-3">
-          {total}株のうち先頭{MAX_TILES}株を表示しています（大規模な庭の全体表示は今後対応）。
+          {total}株を高速描画で表示しています。
         </p>
       )}
 
       <div className="bg-green-50/40 border border-green-100 rounded-xl p-2">
-        <GardenField items={items} onSelect={setSelectedCardId} />
+        {items.length > MAX_TILES ? (
+          <GardenFieldPixi items={items} onSelect={setSelectedCardId} />
+        ) : (
+          <GardenField items={items} onSelect={setSelectedCardId} />
+        )}
       </div>
 
       {/* 枯れ株一覧（全デッキ横断・復活導線） */}

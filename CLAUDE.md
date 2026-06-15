@@ -244,7 +244,7 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
   - 1ノート＝ひし形ブロック1枚。個別=1枚拡大／全体=自動レイアウトで合成（`x=(col-row)*hw, y=(col+row)*hh`、奥→手前描画）
   - `src/components/garden/`: `PlantSprite`（手続き生成SVG・素朴トーン）/`IsoTile`（ブロック+株+水やりバッジ）/`GardenField`（自動レイアウト+揺れ/しずくアニメ）
   - `src/lib/garden/garden-data.ts` `getGardenForDeck(deckId, userId)`: デッキ配下の全カード×card_states を株データ化（オフライン可）
-  - 大規模デッキは `MAX_TILES=150` で打ち切り表示（将来 PixiJS 化）
+  - 大規模デッキ（>150株）は **PixiJS/WebGL で全件描画**（`GardenFieldPixi`＋`tileTexture`：既存SVGアートを canvas 化してテクスチャ再利用・ドラッグ移動/ホイール・ピンチズーム・タップ選択。`next/dynamic` 遅延ロード・WebGL失敗時はSVG縮退）。150以下は従来 `GardenField`（SVG）
 - **枯れ株一覧・復活導線（10.3）✅**: 全デッキ横断で枯れ株を集め、水やり（=復習）で芽吹き直す導線
   - `src/lib/garden/garden-data.ts` `getWitheredPlants(userId, now?)`: 全 card_states を走査 → `isDead` のみ抽出 → deckId/deckName/label/plant 付与・放置日数降順（Dexie のみ・オフライン可）
   - `src/components/garden/WitheredList.tsx`: 枯れ株モーダル一覧。行ごとに「水やり」→ `/study?deck=X&card=cardId`（既存 `priorityCardId` で当該株を最優先表示）
@@ -273,7 +273,7 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 - **次にやること**:
   1. **Vercel デプロイ → 再ログイン**（Dexie v12）で 10.4/10.5/10.2演出/実績バッジ を実機反映・確認
   2. **Phase 10.5 残**: クラスランキング（成長率・オプトアウト・講師ビュー＋RLS）、デイリーミッションのプッシュ連携（Phase 12.3）
-  3. **10.2 残**: 大規模デッキ→PixiJS、しきい値の実データ調整
+  3. **10.2 残**: しきい値の実データ調整（PixiJS 大規模描画は実装済・要WebGL実機確認）
   4. **Phase 13.4**: リッチコンテンツ表示（数式 KaTeX/MathJax・画像）→ 数学・理科へ科目拡張
 
 ## 参照ドキュメント

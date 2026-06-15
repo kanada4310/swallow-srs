@@ -1,18 +1,26 @@
 # 進捗管理
 
 ## 現在の作業
-- Phase: **Phase 10「記憶のいきもの育成」** — 10.1〜10.4＋10.2（成長演出/リアルタイムアニメ）＋10.5（ストリーク/ヒートマップ/バッジ/デイリーミッション軽量版）完了。**019 適用済み・実機確認済み**。残るは 10.5（クラスランキング・ミッションのプッシュ連携）/10.2（PixiJS）
+- Phase: **Phase 10「記憶のいきもの育成」** — 10.1〜10.4＋10.2（成長演出/アニメ/**PixiJS大規模描画**）＋10.5（ストリーク/ヒートマップ/バッジ/デイリーミッション軽量版）完了。**019 適用済み・実機確認済み**。残るは 10.5 クラスランキング・ミッションのプッシュ連携・しきい値調整のみ
 - 最終更新: 2026-06-15
 - 次にやること:
-  1. **Phase 10.5 残**: クラスランキング（成長率・オプトアウト可・講師ビュー＋RLS）、デイリーミッションのプッシュ連携（Phase 12.3）
-  2. **10.2 残**: 大規模デッキの全体表示（MAX_TILES=150→PixiJS化）
+  1. **PixiJS の実機（WebGL）確認**: 6858株デッキ（中学英単語）の `/garden` でドラッグ/ズーム/タップ選択。※当環境ではブラウザ実行不可のため未検証（ビルド・型は通過）
+  2. **Phase 10.5 残**: クラスランキング（成長率・オプトアウト可・講師ビュー＋RLS）、デイリーミッションのプッシュ連携（Phase 12.3）
   3. **しきい値調整**: `GROWTH_THRESHOLDS`/`CARE_THRESHOLDS` を実データで検証
   4. **その後**: Phase 13.4 リッチ表示（数式・画像）→ 科目拡張
   5. パイロット系（別軸）: OOV例文リペア / 全語展開
 
 ## セッション引継ぎメモ
 
-### 2026-06-15（Phase 10.5 デイリーミッション 軽量版 ＋ 実機確認済み）
+### 2026-06-15（Phase 10.2 残 — PixiJS 大規模描画）
+- **依頼**: 「PixiJS化」。方針合意＝**PixiJS(WebGL)／>150株のみ・小規模は従来SVG／ドラッグ移動＋ズーム／既存SVGアートをテクスチャ再利用**
+- **導入**: `pixi.js` v8.19（dependency）
+- **実装**:
+  - `src/components/garden/tileTexture.ts`: `getTileCanvas(plant, variety)` が **IsoTile を `renderToStaticMarkup` で SVG文字列化 → data URL → Image → canvas** にラスタライズしキャッシュ（キー＝growth|care|needsWater|varietyId）。論理88×100・テクスチャ2x(176×200)・アンカー(44/88,64/100)・ISO 半幅40/半高20
+  - `src/components/garden/GardenFieldPixi.tsx`: 動的 `import('pixi.js')`。Application 初期化→world Container にスプライト配置（同アイソメ式・背面→前面）。テクスチャは同キー1枚を共有。**パン**(stage pointerdown/move/up)＋**ホイールズーム**(canvas wheel)＋**ピンチ**(2ポインタ距離)。`pointertap`＋移動量<8px でタップ選択。初期は全体フィット。型は `import type` で取り込み（バンドルは動的importのみ）。アンマウントで `app.destroy`。**WebGL初期化失敗時は `GardenField`(先頭150)に縮退**
+  - `/garden`: items を全件化（slice 廃止）。`items.length > 150` で `GardenFieldPixi`（`next/dynamic`, ssr:false, loading表示）／以下は従来 `GardenField`
+- **検証**: 322テスト全通過（変化なし）／lint クリーン／build 成功（`/garden` 9.69kB＝Pixi は別チャンクで遅延ロード）
+- **次セッション注意（重要）**: **当環境ではブラウザ実行できないため WebGL 描画は未検証**（ビルド・型のみ通過）。要実機確認＝中学英単語6858株デッキの `/garden`。確認ポイント＝①タイルが正しい絵で出るか（Texture.from(canvas) の挙動）②ドラッグ/ホイール/ピンチ/タップ選択③メモリ/FPS。崩れる場合の調整候補＝Texture生成方法（CanvasSource明示）、resolution、アンカー/スケール。MAX_TILES=150 がしきい値
 - **依頼**: 実機確認できた→「続けてください」。10.5 残のうち**プッシュ連携なしで自己完結する軽量版デイリーミッション**を実装（既存データ導出・10.x の方針踏襲）
 - **実装**:
   - `getDailyMission(userId, now)`（`garden-data.ts`）: 今日（4時区切り `studyDayKey`）に水やりした distinct card 数（reviewLogs）＋ いま要水やりの株数（全 card_states の `needsWater`）から `{ wateredToday, dueNow, goal=watered+due, done=(due0 && goal>0) }` を導出。Dexie のみ・オフライン。テスト3件（mock に reviewLogs テーブル追加）
