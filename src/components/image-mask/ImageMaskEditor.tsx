@@ -117,14 +117,21 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
       const candidates = Array.isArray(detectData.candidates) ? detectData.candidates : []
       setRegions(
         candidates.map(
-          (c: { text: string; x: number; y: number; w: number; h: number }): EditRegion => ({
+          (c: {
+            text: string
+            x: number
+            y: number
+            w: number
+            h: number
+            recommended?: boolean
+          }): EditRegion => ({
             id: crypto.randomUUID(),
             x: clamp(c.x, 0, 100),
             y: clamp(c.y, 0, 100),
             w: clamp(c.w, MIN_SIZE, 100),
             h: clamp(c.h, MIN_SIZE, 100),
             answer: c.text || '',
-            included: true,
+            included: c.recommended !== false,
             source: 'ai',
           })
         )

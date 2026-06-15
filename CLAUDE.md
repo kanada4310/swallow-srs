@@ -274,7 +274,9 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
   - 庭の名札（`pickLabel`）は数式を描画しないので `\(…\)` 等を除去
   - ※ `public/katex/`＋`/katex` の publicPath/CORS は旧 KaTeX-HTML 用で**現在未使用**（無害なので残置）
 - **画像（URL/アップロード/オフライン）✅**: `<img src>` は iframe で表示可能。アップロードは `POST /api/images/upload`（TTS の Storage 処理流用・`images` バケット・`{userId}/{uuid}`・公開URL返却）。`ImageUploadButton`＋`NoteEditModal` で挿入。**オフライン**=Dexie v13 `imageCache`（URLキー）＋`StudyCard` がカード内 `<img>` http(s) URL を **data: URL に書換え**て sandbox iframe に埋め込む（opaque origin では親の blob: が参照できないため）。`src/lib/template/images.ts`（純関数・テスト10件）
-- **画像マスキング（Image Occlusion）✅（要実機確認）**: 画像内の用語を隠して暗記。AIが用語を**%bbox付き**検出（`POST /api/image-mask-candidates`＝Claude Vision・OCRルート流用）→`ImageMaskEditor`（`/notes/image-mask/new?deck=X`）で**選択/自由描画/移動/リサイズ/答え編集**→ノート作成。`StudyCard` が `マスク領域`(JSON) から**レビュー毎にN領域ランダムで隠す**（例文プールと同じ思想・表示専用 `画像表`/`画像裏` を合成・保存フィールド非追加）。出題=視覚リコール＋めくり、隠す数=ノート毎設定＋既定30%（`resolveMaskCount`）。座標は**0-100の%**（表示サイズ非依存）。純ロジック `src/lib/image-mask/`（テスト12件）。ノートタイプ「画像マスキング」=`data/create-image-occlusion-notetype.mjs`（**要実行**・`is_system:true`・共有定義 `data/image-occlusion-template.mjs`）。bbox は近似なのでUI微調整前提
+- **画像マスキング（Image Occlusion）✅（要実機確認）**: 画像内の用語を隠して暗記。`POST /api/image-mask-candidates` が用語を**%bbox付き**で検出→`ImageMaskEditor`（`/notes/image-mask/new?deck=X`）で**選択/自由描画/移動/リサイズ/答え編集**→ノート作成。`StudyCard` が `マスク領域`(JSON) から**レビュー毎にN領域ランダムで隠す**（例文プールと同じ思想・表示専用 `画像表`/`画像裏` を合成・保存フィールド非追加）。出題=視覚リコール＋めくり、隠す数=ノート毎設定＋既定30%（`resolveMaskCount`）。座標は**0-100の%**（表示サイズ非依存）。純ロジック `src/lib/image-mask/`（テスト12件）。ノートタイプ「画像マスキング」=`data/create-image-occlusion-notetype.mjs`（**要実行**・`is_system:true`・共有定義 `data/image-occlusion-template.mjs`）
+  - **候補検出の2系統フォールバック**: ①`GOOGLE_CLOUD_VISION_API_KEY` があれば **Google Cloud Vision（DOCUMENT_TEXT_DETECTION）で正確なbbox**＋Claude テキストパスで暗記対象を選別（`recommended`）。②無ければ **Claude Vision で%bbox推定**（位置は**近似**＝UI微調整前提）。Vision キー未設定/失敗時は自動で②に縮退。レスポンスに `source: google-vision|claude-vision`
+  - **編集UXの手直し高速化**: 枠タップ選択→ドラッグ移動／右下リサイズ／**選択中に画像タップでその位置へ移動**（モバイル）／オンスクリーン微調整パッド／PCは矢印キー（Shiftで大）／ドラッグ閾値でタップ誤作動防止
 
 ## 現在の進捗
 
