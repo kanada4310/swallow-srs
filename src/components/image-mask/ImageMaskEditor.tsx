@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { SUPPORTED_IMAGE_TYPES, MAX_IMAGE_SIZE } from '@/lib/constants'
@@ -29,9 +29,12 @@ interface DragState {
   startPx: number // pointer start in %
   startPy: number
   orig: { x: number; y: number; w: number; h: number }
+  moved: boolean
+  prevSelected: string | null
 }
 
 const MIN_SIZE = 2 // 最小ボックスサイズ（%）
+const MOVE_THRESHOLD = 1.2 // これ未満の動きはタップ扱い（%）
 
 function clamp(v: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, v))
@@ -153,9 +156,25 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
       const dx = px - drag.startPx
       const dy = py - drag.startPy
 
+      // しきい値未満はまだ「タップ」扱い（誤操作防止）
+      if (!drag.moved && Math.hypot(dx, dy) < MOVE_THRESHOLD) return
+      if (!drag.moved) {
+        drag.moved = true
+        // 描画モードで動き始めたら、ここで初めて新規ボックスを生成する
+        if (drag.mode === 'draw' && !drag.id) {
+          const id = crypto.randomUUID()
+          drag.id = id
+          setRegions((prev) => [
+            ...prev,
+            { id, x: drag.startPx, y: drag.startPy, w: 0, h: 0, answer: '', included: true, source: 'manual' },
+          ])
+          setSelectedId(id)
+        }
+      }
+
       setRegions((prev) =>
         prev.map((r) => {
-          if (drag.id && r.id !== drag.id && drag.mode !== 'draw') return r
+          if (drag.id && r.id !== drag.id) return r
           if (drag.mode === 'move' && r.id === drag.id) {
             return {
               ...r,
@@ -190,11 +209,28 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
 
   const onPointerUp = useCallback(() => {
     const drag = dragRef.current
-    if (drag?.mode === 'draw' && drag.id) {
-      // 小さすぎる描画は破棄
-      setRegions((prev) =>
-        prev.filter((r) => !(r.id === drag.id && (r.w < MIN_SIZE || r.h < MIN_SIZE)))
-      )
+    if (drag) {
+      if (!drag.moved && drag.mode === 'draw') {
+        // 画像上のタップ＝選択中の枠の中心をタップ位置へ移動（モバイルで微調整しやすく）
+        if (drag.prevSelected) {
+          setRegions((prev) =>
+            prev.map((r) =>
+              r.id === drag.prevSelected
+                ? {
+                    ...r,
+                    x: clamp(drag.startPx - r.w / 2, 0, 100 - r.w),
+                    y: clamp(drag.startPy - r.h / 2, 0, 100 - r.h),
+                  }
+                : r
+            )
+          )
+        }
+      } else if (drag.mode === 'draw' && drag.id) {
+        // 小さすぎる描画は破棄
+        setRegions((prev) =>
+          prev.filter((r) => !(r.id === drag.id && (r.w < MIN_SIZE || r.h < MIN_SIZE)))
+        )
+      }
     }
     dragRef.current = null
     window.removeEventListener('pointermove', onPointerMove)
@@ -205,23 +241,70 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
     e.preventDefault()
     e.stopPropagation()
     const { px, py } = pointerToPct(e)
-    dragRef.current = { mode, id, startPx: px, startPy: py, orig }
+    dragRef.current = { mode, id, startPx: px, startPy: py, orig, moved: false, prevSelected: selectedId }
     window.addEventListener('pointermove', onPointerMove)
     window.addEventListener('pointerup', onPointerUp)
   }
 
-  // 背景でのドラッグ開始 → 新規ボックス描画
+  // 背景/画像でのポインタ操作。ドラッグ→新規描画、タップ→選択中の枠を移動。
   const handleContainerPointerDown = (e: React.PointerEvent) => {
-    if (e.target !== containerRef.current && e.target !== e.currentTarget) {
-      // 画像自体の上で開始した場合も描画扱いにする
-    }
     const { px, py } = pointerToPct(e)
-    const id = crypto.randomUUID()
-    const newRegion: EditRegion = { id, x: px, y: py, w: 0, h: 0, answer: '', included: true, source: 'manual' }
-    setRegions((prev) => [...prev, newRegion])
-    setSelectedId(id)
-    startDrag('draw', id, e, { x: px, y: py, w: 0, h: 0 })
+    // ここではまだ枠を作らない（onPointerMove でしきい値を超えたら生成）
+    dragRef.current = {
+      mode: 'draw',
+      id: null,
+      startPx: px,
+      startPy: py,
+      orig: { x: px, y: py, w: 0, h: 0 },
+      moved: false,
+      prevSelected: selectedId,
+    }
+    window.addEventListener('pointermove', onPointerMove)
+    window.addEventListener('pointerup', onPointerUp)
   }
+
+  // 選択中の枠を量(%)だけ動かす/サイズ変更（オンスクリーンパッド・キーボード用）
+  const nudge = (dx: number, dy: number) => {
+    if (!selectedId) return
+    setRegions((prev) =>
+      prev.map((r) =>
+        r.id === selectedId
+          ? { ...r, x: clamp(r.x + dx, 0, 100 - r.w), y: clamp(r.y + dy, 0, 100 - r.h) }
+          : r
+      )
+    )
+  }
+  const resizeBy = (dw: number, dh: number) => {
+    if (!selectedId) return
+    setRegions((prev) =>
+      prev.map((r) =>
+        r.id === selectedId
+          ? {
+              ...r,
+              w: clamp(r.w + dw, MIN_SIZE, 100 - r.x),
+              h: clamp(r.h + dh, MIN_SIZE, 100 - r.y),
+            }
+          : r
+      )
+    )
+  }
+
+  // 矢印キーで微調整（PC）。Shiftで大きく。
+  useEffect(() => {
+    if (!selectedId) return
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return // 答え入力中は無効
+      const step = e.shiftKey ? 3 : 0.5
+      if (e.key === 'ArrowLeft') { e.preventDefault(); nudge(-step, 0) }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); nudge(step, 0) }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); nudge(0, -step) }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); nudge(0, step) }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId])
 
   const updateRegion = (id: string, patch: Partial<EditRegion>) => {
     setRegions((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)))
@@ -335,7 +418,7 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
       )}
 
       <p className="text-xs text-gray-500">
-        候補をタップで選択/解除、ドラッグで移動・右下で拡大縮小。画像の余白をドラッグすると新しいマスクを描けます。
+        枠をタップで選択→ドラッグで移動・右下で拡大縮小。<b>選択中に画像をタップするとその位置へ移動</b>します。何もない所をドラッグすると新しいマスクを描けます。下の微調整ボタン（PCは矢印キー）でも動かせます。
       </p>
 
       {/* 画像＋オーバーレイ */}
@@ -371,13 +454,14 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
                   boxSizing: 'border-box',
                 }}
               >
-                {/* リサイズハンドル（右下） */}
+                {/* リサイズハンドル（右下・タッチしやすいよう大きめ） */}
                 <div
                   onPointerDown={(e) => {
                     setSelectedId(r.id)
                     startDrag('resize', r.id, e, { x: r.x, y: r.y, w: r.w, h: r.h })
                   }}
-                  className="absolute -right-1.5 -bottom-1.5 w-3 h-3 bg-blue-600 rounded-sm cursor-se-resize"
+                  className="absolute -right-2 -bottom-2 w-4 h-4 bg-blue-600 border-2 border-white rounded-sm cursor-se-resize shadow"
+                  style={{ touchAction: 'none' }}
                 />
               </div>
             )
@@ -389,6 +473,29 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <span className="w-4 h-4 animate-spin rounded-full border-2 border-gray-200 border-t-blue-500" />
           AIがマスキング候補を検出中...
+        </div>
+      )}
+
+      {/* 選択中の枠の微調整パッド（モバイル用・PCは矢印キーでも可） */}
+      {selectedId && (
+        <div className="flex items-center justify-between gap-3 p-2 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-gray-500 mr-1">位置</span>
+            <NudgeBtn onClick={() => nudge(-1, 0)} label="←" />
+            <div className="flex flex-col gap-1">
+              <NudgeBtn onClick={() => nudge(0, -1)} label="↑" />
+              <NudgeBtn onClick={() => nudge(0, 1)} label="↓" />
+            </div>
+            <NudgeBtn onClick={() => nudge(1, 0)} label="→" />
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-gray-500 mr-1">幅</span>
+            <NudgeBtn onClick={() => resizeBy(-1, 0)} label="−" />
+            <NudgeBtn onClick={() => resizeBy(1, 0)} label="＋" />
+            <span className="text-xs text-gray-500 mx-1">高</span>
+            <NudgeBtn onClick={() => resizeBy(0, -1)} label="−" />
+            <NudgeBtn onClick={() => resizeBy(0, 1)} label="＋" />
+          </div>
         </div>
       )}
 
@@ -497,5 +604,17 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
         </button>
       </div>
     </div>
+  )
+}
+
+function NudgeBtn({ onClick, label }: { onClick: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-8 h-7 flex items-center justify-center text-sm text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-100 active:bg-gray-200 select-none"
+    >
+      {label}
+    </button>
   )
 }
