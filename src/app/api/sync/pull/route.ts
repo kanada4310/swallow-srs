@@ -212,6 +212,16 @@ export async function POST(request: NextRequest) {
     response.userDeckSettings = userDeckSettings
   }
 
+  // Fetch user_creature_state (記憶のいきもの育成・品種インプリント)
+  const { data: userCreatureState } = await supabase
+    .from('user_creature_state')
+    .select('*')
+    .eq('user_id', user.id)
+
+  if (userCreatureState && userCreatureState.length > 0) {
+    response.userCreatureState = userCreatureState
+  }
+
   // Fetch classes (teacher's own classes + billing-synced classes + classes user is a member of)
   const { data: teacherClasses } = await supabase
     .from('classes')

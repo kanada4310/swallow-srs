@@ -143,6 +143,22 @@ export interface DeckAssignment {
   assigned_at: string
 }
 
+// 記憶のいきもの育成（Phase 10.4）— 品種インプリント
+// 生徒がノートに刻む「見た目」だけを持つ純コスメ層。card_states には触れない。
+export interface CreatureImprint {
+  /** 品種カタログ（varieties.ts）の id。例: 'apple' / 'sunflower' */
+  variety: string
+}
+
+export interface UserCreatureState {
+  user_id: string
+  note_id: string
+  imprint: CreatureImprint
+  nickname: string | null
+  created_at: string
+  updated_at: string
+}
+
 // Generated content from AI (examples, collocations)
 export interface GeneratedContent {
   examples: string[]

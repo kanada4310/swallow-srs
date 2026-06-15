@@ -2,12 +2,14 @@
 
 import { useMemo } from 'react'
 import type { PlantState } from '@/lib/garden/plant-state'
+import type { Variety } from '@/lib/garden/varieties'
 import { IsoTile, TILE, PLANT_MAX_H } from './IsoTile'
 
 export interface GardenFieldItem {
   id: string
   label: string
   plant: PlantState
+  variety?: Variety
 }
 
 /**
@@ -98,7 +100,7 @@ export function GardenField({
             onClick={onSelect ? () => onSelect(pl.item.id) : undefined}
             style={onSelect ? { cursor: 'pointer' } : undefined}
           >
-            <IsoTile plant={pl.item.plant} delay={(pl.i % 6) * 0.5} />
+            <IsoTile plant={pl.item.plant} variety={pl.item.variety} delay={(pl.i % 6) * 0.5} />
           </g>
         ))}
       </svg>

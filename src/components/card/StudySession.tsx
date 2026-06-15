@@ -12,9 +12,12 @@ import {
 } from '@/lib/srs/scheduler'
 import type { FieldValues } from '@/lib/template'
 import { saveAnswerLocally, undoAnswerLocally, pushToServer, getSyncStatus } from '@/lib/db/sync'
-import { getCardState, type LocalCardState } from '@/lib/db/schema'
+import { getCardState, getCreatureState, saveCreatureState, type LocalCardState } from '@/lib/db/schema'
 import { isOnline as checkOnline } from '@/lib/db/utils'
 import { SyncStatusBadge } from '@/components/ui/SyncStatusBadge'
+import { ImprintPicker } from '@/components/garden/ImprintPicker'
+import { pickLabel } from '@/lib/garden/garden-data'
+import { pickVarietyByHash, type Variety } from '@/lib/garden/varieties'
 import Link from 'next/link'
 import type { GeneratedContent, FieldDefinition, DeckSettings } from '@/types/database'
 
@@ -95,6 +98,9 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
   const [isCardFlipped, setIsCardFlipped] = useState(false)
   const [autoAgainCountdown, setAutoAgainCountdown] = useState<number | null>(null)
   const [undoSnapshot, setUndoSnapshot] = useState<UndoSnapshot | null>(null)
+  // 記憶のいきもの育成（Phase 10.4）— 初回出題時の品種インプリント
+  const [imprintPrompt, setImprintPrompt] = useState<{ noteId: string; word: string } | null>(null)
+  const resolvedNotesRef = useRef<Set<string>>(new Set())
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const cardStartTime = useRef<number>(Date.now())
   const waitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -154,6 +160,63 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
     setIsCardFlipped(false)
     setAutoAgainCountdown(null)
   }, [currentCard])
+
+  // 初回出題時の品種インプリント（Phase 10.4）。
+  // 未学習(new)で、まだ品種が刻まれていないノートだけ、学習前に1度だけ選ばせる。
+  useEffect(() => {
+    let cancelled = false
+    if (!currentCard || currentCard.schedule.state !== 'new') {
+      setImprintPrompt(null)
+      return
+    }
+    const noteId = currentCard.noteId
+    if (resolvedNotesRef.current.has(noteId)) {
+      setImprintPrompt(null)
+      return
+    }
+    getCreatureState(userId, noteId)
+      .then((cs) => {
+        if (cancelled) return
+        if (cs) {
+          resolvedNotesRef.current.add(noteId)
+          setImprintPrompt(null)
+        } else {
+          setImprintPrompt({ noteId, word: pickLabel(currentCard.fieldValues) })
+        }
+      })
+      .catch(() => {
+        // 取得失敗時はプロンプトを出さない（学習を妨げない）
+        if (!cancelled) setImprintPrompt(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [currentCard, userId])
+
+  // 品種を確定して保存（Dexie 即時 ＋ サーバー upsert は fire-and-forget）
+  const commitImprint = useCallback(
+    (noteId: string, variety: Variety) => {
+      resolvedNotesRef.current.add(noteId)
+      setImprintPrompt(null)
+      saveCreatureState(userId, noteId, { variety: variety.id }).catch((e) =>
+        console.warn('Failed to save imprint locally:', e)
+      )
+      if (checkOnline()) {
+        fetch('/api/garden/imprint', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ noteId, variety: variety.id }),
+        }).catch((e) => console.warn('Failed to sync imprint:', e))
+      }
+    },
+    [userId]
+  )
+
+  // 「あとで」= 今回はスキップ（このセッション中は再プロンプトしない・汎用の姿で学習）
+  const skipImprint = useCallback((noteId: string) => {
+    resolvedNotesRef.current.add(noteId)
+    setImprintPrompt(null)
+  }, [])
 
   // Try to sync when coming back online
   useEffect(() => {
@@ -710,7 +773,17 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
           key={'timer-' + currentCard.id + '-' + stats.reviewed}
           totalSeconds={settings.answer_time_limit}
           onTimeUp={handleTimeUp}
-          isPaused={isCardFlipped || isSubmitting}
+          isPaused={isCardFlipped || isSubmitting || imprintPrompt !== null}
+        />
+      )}
+
+      {/* 初回インプリント（品種選択）オーバーレイ */}
+      {imprintPrompt && (
+        <ImprintPicker
+          word={imprintPrompt.word}
+          onSelect={(v) => commitImprint(imprintPrompt.noteId, v)}
+          onAuto={() => commitImprint(imprintPrompt.noteId, pickVarietyByHash(imprintPrompt.noteId))}
+          onSkip={() => skipImprint(imprintPrompt.noteId)}
         />
       )}
 

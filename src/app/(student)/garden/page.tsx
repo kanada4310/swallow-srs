@@ -56,7 +56,7 @@ export default function GardenPage() {
     const all = plants.map((p) => ({ ...p, state: derivePlantState(p.card, now) }))
     const items: GardenFieldItem[] = all
       .slice(0, MAX_TILES)
-      .map((p) => ({ id: p.cardId, label: p.label, plant: p.state }))
+      .map((p) => ({ id: p.cardId, label: p.label, plant: p.state, variety: p.variety }))
     return {
       items,
       summary: summarizeGarden(plants.map((p) => p.card), now),
@@ -147,13 +147,13 @@ export default function GardenPage() {
           >
             <div className="flex justify-center mb-2">
               <svg viewBox="-70 -75 140 130" width="170" height="120" role="img" aria-label="株の個別表示">
-                <IsoTile plant={selected.plant} />
+                <IsoTile plant={selected.plant} variety={selected.variety} />
               </svg>
             </div>
             <div className="text-center">
               <div className="text-lg font-bold text-gray-900 break-words">{selected.label || '（名札なし）'}</div>
               <div className="text-sm text-gray-600 mt-1">
-                {GROWTH_LABEL[selected.plant.growth]} ・ {CARE_LABEL[selected.plant.care]}
+                {selected.variety ? `${selected.variety.name} ・ ` : ''}{GROWTH_LABEL[selected.plant.growth]} ・ {CARE_LABEL[selected.plant.care]}
               </div>
               {selected.plant.isDead && (
                 <div className="text-xs text-amber-700 mt-1">水やり（復習）で芽吹き直します</div>

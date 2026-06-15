@@ -5,8 +5,9 @@
  * 学習エンジンには触れず、IndexedDB（Dexie）から読むだけ。オフライン可。
  */
 
-import { db, getDescendantDeckIds } from '@/lib/db/schema'
+import { db, getDescendantDeckIds, getCreatureStatesMap } from '@/lib/db/schema'
 import { derivePlantState, type PlantCardInput, type PlantState } from './plant-state'
+import { getVariety, type Variety } from './varieties'
 
 export interface GardenPlant {
   cardId: string
@@ -15,10 +16,12 @@ export interface GardenPlant {
   label: string
   /** 学習状態。未学習は null（=種） */
   card: PlantCardInput | null
+  /** インプリント済みの品種（未設定は undefined＝汎用の果樹） */
+  variety?: Variety
 }
 
 /** field_values から名札ラベルを1つ選ぶ（見出し語優先 → 先頭の非空値） */
-function pickLabel(fieldValues: Record<string, unknown> | null | undefined): string {
+export function pickLabel(fieldValues: Record<string, unknown> | null | undefined): string {
   if (!fieldValues) return ''
   const priority = ['見出し語', '単語', '英単語', 'word', 'Word', 'Front', '表面']
   for (const key of priority) {
@@ -57,6 +60,9 @@ export async function getGardenForDeck(
   const states = await db.cardStates.where('user_id').equals(userId).toArray()
   const stateByCard = new Map(states.map((s) => [s.card_id, s]))
 
+  // ノートごとの品種インプリント（未設定は汎用）
+  const imprints = await getCreatureStatesMap(userId)
+
   return cards.map((card) => {
     const note = noteMap.get(card.note_id)
     const cs = stateByCard.get(card.id)
@@ -75,6 +81,7 @@ export async function getGardenForDeck(
       noteId: card.note_id,
       label: pickLabel(note?.field_values as Record<string, unknown> | undefined),
       card: input,
+      variety: getVariety(imprints.get(card.note_id)?.variety),
     }
   })
 }
@@ -91,6 +98,8 @@ export interface WitheredPlant {
   label: string
   /** 導出済みの株状態（グリフ描画用。overdueDays もここに含む） */
   plant: PlantState
+  /** インプリント済みの品種（未設定は undefined＝汎用） */
+  variety?: Variety
 }
 
 /**
@@ -139,6 +148,8 @@ export async function getWitheredPlants(
   const decks = await db.decks.where('id').anyOf(deckIds).toArray()
   const deckNameMap = new Map(decks.map((d) => [d.id, d.name]))
 
+  const imprints = await getCreatureStatesMap(userId)
+
   const result: WitheredPlant[] = []
   for (const { cs, plant } of dead) {
     const card = cardMap.get(cs.card_id)
@@ -151,6 +162,7 @@ export async function getWitheredPlants(
       deckName: deckNameMap.get(card.deck_id) ?? 'デッキ',
       label: pickLabel(note?.field_values as Record<string, unknown> | undefined),
       plant,
+      variety: getVariety(imprints.get(card.note_id)?.variety),
     })
   }
 

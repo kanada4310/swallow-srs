@@ -1,17 +1,36 @@
 # 進捗管理
 
 ## 現在の作業
-- Phase: **Phase 10「記憶のいきもの育成」実装中** — 10.1（株のステータス純ロジック）＋10.2（アイソメ箱庭ビュー `/garden`、実機確認済み）＋**10.3（枯れ株一覧・復活導線）完了**
+- Phase: **Phase 10「記憶のいきもの育成」** — 10.1/10.2/10.3 完了＋**10.4（品種インプリント）完了**。残るは 10.2残/10.5
 - 最終更新: 2026-06-15
 - 次にやること:
-  1. **要デプロイ＆実機確認**: 10.3（`WitheredList` ＋ `getWitheredPlants` ＋ `/garden` 統合）はアプリ改修なので Vercel デプロイ後に実機確認。枯れ株は長期放置の生徒アカウント（例：林奏太さん）で確認
-  2. **Phase 10.4 品種選択（インプリント）**: `user_creature_state` テーブル＋品種カタログ＋初回選択UI（現状は汎用の木1種）
+  1. **★SQL実行**: `supabase/migrations/019_user_creature_state.sql`（未実行だと品種保存が500）→ Vercel デプロイ → 再ログインで Dexie v12 マイグレーション
+  2. **実機確認**: 学習で new カード初回に品種ピッカー → `/garden` で品種別の姿。10.3 枯れ株一覧（復活導線）も
   3. **10.2 残**: 大規模デッキの全体表示（現状 MAX_TILES=150 打ち切り→PixiJS化）／学習完了→庭で成長を見せる演出
-  4. **しきい値調整**: `GROWTH_THRESHOLDS`/`CARE_THRESHOLDS` を実データで検証
-  5. **その後**: Phase 13.4 リッチ表示（数式・画像）→ 科目拡張
-  6. パイロット系（別軸）: OOV例文リペア / 全語展開
+  4. **Phase 10.5**: ストリーク/ヒートマップ・デイリーミッション・クラスランキング（成長率）・バッジ
+  5. **しきい値調整**: `GROWTH_THRESHOLDS`/`CARE_THRESHOLDS` を実データで検証
+  6. **その後**: Phase 13.4 リッチ表示（数式・画像）→ 科目拡張
+  7. パイロット系（別軸）: OOV例文リペア / 全語展開
 
 ## セッション引継ぎメモ
+
+### 2026-06-15（Phase 10.4 品種インプリント）
+- **依頼**: 10.3 完了に続き「品種選択に進んで」。**学習の初回出題時に選択／ベース形状＋品種色／AI初期提案は見送り**で合意
+- **データモデル（唯一の新規）**: `user_creature_state(user_id, note_id, imprint JSONB, nickname)`。card_states には一切触れない純コスメ層
+  - SQL `supabase/migrations/019_user_creature_state.sql`（RLS=自分のみ・updated_at トリガ）**※要 Supabase 実行**
+  - 型 `UserCreatureState`/`CreatureImprint`（`types/database.ts`）
+  - Dexie **v12** `userCreatureState: 'id, user_id, note_id, [user_id+note_id]'`＋ヘルパー `createCreatureStateId`/`getCreatureState`/`saveCreatureState`/`getCreatureStatesMap`（`schema.ts`）。`clearAllData` にも追加
+  - 同期: pull API（`/api/sync/pull`）＋`savePulledData`（`sync.ts`）に `userCreatureState` を追加。保存は `POST /api/garden/imprint`（upsert・VARIETY_MAP で検証）。クライアントは Dexie 即時＋オンライン時に fire-and-forget POST
+- **品種カタログ**: `src/lib/garden/varieties.ts`（果樹6: りんご/みかん/さくらんぼ/ぶどう/レモン/いちじく＋花き5: ひまわり/チューリップ/ばら/コスモス/あさがお）。各 {id,name,kind,accent,accentDark,accentLight,emoji}。`pickVarietyByHash`（おまかせ＝noteId から決定的・FNV風）
+- **スプライト**: `PlantSprite` に `variety?` 追加。**ベース形状＋品種色**＝果樹は果実色、花き(kind='flower')は mature=つぼみ/blooming=花（花びら7枚＋中心）。早い段階（種/芽/苗）は品種差なし。しおれ以降は実/花が出ない（既存の lush 判定流用）。※5段階フル描き下ろしは将来
+- **初回インプリントUI**: `ImprintPicker`（3列グリッド＋おまかせ＋あとで）。`StudySession` に統合＝currentCard が `state==='new'` かつ Dexie に未刻印のノートのみ1度プロンプト。`resolvedNotesRef`（Set）でセッション内の再プロンプト/再クエリ抑止。「あとで」はスキップ（保存せず汎用の姿）。プロンプト中はタイマー一時停止
+- **描画反映**: `IsoTile`/`GardenField`/`WitheredList`/`/garden`(個別モーダル) に variety を伝播。`getGardenForDeck`/`getWitheredPlants` が `getCreatureStatesMap` で note→品種を解決（未刻印は汎用）。`pickLabel` を garden-data から export して StudySession のラベル抽出に再利用
+- **検証**: 298テスト全通過（291→+7、varieties 7件＋garden-data モックに `getCreatureStatesMap` 追加）／lint クリーン（既存 TemplatePreview 警告のみ）／本番ビルド成功（`/garden` 9.7kB・`/api/garden/imprint` 登録・52ページ）
+- **次セッション注意**:
+  - **★最重要: `019_...sql` を Supabase で実行**しないと品種保存が 500（Dexie 側は動くがサーバー upsert 失敗）
+  - **要 Vercel デプロイ＋再ログイン**（Dexie v12 マイグレーション＝既存ユーザーは初回 sync で userCreatureState 取得）
+  - 大規模デッキ（中学英単語6858）では new カードのたびにプロンプト → 「おまかせ/あとで」で流せる設計だが、頻度が気になるなら「デッキ設定でインプリントOFF」等を将来検討
+  - 品種別スプライトは色＋形状の差のみ（ぶどうも丸い実）。フィデリティを上げるなら品種ごとの専用パスを追加
 
 ### 2026-06-15（Phase 10.3 枯れ株一覧・復活導線）
 - **依頼**: /start-session → 10.1/10.2 実機確認済み・文脈アシストのデプロイ確認済みを確認 → 今回の主軸は **Phase 10.3 枯れ株一覧（復活導線）**

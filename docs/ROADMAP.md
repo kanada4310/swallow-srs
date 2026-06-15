@@ -502,13 +502,13 @@ Anki本家と同様に、Again/Hardで評価したカードを同一セッショ
 - [x] 枯れ株に水やり（=復習）で芽吹き直す導線（`/study?deck=X&card=cardId` で当該株を最優先＝永久ロスト禁止の安全弁）
 - [x] 枯れ株一覧ビュー（全デッキ横断。`getWitheredPlants` ＋ `WitheredList`、`/garden` の「枯れ株 N」バッジから展開）
 
-### 10.4 品種選択（果樹・花きのインプリント）
+### 10.4 品種選択（果樹・花きのインプリント） ✅ 完了
 個別性は品種選択で担保。記憶術（視覚化）としても機能。
 
-- [ ] 品種カタログ（果樹/花き 各5段階スプライト、有限・手描き可能な規模）
-- [ ] 初回インプリントUI（「この単語はこの果物/花」と選ぶ。AI初期値提案は任意）
-- [ ] DBマイグレーション: `user_creature_state`（user_id, note_id, imprint, nickname）
-- [ ] Dexie 対応（生徒ごと・オフライン）
+- [x] 品種カタログ（`src/lib/garden/varieties.ts`：果樹6＋花き5。**ベース形状＋品種色**方式＝`PlantSprite` が kind/色で姿を変える。5段階フル描き下ろしは将来）
+- [x] 初回インプリントUI（`ImprintPicker`。学習の初回出題時＝new カードで未刻印のノートに1度だけ。「おまかせ」=noteId ハッシュで決定的／「あとで」=スキップ。AI初期提案は見送り）
+- [x] DBマイグレーション: `user_creature_state`（`019_user_creature_state.sql`、imprint JSONB + nickname、RLS=自分のみ）**要 Supabase 実行**
+- [x] Dexie 対応（生徒ごと・オフライン。Dexie v12 `userCreatureState`、`saveCreatureState`/`getCreatureState`/`getCreatureStatesMap`、pull API＋sync 同期、`POST /api/garden/imprint`）
 
 ### 10.5 集計・ランキングレイヤー
 継続のフック。公平性に配慮。
@@ -716,16 +716,17 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 
 ## 現在の進捗
 
-**Phase**: Phase 10「記憶のいきもの育成」10.1/10.2/**10.3 完了**（10.3 枯れ株一覧・復活導線）。次は 10.4 or 10.2残
+**Phase**: Phase 10「記憶のいきもの育成」10.1/10.2/10.3/**10.4 完了**（10.4 品種インプリント）。残るは 10.2残/10.5
 **最終更新**: 2026-06-15
-**次のタスク**: 10.3 デプロイ＆実機確認 → Phase 10.4 品種選択 or 10.2残
+**次のタスク**: **`019_user_creature_state.sql` を Supabase 実行** → 10.3/10.4 デプロイ＆実機確認 → 10.2残 or 10.5
 
 ### 次回セッションでやること
 
-1. **10.3 デプロイ＆実機確認**: `WitheredList`＋`getWitheredPlants`＋`/garden` 統合（要 Vercel デプロイ）。枯れは長期放置アカウントで
-2. **Phase 10.4 品種選択（インプリント）**: `user_creature_state` テーブル＋品種カタログ＋初回選択UI（現状は汎用の木1種）
+1. **★SQL実行**: `supabase/migrations/019_user_creature_state.sql`（未実行だと品種保存が500）→ Vercel デプロイ → 再ログインで Dexie v12 マイグレーション
+2. **実機確認**: 学習で new カード初回に品種ピッカー → `/garden` で品種別の姿。10.3 枯れ株一覧も
 3. **10.2 残**: 大規模デッキ→PixiJS化、学習完了→庭で成長を見せる演出、`GROWTH/CARE_THRESHOLDS` の実データ調整
-4. **その後**: リッチコンテンツ表示（Phase 13.x 数式・画像）→ 数学・理科へ科目拡張
+4. **Phase 10.5**: ストリーク/ヒートマップ・デイリーミッション・クラスランキング（成長率）・バッジ
+5. **その後**: リッチコンテンツ表示（Phase 13.x 数式・画像）→ 数学・理科へ科目拡張
 
 ### 今後のロードマップ（優先度順）
 - **Phase 10**: 記憶のいきもの育成（育成ゲーム）★次の主軸（@docs/memory-creatures-design.md）
@@ -756,3 +757,4 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 - [x] **文脈アシスト**（2026-06-14）: コロケーションパイロットの表面最上部に例文ごとの日本語リード文を追加（enrich-only AI生成870例文、例文プール {en,blank,ja,ctx} 拡張、DB in-place 更新）
 - [x] **Phase 10.1/10.2 記憶のいきもの育成**（2026-06-15）: 株のステータス導出（`plant-state.ts`）＋アイソメ箱庭ビュー `/garden`（実機確認済み）
 - [x] **Phase 10.3 枯れ株一覧・復活導線**（2026-06-15）: 全デッキ横断 `getWitheredPlants`＋`WitheredList` モーダル＋「水やり」で当該株を最優先復習（`/study?...&card=`）。枯れは見た目のみ・永久ロストなし
+- [x] **Phase 10.4 品種インプリント**（2026-06-15）: `varieties.ts`（果樹6＋花き5、ベース形状＋色）＋初回出題時 `ImprintPicker`＋`user_creature_state`（019/Dexie v12/pull同期/`/api/garden/imprint`）。庭・枯れ株一覧が品種別の姿で描画

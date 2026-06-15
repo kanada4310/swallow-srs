@@ -18,6 +18,7 @@ import type {
   Class,
   ClassMember,
   DeckAssignment,
+  CreatureImprint,
 } from '@/types/database'
 import type { CardSchedule } from '@/lib/srs/scheduler'
 import { resolveDeckSettings } from '@/lib/srs/scheduler'
@@ -95,6 +96,16 @@ export interface LocalUserDeckSettings {
   updated_at: Date
 }
 
+// 記憶のいきもの育成（Phase 10.4）— 品種インプリント（生徒×ノート）
+export interface LocalUserCreatureState {
+  id: string // composite key: `${user_id}:${note_id}`
+  user_id: string
+  note_id: string
+  imprint: CreatureImprint
+  nickname: string | null
+  updated_at: Date
+}
+
 class TsubameSRSDatabase extends Dexie {
   // Tables
   profiles!: Table<Profile>
@@ -109,6 +120,7 @@ class TsubameSRSDatabase extends Dexie {
   syncMetadata!: Table<SyncMetadata>
   audioCache!: Table<AudioCacheEntry>
   userDeckSettings!: Table<LocalUserDeckSettings>
+  userCreatureState!: Table<LocalUserCreatureState>
   classes!: Table<Class>
   classMembers!: Table<ClassMember>
   deckAssignments!: Table<DeckAssignment>
@@ -324,6 +336,26 @@ class TsubameSRSDatabase extends Dexie {
       classMembers: '[class_id+user_id], class_id, user_id',
       deckAssignments: 'id, deck_id, class_id, user_id',
     })
+
+    // Version 12: Add userCreatureState table for 記憶のいきもの育成（品種インプリント）
+    this.version(12).stores({
+      profiles: 'id',
+      noteTypes: 'id',
+      cardTemplates: 'id, note_type_id',
+      decks: 'id, owner_id, parent_deck_id',
+      notes: 'id, deck_id, *tags',
+      cards: 'id, note_id, deck_id',
+      cardStates: 'id, user_id, card_id, due, [user_id+card_id]',
+      reviewLogs: 'id, user_id, card_id, synced_at',
+      syncQueue: '++id, table, created_at, attempts',
+      syncMetadata: 'key',
+      audioCache: 'id, noteId, cachedAt',
+      userDeckSettings: 'id, user_id, deck_id, [user_id+deck_id]',
+      userCreatureState: 'id, user_id, note_id, [user_id+note_id]',
+      classes: 'id, teacher_id, billing_template_id',
+      classMembers: '[class_id+user_id], class_id, user_id',
+      deckAssignments: 'id, deck_id, class_id, user_id',
+    })
   }
 }
 
@@ -369,6 +401,46 @@ export async function saveCardState(
     id,
     updated_at: new Date(),
   })
+}
+
+// 記憶のいきもの育成（Phase 10.4）— 品種インプリントの Dexie ヘルパー
+
+/** user_creature_state の複合キー */
+export function createCreatureStateId(userId: string, noteId: string): string {
+  return `${userId}:${noteId}`
+}
+
+/** ノートの品種インプリントを取得（未設定なら undefined） */
+export async function getCreatureState(
+  userId: string,
+  noteId: string
+): Promise<LocalUserCreatureState | undefined> {
+  return db.userCreatureState.get(createCreatureStateId(userId, noteId))
+}
+
+/** 品種インプリントを保存（upsert・オフライン可） */
+export async function saveCreatureState(
+  userId: string,
+  noteId: string,
+  imprint: CreatureImprint,
+  nickname: string | null = null
+): Promise<void> {
+  await db.userCreatureState.put({
+    id: createCreatureStateId(userId, noteId),
+    user_id: userId,
+    note_id: noteId,
+    imprint,
+    nickname,
+    updated_at: new Date(),
+  })
+}
+
+/** ユーザーの全インプリントを note_id → imprint の Map で返す（庭の一括描画用） */
+export async function getCreatureStatesMap(
+  userId: string
+): Promise<Map<string, CreatureImprint>> {
+  const rows = await db.userCreatureState.where('user_id').equals(userId).toArray()
+  return new Map(rows.map((r) => [r.note_id, r.imprint]))
 }
 
 /**
@@ -441,6 +513,7 @@ export async function clearAllData(): Promise<void> {
       db.syncMetadata,
       db.audioCache,
       db.userDeckSettings,
+      db.userCreatureState,
       db.classes,
       db.classMembers,
       db.deckAssignments,
@@ -459,6 +532,7 @@ export async function clearAllData(): Promise<void> {
         db.syncMetadata.clear(),
         db.audioCache.clear(),
         db.userDeckSettings.clear(),
+        db.userCreatureState.clear(),
         db.classes.clear(),
         db.classMembers.clear(),
         db.deckAssignments.clear(),

@@ -1,6 +1,7 @@
 'use client'
 
 import type { PlantState } from '@/lib/garden/plant-state'
+import type { Variety } from '@/lib/garden/varieties'
 import { PlantSprite } from './PlantSprite'
 
 /** アイソメ・ブロックの寸法（天面の半幅・半高・厚み） */
@@ -20,10 +21,12 @@ const SOIL_D = '#7C6042'
  */
 export function IsoTile({
   plant,
+  variety,
   animate = true,
   delay = 0,
 }: {
   plant: PlantState
+  variety?: Variety
   animate?: boolean
   delay?: number
 }) {
@@ -38,7 +41,7 @@ export function IsoTile({
 
       {/* 株（揺れアニメは外側のグループ、しおれ傾きは PlantSprite 内側） */}
       <g className={animate ? 'garden-sway' : undefined} style={delayStyle}>
-        <PlantSprite stage={plant.growth} care={plant.care} />
+        <PlantSprite stage={plant.growth} care={plant.care} variety={variety} />
       </g>
 
       {/* 水やりが必要ならしずくバッジ（位置は外側、脈打ちは内側＝transform衝突回避） */}

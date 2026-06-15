@@ -189,6 +189,18 @@ export async function pullFromServer(userId: string): Promise<void> {
     await db.userDeckSettings.bulkPut(mapped)
   }
 
+  if (data.userCreatureState && data.userCreatureState.length > 0) {
+    const mapped = data.userCreatureState.map((s: { user_id: string; note_id: string; imprint: { variety: string }; nickname: string | null; updated_at: string }) => ({
+      id: `${s.user_id}:${s.note_id}`,
+      user_id: s.user_id,
+      note_id: s.note_id,
+      imprint: s.imprint,
+      nickname: s.nickname ?? null,
+      updated_at: new Date(s.updated_at),
+    }))
+    await db.userCreatureState.bulkPut(mapped)
+  }
+
   if (data.classes) {
     await db.classes.bulkPut(data.classes)
   }

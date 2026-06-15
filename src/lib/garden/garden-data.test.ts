@@ -35,6 +35,7 @@ vi.mock('@/lib/db/schema', () => ({
     decks: makeTable(() => decksData),
   },
   getDescendantDeckIds: vi.fn().mockResolvedValue([]),
+  getCreatureStatesMap: vi.fn().mockResolvedValue(new Map()),
 }))
 
 import { getWitheredPlants } from './garden-data'

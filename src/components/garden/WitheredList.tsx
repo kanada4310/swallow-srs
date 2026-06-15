@@ -52,7 +52,7 @@ export function WitheredList({
             {plants.map((p) => (
               <li key={p.cardId} className="flex items-center gap-3 py-2.5 px-2">
                 <svg viewBox="-44 -62 88 92" width="44" height="46" role="img" aria-hidden className="flex-shrink-0">
-                  <IsoTile plant={p.plant} animate={false} />
+                  <IsoTile plant={p.plant} variety={p.variety} animate={false} />
                 </svg>
                 <div className="min-w-0 flex-1">
                   <div className="font-medium text-gray-900 truncate">

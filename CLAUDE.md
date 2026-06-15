@@ -249,20 +249,25 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
   - `src/lib/garden/garden-data.ts` `getWitheredPlants(userId, now?)`: 全 card_states を走査 → `isDead` のみ抽出 → deckId/deckName/label/plant 付与・放置日数降順（Dexie のみ・オフライン可）
   - `src/components/garden/WitheredList.tsx`: 枯れ株モーダル一覧。行ごとに「水やり」→ `/study?deck=X&card=cardId`（既存 `priorityCardId` で当該株を最優先表示）
   - `/garden` のサマリー「🍂 枯れ株 N（全デッキ）」バッジから展開。枯れは見た目のみ・card_states 不変・永久ロストなし（安全弁）
-- **方針**: アートは当面**自前の手続き生成SVG**で世界観統制（CC0素材は絵柄不一致で見送り）。品種別スプライト/`user_creature_state` は 10.4。将来 PixiJS（大規模）/Rive（状態アニメ）
+- **品種インプリント（10.4）✅**: 「この単語をどの植物で育てる？」を初回出題時に選ぶ（視覚化記憶術）
+  - `src/lib/garden/varieties.ts`: 品種カタログ（果樹6＋花き5）。**ベース形状（tree/flower）＋品種アクセント色**方式で `PlantSprite` が姿を変える（5段階フル描き下ろしは将来）。`pickVarietyByHash`（おまかせ用・決定的）
+  - `src/components/garden/ImprintPicker.tsx`: 学習で new カード＋未刻印ノートのみ1度プロンプト（`StudySession` に統合）。「おまかせ」/「あとで」あり
+  - DB: `user_creature_state`（`019_user_creature_state.sql`、imprint JSONB + nickname、RLS=自分のみ）。Dexie v12 `userCreatureState`＋`saveCreatureState`/`getCreatureState`/`getCreatureStatesMap`。pull API＋sync で同期、保存は `POST /api/garden/imprint`（オフラインは Dexie 即時・オンラインで upsert）
+  - 庭/個別/枯れ株一覧はインプリント済みの品種で描画（未刻印は汎用の果樹）
+- **方針**: アートは当面**自前の手続き生成SVG**で世界観統制（CC0素材は絵柄不一致で見送り）。将来 PixiJS（大規模）/Rive（状態アニメ）。品種別の5段階フルスプライトは後日
 
 ## 現在の進捗
 
 詳細は @docs/progress.md を参照。
 
 - **最終更新**: 2026-06-15
-- **直近の修正**: **Phase 10.3「枯れ株一覧・復活導線」完了**（10.1/10.2 は実装・実機確認済み）。`/garden` の「🍂 枯れ株 N（全デッキ）」から全デッキ横断の枯れ株一覧モーダル → 「水やり」で当該株を最優先復習（`/study?...&card=`）→ FSRS が自然に芽吹き直し。枯れは見た目のみ・card_states 不変。設計は @docs/memory-creatures-design.md
+- **直近の修正**: **Phase 10.4「品種インプリント」完了**（10.1/10.2/10.3 済み）。学習の初回出題時に「どの植物で育てる？」を選び、庭・枯れ株一覧が品種別の姿で描画。`user_creature_state`（019/Dexie v12/同期）＋`varieties.ts`（ベース形状＋色）＋`ImprintPicker`。設計は @docs/memory-creatures-design.md
 - **次にやること**:
-  1. **要デプロイ＆実機確認**: 10.3（新コンポーネント・新ロジック）。デプロイ後に再ログイン→`/garden`、枯れは長期放置アカウントで
-  2. **Phase 10.4 品種選択（インプリント）**: `user_creature_state` テーブル＋品種カタログ＋初回選択UI（現状は汎用の木1種）
+  1. **★`019_user_creature_state.sql` を Supabase 実行**（未実行だと品種保存が500）→ Vercel デプロイ → 再ログインで Dexie v12 マイグレーション
+  2. **実機確認**: 学習 new カード初回で品種ピッカー → `/garden` で品種別の姿。10.3 枯れ株一覧も
   3. **10.2 残**: 大規模デッキ→PixiJS、学習完了→成長演出、しきい値の実データ調整
-  4. **Phase 13.4**: リッチコンテンツ表示（数式 KaTeX/MathJax・画像）→ 数学・理科へ科目拡張
-  5. billing側のLINE送信ジョブ / Phase 9.3-9.4
+  4. **Phase 10.5**: ストリーク/ヒートマップ・デイリーミッション・ランキング（成長率）・バッジ
+  5. **Phase 13.4**: リッチコンテンツ表示（数式 KaTeX/MathJax・画像）→ 数学・理科へ科目拡張
 
 ## 参照ドキュメント
 
