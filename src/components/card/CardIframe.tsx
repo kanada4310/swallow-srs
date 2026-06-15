@@ -26,7 +26,7 @@ ${katexLink}
   *, *::before, *::after { box-sizing: border-box; }
   body {
     margin: 0;
-    padding: 8px;
+    padding: 10px 8px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     font-size: 16px;
     line-height: 1.6;
@@ -73,7 +73,13 @@ ${katexLink}
 (function() {
   var frameId = ${JSON.stringify(frameId)};
   function sendHeight() {
-    var h = document.documentElement.scrollHeight;
+    var b = document.body, d = document.documentElement;
+    // KaTeX のような背の高い要素でも切れないよう、複数指標の最大値を採る
+    var h = Math.max(
+      d.scrollHeight, d.offsetHeight,
+      b ? b.scrollHeight : 0, b ? b.offsetHeight : 0,
+      b ? Math.ceil(b.getBoundingClientRect().height) : 0
+    );
     parent.postMessage({ type: 'card-iframe-resize', frameId: frameId, height: h }, '*');
   }
   if (typeof ResizeObserver !== 'undefined') {
@@ -82,6 +88,12 @@ ${katexLink}
   sendHeight();
   setTimeout(sendHeight, 50);
   setTimeout(sendHeight, 200);
+  setTimeout(sendHeight, 500);
+  // KaTeX のフォント/CSS 読込で高さが変わるため、フォント確定後に再計測する
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(sendHeight).catch(function(){});
+  }
+  window.addEventListener('load', sendHeight);
 
   // TTS button click handler
   document.addEventListener('click', function(e) {
