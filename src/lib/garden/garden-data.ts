@@ -22,10 +22,14 @@ export interface GardenPlant {
   variety?: Variety
 }
 
-/** field_values から名札ラベルを1つ選ぶ（見出し語優先 → 先頭の非空値） */
+/**
+ * field_values から名札ラベルを1つ選ぶ。
+ * 庭の名札用に「短い見出し」フィールドがあれば最優先で使う（数式デッキ等で有効）。
+ * 無ければ見出し語系 → 先頭の非空値（数式は除去）にフォールバック。
+ */
 export function pickLabel(fieldValues: Record<string, unknown> | null | undefined): string {
   if (!fieldValues) return ''
-  const priority = ['見出し語', '単語', '英単語', 'word', 'Word', 'Front', '表面']
+  const priority = ['見出し', 'ラベル', 'タイトル', '見出し語', '単語', '英単語', 'word', 'Word', 'Front', '表面']
   for (const key of priority) {
     const v = fieldValues[key]
     if (typeof v === 'string' && v.trim()) return stripHtml(v)

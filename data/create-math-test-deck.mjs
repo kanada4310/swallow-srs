@@ -45,8 +45,9 @@ const DECK_NAME = '数式テスト（KaTeX 確認用）'
 const PREFERRED_OWNER_EMAIL = 'gaimon.maam@gmail.com'
 
 const FIELDS = [
-  { name: '問題', ord: 0, settings: {} },
-  { name: '解答', ord: 1, settings: {} },
+  { name: '見出し', ord: 0, settings: {} }, // 庭の名札用の短い見出し
+  { name: '問題', ord: 1, settings: {} },
+  { name: '解答', ord: 2, settings: {} },
 ]
 
 const FRONT_TEMPLATE = `<div class="q">{{問題}}</div>`
@@ -58,15 +59,17 @@ hr { margin: 20px 0; border: none; border-top: 1px solid #e5e7eb; }
 .katex-display { margin: 0.6em 0; }`
 
 // 問題/解答に数式デリミタ（\(…\) インライン, \[…\] / $$…$$ ディスプレイ）を含む
+// 見出し = 庭の名札用の短いラベル（数式を含めない）
 const NOTES = [
-  { 問題: '質量とエネルギーの等価性を表す式は？', 解答: '\\(E = mc^2\\)' },
-  { 問題: '二次方程式 \\(ax^2+bx+c=0\\) の解の公式は？', 解答: '\\[ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a} \\]' },
-  { 問題: '1 から n までの自然数の和は？', 解答: '$$\\sum_{k=1}^{n} k = \\frac{n(n+1)}{2}$$' },
-  { 問題: '三角関数の基本（ピタゴラスの）恒等式は？', 解答: '\\(\\sin^2\\theta + \\cos^2\\theta = 1\\)' },
-  { 問題: '\\(\\displaystyle\\int_0^1 x^2\\,dx\\) の値は？', 解答: '\\[ \\int_0^1 x^2\\,dx = \\frac{1}{3} \\]' },
-  { 問題: '2×2 の単位行列を書け。', 解答: '$$\\begin{pmatrix} 1 & 0 \\\\ 0 & 1 \\end{pmatrix}$$' },
-  { 問題: '水の生成反応式（化学）を完成させよ。', 解答: '\\(2H_2 + O_2 \\rightarrow 2H_2O\\)' },
+  { 見出し: '質量とエネルギー', 問題: '質量とエネルギーの等価性を表す式は？', 解答: '\\(E = mc^2\\)' },
+  { 見出し: '二次方程式の解の公式', 問題: '二次方程式 \\(ax^2+bx+c=0\\) の解の公式は？', 解答: '\\[ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a} \\]' },
+  { 見出し: '1〜nの和', 問題: '1 から n までの自然数の和は？', 解答: '$$\\sum_{k=1}^{n} k = \\frac{n(n+1)}{2}$$' },
+  { 見出し: '三角関数の恒等式', 問題: '三角関数の基本（ピタゴラスの）恒等式は？', 解答: '\\(\\sin^2\\theta + \\cos^2\\theta = 1\\)' },
+  { 見出し: '定積分', 問題: '\\(\\displaystyle\\int_0^1 x^2\\,dx\\) の値は？', 解答: '\\[ \\int_0^1 x^2\\,dx = \\frac{1}{3} \\]' },
+  { 見出し: '単位行列', 問題: '2×2 の単位行列を書け。', 解答: '$$\\begin{pmatrix} 1 & 0 \\\\ 0 & 1 \\end{pmatrix}$$' },
+  { 見出し: '水の生成反応', 問題: '水の生成反応式（化学）を完成させよ。', 解答: '\\(2H_2 + O_2 \\rightarrow 2H_2O\\)' },
   {
+    見出し: '図形（三角形）',
     問題: '【画像表示テスト】下の図形は何角形？<br><img src="data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'120\' height=\'110\'><polygon points=\'60,8 112,100 8,100\' fill=\'%23bfdbfe\' stroke=\'%232563eb\' stroke-width=\'3\'/></svg>" alt="三角形">',
     解答: '三角形（\\(n = 3\\)）',
   },
