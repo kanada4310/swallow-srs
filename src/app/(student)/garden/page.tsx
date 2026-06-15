@@ -9,6 +9,7 @@ import { getGardenForDeck } from '@/lib/garden/garden-data'
 import { derivePlantState, summarizeGarden, type GrowthStage, type CareState } from '@/lib/garden/plant-state'
 import { GardenField, type GardenFieldItem } from '@/components/garden/GardenField'
 import { IsoTile } from '@/components/garden/IsoTile'
+import { AppLayout } from '@/components/layout/AppLayout'
 
 /** 一度に描画するタイル数の上限（超過分は PixiJS 化で対応予定） */
 const MAX_TILES = 150
@@ -59,10 +60,15 @@ export default function GardenPage() {
     : null
 
   if (!userId || decks === undefined) {
-    return <div className="max-w-4xl mx-auto px-4 py-10 text-gray-500">読み込み中…</div>
+    return (
+      <AppLayout>
+        <div className="max-w-4xl mx-auto px-4 py-10 text-gray-500">読み込み中…</div>
+      </AppLayout>
+    )
   }
 
   return (
+    <AppLayout>
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
         <h1 className="text-2xl font-bold text-gray-900">
@@ -154,5 +160,6 @@ export default function GardenPage() {
         </div>
       )}
     </div>
+    </AppLayout>
   )
 }
