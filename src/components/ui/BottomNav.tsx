@@ -68,6 +68,7 @@ const studentNavItems: NavItem[] = [
 const teacherNavItems: NavItem[] = [
   { href: '/', label: 'ホーム', icon: <HomeIcon /> },
   { href: '/decks', label: 'デッキ', icon: <DecksIcon /> },
+  { href: '/garden', label: '庭', icon: <GardenIcon /> },
   { href: '/notes', label: 'ノート', icon: <NotesIcon /> },
   { href: '/students', label: '生徒', icon: <StudentsIcon /> },
   { href: '/note-types', label: 'テンプレート', icon: <NoteTypesIcon /> },
@@ -90,14 +91,14 @@ export function BottomNav({ role }: BottomNavProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center py-2 px-3 min-w-[64px] ${
+                className={`flex flex-col items-center py-2 px-1.5 min-w-0 ${
                   isActive
                     ? 'text-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
                 {item.icon}
-                <span className="text-xs mt-1">{item.label}</span>
+                <span className="text-xs mt-1 whitespace-nowrap">{item.label}</span>
               </Link>
             )
           })}
