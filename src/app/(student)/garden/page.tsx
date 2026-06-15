@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useLiveQuery } from 'dexie-react-hooks'
@@ -45,6 +45,17 @@ export default function GardenPage() {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
   const [showWithered, setShowWithered] = useState(false)
   const [showAchievements, setShowAchievements] = useState(false)
+  // 選択した時刻。Pixi のタップ（pointerup）直後に来る合成 click が背景に当たって
+  // 即座に閉じる「ゴーストクリック」を抑止するためのガード。
+  const selectedAtRef = useRef(0)
+  const selectCard = (id: string) => {
+    selectedAtRef.current = Date.now()
+    setSelectedCardId(id)
+  }
+  const closeSelected = () => {
+    if (Date.now() - selectedAtRef.current < 400) return // 直後の合成クリックは無視
+    setSelectedCardId(null)
+  }
 
   // 学習完了の「庭で見る」等から ?deck= で対象デッキを指定可能（クライアントのみ）
   useEffect(() => {
@@ -171,9 +182,9 @@ export default function GardenPage() {
 
       <div className="bg-green-50/40 border border-green-100 rounded-xl p-2">
         {items.length > MAX_TILES ? (
-          <GardenFieldPixi items={items} onSelect={setSelectedCardId} />
+          <GardenFieldPixi items={items} onSelect={selectCard} />
         ) : (
-          <GardenField items={items} onSelect={setSelectedCardId} />
+          <GardenField items={items} onSelect={selectCard} />
         )}
       </div>
 
@@ -191,7 +202,7 @@ export default function GardenPage() {
       {selected && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={() => setSelectedCardId(null)}
+          onClick={closeSelected}
         >
           <div
             className="bg-white rounded-xl shadow-xl max-w-xs w-full p-5"
