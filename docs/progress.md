@@ -22,8 +22,10 @@
   - **KaTeX は重い(~270KB)ので数式カードのみ動的 import**。`StudyCard`：`MATH_DELIMITER` で前判定→`import('@/lib/template/math')`→`displayedFront/Back` に差し替え＋`CardIframe math={…}`。`TemplatePreview` も同様（プレビューで数式確認可）
   - `CardIframe`：`math` prop で `<link rel="stylesheet" href="/katex/katex.min.css">` を出し分け
 - **検証**: 329テスト全通過（322→+7）／lint クリーン／build 成功。`/study` 3.14kB（KaTeX は別チャンク＝初期バンドル不変）
+- **実機で数式が二重表示＝崩れる不具合 → 修正済み（要再デプロイ）**: 原因は **`/katex/*` がミドルウェアで未認証リダイレクト(307→/login)** され、iframe が KaTeX CSS を読めず「ネイティブMathML＋未CSSのkatex-html」が二重表示されていた。修正＝①`publicPaths` に `/katex` 追加（`src/lib/supabase/middleware.ts`）②`next.config.mjs` に `/katex/:path*` の CORS(`Access-Control-Allow-Origin:*`)＋長期キャッシュ headers（**iframe は sandbox=opaque origin なのでフォントに CORS 必須**）③woff2 を SW `katex-fonts` で CacheFirst（オフライン）。**Vercel 再デプロイで反映**
+- **検証用デッキ投入済み**: `data/create-math-test-deck.mjs` で「数式テスト（KaTeX 確認用）」(deck `376dc155…`, owner gaimon.maam, 8問＋画像)
 - **次セッション注意**:
-  - 要 Vercel デプロイ＋実機で数式カード確認（`\(x^2\)` 等を含むノートを作って `/study`）。**オフライン**: 初回は KaTeX CSS/フォントの取得が要る（SW キャッシュ後はオフライン可）。SW が `/katex/` を確実にプリキャッシュするかは要確認（崩れる＝フォント未取得なら next-pwa の runtimeCaching に `/katex/` 追加を検討）
+  - 再デプロイ後に `/study` で数式が**1つだけ**整形表示されることを確認（二重表示が消えていれば成功）。`curl -I https://srs.swallow-base.com/katex/katex.min.css` が **200＋ACAO** になるか／フォント woff2 も 200 を確認
   - 画像は URL 表示のみ。**アップロード（Storage）＋オフラインキャッシュ未実装**＝次の増分（TTS の `saveAudioCache` 同様の仕組みを `<img>`/フィールドに）。iframe 越しの画像 blob 差し替えが要点
   - 数式が入ったので**数学・理科デッキ**を作れば科目拡張＋その科目の「いきもの」飼育に繋がる
 

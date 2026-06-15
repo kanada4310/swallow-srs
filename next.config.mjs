@@ -1,7 +1,21 @@
 import withPWA from '@ducanh2912/next-pwa'
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {}
+const nextConfig = {
+  async headers() {
+    return [
+      {
+        // KaTeX CSS/フォントは sandbox iframe（opaque origin）から読み込まれるため、
+        // クロスオリジン扱いになる。フォント読込に CORS が必要なので許可する。
+        source: '/katex/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+    ]
+  },
+}
 
 const config = withPWA({
   dest: 'public',
@@ -60,6 +74,18 @@ const config = withPWA({
           expiration: {
             maxEntries: 100,
             maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+          },
+        },
+      },
+      {
+        // KaTeX フォント（woff2 等）— オフラインでも数式が崩れないようキャッシュ
+        urlPattern: /\/katex\/.*\.(?:woff2?|ttf)$/i,
+        handler: 'CacheFirst',
+        options: {
+          cacheName: 'katex-fonts',
+          expiration: {
+            maxEntries: 40,
+            maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
           },
         },
       },
