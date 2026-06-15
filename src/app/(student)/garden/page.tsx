@@ -10,6 +10,7 @@ import { derivePlantState, summarizeGarden, type GrowthStage, type CareState } f
 import { GardenField, type GardenFieldItem } from '@/components/garden/GardenField'
 import { IsoTile } from '@/components/garden/IsoTile'
 import { WitheredList } from '@/components/garden/WitheredList'
+import { AchievementsModal } from '@/components/garden/AchievementsModal'
 import { useStreak } from '@/lib/stats/useStreak'
 import { AppLayout } from '@/components/layout/AppLayout'
 
@@ -30,6 +31,7 @@ export default function GardenPage() {
   const [deckId, setDeckId] = useState<string | null>(null)
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
   const [showWithered, setShowWithered] = useState(false)
+  const [showAchievements, setShowAchievements] = useState(false)
 
   // 学習完了の「庭で見る」等から ?deck= で対象デッキを指定可能（クライアントのみ）
   useEffect(() => {
@@ -99,6 +101,12 @@ export default function GardenPage() {
               🔥 {streak}日
             </span>
           )}
+          <button
+            onClick={() => setShowAchievements(true)}
+            className="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 text-sm font-medium whitespace-nowrap hover:bg-amber-200"
+          >
+            🏅 実績
+          </button>
         </div>
         {decks && decks.length > 0 && (
           <select
@@ -150,6 +158,11 @@ export default function GardenPage() {
       {/* 枯れ株一覧（全デッキ横断・復活導線） */}
       {showWithered && (
         <WitheredList plants={withered ?? []} onClose={() => setShowWithered(false)} />
+      )}
+
+      {/* 実績（アチーブメントバッジ） */}
+      {showAchievements && (
+        <AchievementsModal userId={userId} onClose={() => setShowAchievements(false)} />
       )}
 
       {/* 個別画面（1ブロック） */}

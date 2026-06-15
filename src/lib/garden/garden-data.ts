@@ -8,6 +8,8 @@
 import { db, getDescendantDeckIds, getCreatureStatesMap } from '@/lib/db/schema'
 import { derivePlantState, type PlantCardInput, type PlantState } from './plant-state'
 import { getVariety, type Variety } from './varieties'
+import { computeStreak } from '@/lib/stats/streak'
+import type { AchievementInput } from './achievements'
 
 export interface GardenPlant {
   cardId: string
@@ -169,4 +171,52 @@ export async function getWitheredPlants(
   // 放置が長い（=より枯れている）順に
   result.sort((a, b) => b.plant.overdueDays - a.plant.overdueDays)
   return result
+}
+
+/**
+ * アチーブメント評価用の指標を既存データから集計する（Phase 10.5）。
+ * reviewLogs / card_states / notes / userCreatureState から導出。オフライン可。
+ */
+export async function getAchievementInput(
+  userId: string,
+  now: Date = new Date()
+): Promise<AchievementInput> {
+  const [reviewLogs, cardStates, totalPlants, imprints] = await Promise.all([
+    db.reviewLogs.where('user_id').equals(userId).toArray(),
+    db.cardStates.where('user_id').equals(userId).toArray(),
+    db.notes.count(),
+    getCreatureStatesMap(userId),
+  ])
+
+  const dates = reviewLogs.map((l) =>
+    l.reviewed_at instanceof Date ? l.reviewed_at : new Date(l.reviewed_at)
+  )
+  const { longest } = computeStreak(dates, now)
+
+  let bloomingCount = 0
+  for (const cs of cardStates) {
+    const growth = derivePlantState(
+      {
+        state: cs.state,
+        stability: cs.stability ?? null,
+        interval: cs.interval,
+        due: cs.due,
+        lapses: cs.lapses ?? 0,
+      },
+      now
+    ).growth
+    if (growth === 'blooming') bloomingCount += 1
+  }
+
+  const varietyCount = new Set(
+    Array.from(imprints.values()).map((i) => i.variety)
+  ).size
+
+  return {
+    totalReviews: reviewLogs.length,
+    streakLongest: longest,
+    bloomingCount,
+    totalPlants,
+    varietyCount,
+  }
 }

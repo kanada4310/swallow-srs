@@ -258,6 +258,7 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
   - `src/lib/stats/streak.ts`: `computeStreak`（current/longest・4時区切り、当日未学習でも継続）/`buildHeatmap`（週×7日）。純ロジック・テスト13件
   - `src/lib/stats/useStreak.ts`（Dexie reviewLogs を liveQuery・オフライン可）＋`src/components/stats/StreakHeatmap.tsx`。`/stats` 上部に表示＋`/garden` ヘッダーに🔥連続日数
 - **学習完了→成長演出（10.2 残）✅**: `StudySession` がセッション中の段階アップ（`GROWTH_ORDER` で基準比較）を集計し、完了画面で `GrowthCelebration`（品種別スプライト＋from→to＋「庭で見る」）。`/garden` は `?deck=` でデッキ指定可
+- **アチーブメントバッジ（10.5）✅**: `src/lib/garden/achievements.ts`（結実/ストリーク/累計レビュー/品種数/株数の9種を既存データから導出する純ロジック・テスト7件）＋`getAchievementInput`（Dexie・オフライン）＋`src/components/garden/AchievementsModal.tsx`。`/garden` の「🏅 実績」から達成/進捗を表示
 - **DB適用**: `019_user_creature_state.sql` は Supabase に**適用済み**（CLI 導入・link・001〜018 repair・db push）。以後の新規マイグレーションは `npx supabase db push` で適用可能（手動SQL不要）
 - **方針**: アートは当面**自前の手続き生成SVG**で世界観統制（CC0素材は絵柄不一致で見送り）。将来 PixiJS（大規模）/Rive（状態アニメ）。品種別の5段階フルスプライトは後日
 
@@ -268,8 +269,8 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 - **最終更新**: 2026-06-15
 - **直近の修正**: **Phase 10.4 品種インプリント＋10.5一部（ストリーク/ヒートマップ）＋10.2 学習完了→成長演出 完了**。**019 マイグレーションも Supabase に適用済み**。学習で品種を選び庭が品種別の姿に／完了画面で育った株を演出／`/stats`・`/garden` に連続日数。設計は @docs/memory-creatures-design.md
 - **次にやること**:
-  1. **Vercel デプロイ → 再ログイン**（Dexie v12）で 10.4/10.5/10.2演出 を実機反映・確認
-  2. **Phase 10.5 残**: デイリーミッション＋プッシュ連携、クラスランキング（成長率・オプトアウト）、バッジ
+  1. **Vercel デプロイ → 再ログイン**（Dexie v12）で 10.4/10.5/10.2演出/実績バッジ を実機反映・確認
+  2. **Phase 10.5 残**: デイリーミッション＋プッシュ連携、クラスランキング（成長率・オプトアウト）
   3. **10.2 残**: 大規模デッキ→PixiJS、回答ごとのリアルタイム成長アニメ、しきい値の実データ調整
   4. **Phase 13.4**: リッチコンテンツ表示（数式 KaTeX/MathJax・画像）→ 数学・理科へ科目拡張
 
