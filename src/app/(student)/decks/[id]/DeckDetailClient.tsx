@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { NoteEditor } from '@/components/deck/NoteEditor'
 import { NoteBrowser } from '@/components/deck/NoteBrowser'
 import { NoteEditModal } from '@/components/deck/NoteEditModal'
@@ -329,6 +330,16 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
             </svg>
             写真から読み取り
           </button>
+          <Link
+            href={`/notes/image-mask/new?deck=${deckId}`}
+            className="flex-1 min-w-[140px] py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9h6v6H9z" />
+            </svg>
+            画像マスキング
+          </Link>
           <button
             onClick={() => setShowBulkGenerateModal(true)}
             disabled={notes.length === 0}

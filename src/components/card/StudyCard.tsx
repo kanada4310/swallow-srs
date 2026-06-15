@@ -6,6 +6,7 @@ import { renderTemplate, hasTtsPlaceholders, extractTtsFieldNames, extractImageU
 import { CardIframe } from '@/components/card/CardIframe'
 import { AudioButton } from '@/components/audio/AudioButton'
 import { getCachedAudio, saveAudioCache, getCachedImage, saveImageCache } from '@/lib/db/schema'
+import { resolveMaskCount, pickMaskIndices, buildMaskHtml, type MaskRegions } from '@/lib/image-mask'
 import { SwipeOverlay } from '@/components/card/SwipeOverlay'
 import { useSwipeGesture, type SwipeDirection } from '@/lib/swipe/useSwipeGesture'
 import type { GeneratedContent, FieldDefinition } from '@/types/database'
@@ -89,28 +90,65 @@ export function StudyCard({
   // 表示用フィールド(英文穴埋め/和文/英文)に展開する。
   // SRSスケジュールはノート(=コロケーション)単位のまま、表示する例文だけを毎回入れ替える。
   const poolPickRef = useRef<{ noteId: string; idx: number } | null>(null)
+  // 画像マスキングノート: マスク領域からレビューごとにランダムにN領域を隠す。
+  // 表示専用フィールド 画像表/画像裏 を合成する（保存フィールドは増やさない）。
+  const maskPickRef = useRef<{ noteId: string; maskedIds: string[] } | null>(null)
   const effectiveFieldValues = useMemo<FieldValues>(() => {
-    const raw = fieldValues['例文プール']
-    if (!raw) return fieldValues
-    let pool: Array<{ en?: string; blank?: string; ja?: string; ctx?: string }>
-    try {
-      pool = JSON.parse(raw)
-    } catch {
-      return fieldValues
+    // 例文プール（コロケーション構文）
+    const poolRaw = fieldValues['例文プール']
+    if (poolRaw) {
+      let pool: Array<{ en?: string; blank?: string; ja?: string; ctx?: string }> = []
+      try {
+        pool = JSON.parse(poolRaw)
+      } catch {
+        pool = []
+      }
+      if (Array.isArray(pool) && pool.length > 0) {
+        // このカード表示につき1回だけランダムに選ぶ（次に出題されると別の例文になる）
+        if (!poolPickRef.current || poolPickRef.current.noteId !== noteId) {
+          poolPickRef.current = { noteId, idx: Math.floor(Math.random() * pool.length) }
+        }
+        const ex = pool[poolPickRef.current.idx % pool.length] ?? pool[0]
+        return {
+          ...fieldValues,
+          '英文穴埋め': ex.blank ?? '',
+          '和文': ex.ja ?? '',
+          '英文': ex.en ?? '',
+          '文脈': ex.ctx ?? '',
+        }
+      }
     }
-    if (!Array.isArray(pool) || pool.length === 0) return fieldValues
-    // このカード表示につき1回だけランダムに選ぶ（次に出題されると別の例文になる）
-    if (!poolPickRef.current || poolPickRef.current.noteId !== noteId) {
-      poolPickRef.current = { noteId, idx: Math.floor(Math.random() * pool.length) }
+
+    // 画像マスキング
+    const maskRaw = fieldValues['マスク領域']
+    const imageUrl = fieldValues['画像']
+    if (maskRaw && imageUrl) {
+      let regions: MaskRegions = []
+      try {
+        regions = JSON.parse(maskRaw)
+      } catch {
+        regions = []
+      }
+      if (Array.isArray(regions) && regions.length > 0) {
+        if (!maskPickRef.current || maskPickRef.current.noteId !== noteId) {
+          const configured = parseInt(fieldValues['毎回隠す数'] || '', 10)
+          const count = resolveMaskCount(
+            regions.length,
+            Number.isNaN(configured) ? null : configured
+          )
+          const idxs = pickMaskIndices(regions.length, count)
+          maskPickRef.current = { noteId, maskedIds: idxs.map((i) => regions[i].id) }
+        }
+        const maskedIds = new Set(maskPickRef.current.maskedIds)
+        return {
+          ...fieldValues,
+          '画像表': buildMaskHtml(imageUrl, regions, maskedIds, 'front'),
+          '画像裏': buildMaskHtml(imageUrl, regions, maskedIds, 'back'),
+        }
+      }
     }
-    const ex = pool[poolPickRef.current.idx % pool.length] ?? pool[0]
-    return {
-      ...fieldValues,
-      '英文穴埋め': ex.blank ?? '',
-      '和文': ex.ja ?? '',
-      '英文': ex.en ?? '',
-      '文脈': ex.ctx ?? '',
-    }
+
+    return fieldValues
   }, [fieldValues, noteId])
 
   // Render templates (pure template processing, no sanitization)

@@ -1,17 +1,48 @@
 # 進捗管理
 
 ## 現在の作業
-- Phase: **Phase 10 ほぼ完了**（クラスランキングは**見送り**）＋**Phase 13.4 数式（KaTeX）完了**。画像はURL表示可、アップロード/オフラインキャッシュが次の増分
+- Phase: **Phase 10 ほぼ完了**＋**Phase 13.4 数式完了**＋**画像マスキング（増分A/B）実装完了（要実機確認）**。ブランチ `feat/image-masking`
 - 最終更新: 2026-06-15
-- **数式（MathML描画）＋庭の見た目改善は実機確認済み（問題なし）**
+- **画像マスキングは未実機確認**。要 `node data/create-image-occlusion-notetype.mjs` 実行＋Vercelデプロイ＋再ログイン（Dexie v13）
 - 次にやること:
-  1. **画像アップロード**: フィールド型＋Supabase Storage＋オフライン(IndexedDB)キャッシュ（TTS音声の仕組みを流用）
-  2. **科目拡張**: 数式が使えるので数学・理科デッキ作成 → そこの「いきもの」も飼える（Phase 10 連携）
+  1. **画像マスキングの実機確認**（手順は下のセッションメモ参照）→ 問題なければ main へマージ
+  2. **科目拡張**: 数式＋画像マスキングが使えるので数学・理科デッキ作成 → そこの「いきもの」も飼える（Phase 10 連携）
   3. **10.2 残**: しきい値の実データ調整／デイリーミッションのプッシュ連携（Phase 12.3）
   4. **掃除（任意）**: `public/katex/`＋`/katex` publicPath/CORS は MathML 化で未使用＝撤去可
   5. パイロット系（別軸）: OOV例文リペア / 全語展開
 
 ## セッション引継ぎメモ
+
+### 2026-06-15（Phase 13.4 画像アップロード＋画像マスキング — 要実機確認）
+- **依頼**: 画像はアップロードだけでなく、画像内の用語を自由にマスキングしたい。AIがマスキング候補を提示→ユーザー選択→マスク付きノート作成。コロケーション例文プールのように、同じ画像から毎回ランダムに数か所を答える出題に。
+- **合意（AskUserQuestion）**: 出題=**視覚リコール＋めくり**／隠す数=**ノート毎設定＋デフォルト約3割**／検出対象=**テキスト用語＋自由描画**
+- **増分A（コミット済み `feat/image-masking`）画像アップロード＋オフラインキャッシュ**:
+  - `POST /api/images/upload`（TTS の `audio` バケット処理を流用、`images` バケット、`{userId}/{uuid}.{ext}`、公開URL返却、`requireAuth`）
+  - Dexie **v13** `imageCache`（**URLキー**）＋`getCachedImage`/`saveImageCache`/`cleanupOldImageCache`、`clearAllData` 追加
+  - `src/lib/template/images.ts`：`extractImageUrls`/`rewriteImageSrcs`/`hasRemoteImages`/`blobToDataUrl`（純関数＋テスト10件）
+  - **StudyCard**：カード内 `<img>` http(s) URL を キャッシュ→無ければfetch＋キャッシュ→**data: URL に書換え**て iframe へ。**重要**: iframe は `sandbox`（allow-same-origin なし＝opaque origin）で親の `blob:` を参照できないため **data: URL を srcdoc に直接埋め込む**のが肝。これで任意カードの `<img>` がオフライン表示可（汎用の効果）
+  - `ImageUploadButton`＋`NoteEditModal` の各フィールドに画像挿入導線（`<img src>` を追記）
+- **増分B（このセッションで実装）画像マスキング本体**:
+  - `src/lib/image-mask/mask.ts`（純ロジック・テスト12件）：`MaskRegion{id,x,y,w,h,answer,hint}`（座標は**0-100の%**＝表示サイズ非依存）、`resolveMaskCount`（既定30%・最低1）、`pickMaskIndices`（部分シャッフル・rng差替可）、`buildMaskHtml`（表=不透明グレー「?」／裏=枠線＋answer）
+  - `POST /api/image-mask-candidates`：Claude Vision（OCRルートのauth/client流用）で用語を**%bbox付き**検出。座標は**近似**なのでUIで微調整前提
+  - **StudyCard**：`マスク領域`(JSON)＋`画像` を持つノートで、`maskPickRef` で**毎回ランダムにN領域**を選び、表示専用フィールド `画像表`/`画像裏` を合成（例文プールと同じ思想・保存フィールド非追加）。合成HTML内の `<img>` は増分Aの仕組みで自動オフライン化
+  - `ImageMaskEditor`（`src/components/image-mask/`）＋ページ `/notes/image-mask/new?deck=X`：画像アップ→候補検出（並行）→画像上にオーバーレイ表示→**タップ選択/ドラッグ移動/右下リサイズ/余白ドラッグで新規描画/削除/答え編集**＋「毎回隠す数」「見出し」「補足」。保存=`POST /api/notes`→`fullSync`→デッキへ
+  - デッキ詳細に「画像マスキング」ボタン（teal、`/notes/image-mask/new?deck=`）
+  - ノートタイプ「**画像マスキング**」: `data/create-image-occlusion-notetype.mjs`＋`data/image-occlusion-template.mjs`（共有定義）。フィールド=画像/マスク領域/毎回隠す数/見出し/補足。`is_system:true`（全ユーザー利用可）。**※未実行**
+- **検証**: lint クリーン（既存 TemplatePreview 警告のみ）／**テスト351件全通過**（329→+22）／build 成功（`/study` 3.66kB 不変・`/notes/image-mask/new` 4.86kB）
+- **次セッションでやること（実機確認の順序・重要）**:
+  1. **ノートタイプ作成**: `node data/create-image-occlusion-notetype.mjs`（先に `--dry-run`）。これを実行しないと編集ページが「ノートタイプが見つかりません」になる
+  2. **Vercel デプロイ＋再ログイン**（Dexie v13 マイグレーション・新ルート）
+  3. デッキ詳細「画像マスキング」→画像アップ→AI候補が枠で出る→選択/手描き調整→作成→`/study` で**毎回違う箇所が隠れる**＋めくりで answer 表示。オフライン（再読込/機内）でも画像が出ること
+  4. 良ければ `feat/image-masking` を main へマージ
+- **次セッション注意/未対応**:
+  - 候補bboxは**近似**（Claude Vision）。ズレ前提でUI微調整。精度が要るなら検出プロンプト調整やモデル変更
+  - 編集UIの移動/リサイズは**右下ハンドル1点のみ**（最小限）。他辺ハンドルや回転は未対応
+  - 画像キャッシュは**URLキー**でノート削除時の個別purgeは未配線（30日TTL `cleanupOldImageCache` 任せ）。気になれば note 削除時に field の画像URLを引いて purge する配線を追加
+  - `TemplatePreview` は `画像表`/`画像裏` を合成しないのでプレビューは空（コロケーションと同じ仕様。実カードは `/study` で確認）
+  - is_system ノートタイプが生徒へ pull 同期されるかは要実機確認（Basic/Cloze 同様に出る想定）
+
+### 2026-06-15（数式の実機修正＋庭の見た目改善 — すべて実機確認済み）
 
 ### 2026-06-15（数式の実機修正＋庭の見た目改善 — すべて実機確認済み）
 - **このセッション後半の流れ**: 13.4 数式実装 → 実機で「二重表示／積分カード空欄」発覚 → 原因究明・修正 → 名札・地面色の改善。**最終的に実機確認OK（ユーザー承認）**

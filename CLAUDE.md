@@ -273,17 +273,18 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
   - **サニタイズとの両立**: カードは iframe(sandbox, allow-same-origin なし) 隔離描画で `dangerouslySetInnerHTML` 不使用 → MathML をそのまま渡せる
   - 庭の名札（`pickLabel`）は数式を描画しないので `\(…\)` 等を除去
   - ※ `public/katex/`＋`/katex` の publicPath/CORS は旧 KaTeX-HTML 用で**現在未使用**（無害なので残置）
-- **画像**: `<img src>` は iframe で表示可能（テンプレ/フィールドに直書き）。**アップロード（Supabase Storage）＋オフライン(IndexedDB)キャッシュは次の増分**（TTS音声の仕組みを流用予定）
+- **画像（URL/アップロード/オフライン）✅**: `<img src>` は iframe で表示可能。アップロードは `POST /api/images/upload`（TTS の Storage 処理流用・`images` バケット・`{userId}/{uuid}`・公開URL返却）。`ImageUploadButton`＋`NoteEditModal` で挿入。**オフライン**=Dexie v13 `imageCache`（URLキー）＋`StudyCard` がカード内 `<img>` http(s) URL を **data: URL に書換え**て sandbox iframe に埋め込む（opaque origin では親の blob: が参照できないため）。`src/lib/template/images.ts`（純関数・テスト10件）
+- **画像マスキング（Image Occlusion）✅（要実機確認）**: 画像内の用語を隠して暗記。AIが用語を**%bbox付き**検出（`POST /api/image-mask-candidates`＝Claude Vision・OCRルート流用）→`ImageMaskEditor`（`/notes/image-mask/new?deck=X`）で**選択/自由描画/移動/リサイズ/答え編集**→ノート作成。`StudyCard` が `マスク領域`(JSON) から**レビュー毎にN領域ランダムで隠す**（例文プールと同じ思想・表示専用 `画像表`/`画像裏` を合成・保存フィールド非追加）。出題=視覚リコール＋めくり、隠す数=ノート毎設定＋既定30%（`resolveMaskCount`）。座標は**0-100の%**（表示サイズ非依存）。純ロジック `src/lib/image-mask/`（テスト12件）。ノートタイプ「画像マスキング」=`data/create-image-occlusion-notetype.mjs`（**要実行**・`is_system:true`・共有定義 `data/image-occlusion-template.mjs`）。bbox は近似なのでUI微調整前提
 
 ## 現在の進捗
 
 詳細は @docs/progress.md を参照。
 
 - **最終更新**: 2026-06-15
-- **直近の修正**: **Phase 13.4 数式完了＋実機確認済み**（Phase 10 はほぼ完了・クラスランキングは見送り）。数式は **KaTeX→MathML ネイティブ描画**（iframe で CSS/フォント不要＝二重表示/空欄を根本解消）。庭は名札に `見出し` フィールド優先＋タイル天面をベージュ土（葉と被らない・水やりで湿り色）。画像はURL表示可。設計は @docs/memory-creatures-design.md
+- **直近の修正**: **Phase 13.4 画像アップロード＋画像マスキング実装完了（要実機確認）**。画像アップ（`/api/images/upload`・`images`バケット）＋オフラインキャッシュ（Dexie v13・`<img>`→data:URL書換え）。画像マスキング＝AI候補検出（`/api/image-mask-candidates`）＋編集UI（`/notes/image-mask/new`）＋毎回ランダム出題（`src/lib/image-mask`）。ブランチ `feat/image-masking`。設計は @docs/memory-creatures-design.md
 - **次にやること**:
-  1. **画像アップロード**（フィールド型＋Supabase Storage＋オフラインIndexedDBキャッシュ・TTS流用）
-  2. **科目拡張**: 数学・理科デッキ作成（数式が使えるようになったので）→ そこの「いきもの」も飼える（Phase 10 連携）
+  1. **画像マスキングの実機確認**: `node data/create-image-occlusion-notetype.mjs` 実行 → Vercelデプロイ → 再ログイン（Dexie v13）→ デッキ詳細「画像マスキング」で確認 → 良ければ main へマージ
+  2. **科目拡張**: 数学・理科デッキ作成（数式＋画像が使える）→ そこの「いきもの」も飼える（Phase 10 連携）
   3. **10.2 残**: しきい値の実データ調整／デイリーミッションのプッシュ連携（Phase 12.3）
   4. **掃除（任意）**: `public/katex/`＋`/katex` publicPath/CORS は MathML 化で未使用＝撤去可
 

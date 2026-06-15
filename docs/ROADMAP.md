@@ -640,7 +640,8 @@ billing側のLINE Bot経由で復習カード通知を送信する。
 - [x] 数式: **KaTeX** をカード描画に統合（Anki互換 `\(…\)`・`\[…\]`・`$$…$$`）。`src/lib/template/math.ts`＝`renderMath`/`containsMath`。数式を含むカードでのみ**動的import**（`/study` バンドルを軽く保つ）。`StudyCard`＋`TemplatePreview` 対応・テスト7件
 - [x] サニタイズとの両立: カードは **iframe(sandbox, allow-same-origin なし) 隔離**で `dangerouslySetInnerHTML` 不使用 → KaTeX 出力をそのまま渡せる（サニタイザと衝突しない）。KaTeX CSS は iframe 側で `/public/katex/katex.min.css`＋woff2 を読み込み（自己ホスト＝オフライン可）
 - [x] 画像（URL）: `<img>` は iframe で既に表示可能（テンプレ/フィールドに `<img src>` で利用）
-- [ ] 画像アップロード（フィールド型 + Supabase Storage、TTS音声の仕組みを流用）＋ オフライン（IndexedDB）画像キャッシュ ＝ 次の増分
+- [x] 画像アップロード（`POST /api/images/upload`＝TTS の Storage 流用、`images` バケット）＋ オフライン（IndexedDB）画像キャッシュ（Dexie v13 `imageCache`・URLキー）。StudyCard が `<img>` URL を data: URL に書換えて sandbox iframe でオフライン表示（増分A・要実機確認）
+- [x] 画像マスキング（増分B・要実機確認）: AIが用語を%bbox付き検出（`/api/image-mask-candidates`）→`ImageMaskEditor` で選択/自由描画→ノート作成。`src/lib/image-mask`（純ロジック・テスト12件）。StudyCard が `マスク領域`(JSON) から**毎回ランダムにN領域**を隠して出題（視覚リコール＋めくり／隠す数=ノート毎設定＋既定30%）。ノートタイプ「画像マスキング」（`data/create-image-occlusion-notetype.mjs`・**要実行**）
 - [ ] → 数学・理科デッキで「記憶のいきもの」を飼えるようにする（Phase 10 連携）
 
 ---
