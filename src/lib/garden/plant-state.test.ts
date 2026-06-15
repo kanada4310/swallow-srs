@@ -4,6 +4,7 @@ import {
   summarizeGarden,
   GROWTH_THRESHOLDS,
   CARE_THRESHOLDS,
+  GROWTH_ORDER,
   type PlantCardInput,
 } from './plant-state'
 
@@ -25,6 +26,15 @@ function card(overrides: Partial<PlantCardInput> = {}): PlantCardInput {
     ...overrides,
   }
 }
+
+describe('GROWTH_ORDER', () => {
+  it('種<芽<苗<成株<開花 の昇順になっている', () => {
+    expect(GROWTH_ORDER.seed).toBeLessThan(GROWTH_ORDER.sprout)
+    expect(GROWTH_ORDER.sprout).toBeLessThan(GROWTH_ORDER.seedling)
+    expect(GROWTH_ORDER.seedling).toBeLessThan(GROWTH_ORDER.mature)
+    expect(GROWTH_ORDER.mature).toBeLessThan(GROWTH_ORDER.blooming)
+  })
+})
 
 describe('derivePlantState — 成長段階', () => {
   it('未学習（null）は種・健やか', () => {

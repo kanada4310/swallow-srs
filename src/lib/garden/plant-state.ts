@@ -14,6 +14,15 @@
 /** 成長段階（種→芽→苗→成株→開花・結実） */
 export type GrowthStage = 'seed' | 'sprout' | 'seedling' | 'mature' | 'blooming'
 
+/** 成長段階の順序（段階アップ検出に使う。小→大で成長） */
+export const GROWTH_ORDER: Record<GrowthStage, number> = {
+  seed: 0,
+  sprout: 1,
+  seedling: 2,
+  mature: 3,
+  blooming: 4,
+}
+
 /** 世話状態（健やか→乾き気味→しおれ→枯れかけ→枯れ） */
 export type CareState = 'healthy' | 'thirsty' | 'wilting' | 'dryingOut' | 'withered'
 

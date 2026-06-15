@@ -12,14 +12,42 @@ import {
 } from '@/lib/srs/scheduler'
 import type { FieldValues } from '@/lib/template'
 import { saveAnswerLocally, undoAnswerLocally, pushToServer, getSyncStatus } from '@/lib/db/sync'
-import { getCardState, getCreatureState, saveCreatureState, type LocalCardState } from '@/lib/db/schema'
+import { getCardState, getCreatureState, saveCreatureState, getCreatureStatesMap, type LocalCardState } from '@/lib/db/schema'
 import { isOnline as checkOnline } from '@/lib/db/utils'
 import { SyncStatusBadge } from '@/components/ui/SyncStatusBadge'
 import { ImprintPicker } from '@/components/garden/ImprintPicker'
+import { IsoTile } from '@/components/garden/IsoTile'
 import { pickLabel } from '@/lib/garden/garden-data'
-import { pickVarietyByHash, type Variety } from '@/lib/garden/varieties'
+import { pickVarietyByHash, getVariety, type Variety } from '@/lib/garden/varieties'
+import { derivePlantState, GROWTH_ORDER, type GrowthStage } from '@/lib/garden/plant-state'
 import Link from 'next/link'
-import type { GeneratedContent, FieldDefinition, DeckSettings } from '@/types/database'
+import type { GeneratedContent, FieldDefinition, DeckSettings, CreatureImprint } from '@/types/database'
+
+/** セッション中に段階が上がった株（学習完了演出用） */
+interface GrowthEvent {
+  noteId: string
+  label: string
+  from: GrowthStage
+  to: GrowthStage
+}
+
+const GROWTH_LABEL_SHORT: Record<GrowthStage, string> = {
+  seed: '種', sprout: '芽', seedling: '苗', mature: '成株', blooming: '開花',
+}
+
+/** CardSchedule から成長段階を導く（care は使わないので now は任意） */
+function growthOf(schedule: CardSchedule, now: Date): GrowthStage {
+  return derivePlantState(
+    {
+      state: schedule.state,
+      stability: schedule.stability ?? null,
+      interval: schedule.interval,
+      due: schedule.due,
+      lapses: schedule.lapses ?? 0,
+    },
+    now
+  ).growth
+}
 
 interface CardData {
   id: string
@@ -101,6 +129,11 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
   // 記憶のいきもの育成（Phase 10.4）— 初回出題時の品種インプリント
   const [imprintPrompt, setImprintPrompt] = useState<{ noteId: string; word: string } | null>(null)
   const resolvedNotesRef = useRef<Set<string>>(new Set())
+  // ノート→品種（完了演出のスプライト描画用）
+  const [imprintMap, setImprintMap] = useState<Map<string, CreatureImprint>>(new Map())
+  // セッション中の成長（段階アップ）演出（Phase 10.2 残）
+  const [grownEvents, setGrownEvents] = useState<GrowthEvent[]>([])
+  const growthBaselineRef = useRef<Map<string, GrowthStage>>(new Map())
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const cardStartTime = useRef<number>(Date.now())
   const waitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -193,11 +226,17 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
     }
   }, [currentCard, userId])
 
+  // 完了演出のスプライト用に、ノート→品種の対応を読み込む（オフライン可）
+  useEffect(() => {
+    getCreatureStatesMap(userId).then(setImprintMap).catch(() => {})
+  }, [userId])
+
   // 品種を確定して保存（Dexie 即時 ＋ サーバー upsert は fire-and-forget）
   const commitImprint = useCallback(
     (noteId: string, variety: Variety) => {
       resolvedNotesRef.current.add(noteId)
       setImprintPrompt(null)
+      setImprintMap((prev) => new Map(prev).set(noteId, { variety: variety.id }))
       saveCreatureState(userId, noteId, { variety: variety.id }).catch((e) =>
         console.warn('Failed to save imprint locally:', e)
       )
@@ -342,6 +381,25 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
     try {
       // Calculate new schedule locally
       const newSchedule = calculateNextReview(currentCard.schedule, ease, now, deckSettings)
+
+      // 成長（段階アップ）の検出（Phase 10.2 残・完了演出用）。
+      // セッション開始時の段階をノートごとに基準として保持し、最新段階と比べる。
+      const growthNoteId = currentCard.noteId
+      if (!growthBaselineRef.current.has(growthNoteId)) {
+        growthBaselineRef.current.set(growthNoteId, growthOf(currentCard.schedule, now))
+      }
+      const baselineStage = growthBaselineRef.current.get(growthNoteId)!
+      const postStage = growthOf(newSchedule, now)
+      if (GROWTH_ORDER[postStage] > GROWTH_ORDER[baselineStage]) {
+        const label = pickLabel(currentCard.fieldValues)
+        setGrownEvents((prev) => [
+          ...prev.filter((e) => e.noteId !== growthNoteId),
+          { noteId: growthNoteId, label, from: baselineStage, to: postStage },
+        ])
+      } else {
+        // Again などで基準まで戻った場合は演出から外す
+        setGrownEvents((prev) => prev.filter((e) => e.noteId !== growthNoteId))
+      }
 
       // Check for leech
       let isSuspended = false
@@ -544,6 +602,8 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
 
     // Restore React state
     setCurrentCard(snapshot.answeredCard)
+    // 成長演出からも外す（再回答されれば再評価される）
+    setGrownEvents((prev) => prev.filter((e) => e.noteId !== snapshot.answeredCard.noteId))
     setMainIndex(snapshot.previousMainIndex)
     setLearningQueue(snapshot.previousLearningQueue)
     setFromLearningQueue(snapshot.previousFromLearningQueue)
@@ -619,6 +679,9 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
             </div>
           </div>
         </div>
+        {grownEvents.length > 0 && (
+          <GrowthCelebration events={grownEvents} imprintMap={imprintMap} deckId={deckId} />
+        )}
         {undoSnapshot && <UndoBanner onUndo={handleUndo} />}
         <div className="flex flex-col items-center gap-3">
           <Link
@@ -808,6 +871,70 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
         ttsAutoplay={settings.tts_autoplay}
         ttsAutoButton={settings.tts_auto_button}
       />
+    </div>
+  )
+}
+
+/** 学習完了時の成長演出（段階が上がった株を庭の姿で見せる・Phase 10.2 残） */
+function GrowthCelebration({
+  events,
+  imprintMap,
+  deckId,
+}: {
+  events: GrowthEvent[]
+  imprintMap: Map<string, CreatureImprint>
+  deckId?: string
+}) {
+  const MAX = 12
+  const shown = events.slice(0, MAX)
+  const extra = events.length - shown.length
+
+  return (
+    <div className="bg-green-50 border border-green-100 rounded-xl p-4 mb-6 text-left">
+      <p className="text-center text-sm font-medium text-green-800 mb-3">
+        🌱 {events.length}株が育ちました！
+      </p>
+      <div className="flex flex-wrap justify-center gap-3">
+        {shown.map((e) => {
+          const variety = getVariety(imprintMap.get(e.noteId)?.variety)
+          return (
+            <div key={e.noteId} className="flex flex-col items-center w-20">
+              <svg viewBox="-44 -62 88 92" width="48" height="50" aria-hidden>
+                <IsoTile
+                  plant={{
+                    growth: e.to,
+                    care: 'healthy',
+                    isDead: false,
+                    needsWater: false,
+                    overdueDays: 0,
+                    effectiveStability: 0,
+                    struggled: false,
+                  }}
+                  variety={variety}
+                  animate={false}
+                />
+              </svg>
+              <span className="text-xs text-gray-700 truncate w-full text-center" title={e.label}>
+                {e.label || '（名札なし）'}
+              </span>
+              <span className="text-[10px] text-green-700">
+                {GROWTH_LABEL_SHORT[e.from]}→{GROWTH_LABEL_SHORT[e.to]}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+      {extra > 0 && (
+        <p className="text-center text-xs text-gray-500 mt-2">ほか {extra} 株</p>
+      )}
+      <div className="flex justify-center mt-4">
+        <Link
+          href={deckId ? `/garden?deck=${deckId}` : '/garden'}
+          className="px-4 py-2 text-sm text-green-700 bg-white border border-green-300 rounded-lg hover:bg-green-50"
+        >
+          庭で見る
+        </Link>
+      </div>
     </div>
   )
 }

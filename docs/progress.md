@@ -1,18 +1,29 @@
 # 進捗管理
 
 ## 現在の作業
-- Phase: **Phase 10「記憶のいきもの育成」** — 10.1〜10.4 完了＋**10.5 一部（ストリーク/ヒートマップ）完了**。残るは 10.5残/10.2残
+- Phase: **Phase 10「記憶のいきもの育成」** — 10.1〜10.4＋10.5一部（ストリーク/ヒートマップ）＋10.2 学習完了演出 完了。**019 適用済み**。残るは 10.5残/10.2残
 - 最終更新: 2026-06-15
 - 次にやること:
-  1. **★SQL実行**: `supabase/migrations/019_user_creature_state.sql`（未実行だと品種保存が500）→ Vercel デプロイ → 再ログインで Dexie v12 マイグレーション
-  2. **実機確認**: 品種ピッカー／品種別の庭／10.3 枯れ株一覧／`/stats` ストリーク・ヒートマップ／`/garden` の🔥連続日数
-  3. **Phase 10.5 残**: デイリーミッション（今日◯株）＋プッシュ連携、クラスランキング（成長率・オプトアウト可）、アチーブメントバッジ
-  4. **10.2 残**: 大規模デッキの全体表示（現状 MAX_TILES=150 打ち切り→PixiJS化）／学習完了→庭で成長を見せる演出
-  5. **しきい値調整**: `GROWTH_THRESHOLDS`/`CARE_THRESHOLDS` を実データで検証
-  6. **その後**: Phase 13.4 リッチ表示（数式・画像）→ 科目拡張
-  7. パイロット系（別軸）: OOV例文リペア / 全語展開
+  1. **Vercel デプロイ → 再ログイン**（Dexie v12）で 10.4/10.5/10.2演出 を実機反映・確認（品種ピッカー／品種別の庭／枯れ株一覧／完了画面の成長演出／`/stats`・`/garden` 連続日数）
+  2. **Phase 10.5 残**: デイリーミッション（今日◯株）＋プッシュ連携、クラスランキング（成長率・オプトアウト可）、アチーブメントバッジ
+  3. **10.2 残**: 大規模デッキの全体表示（MAX_TILES=150→PixiJS化）／回答ごとのリアルタイム成長アニメ
+  4. **しきい値調整**: `GROWTH_THRESHOLDS`/`CARE_THRESHOLDS` を実データで検証
+  5. **その後**: Phase 13.4 リッチ表示（数式・画像）→ 科目拡張
+  6. パイロット系（別軸）: OOV例文リペア / 全語展開
 
 ## セッション引継ぎメモ
+
+### 2026-06-15（019 マイグレーション適用 ＋ Phase 10.2 学習完了→成長演出）
+- **019 を Supabase に適用（CLI 導入）**: ユーザー依頼「sql実行してpush」。手段が無かったため Supabase CLI を devDependency で導入＋`supabase init`（`config.toml`/`supabase/.gitignore`、secrets除外）。ユーザーからアクセストークン（`sbp_...`）＋DBパスワードを受領し env 経由で実行
+  - `supabase link --project-ref ntmuhlvamuniqnrxamry` → `migration list` で**リモート履歴が空**（001〜018 は手動適用済みで未記録）と判明 → `supabase migration repair --status applied 001..018`（履歴だけ記録・SQL再実行なし）→ `supabase db push` で**019 のみ適用**。REST(service-role)で `user_creature_state` 存在確認（rows=0）
+  - **重要**: 今後の新規マイグレーションは `npx supabase db push` 一発でOK（履歴が 001〜019 まで整った）。**ユーザーにアクセストークンの revoke を依頼済み**（チャット履歴に残るため）
+- **Phase 10.2 学習完了→成長演出**: `StudySession` にセッション中の段階アップ集計を追加
+  - `plant-state.ts` に `GROWTH_ORDER`（種<芽<苗<成株<開花）export。`growthOf(schedule)` で CardSchedule→段階
+  - handleAnswer で「基準（そのノートをセッションで最初に見た時の段階、`growthBaselineRef`）」と回答後段階を比較し、上がったら `grownEvents` に upsert／戻ったら除外。undo でも当該ノートを除外
+  - 完了画面に `GrowthCelebration`（段階アップ株を品種別 `IsoTile` スプライト＋`from→to`＋「庭で見る」`/garden?deck=`）。`imprintMap` は mount 時に `getCreatureStatesMap` で読み込み＋インプリント確定時に更新
+  - `/garden` を `?deck=` 対応（client で window.location 読み）
+  - テスト+1（`GROWTH_ORDER` 昇順、計312）／lint クリーン／build 成功（`/garden` 7.28kB・`/study` 223kB）
+- **次セッション注意**: 要 Vercel デプロイ＋再ログイン（Dexie v12）。成長演出は「セッション開始→終了で段階が上がった株」のみ表示（毎回出るわけではない＝新規や復習だけだと出ないこともある）。リアルタイム（回答ごと）のカード上アニメは未実装＝10.2残
 
 ### 2026-06-15（Phase 10.5 一部 — 学習ストリーク＆ヒートマップ）
 - **依頼**: 「今のが終わったら次のステップも進めておいて」→ ロードマップ順で 10.5 の最も自己完結なスライス（ストリーク/ヒートマップ）を実装。review_logs から導出＝新DB不要・オフライン可・実データ調整不要で 10.x の実績パターンに沿う

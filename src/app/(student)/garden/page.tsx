@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useAuth } from '@/contexts/AuthContext'
@@ -30,6 +30,12 @@ export default function GardenPage() {
   const [deckId, setDeckId] = useState<string | null>(null)
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
   const [showWithered, setShowWithered] = useState(false)
+
+  // 学習完了の「庭で見る」等から ?deck= で対象デッキを指定可能（クライアントのみ）
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get('deck')
+    if (p) setDeckId(p)
+  }, [])
 
   const decks = useLiveQuery(
     async () => (userId ? await getDecksWithStatsOffline(userId) : null),
