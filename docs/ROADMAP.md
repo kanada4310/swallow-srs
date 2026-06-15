@@ -516,7 +516,7 @@ Anki本家と同様に、Again/Hardで評価したカードを同一セッショ
 
 - [x] 学習ストリーク + ヒートマップカレンダー（review_logs 集計・4時区切り）。`src/lib/stats/streak.ts`（純ロジック・テスト13件）＋`useStreak`（Dexie/オフライン）＋`StreakHeatmap`。`/stats` に表示＋`/garden` ヘッダーに 🔥連続日数
 - [x] デイリーミッション（今日の水やり進捗・軽量版）：`getDailyMission`（reviewLogs今日分＋全デッキ要水やりから導出・Dexie/オフライン）＋`DailyMissionCard`（`/garden` 上部）。**プッシュ通知連携は未（Phase 12.3 のインフラに乗せる将来分）**
-- [ ] クラスランキング（**絶対量でなく成長率**で競う／オプトアウト可）
+- [~] クラスランキング（**絶対量でなく成長率**）— **見送り**（順位付けは逆にモチベーションを削ぐ懸念があるとの方針判断・2026-06-15）。将来やるならオプトアウト前提
 - [x] アチーブメントバッジ（`achievements.ts`：結実/ストリーク/累計レビュー/品種/株数の9種を既存データから導出。`AchievementsModal`、`/garden` の「🏅 実績」から。テスト7件）
 
 ---
@@ -637,10 +637,10 @@ billing側のLINE Bot経由で復習カード通知を送信する。
 ### 13.4 リッチコンテンツ表示（数式・画像）★Phase 10 の次
 カードで数式・画像を表示し、英語塾から数学・理科へ科目を拡張する土台。
 
-- [ ] 数式: KaTeX または MathJax をテンプレートレンダラに統合（Anki互換 `\( \)` 記法）
-- [ ] サニタイズ方針（`dangerouslySetInnerHTML` 未サニタイズ禁止）との両立設計
-- [ ] 画像フィールド型 + Supabase Storage（TTS音声の仕組みを流用）
-- [ ] オフライン（IndexedDB）での画像キャッシュ
+- [x] 数式: **KaTeX** をカード描画に統合（Anki互換 `\(…\)`・`\[…\]`・`$$…$$`）。`src/lib/template/math.ts`＝`renderMath`/`containsMath`。数式を含むカードでのみ**動的import**（`/study` バンドルを軽く保つ）。`StudyCard`＋`TemplatePreview` 対応・テスト7件
+- [x] サニタイズとの両立: カードは **iframe(sandbox, allow-same-origin なし) 隔離**で `dangerouslySetInnerHTML` 不使用 → KaTeX 出力をそのまま渡せる（サニタイザと衝突しない）。KaTeX CSS は iframe 側で `/public/katex/katex.min.css`＋woff2 を読み込み（自己ホスト＝オフライン可）
+- [x] 画像（URL）: `<img>` は iframe で既に表示可能（テンプレ/フィールドに `<img src>` で利用）
+- [ ] 画像アップロード（フィールド型 + Supabase Storage、TTS音声の仕組みを流用）＋ オフライン（IndexedDB）画像キャッシュ ＝ 次の増分
 - [ ] → 数学・理科デッキで「記憶のいきもの」を飼えるようにする（Phase 10 連携）
 
 ---
@@ -717,9 +717,9 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 
 ## 現在の進捗
 
-**Phase**: Phase 10「記憶のいきもの育成」10.1〜10.4＋10.2（成長演出/アニメ/PixiJS大規模描画）＋10.5（ストリーク/ヒートマップ/バッジ/デイリーミッション軽量版）完了。**019 適用済み・実機確認済み**。残るは 10.5 クラスランキング・ミッションのプッシュ連携・しきい値調整のみ
+**Phase**: Phase 10 ほぼ完了（クラスランキングは見送り）＋**Phase 13.4 数式（KaTeX）完了**。画像はURL表示可、アップロード/オフラインキャッシュが次の増分
 **最終更新**: 2026-06-15
-**次のタスク**: PixiJS の実機（WebGL）確認 → 10.5 クラスランキング or Phase 13.4（数式・画像）
+**次のタスク**: 数式の実機確認 → 画像アップロード（Storage+オフラインキャッシュ）or 科目拡張デッキ作成
 
 ### 次回セッションでやること
 
@@ -765,4 +765,5 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 - [x] **Phase 10.5 アチーブメントバッジ**（2026-06-15）: `achievements.ts`（9種を既存データから導出・テスト7件）＋`getAchievementInput`(Dexie)＋`AchievementsModal`。`/garden`「🏅 実績」から達成/進捗を表示
 - [x] **Phase 10.2 リアルタイム成長アニメ**（2026-06-15）: 回答ごとに非ブロッキングの一時演出（正答=💧／段階アップ=品種別スプライトのポップ、`StudySession`）
 - [x] **Phase 10.5 デイリーミッション（軽量版）**（2026-06-15）: `getDailyMission`（今日の水やり進捗を既存データから導出・テスト3件）＋`DailyMissionCard`（`/garden` 上部）。プッシュ連携は将来
-- [x] **Phase 10.2 PixiJS 大規模描画**（2026-06-15）: `GardenFieldPixi`（>150株を WebGL 全件描画・ドラッグ/ズーム・遅延ロード・SVG縮退）＋`tileTexture`（既存SVGを canvas 化キャッシュ）。pixi.js v8 導入。**要実機（WebGL）確認**
+- [x] **Phase 10.2 PixiJS 大規模描画**（2026-06-15）: `GardenFieldPixi`（>150株を WebGL 全件描画・ドラッグ/ズーム・遅延ロード・SVG縮退）＋`tileTexture`（既存SVGを canvas 化キャッシュ）。pixi.js v8 導入。タップ選択のゴーストクリック不具合も修正済（実機でパン/ズーム/タップ確認済）
+- [x] **Phase 13.4 数式（KaTeX）**（2026-06-15）: `math.ts`（renderMath/containsMath・テスト7件）＋数式カードのみ動的import＋iframe に KaTeX CSS(自己ホスト/オフライン)。StudyCard/TemplatePreview 対応。画像は `<img>` で表示可（アップロード/オフラインキャッシュは次の増分）

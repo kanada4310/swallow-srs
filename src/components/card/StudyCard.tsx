@@ -10,6 +10,9 @@ import { SwipeOverlay } from '@/components/card/SwipeOverlay'
 import { useSwipeGesture, type SwipeDirection } from '@/lib/swipe/useSwipeGesture'
 import type { GeneratedContent, FieldDefinition } from '@/types/database'
 
+/** 数式デリミタの安価な検出（KaTeX を読み込む前判定。\( \[ $$） */
+const MATH_DELIMITER = /\\\(|\\\[|\$\$/
+
 interface StudyCardProps {
   noteId: string
   fieldValues: FieldValues
@@ -126,6 +129,34 @@ export function StudyCard({
       { side: 'back', clozeNumber, renderedFront }
     )
   }, [template.back, effectiveFieldValues, clozeNumber, renderedFront])
+
+  // 数式（Phase 13.4）: 数式デリミタを含むカードだけ KaTeX を動的ロードして HTML 化する。
+  // KaTeX は重いので、数式を含まないカードでは読み込まない（/study バンドルを軽く保つ）。
+  const frontHasMath = useMemo(() => MATH_DELIMITER.test(renderedFront), [renderedFront])
+  const backHasMath = useMemo(() => MATH_DELIMITER.test(renderedBack), [renderedBack])
+  const [mathHtml, setMathHtml] = useState<{ front: string | null; back: string | null }>({
+    front: null,
+    back: null,
+  })
+
+  useEffect(() => {
+    setMathHtml({ front: null, back: null })
+    if (!frontHasMath && !backHasMath) return
+    let cancelled = false
+    import('@/lib/template/math')
+      .then(({ renderMath }) => {
+        if (cancelled) return
+        setMathHtml({
+          front: frontHasMath ? renderMath(renderedFront) : null,
+          back: backHasMath ? renderMath(renderedBack) : null,
+        })
+      })
+      .catch(() => { /* 数式描画失敗時は素のテキストのまま */ })
+    return () => { cancelled = true }
+  }, [renderedFront, renderedBack, frontHasMath, backHasMath])
+
+  const displayedFront = mathHtml.front ?? renderedFront
+  const displayedBack = mathHtml.back ?? renderedBack
 
   // Check if templates use inline {{tts:...}} placeholders
   const templateHasTts = useMemo(() => {
@@ -417,7 +448,7 @@ export function StudyCard({
         {!isFlipped ? (
           /* Front only */
           <div className="flex-1 p-8 flex flex-col items-center justify-center relative">
-            <CardIframe key="front" html={renderedFront} css={template.css} className="text-xl" onTtsPlay={handleIframeTtsPlay} />
+            <CardIframe key="front" html={displayedFront} css={template.css} className="text-xl" onTtsPlay={handleIframeTtsPlay} math={frontHasMath} />
             {!templateHasTts && ttsAutoButton && frontTtsFields.length > 0 && (
               <div className="mt-4 flex gap-2">
                 {frontTtsFields.map(fieldName => (
@@ -438,7 +469,7 @@ export function StudyCard({
         ) : (
           /* Back only (back template is self-contained, includes front content) */
           <div className="flex-1 p-8 flex flex-col items-center justify-center">
-            <CardIframe key="back" html={renderedBack} css={template.css} className="text-xl" onTtsPlay={handleIframeTtsPlay} />
+            <CardIframe key="back" html={displayedBack} css={template.css} className="text-xl" onTtsPlay={handleIframeTtsPlay} math={backHasMath} />
             {!templateHasTts && ttsAutoButton && backTtsFields.length > 0 && (
               <div className="mt-4 flex gap-2">
                 {backTtsFields.map(fieldName => (

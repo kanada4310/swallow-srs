@@ -1,16 +1,31 @@
 # 進捗管理
 
 ## 現在の作業
-- Phase: **Phase 10「記憶のいきもの育成」** — 10.1〜10.4＋10.2（成長演出/アニメ/**PixiJS大規模描画**）＋10.5（ストリーク/ヒートマップ/バッジ/デイリーミッション軽量版）完了。**019 適用済み・実機確認済み**。残るは 10.5 クラスランキング・ミッションのプッシュ連携・しきい値調整のみ
+- Phase: **Phase 10 ほぼ完了**（クラスランキングは**見送り**）＋**Phase 13.4 数式（KaTeX）完了**。画像はURL表示可、アップロード/オフラインキャッシュが次の増分
 - 最終更新: 2026-06-15
 - 次にやること:
-  1. **PixiJS の実機（WebGL）確認**: 6858株デッキ（中学英単語）の `/garden` でドラッグ/ズーム/タップ選択。※当環境ではブラウザ実行不可のため未検証（ビルド・型は通過）
-  2. **Phase 10.5 残**: クラスランキング（成長率・オプトアウト可・講師ビュー＋RLS）、デイリーミッションのプッシュ連携（Phase 12.3）
-  3. **しきい値調整**: `GROWTH_THRESHOLDS`/`CARE_THRESHOLDS` を実データで検証
-  4. **その後**: Phase 13.4 リッチ表示（数式・画像）→ 科目拡張
+  1. **Vercel デプロイ → 実機確認**: 数式カード（`\(…\)` 等）、PixiJS 大規模庭、品種/実績/ミッション/連続日数
+  2. **画像アップロード**: フィールド型＋Supabase Storage＋オフライン(IndexedDB)キャッシュ（TTS音声の仕組みを流用）
+  3. **科目拡張**: 数式が使えるので数学・理科デッキ作成 → そこの「いきもの」も飼える（Phase 10 連携）
+  4. **10.2 残**: しきい値の実データ調整／デイリーミッションのプッシュ連携（Phase 12.3）
   5. パイロット系（別軸）: OOV例文リペア / 全語展開
 
 ## セッション引継ぎメモ
+
+### 2026-06-15（Phase 13.4 数式 KaTeX ＋ クラスランキング見送り）
+- **依頼**: 「③Phase 13.4（数式・画像）に進んで。クラスランキングは逆にモチベーションを削ぐ場合もあるので一旦なしで」
+- **クラスランキングは見送り**（ROADMAP 10.5 を `[~]` 見送り表記に・CLAUDE.md に方針明記）
+- **設計の肝（判明）**: カードは **iframe(srcdoc, sandbox, allow-same-origin なし)** で隔離描画＝サニタイズせず（`renderer.ts` コメント通り）。よって **KaTeX 出力をそのまま iframe に渡せる**（サニタイザと衝突しない）。`<img>` も既に表示可
+- **実装（数式）**:
+  - `pixi.js` とは別に `katex` 0.17＋`@types/katex` 追加。`public/katex/` に `katex.min.css`＋woff2 20本を**自己ホスト**（オフライン可。CSS の font 相対URLが `/katex/fonts/` に解決）
+  - `src/lib/template/math.ts`: `containsMath`（安価な正規表現 `\( \[ $$`）／`renderMath`（KaTeX `renderToString`・display=$$,\[\]／inline=\(\)・`throwOnError:false`）。単一 `$…$` は誤検出回避で対象外。テスト7件
+  - **KaTeX は重い(~270KB)ので数式カードのみ動的 import**。`StudyCard`：`MATH_DELIMITER` で前判定→`import('@/lib/template/math')`→`displayedFront/Back` に差し替え＋`CardIframe math={…}`。`TemplatePreview` も同様（プレビューで数式確認可）
+  - `CardIframe`：`math` prop で `<link rel="stylesheet" href="/katex/katex.min.css">` を出し分け
+- **検証**: 329テスト全通過（322→+7）／lint クリーン／build 成功。`/study` 3.14kB（KaTeX は別チャンク＝初期バンドル不変）
+- **次セッション注意**:
+  - 要 Vercel デプロイ＋実機で数式カード確認（`\(x^2\)` 等を含むノートを作って `/study`）。**オフライン**: 初回は KaTeX CSS/フォントの取得が要る（SW キャッシュ後はオフライン可）。SW が `/katex/` を確実にプリキャッシュするかは要確認（崩れる＝フォント未取得なら next-pwa の runtimeCaching に `/katex/` 追加を検討）
+  - 画像は URL 表示のみ。**アップロード（Storage）＋オフラインキャッシュ未実装**＝次の増分（TTS の `saveAudioCache` 同様の仕組みを `<img>`/フィールドに）。iframe 越しの画像 blob 差し替えが要点
+  - 数式が入ったので**数学・理科デッキ**を作れば科目拡張＋その科目の「いきもの」飼育に繋がる
 
 ### 2026-06-15（Phase 10.2 残 — PixiJS 大規模描画）
 - **依頼**: 「PixiJS化」。方針合意＝**PixiJS(WebGL)／>150株のみ・小規模は従来SVG／ドラッグ移動＋ズーム／既存SVGアートをテクスチャ再利用**

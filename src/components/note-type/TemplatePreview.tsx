@@ -57,6 +57,19 @@ export function TemplatePreview({ frontTemplate, backTemplate, css, fields }: Te
     }
   }, [debouncedFront, debouncedBack, debouncedCss, sampleData, side])
 
+  // 数式プレビュー（Phase 13.4）: デリミタを含む時だけ KaTeX を動的ロードして HTML 化
+  const hasMath = useMemo(() => /\\\(|\\\[|\$\$/.test(renderedContent), [renderedContent])
+  const [mathContent, setMathContent] = useState<string | null>(null)
+  useEffect(() => {
+    setMathContent(null)
+    if (!hasMath) return
+    let cancelled = false
+    import('@/lib/template/math')
+      .then(({ renderMath }) => { if (!cancelled) setMathContent(renderMath(renderedContent)) })
+      .catch(() => { /* 素のテキストのまま */ })
+    return () => { cancelled = true }
+  }, [renderedContent, hasMath])
+
   const updateSampleData = (fieldName: string, value: string) => {
     setSampleData(prev => ({ ...prev, [fieldName]: value }))
   }
@@ -116,7 +129,7 @@ export function TemplatePreview({ frontTemplate, backTemplate, css, fields }: Te
           {side === 'front' ? '表面プレビュー' : '裏面プレビュー'}
         </div>
         <div className="bg-white min-h-[200px] p-6 flex items-center justify-center">
-          <CardIframe html={renderedContent} css={debouncedCss} minHeight={100} className="w-full" />
+          <CardIframe html={mathContent ?? renderedContent} css={debouncedCss} minHeight={100} className="w-full" math={hasMath} />
         </div>
       </div>
 

@@ -8,14 +8,20 @@ interface CardIframeProps {
   minHeight?: number
   className?: string
   onTtsPlay?: (fieldName: string) => void
+  /** 数式（KaTeX）を含む場合に KaTeX CSS を読み込む */
+  math?: boolean
 }
 
-function buildSrcdoc(html: string, css: string, frameId: string): string {
+function buildSrcdoc(html: string, css: string, frameId: string, math = false): string {
+  const katexLink = math
+    ? '<link rel="stylesheet" href="/katex/katex.min.css">'
+    : ''
   return `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+${katexLink}
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   body {
@@ -107,7 +113,7 @@ function buildSrcdoc(html: string, css: string, frameId: string): string {
 </html>`
 }
 
-export function CardIframe({ html, css, minHeight = 60, className, onTtsPlay }: CardIframeProps) {
+export function CardIframe({ html, css, minHeight = 60, className, onTtsPlay, math = false }: CardIframeProps) {
   const frameId = useId()
   const [isMounted, setIsMounted] = useState(false)
   const [height, setHeight] = useState(minHeight)
@@ -143,9 +149,9 @@ export function CardIframe({ html, css, minHeight = 60, className, onTtsPlay }: 
   useEffect(() => {
     const iframe = iframeRef.current
     if (iframe) {
-      iframe.srcdoc = buildSrcdoc(html, css, frameId)
+      iframe.srcdoc = buildSrcdoc(html, css, frameId, math)
     }
-  }, [html, css, frameId])
+  }, [html, css, frameId, math])
 
   // SSR placeholder - prevents hydration mismatch
   if (!isMounted) {
@@ -160,7 +166,7 @@ export function CardIframe({ html, css, minHeight = 60, className, onTtsPlay }: 
   return (
     <iframe
       ref={iframeRef}
-      srcDoc={buildSrcdoc(html, css, frameId)}
+      srcDoc={buildSrcdoc(html, css, frameId, math)}
       sandbox="allow-scripts allow-popups"
       style={{ height: `${height}px`, minHeight: `${minHeight}px` }}
       className={`w-full border-0 ${className || ''}`}

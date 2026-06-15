@@ -263,18 +263,26 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 - **デイリーミッション（10.5・軽量版）✅**: `getDailyMission`（今日の水やり進捗＝reviewLogs今日分の distinct card ＋ 全デッキの要水やり株から導出・Dexie/オフライン・テスト3件）＋`src/components/garden/DailyMissionCard.tsx`（`/garden` 上部）。**プッシュ通知連携は未**（Phase 12.3 のインフラに乗せる将来分）
 - **DB適用**: `019_user_creature_state.sql` は Supabase に**適用済み**（CLI 導入・link・001〜018 repair・db push）。以後の新規マイグレーションは `npx supabase db push` で適用可能（手動SQL不要）
 - **方針**: アートは当面**自前の手続き生成SVG**で世界観統制（CC0素材は絵柄不一致で見送り）。将来 PixiJS（大規模）/Rive（状態アニメ）。品種別の5段階フルスプライトは後日
+- **クラスランキング（10.5）は見送り**: 順位付けは逆にモチベーションを削ぐ懸念があるとの方針判断（2026-06-15）
+
+## リッチコンテンツ表示（Phase 13.4）
+
+- **数式（KaTeX）✅**: カードで TeX を描画。Anki互換デリミタ `\(…\)`（インライン）・`\[…\]`・`$$…$$`（ディスプレイ）。単一 `$…$` は誤検出回避のため対象外
+  - `src/lib/template/math.ts`: `renderMath(html)`/`containsMath(html)`。KaTeX は重い(~270KB)ため**数式を含むカードでのみ動的 import**（`StudyCard`/`TemplatePreview` が `containsMath` 判定→`import('@/lib/template/math')`）。`/study` の初期バンドルは肥大しない
+  - **サニタイズとの両立**: カードは iframe(sandbox, allow-same-origin なし) 隔離描画で `dangerouslySetInnerHTML` 不使用 → KaTeX 出力をそのまま渡せる。KaTeX CSS は iframe の `<link href="/katex/katex.min.css">` で読み込み（`public/katex/` に css＋woff2 を自己ホスト＝オフライン可）。`CardIframe` は `math` prop で CSS を出し分け
+- **画像**: `<img src>` は iframe で表示可能（テンプレ/フィールドに直書き）。**アップロード（Supabase Storage）＋オフライン(IndexedDB)キャッシュは次の増分**（TTS音声の仕組みを流用予定）
 
 ## 現在の進捗
 
 詳細は @docs/progress.md を参照。
 
 - **最終更新**: 2026-06-15
-- **直近の修正**: **Phase 10.4 品種インプリント＋10.5一部（ストリーク/ヒートマップ）＋10.2 学習完了→成長演出 完了**。**019 マイグレーションも Supabase に適用済み**。学習で品種を選び庭が品種別の姿に／完了画面で育った株を演出／`/stats`・`/garden` に連続日数。設計は @docs/memory-creatures-design.md
+- **直近の修正**: **Phase 13.4 数式（KaTeX）完了**（Phase 10 はほぼ完了・クラスランキングは見送り）。カードで `\(…\)`/`\[…\]`/`$$…$$` を描画（数式カードのみ KaTeX 動的import・iframe で KaTeX CSS 自己ホスト）。画像はURL表示可。設計は @docs/memory-creatures-design.md
 - **次にやること**:
-  1. **Vercel デプロイ → 再ログイン**（Dexie v12）で 10.4/10.5/10.2演出/実績バッジ を実機反映・確認
-  2. **Phase 10.5 残**: クラスランキング（成長率・オプトアウト・講師ビュー＋RLS）、デイリーミッションのプッシュ連携（Phase 12.3）
-  3. **10.2 残**: しきい値の実データ調整（PixiJS 大規模描画は実装済・要WebGL実機確認）
-  4. **Phase 13.4**: リッチコンテンツ表示（数式 KaTeX/MathJax・画像）→ 数学・理科へ科目拡張
+  1. **Vercel デプロイ → 実機確認**（数式カード、PixiJS 大規模庭、品種/実績/ミッション/連続日数）
+  2. **画像アップロード**（フィールド型＋Supabase Storage＋オフラインIndexedDBキャッシュ・TTS流用）
+  3. **科目拡張**: 数学・理科デッキ作成（数式が使えるようになったので）→ そこの「いきもの」も飼える（Phase 10 連携）
+  4. **10.2 残**: しきい値の実データ調整／デイリーミッションのプッシュ連携（Phase 12.3）
 
 ## 参照ドキュメント
 
