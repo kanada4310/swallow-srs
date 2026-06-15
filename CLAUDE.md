@@ -230,17 +230,35 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
   - `safeNext` ヘルパーで open redirect を防止（`/path` のみ許可）
   - LIFF 経由で Flex メッセージから `/study?deckId=xxx` に直接遷移できる
 
+## 記憶のいきもの育成（Phase 10・実装中）
+
+一次仕様 @docs/memory-creatures-design.md。**1ノート＝1株の植物（果樹・花き）**を育てる育成ゲーム。
+水やり＝復習／枯れ＝死（見た目のみ・復習で芽吹き直し）／品種選択＝インプリント。
+**FSRS の `card_states` から導出する純コスメティック層で、学習エンジンには一切触れない。**
+
+- **状態導出ロジック（10.1）**: `src/lib/garden/plant-state.ts`
+  - `derivePlantState(card, now)` → 成長段階（`stability`→`interval` フォールバック: 種/芽/苗/成株/開花・結実）＋世話状態（`due`超過度: 健やか/乾き気味/しおれ/枯れかけ/枯れ）
+  - `summarizeGarden(cards, now)` → 庭サマリー（要水やり数・枯れ数・段階別）
+  - しきい値は `GROWTH_THRESHOLDS`/`CARE_THRESHOLDS`（実データで調整）
+- **箱庭ビュー（10.2）**: `/garden`（`src/app/(student)/garden/page.tsx`）。アイソメ・タイル方式
+  - 1ノート＝ひし形ブロック1枚。個別=1枚拡大／全体=自動レイアウトで合成（`x=(col-row)*hw, y=(col+row)*hh`、奥→手前描画）
+  - `src/components/garden/`: `PlantSprite`（手続き生成SVG・素朴トーン）/`IsoTile`（ブロック+株+水やりバッジ）/`GardenField`（自動レイアウト+揺れ/しずくアニメ）
+  - `src/lib/garden/garden-data.ts` `getGardenForDeck(deckId, userId)`: デッキ配下の全カード×card_states を株データ化（オフライン可）
+  - 大規模デッキは `MAX_TILES=150` で打ち切り表示（将来 PixiJS 化）
+- **方針**: アートは当面**自前の手続き生成SVG**で世界観統制（CC0素材は絵柄不一致で見送り）。品種別スプライト/`user_creature_state` は 10.4。将来 PixiJS（大規模）/Rive（状態アニメ）
+
 ## 現在の進捗
 
 詳細は @docs/progress.md を参照。
 
-- **最終更新**: 2026-06-14
-- **直近の修正**: コロケーションパイロットに**文脈アシスト（日本語の場面リード文）**を表面最上部へ追加・push 完了（enrich-only AI生成・例文プール {en,blank,ja,ctx} 拡張・DB in-place 更新・要 Vercel デプロイ反映）
+- **最終更新**: 2026-06-15
+- **直近の修正**: **Phase 10「記憶のいきもの育成」10.1/10.2 を実装・push 完了**。1ノート＝植物（果樹・花き）の育成ゲーム。アイソメ箱庭ビュー `/garden`（種→芽→苗→成株→開花/結実＋しおれ〜枯れ、水やり＝復習）。FSRS の card_states から導出する純コスメ層で学習エンジンは不変。設計は @docs/memory-creatures-design.md
 - **次にやること**:
-  1. **デプロイ反映確認**: 文脈アシスト（StudyCard 改修）→ Vercel デプロイ後に再ログイン→実機確認
-  2. **Phase 10 着手**: 記憶のいきもの育成（1ノート＝1匹の飼育、@docs/memory-creatures-design.md）。まず 10.1 いきものステータス基盤（`card_states` → 成長/世話状態の純ロジック＋テスト）。アート方針=癒しモンスター系で確定
-  3. **Phase 13.4**: リッチコンテンツ表示（数式 KaTeX/MathJax・画像）→ 数学・理科へ科目拡張
-  4. billing側のLINE送信ジョブ / Phase 9.3-9.4
+  1. **実機確認（デプロイ後）**: スマホ再ログイン→`/garden`。学習履歴のあるアカウント／小さいデッキで（新規は全部「種」）。枯れは長期放置アカウントで
+  2. **Phase 10.4 品種選択（インプリント）**: `user_creature_state` テーブル＋品種カタログ＋初回選択UI（現状は汎用の木1種）
+  3. **Phase 10.3 枯れ株一覧（復活導線）** / 10.2残（大規模デッキ→PixiJS、学習完了→成長演出、しきい値の実データ調整）
+  4. **Phase 13.4**: リッチコンテンツ表示（数式 KaTeX/MathJax・画像）→ 数学・理科へ科目拡張
+  5. billing側のLINE送信ジョブ / Phase 9.3-9.4 / 文脈アシストのデプロイ確認
 
 ## 参照ドキュメント
 
