@@ -267,9 +267,12 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 
 ## リッチコンテンツ表示（Phase 13.4）
 
-- **数式（KaTeX）✅**: カードで TeX を描画。Anki互換デリミタ `\(…\)`（インライン）・`\[…\]`・`$$…$$`（ディスプレイ）。単一 `$…$` は誤検出回避のため対象外
-  - `src/lib/template/math.ts`: `renderMath(html)`/`containsMath(html)`。KaTeX は重い(~270KB)ため**数式を含むカードでのみ動的 import**（`StudyCard`/`TemplatePreview` が `containsMath` 判定→`import('@/lib/template/math')`）。`/study` の初期バンドルは肥大しない
-  - **サニタイズとの両立**: カードは iframe(sandbox, allow-same-origin なし) 隔離描画で `dangerouslySetInnerHTML` 不使用 → KaTeX 出力をそのまま渡せる。KaTeX CSS は iframe の `<link href="/katex/katex.min.css">` で読み込み（`public/katex/` に css＋woff2 を自己ホスト＝オフライン可）。`CardIframe` は `math` prop で CSS を出し分け
+- **数式（KaTeX → MathML 描画）✅**: カードで TeX を描画。Anki互換デリミタ `\(…\)`（インライン）・`\[…\]`・`$$…$$`（ディスプレイ）。単一 `$…$` は誤検出回避で対象外
+  - `src/lib/template/math.ts`: `renderMath(html)`/`containsMath(html)`。KaTeX で **`output:'mathml'`**（ブラウザネイティブ描画＝**CSS/Webフォント不要**）。KaTeX は重い(~270KB)ため**数式を含むカードでのみ動的 import**（`StudyCard`/`TemplatePreview` が `containsMath` 判定→`import`）。`/study` 初期バンドル不変
+  - **なぜ MathML**: iframe(sandbox=opaque origin) で KaTeX-HTML を使うと CSS/フォントの読込・CORS・高さ計測が壊れ、二重表示や空欄が頻発した。MathML は外部アセット不要で最も壊れにくい。`CardIframe` は KaTeX CSS link を持たず、`math` prop で最小 CSS（`math[display=block]` 中央寄せ）と最低高さ160pxのみ付与
+  - **サニタイズとの両立**: カードは iframe(sandbox, allow-same-origin なし) 隔離描画で `dangerouslySetInnerHTML` 不使用 → MathML をそのまま渡せる
+  - 庭の名札（`pickLabel`）は数式を描画しないので `\(…\)` 等を除去
+  - ※ `public/katex/`＋`/katex` の publicPath/CORS は旧 KaTeX-HTML 用で**現在未使用**（無害なので残置）
 - **画像**: `<img src>` は iframe で表示可能（テンプレ/フィールドに直書き）。**アップロード（Supabase Storage）＋オフライン(IndexedDB)キャッシュは次の増分**（TTS音声の仕組みを流用予定）
 
 ## 現在の進捗

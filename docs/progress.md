@@ -22,7 +22,10 @@
   - **KaTeX は重い(~270KB)ので数式カードのみ動的 import**。`StudyCard`：`MATH_DELIMITER` で前判定→`import('@/lib/template/math')`→`displayedFront/Back` に差し替え＋`CardIframe math={…}`。`TemplatePreview` も同様（プレビューで数式確認可）
   - `CardIframe`：`math` prop で `<link rel="stylesheet" href="/katex/katex.min.css">` を出し分け
 - **検証**: 329テスト全通過（322→+7）／lint クリーン／build 成功。`/study` 3.14kB（KaTeX は別チャンク＝初期バンドル不変）
-- **実機で数式が二重表示＝崩れる不具合 → 修正済み（要再デプロイ）**: 原因は **`/katex/*` がミドルウェアで未認証リダイレクト(307→/login)** され、iframe が KaTeX CSS を読めず「ネイティブMathML＋未CSSのkatex-html」が二重表示されていた。修正＝①`publicPaths` に `/katex` 追加（`src/lib/supabase/middleware.ts`）②`next.config.mjs` に `/katex/:path*` の CORS(`Access-Control-Allow-Origin:*`)＋長期キャッシュ headers（**iframe は sandbox=opaque origin なのでフォントに CORS 必須**）③woff2 を SW `katex-fonts` で CacheFirst（オフライン）。**Vercel 再デプロイで反映**
+- **【重要・方針転換】KaTeX 出力を MathML のみに変更（最も壊れにくい）**: iframe(sandbox=opaque origin) 内で KaTeX-HTML を使うと CSS/Webフォントの読込・CORS・高さ計測が次々壊れた（二重表示／積分カード空欄）。**`output:'mathml'` に変更**＝ブラウザがネイティブ描画するので **CSS もフォントも不要**。`CardIframe` から KaTeX CSS `<link>` を撤去し、代わりに最小 CSS（`math[display=block]` 中央寄せ・1.15em）だけ注入。これで二重表示・空欄の根本原因（外部アセット依存）が消える。モダンブラウザは MathML Core 対応（実機スクショでネイティブ MathML が綺麗に出ていた）
+- **付随修正**: ①庭の名札は数式を描画しないので `pickLabel` で `\(…\)`/`\[…\]`/`$$…$$` を除去（生TeXが出ないように）②`CardIframe` 高さ計測の堅牢化（fonts.ready/link load/複数指標の最大値/数式カードは最低160px）— MathML 化で不要寄りだが安全網として残す
+- **（過去対応・現在は不要だが無害なので残置）** `/katex` の publicPath 追加＋next.config CORS＋SW フォントキャッシュ＝KaTeX-HTML 用だった。MathML 化で未使用（`public/katex/` も未使用）。気になれば後で撤去可
+- **要 Vercel 再デプロイ**で反映
 - **検証用デッキ投入済み**: `data/create-math-test-deck.mjs` で「数式テスト（KaTeX 確認用）」(deck `376dc155…`, owner gaimon.maam, 8問＋画像)
 - **次セッション注意**:
   - 再デプロイ後に `/study` で数式が**1つだけ**整形表示されることを確認（二重表示が消えていれば成功）。`curl -I https://srs.swallow-base.com/katex/katex.min.css` が **200＋ACAO** になるか／フォント woff2 も 200 を確認

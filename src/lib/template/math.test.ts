@@ -23,27 +23,28 @@ describe('renderMath', () => {
     expect(renderMath(html)).toBe(html)
   })
 
-  it('renders inline math \\( ... \\) to KaTeX html', () => {
+  it('renders inline math \\( ... \\) to MathML', () => {
     const out = renderMath('質量とエネルギー \\(x^2\\) です')
-    expect(out).toContain('katex')
+    expect(out).toContain('<math')
     expect(out).not.toContain('\\(')
+    expect(out).not.toContain('display="block"') // インラインは block ではない
     // 周囲のテキストは保持
     expect(out).toContain('質量とエネルギー')
     expect(out).toContain('です')
   })
 
-  it('renders display math \\[ ... \\] and $$ ... $$', () => {
+  it('renders display math \\[ ... \\] and $$ ... $$ as block MathML', () => {
     const a = renderMath('\\[ E = mc^2 \\]')
-    expect(a).toContain('katex')
-    expect(a).toContain('katex-display')
+    expect(a).toContain('<math')
+    expect(a).toContain('display="block"')
     const b = renderMath('$$ a + b $$')
-    expect(b).toContain('katex')
-    expect(b).toContain('katex-display')
+    expect(b).toContain('<math')
+    expect(b).toContain('display="block"')
   })
 
   it('renders multiple expressions in one string', () => {
     const out = renderMath('\\(a\\) と \\(b\\)')
-    const count = (out.match(/class="katex"/g) || []).length
+    const count = (out.match(/<math/g) || []).length
     expect(count).toBe(2)
   })
 

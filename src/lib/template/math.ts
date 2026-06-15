@@ -2,7 +2,9 @@
  * 数式レンダリング（Phase 13.4）— KaTeX で TeX を HTML に変換する。
  *
  * カードは iframe(sandbox) 内で隔離描画されるため、サニタイズと衝突しない。
- * KaTeX の出力（span/MathML）をそのまま iframe に渡し、KaTeX CSS は iframe 側で読み込む。
+ * 出力は **MathML のみ**（`output: 'mathml'`）。ブラウザがネイティブ描画するため
+ * KaTeX の CSS / Web フォントが不要 → iframe 内での CSS 読込・フォント CORS・高さ計測の
+ * 問題を回避でき、最も壊れにくい（モダンブラウザは MathML Core 対応）。
  *
  * 対応デリミタ（Anki 互換）:
  *   - `\( ... \)`  インライン
@@ -16,6 +18,8 @@
 
 import katex from 'katex'
 
+const MATHML_OUTPUT = 'mathml'
+
 /** 数式デリミタを含むか（KaTeX を読み込む前の安価な判定） */
 export function containsMath(html: string): boolean {
   return /\\\(|\\\[|\$\$/.test(html)
@@ -26,7 +30,7 @@ function renderOne(tex: string, displayMode: boolean): string {
     return katex.renderToString(tex.trim(), {
       displayMode,
       throwOnError: false,
-      output: 'htmlAndMathml',
+      output: MATHML_OUTPUT,
     })
   } catch {
     // 想定外の失敗時は元のテキストを残す（カードを壊さない）

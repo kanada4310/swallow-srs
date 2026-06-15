@@ -37,7 +37,15 @@ export function pickLabel(fieldValues: Record<string, unknown> | null | undefine
 }
 
 function stripHtml(s: string): string {
-  return s.replace(/<[^>]*>/g, '').trim().slice(0, 40)
+  return s
+    // 数式（KaTeX デリミタ）部分は名札では描画できないので丸ごと除去
+    .replace(/\$\$[\s\S]+?\$\$/g, '')
+    .replace(/\\\[[\s\S]+?\\\]/g, '')
+    .replace(/\\\([\s\S]+?\\\)/g, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 40)
 }
 
 /**

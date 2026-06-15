@@ -13,15 +13,17 @@ interface CardIframeProps {
 }
 
 function buildSrcdoc(html: string, css: string, frameId: string, math = false): string {
-  const katexLink = math
-    ? '<link rel="stylesheet" href="/katex/katex.min.css">'
+  // 数式は MathML（ブラウザネイティブ）。KaTeX CSS/フォントは不要。
+  // 表示の体裁だけ最小限整える（ディスプレイ式は中央寄せ・少し大きめ）。
+  const mathCss = math
+    ? `math { font-size: 1.15em; }
+  math[display="block"] { display: block; margin: 0.6em auto; text-align: center; overflow-x: auto; }`
     : ''
   return `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-${katexLink}
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   body {
@@ -64,6 +66,7 @@ ${katexLink}
     align-items: center;
     gap: 6px;
   }
+  ${mathCss}
   ${css}
 </style>
 </head>
@@ -89,11 +92,17 @@ ${katexLink}
   setTimeout(sendHeight, 50);
   setTimeout(sendHeight, 200);
   setTimeout(sendHeight, 500);
-  // KaTeX のフォント/CSS 読込で高さが変わるため、フォント確定後に再計測する
+  setTimeout(sendHeight, 1000);
+  // KaTeX のフォント/CSS 読込で高さが変わるため、確定後に再計測する
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(sendHeight).catch(function(){});
   }
   window.addEventListener('load', sendHeight);
+  // スタイルシート（KaTeX CSS）読込完了でもレイアウトが変わるので再計測
+  var links = document.getElementsByTagName('link');
+  for (var li = 0; li < links.length; li++) {
+    links[li].addEventListener('load', sendHeight);
+  }
 
   // TTS button click handler
   document.addEventListener('click', function(e) {
@@ -128,7 +137,9 @@ ${katexLink}
 export function CardIframe({ html, css, minHeight = 60, className, onTtsPlay, math = false }: CardIframeProps) {
   const frameId = useId()
   const [isMounted, setIsMounted] = useState(false)
-  const [height, setHeight] = useState(minHeight)
+  // 数式カードは背が高くなりやすく、計測が遅れても空に見えないよう最低高さを確保する
+  const effMinHeight = math ? Math.max(minHeight, 160) : minHeight
+  const [height, setHeight] = useState(effMinHeight)
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
   // Client-only: avoid SSR hydration mismatch with iframe srcDoc
@@ -139,12 +150,12 @@ export function CardIframe({ html, css, minHeight = 60, className, onTtsPlay, ma
   const handleMessage = useCallback((e: MessageEvent) => {
     if (!e.data || e.data.frameId !== frameId) return
     if (e.data.type === 'card-iframe-resize') {
-      const newHeight = Math.max(e.data.height, minHeight)
+      const newHeight = Math.max(e.data.height, effMinHeight)
       setHeight(newHeight)
     } else if (e.data.type === 'card-tts-play') {
       onTtsPlay?.(e.data.fieldName)
     }
-  }, [frameId, minHeight, onTtsPlay])
+  }, [frameId, effMinHeight, onTtsPlay])
 
   // Listen for resize messages
   useEffect(() => {
@@ -154,8 +165,8 @@ export function CardIframe({ html, css, minHeight = 60, className, onTtsPlay, ma
 
   // Reset height when content changes
   useEffect(() => {
-    setHeight(minHeight)
-  }, [html, css, minHeight])
+    setHeight(effMinHeight)
+  }, [html, css, effMinHeight])
 
   // Programmatically set srcdoc via ref to ensure browser re-renders
   useEffect(() => {
@@ -169,7 +180,7 @@ export function CardIframe({ html, css, minHeight = 60, className, onTtsPlay, ma
   if (!isMounted) {
     return (
       <div
-        style={{ minHeight: `${minHeight}px` }}
+        style={{ minHeight: `${effMinHeight}px` }}
         className={`w-full ${className || ''}`}
       />
     )
@@ -180,7 +191,7 @@ export function CardIframe({ html, css, minHeight = 60, className, onTtsPlay, ma
       ref={iframeRef}
       srcDoc={buildSrcdoc(html, css, frameId, math)}
       sandbox="allow-scripts allow-popups"
-      style={{ height: `${height}px`, minHeight: `${minHeight}px` }}
+      style={{ height: `${height}px`, minHeight: `${effMinHeight}px` }}
       className={`w-full border-0 ${className || ''}`}
       title="Card content"
       scrolling="no"
