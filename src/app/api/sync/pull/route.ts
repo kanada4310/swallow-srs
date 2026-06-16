@@ -43,22 +43,21 @@ export async function POST(request: NextRequest) {
     response.profiles = [profile]
   }
 
-  // Fetch system note types
-  let noteTypesQuery = supabase
+  // Fetch accessible note types (system + owned).
+  // NOTE: note types are few and small, so we always sync the FULL set + all their
+  // card templates (not just incrementally-changed ones). Incrementally filtering
+  // note types could leave a note type in the client without its card_template
+  // (e.g. the type was synced in an earlier batch but its template never arrived),
+  // which makes the study card fall back to a {{Front}}/{{Back}} template and render blank.
+  const { data: noteTypes } = await supabase
     .from('note_types')
     .select('*')
     .or(`is_system.eq.true,owner_id.eq.${user.id}`)
 
-  if (lastSyncAt) {
-    noteTypesQuery = noteTypesQuery.gt('updated_at', lastSyncAt.toISOString())
-  }
-
-  const { data: noteTypes } = await noteTypesQuery
-
   if (noteTypes && noteTypes.length > 0) {
     response.noteTypes = noteTypes
 
-    // Fetch card templates for these note types
+    // Always fetch card templates for ALL accessible note types (self-heals missing templates)
     const noteTypeIds = noteTypes.map((nt) => nt.id)
     const { data: cardTemplates } = await supabase
       .from('card_templates')
