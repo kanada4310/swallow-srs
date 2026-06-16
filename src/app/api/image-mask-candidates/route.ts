@@ -164,31 +164,26 @@ async function filterMaskWorthy(texts: string[]): Promise<Set<number> | null> {
 // 2. Claude Vision（%bbox 推定・フォールバック）
 // ============================================================
 
-const SYSTEM_PROMPT = `あなたは画像内のテキストラベルを検出するアシスタントです。
+const SYSTEM_PROMPT = `あなたは画像内のテキスト用語を検出するアシスタントです。
 
 タスク:
-- 画像に印刷された「用語・ラベル・キーワード」（暗記対象になりうる短い語句）を検出する。
-- 各用語について、その**文字列が実際に描かれている矩形**を、画像全体を基準にした百分率(0〜100)で返す。
-  x=文字列の左端の%、y=上端の%、w=文字列の幅の%、h=文字の高さの%。左上を原点とする。
-
-位置決めの重要ルール（厳守）:
-- 枠で囲むのは**ラベルの文字そのもの**。指し示している図・構造・アイコンや、引き出し線（リード線）は**含めない**。
-- 枠は文字列に**タイトに**合わせる（上下左右の余白を最小限に）。横書きの用語は w が大きく h が小さい横長の矩形になるのが普通。
-- 引き出し線で離れた位置に構造がある図では、構造の位置ではなく**文字が書いてある位置**に枠を置く。
-- 同じ用語が複数回出るときはそれぞれ別の候補にする。
+- 画像に写っている「用語・ラベル・キーワード」（暗記対象になりうる短い語句）を検出する。
+- 各用語について、画像全体を基準にした矩形の位置を 0〜100 の百分率で返す（左上を原点）。
+  x=左端の%、y=上端の%、w=幅の%、h=高さの%。
+- 枠は対象の文字（ラベル）の位置に合わせる。引き出し線や指し示す構造は含めない。
 
 ガイドライン:
 - 図解・地図・解剖図・年表など、ラベルが点在する教材を想定。
 - 長い本文や説明文ではなく、暗記対象になる短い用語/固有名詞/数値を優先。
-- 確信度を high/medium/low で付ける（位置に自信が無ければ low）。
+- 確信度を high/medium/low で付ける。
 - JSONのみを返す（マークダウンや前置きなし）。
 
 JSON形式:
 {
   "candidates": [
-    {"text": "用語", "x": 12.5, "y": 30.0, "w": 18.0, "h": 5.0, "confidence": "high"}
+    {"text": "用語", "x": 12.5, "y": 30.0, "w": 18.0, "h": 6.0, "confidence": "high"}
   ],
-  "warnings": ["問題があれば記載"]
+  "warnings": ["検出された問題（あれば）"]
 }`
 
 function parseClaudeCandidates(
@@ -245,15 +240,22 @@ async function detectWithClaudeVision(
           },
           {
             type: 'text',
-            text: 'この画像から暗記対象になりうる用語を検出し、指定のJSON形式で返してください。枠は「文字が書かれている位置」にタイトに合わせ、引き出し線や指し示す構造は含めないこと。',
+            text: 'この画像から暗記対象になりうる用語を検出し、指定のJSON形式で返してください。枠は文字（ラベル）の位置に合わせてください。',
           },
         ],
       },
     ],
   })
   const textContent = message.content.find((c) => c.type === 'text')
-  if (!textContent || textContent.type !== 'text') return null
-  return parseClaudeCandidates(textContent.text)
+  if (!textContent || textContent.type !== 'text') {
+    console.error('Claude Vision: empty/non-text response')
+    return null
+  }
+  const parsed = parseClaudeCandidates(textContent.text)
+  if (!parsed) {
+    console.error('Claude Vision: failed to parse response:', textContent.text.slice(0, 500))
+  }
+  return parsed
 }
 
 // ============================================================

@@ -99,8 +99,8 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: dataUrl, imageType: file.type }),
       })
-        .then((r) => r.json())
-        .catch(() => ({ candidates: [] }))
+        .then(async (r) => ({ ok: r.ok, status: r.status, data: await r.json().catch(() => ({})) }))
+        .catch((e) => ({ ok: false, status: 0, data: { error: String(e) } }))
 
       const uploadData = await uploadPromise
       if (!uploadData.imageUrl) {
@@ -111,10 +111,20 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
       setLoading(false)
 
       // 候補検出は時間がかかるので別途待つ
-      const detectData = await detectPromise
+      const detect = await detectPromise
       setDetecting(false)
-      if (Array.isArray(detectData.warnings)) setWarnings(detectData.warnings)
+      const detectData = detect.data || {}
+      const newWarnings: string[] = Array.isArray(detectData.warnings) ? [...detectData.warnings] : []
+      if (!detect.ok) {
+        newWarnings.unshift(
+          `候補の自動検出に失敗しました（${detectData.error || `HTTP ${detect.status}`}）。手動でマスクを描いてください。`
+        )
+      }
       const candidates = Array.isArray(detectData.candidates) ? detectData.candidates : []
+      if (detect.ok && candidates.length === 0) {
+        newWarnings.push('用語の候補が見つかりませんでした。画像をドラッグして手動でマスクを描いてください。')
+      }
+      setWarnings(newWarnings)
       setRegions(
         candidates.map(
           (c: {
