@@ -54,6 +54,7 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
 
   const [loading, setLoading] = useState(false)
   const [detecting, setDetecting] = useState(false)
+  const [detectSource, setDetectSource] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [warnings, setWarnings] = useState<string[]>([])
@@ -114,6 +115,7 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
       const detect = await detectPromise
       setDetecting(false)
       const detectData = detect.data || {}
+      setDetectSource(typeof detectData.source === 'string' ? detectData.source : null)
       const newWarnings: string[] = Array.isArray(detectData.warnings) ? [...detectData.warnings] : []
       if (!detect.ok) {
         newWarnings.unshift(
@@ -437,6 +439,13 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
       <p className="text-xs text-gray-500">
         枠をタップで選択→ドラッグで移動・右下で拡大縮小。<b>選択中に画像をタップするとその位置へ移動</b>します。何もない所をドラッグすると新しいマスクを描けます。下の微調整ボタン（PCは矢印キー）でも動かせます。
       </p>
+      {detectSource && (
+        <p className="text-[11px] text-gray-400">
+          検出エンジン: {detectSource === 'google-vision'
+            ? '高精度OCR（Google Vision）— 枠は文字にほぼ正確に合います'
+            : 'AI推定（位置はおおまか／要微調整）'}
+        </p>
+      )}
 
       {/* 画像＋オーバーレイ */}
       <div className="select-none overflow-hidden rounded-lg border border-gray-200">
