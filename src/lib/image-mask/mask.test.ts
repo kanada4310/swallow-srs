@@ -77,11 +77,26 @@ describe('buildMaskHtml', () => {
     expect(html).not.toContain('left:50%')
   })
 
-  it('back: outlines masked regions and shows escaped answer', () => {
+  it('back: outlines masked regions and lists escaped answers below the image (no overlay text)', () => {
     const html = buildMaskHtml('https://x.com/i.png', regions, new Set(['b']), 'back')
+    // 答えは画像下の番号付きリストに（重なり防止）
+    expect(html).toContain('<ol')
+    expect(html).toContain('<li')
     expect(html).toContain('Golgi &amp; co')
-    expect(html).toContain('left:50%')
+    expect(html).toContain('left:50%') // region b の枠
     expect(html).not.toContain('?')
+  })
+
+  it('back: numbers masked regions top-to-bottom and matches list order', () => {
+    const rs = [
+      { id: 'low', x: 10, y: 80, w: 10, h: 5, answer: 'B' },
+      { id: 'high', x: 10, y: 10, w: 10, h: 5, answer: 'A' },
+    ]
+    const html = buildMaskHtml('https://x.com/i.png', rs, new Set(['low', 'high']), 'back')
+    // 上にある high(A) が①、下の low(B) が②。リストは A→B の順
+    expect(html.indexOf('>A<')).toBeLessThan(html.indexOf('>B<'))
+    expect(html).toContain('>1</span>')
+    expect(html).toContain('>2</span>')
   })
 
   it('escapes the image URL', () => {

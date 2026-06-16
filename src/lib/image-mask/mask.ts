@@ -73,7 +73,9 @@ function boxStyle(r: MaskRegion): string {
 /**
  * カード表示用の HTML を組み立てる。
  * side='front': masked の領域を不透明グレーで覆う（「?」付き）。
- * side='back' : 画像は全表示。masked だった領域を枠線でハイライトし、answer を重ねる。
+ * side='back' : 画像は全表示（元のラベル文字が読める）。masked だった領域は
+ *   枠線＋小さな番号バッジだけを重ね、答えは画像の下に番号付きリストで表示する
+ *   （文字を画像の上に重ねないので、元の文字と衝突しない）。
  *
  * imageUrl は http(s) 公開URL（StudyCard 側でオフライン用に data: URL へ書換えられる）。
  */
@@ -84,18 +86,36 @@ export function buildMaskHtml(
   side: 'front' | 'back'
 ): string {
   if (!imageUrl) return ''
-  const overlays = regions
+  const img = `<img src="${esc(imageUrl)}" style="display:block;max-width:100%;height:auto;">`
+
+  if (side === 'front') {
+    const overlays = regions
+      .filter((r) => maskedIds.has(r.id))
+      .map(
+        (r) =>
+          `<div style="${boxStyle(
+            r
+          )}background:#475569;border-radius:3px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:0.9em;">?</div>`
+      )
+      .join('')
+    return `<div style="position:relative;display:inline-block;max-width:100%;">${img}${overlays}</div>`
+  }
+
+  // 裏面: マスクしていた領域を上から下→左から右の順に番号付け
+  const masked = regions
     .filter((r) => maskedIds.has(r.id))
-    .map((r) => {
-      if (side === 'front') {
-        return `<div style="${boxStyle(r)}background:#475569;border-radius:3px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:0.9em;">?</div>`
-      }
-      const answer = r.answer ? esc(r.answer) : ''
-      return `<div style="${boxStyle(r)}border:2px solid #f59e0b;border-radius:3px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;color:#b45309;font-weight:bold;font-size:0.85em;text-align:center;line-height:1.1;overflow:hidden;">${answer}</div>`
+    .sort((a, b) => a.y - b.y || a.x - b.x)
+
+  const overlays = masked
+    .map((r, i) => {
+      const badge = `<span style="position:absolute;top:0;left:0;transform:translate(-35%,-35%);background:#f59e0b;color:#fff;font-size:11px;line-height:16px;min-width:16px;height:16px;border-radius:8px;text-align:center;font-weight:bold;padding:0 3px;box-shadow:0 0 0 1px #fff;">${i + 1}</span>`
+      return `<div style="${boxStyle(r)}border:2px solid #f59e0b;border-radius:3px;">${badge}</div>`
     })
     .join('')
 
-  return `<div style="position:relative;display:inline-block;max-width:100%;"><img src="${esc(
-    imageUrl
-  )}" style="display:block;max-width:100%;height:auto;">${overlays}</div>`
+  const list = masked
+    .map((r) => `<li style="margin:2px 0;">${r.answer ? esc(r.answer) : ''}</li>`)
+    .join('')
+
+  return `<div style="display:inline-block;max-width:100%;text-align:left;"><div style="position:relative;display:inline-block;max-width:100%;">${img}${overlays}</div><ol style="margin:10px 0 0;padding-left:1.6em;font-size:14px;color:#374151;line-height:1.5;">${list}</ol></div>`
 }
