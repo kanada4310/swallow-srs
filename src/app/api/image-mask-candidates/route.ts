@@ -143,7 +143,7 @@ async function filterMaskWorthy(texts: string[]): Promise<Set<number> | null> {
   try {
     const list = texts.map((t, i) => `${i}: ${t}`).join('\n')
     const msg = await getAnthropic().messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1024,
       system: `与えられた候補から、暗記対象になりうる短い用語（固有名詞・専門用語・図のラベル）の番号だけを選ぶ。長い文・説明文・ページ番号・出典・記号のみは除外する。JSONのみ返す: {"keep":[番号,...]}`,
       messages: [{ role: 'user', content: `候補:\n${list}` }],
@@ -223,7 +223,7 @@ async function detectWithClaudeVision(
   imageType: string
 ): Promise<{ candidates: Candidate[]; warnings?: string[] } | null> {
   const message = await getAnthropic().messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-6',
     max_tokens: 4096,
     system: SYSTEM_PROMPT,
     messages: [
@@ -333,6 +333,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, candidates: [], warnings, source: 'none' })
   } catch (error) {
     console.error('Error in image-mask-candidates API:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    // 原因切り分けのため実エラーメッセージを返す（編集UIのバナーに表示される）
+    const msg = error instanceof Error ? error.message : 'Internal server error'
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

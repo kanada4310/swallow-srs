@@ -261,7 +261,7 @@ export async function POST(request: NextRequest) {
       const userPrompt = buildRuleUserPrompt(rule, effectiveFieldValues)
 
       const message = await anthropic.messages.create({
-        model: 'claude-3-haiku-20240307',
+        model: 'claude-haiku-4-5',
         max_tokens: 500,
         messages: [{ role: 'user', content: userPrompt }],
         system: buildRuleSystemPrompt(),
@@ -348,7 +348,7 @@ export async function POST(request: NextRequest) {
     const userPrompt = buildLegacyUserPrompt(effectiveWord, effectiveMeaning, includeCollocations)
 
     const message = await anthropic.messages.create({
-      model: 'claude-3-haiku-20240307',
+      model: 'claude-haiku-4-5',
       max_tokens: 500,
       messages: [{ role: 'user', content: userPrompt }],
       system: LEGACY_SYSTEM_PROMPT,
@@ -376,7 +376,7 @@ export async function POST(request: NextRequest) {
       examples: generatedData.examples,
       collocations: generatedData.collocations,
       generated_at: new Date().toISOString(),
-      model: 'claude-3-haiku-20240307',
+      model: 'claude-haiku-4-5',
     }
 
     const { error: updateError } = await supabase
