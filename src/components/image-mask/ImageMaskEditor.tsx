@@ -1,45 +1,24 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { SUPPORTED_IMAGE_TYPES, MAX_IMAGE_SIZE } from '@/lib/constants'
 import type { NoteType } from '@/types/database'
-
-interface EditRegion {
-  id: string
-  x: number // %
-  y: number
-  w: number
-  h: number
-  answer: string
-  included: boolean
-  source: 'ai' | 'manual'
-}
+import {
+  MaskRegionEditor,
+  candidateToRegion,
+  regionsToMaskPayload,
+  type EditRegion,
+} from './MaskRegionEditor'
+import { readAsDataUrl, uploadImage, detectCandidates } from './api'
 
 interface ImageMaskEditorProps {
   deckId: string
   noteType: NoteType
 }
 
-type DragMode = 'move' | 'resize' | 'draw' | null
-interface DragState {
-  mode: DragMode
-  id: string | null
-  startPx: number // pointer start in %
-  startPy: number
-  orig: { x: number; y: number; w: number; h: number }
-  moved: boolean
-  prevSelected: string | null
-}
-
-const MIN_SIZE = 2 // 最小ボックスサイズ（%）
-const MOVE_THRESHOLD = 1.2 // これ未満の動きはタップ扱い（%）
-
-function clamp(v: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, v))
-}
-
+// 単一の画像マスキングノートを作成（アップロード→AI候補→編集→保存）
 export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
   const router = useRouter()
   const { profile } = useAuth()
@@ -47,7 +26,6 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
   const [step, setStep] = useState<'upload' | 'edit'>('upload')
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [regions, setRegions] = useState<EditRegion[]>([])
-  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [maskCount, setMaskCount] = useState('')
   const [heading, setHeading] = useState('')
   const [note, setNote] = useState('')
@@ -60,18 +38,7 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
   const [warnings, setWarnings] = useState<string[]>([])
 
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const dragRef = useRef<DragState | null>(null)
 
-  const readAsDataUrl = (file: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(reader.result as string)
-      reader.onerror = () => reject(reader.error)
-      reader.readAsDataURL(file)
-    })
-
-  // 画像選択 → アップロード＋候補検出を並行実行
   const handleFile = async (file: File) => {
     setError(null)
     setWarnings([])
@@ -88,66 +55,26 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
     setDetecting(true)
     try {
       const dataUrl = await readAsDataUrl(file)
+      const detectPromise = detectCandidates(dataUrl, file.type)
 
-      const uploadPromise = fetch('/api/images/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: dataUrl, imageType: file.type }),
-      }).then((r) => r.json())
-
-      const detectPromise = fetch('/api/image-mask-candidates', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: dataUrl, imageType: file.type }),
-      })
-        .then(async (r) => ({ ok: r.ok, status: r.status, data: await r.json().catch(() => ({})) }))
-        .catch((e) => ({ ok: false, status: 0, data: { error: String(e) } }))
-
-      const uploadData = await uploadPromise
-      if (!uploadData.imageUrl) {
-        throw new Error(uploadData.error || '画像アップロードに失敗しました')
-      }
-      setImageUrl(uploadData.imageUrl)
+      const url = await uploadImage(dataUrl, file.type)
+      setImageUrl(url)
       setStep('edit')
       setLoading(false)
 
-      // 候補検出は時間がかかるので別途待つ
       const detect = await detectPromise
       setDetecting(false)
-      const detectData = detect.data || {}
-      setDetectSource(typeof detectData.source === 'string' ? detectData.source : null)
-      const newWarnings: string[] = Array.isArray(detectData.warnings) ? [...detectData.warnings] : []
+      setDetectSource(detect.source)
+      const newWarnings = [...detect.warnings]
       if (!detect.ok) {
         newWarnings.unshift(
-          `候補の自動検出に失敗しました（${detectData.error || `HTTP ${detect.status}`}）。手動でマスクを描いてください。`
+          `候補の自動検出に失敗しました（${detect.error}）。手動でマスクを描いてください。`
         )
-      }
-      const candidates = Array.isArray(detectData.candidates) ? detectData.candidates : []
-      if (detect.ok && candidates.length === 0) {
+      } else if (detect.candidates.length === 0) {
         newWarnings.push('用語の候補が見つかりませんでした。画像をドラッグして手動でマスクを描いてください。')
       }
       setWarnings(newWarnings)
-      setRegions(
-        candidates.map(
-          (c: {
-            text: string
-            x: number
-            y: number
-            w: number
-            h: number
-            recommended?: boolean
-          }): EditRegion => ({
-            id: crypto.randomUUID(),
-            x: clamp(c.x, 0, 100),
-            y: clamp(c.y, 0, 100),
-            w: clamp(c.w, MIN_SIZE, 100),
-            h: clamp(c.h, MIN_SIZE, 100),
-            answer: c.text || '',
-            included: c.recommended !== false,
-            source: 'ai',
-          })
-        )
-      )
+      setRegions(detect.candidates.map(candidateToRegion))
     } catch (err) {
       setError(err instanceof Error ? err.message : '処理に失敗しました')
       setLoading(false)
@@ -157,211 +84,23 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
     }
   }
 
-  // pointer → コンテナ相対の %
-  const pointerToPct = useCallback((e: PointerEvent | React.PointerEvent): { px: number; py: number } => {
-    const rect = containerRef.current?.getBoundingClientRect()
-    if (!rect || rect.width === 0 || rect.height === 0) return { px: 0, py: 0 }
-    return {
-      px: clamp(((e.clientX - rect.left) / rect.width) * 100, 0, 100),
-      py: clamp(((e.clientY - rect.top) / rect.height) * 100, 0, 100),
-    }
-  }, [])
-
-  const onPointerMove = useCallback(
-    (e: PointerEvent) => {
-      const drag = dragRef.current
-      if (!drag || !drag.mode) return
-      const { px, py } = pointerToPct(e)
-      const dx = px - drag.startPx
-      const dy = py - drag.startPy
-
-      // しきい値未満はまだ「タップ」扱い（誤操作防止）
-      if (!drag.moved && Math.hypot(dx, dy) < MOVE_THRESHOLD) return
-      if (!drag.moved) {
-        drag.moved = true
-        // 描画モードで動き始めたら、ここで初めて新規ボックスを生成する
-        if (drag.mode === 'draw' && !drag.id) {
-          const id = crypto.randomUUID()
-          drag.id = id
-          setRegions((prev) => [
-            ...prev,
-            { id, x: drag.startPx, y: drag.startPy, w: 0, h: 0, answer: '', included: true, source: 'manual' },
-          ])
-          setSelectedId(id)
-        }
-      }
-
-      setRegions((prev) =>
-        prev.map((r) => {
-          if (drag.id && r.id !== drag.id) return r
-          if (drag.mode === 'move' && r.id === drag.id) {
-            return {
-              ...r,
-              x: clamp(drag.orig.x + dx, 0, 100 - r.w),
-              y: clamp(drag.orig.y + dy, 0, 100 - r.h),
-            }
-          }
-          if (drag.mode === 'resize' && r.id === drag.id) {
-            return {
-              ...r,
-              w: clamp(drag.orig.w + dx, MIN_SIZE, 100 - r.x),
-              h: clamp(drag.orig.h + dy, MIN_SIZE, 100 - r.y),
-            }
-          }
-          if (drag.mode === 'draw' && r.id === drag.id) {
-            const nx = Math.min(drag.startPx, px)
-            const ny = Math.min(drag.startPy, py)
-            return {
-              ...r,
-              x: nx,
-              y: ny,
-              w: clamp(Math.abs(px - drag.startPx), 0, 100 - nx),
-              h: clamp(Math.abs(py - drag.startPy), 0, 100 - ny),
-            }
-          }
-          return r
-        })
-      )
-    },
-    [pointerToPct]
-  )
-
-  const onPointerUp = useCallback(() => {
-    const drag = dragRef.current
-    if (drag) {
-      if (!drag.moved && drag.mode === 'draw') {
-        // 画像上のタップ＝選択中の枠の中心をタップ位置へ移動（モバイルで微調整しやすく）
-        if (drag.prevSelected) {
-          setRegions((prev) =>
-            prev.map((r) =>
-              r.id === drag.prevSelected
-                ? {
-                    ...r,
-                    x: clamp(drag.startPx - r.w / 2, 0, 100 - r.w),
-                    y: clamp(drag.startPy - r.h / 2, 0, 100 - r.h),
-                  }
-                : r
-            )
-          )
-        }
-      } else if (drag.mode === 'draw' && drag.id) {
-        // 小さすぎる描画は破棄
-        setRegions((prev) =>
-          prev.filter((r) => !(r.id === drag.id && (r.w < MIN_SIZE || r.h < MIN_SIZE)))
-        )
-      }
-    }
-    dragRef.current = null
-    window.removeEventListener('pointermove', onPointerMove)
-    window.removeEventListener('pointerup', onPointerUp)
-  }, [onPointerMove])
-
-  const startDrag = (mode: DragMode, id: string | null, e: React.PointerEvent, orig: DragState['orig']) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const { px, py } = pointerToPct(e)
-    dragRef.current = { mode, id, startPx: px, startPy: py, orig, moved: false, prevSelected: selectedId }
-    window.addEventListener('pointermove', onPointerMove)
-    window.addEventListener('pointerup', onPointerUp)
-  }
-
-  // 背景/画像でのポインタ操作。ドラッグ→新規描画、タップ→選択中の枠を移動。
-  const handleContainerPointerDown = (e: React.PointerEvent) => {
-    const { px, py } = pointerToPct(e)
-    // ここではまだ枠を作らない（onPointerMove でしきい値を超えたら生成）
-    dragRef.current = {
-      mode: 'draw',
-      id: null,
-      startPx: px,
-      startPy: py,
-      orig: { x: px, y: py, w: 0, h: 0 },
-      moved: false,
-      prevSelected: selectedId,
-    }
-    window.addEventListener('pointermove', onPointerMove)
-    window.addEventListener('pointerup', onPointerUp)
-  }
-
-  // 選択中の枠を量(%)だけ動かす/サイズ変更（オンスクリーンパッド・キーボード用）
-  const nudge = (dx: number, dy: number) => {
-    if (!selectedId) return
-    setRegions((prev) =>
-      prev.map((r) =>
-        r.id === selectedId
-          ? { ...r, x: clamp(r.x + dx, 0, 100 - r.w), y: clamp(r.y + dy, 0, 100 - r.h) }
-          : r
-      )
-    )
-  }
-  const resizeBy = (dw: number, dh: number) => {
-    if (!selectedId) return
-    setRegions((prev) =>
-      prev.map((r) =>
-        r.id === selectedId
-          ? {
-              ...r,
-              w: clamp(r.w + dw, MIN_SIZE, 100 - r.x),
-              h: clamp(r.h + dh, MIN_SIZE, 100 - r.y),
-            }
-          : r
-      )
-    )
-  }
-
-  // 矢印キーで微調整（PC）。Shiftで大きく。
-  useEffect(() => {
-    if (!selectedId) return
-    const onKey = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return // 答え入力中は無効
-      const step = e.shiftKey ? 3 : 0.5
-      if (e.key === 'ArrowLeft') { e.preventDefault(); nudge(-step, 0) }
-      else if (e.key === 'ArrowRight') { e.preventDefault(); nudge(step, 0) }
-      else if (e.key === 'ArrowUp') { e.preventDefault(); nudge(0, -step) }
-      else if (e.key === 'ArrowDown') { e.preventDefault(); nudge(0, step) }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId])
-
-  const updateRegion = (id: string, patch: Partial<EditRegion>) => {
-    setRegions((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)))
-  }
-
-  const deleteRegion = (id: string) => {
-    setRegions((prev) => prev.filter((r) => r.id !== id))
-    if (selectedId === id) setSelectedId(null)
-  }
-
-  const includedRegions = regions.filter((r) => r.included)
-
   const handleSave = async () => {
     setError(null)
     if (!imageUrl) return
-    if (includedRegions.length === 0) {
+    const payload = regionsToMaskPayload(regions)
+    if (payload.length === 0) {
       setError('出題対象のマスクを1つ以上にしてください')
       return
     }
     setSaving(true)
     try {
-      const maskRegions = includedRegions.map((r) => ({
-        id: r.id,
-        x: Math.round(r.x * 100) / 100,
-        y: Math.round(r.y * 100) / 100,
-        w: Math.round(r.w * 100) / 100,
-        h: Math.round(r.h * 100) / 100,
-        answer: r.answer.trim(),
-      }))
-
       const fieldValues: Record<string, string> = {
         画像: imageUrl,
-        マスク領域: JSON.stringify(maskRegions),
+        マスク領域: JSON.stringify(payload),
         毎回隠す数: maskCount.trim(),
         見出し: heading.trim(),
         補足: note.trim(),
       }
-
       const resp = await fetch('/api/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -370,7 +109,6 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
       const data = await resp.json()
       if (!resp.ok) throw new Error(data.error || 'ノートの作成に失敗しました')
 
-      // 即時オフライン反映のため同期
       if (profile) {
         const { fullSync } = await import('@/lib/db/sync')
         await fullSync(profile.id).catch(() => {})
@@ -419,6 +157,16 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
             </>
           )}
         </button>
+        <p className="text-center text-xs text-gray-400">
+          複数枚をまとめて登録するなら{' '}
+          <button
+            type="button"
+            onClick={() => router.push(`/notes/image-mask/bulk?deck=${deckId}`)}
+            className="text-blue-600 underline"
+          >
+            一括作成
+          </button>
+        </p>
       </div>
     )
   }
@@ -435,10 +183,6 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
           ))}
         </div>
       )}
-
-      <p className="text-xs text-gray-500">
-        枠をタップで選択→ドラッグで移動・右下で拡大縮小。<b>選択中に画像をタップするとその位置へ移動</b>します。何もない所をドラッグすると新しいマスクを描けます。下の微調整ボタン（PCは矢印キー）でも動かせます。
-      </p>
       {detectSource && (
         <p className="text-[11px] text-gray-400">
           検出エンジン: {detectSource === 'google-vision'
@@ -447,136 +191,9 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
         </p>
       )}
 
-      {/* 画像＋オーバーレイ */}
-      <div className="select-none overflow-hidden rounded-lg border border-gray-200">
-        <div
-          ref={containerRef}
-          className="relative inline-block w-full touch-none"
-          style={{ lineHeight: 0 }}
-          onPointerDown={handleContainerPointerDown}
-        >
-          {imageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={imageUrl} alt="マスキング対象" className="block w-full h-auto" draggable={false} />
-          )}
-          {regions.map((r) => {
-            const selected = r.id === selectedId
-            return (
-              <div
-                key={r.id}
-                onPointerDown={(e) => {
-                  setSelectedId(r.id)
-                  startDrag('move', r.id, e, { x: r.x, y: r.y, w: r.w, h: r.h })
-                }}
-                className="absolute cursor-move"
-                style={{
-                  left: `${r.x}%`,
-                  top: `${r.y}%`,
-                  width: `${r.w}%`,
-                  height: `${r.h}%`,
-                  border: selected ? '2px solid #2563eb' : '2px solid rgba(37,99,235,0.5)',
-                  background: r.included ? 'rgba(37,99,235,0.25)' : 'rgba(148,163,184,0.15)',
-                  borderRadius: 3,
-                  boxSizing: 'border-box',
-                }}
-              >
-                {/* リサイズハンドル（右下・タッチしやすいよう大きめ） */}
-                <div
-                  onPointerDown={(e) => {
-                    setSelectedId(r.id)
-                    startDrag('resize', r.id, e, { x: r.x, y: r.y, w: r.w, h: r.h })
-                  }}
-                  className="absolute -right-2 -bottom-2 w-4 h-4 bg-blue-600 border-2 border-white rounded-sm cursor-se-resize shadow"
-                  style={{ touchAction: 'none' }}
-                />
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {detecting && (
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <span className="w-4 h-4 animate-spin rounded-full border-2 border-gray-200 border-t-blue-500" />
-          AIがマスキング候補を検出中...
-        </div>
+      {imageUrl && (
+        <MaskRegionEditor imageUrl={imageUrl} regions={regions} onChange={setRegions} detecting={detecting} />
       )}
-
-      {/* 選択中の枠の微調整パッド（モバイル用・PCは矢印キーでも可） */}
-      {selectedId && (
-        <div className="flex items-center justify-between gap-3 p-2 bg-gray-50 border border-gray-200 rounded-lg">
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-gray-500 mr-1">位置</span>
-            <NudgeBtn onClick={() => nudge(-1, 0)} label="←" />
-            <div className="flex flex-col gap-1">
-              <NudgeBtn onClick={() => nudge(0, -1)} label="↑" />
-              <NudgeBtn onClick={() => nudge(0, 1)} label="↓" />
-            </div>
-            <NudgeBtn onClick={() => nudge(1, 0)} label="→" />
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-gray-500 mr-1">幅</span>
-            <NudgeBtn onClick={() => resizeBy(-1, 0)} label="−" />
-            <NudgeBtn onClick={() => resizeBy(1, 0)} label="＋" />
-            <span className="text-xs text-gray-500 mx-1">高</span>
-            <NudgeBtn onClick={() => resizeBy(0, -1)} label="−" />
-            <NudgeBtn onClick={() => resizeBy(0, 1)} label="＋" />
-          </div>
-        </div>
-      )}
-
-      {/* 領域リスト */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-gray-700">
-            マスク領域（{includedRegions.length} / {regions.length}）
-          </h3>
-        </div>
-        {regions.length === 0 && !detecting && (
-          <p className="text-sm text-gray-400">候補がありません。画像をドラッグしてマスクを描いてください。</p>
-        )}
-        {regions.map((r, i) => (
-          <div
-            key={r.id}
-            onClick={() => setSelectedId(r.id)}
-            className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer ${
-              r.id === selectedId ? 'border-blue-400 bg-blue-50' : 'border-gray-200'
-            }`}
-          >
-            <input
-              type="checkbox"
-              checked={r.included}
-              onChange={(e) => updateRegion(r.id, { included: e.target.checked })}
-              onClick={(e) => e.stopPropagation()}
-              className="w-4 h-4"
-              title="出題対象"
-            />
-            <span className="text-xs text-gray-400 w-5 flex-shrink-0">{i + 1}</span>
-            <input
-              type="text"
-              value={r.answer}
-              onChange={(e) => updateRegion(r.id, { answer: e.target.value })}
-              onClick={(e) => e.stopPropagation()}
-              placeholder="正解テキスト"
-              className="flex-1 min-w-0 px-2 py-1 text-sm border border-gray-300 rounded outline-none focus:ring-1 focus:ring-blue-500"
-            />
-            {r.source === 'ai' && <span className="text-[10px] text-purple-500 flex-shrink-0">AI</span>}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                deleteRegion(r.id)
-              }}
-              className="text-gray-400 hover:text-red-500 flex-shrink-0"
-              title="削除"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        ))}
-      </div>
 
       {/* 設定 */}
       <div className="grid grid-cols-1 gap-3 pt-2 border-t border-gray-100">
@@ -630,17 +247,5 @@ export function ImageMaskEditor({ deckId, noteType }: ImageMaskEditorProps) {
         </button>
       </div>
     </div>
-  )
-}
-
-function NudgeBtn({ onClick, label }: { onClick: () => void; label: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="w-8 h-7 flex items-center justify-center text-sm text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-100 active:bg-gray-200 select-none"
-    >
-      {label}
-    </button>
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { NoteBrowser } from '@/components/deck/NoteBrowser'
 import { NoteEditModal } from '@/components/deck/NoteEditModal'
 import { NoteEditor } from '@/components/deck/NoteEditor'
@@ -24,6 +25,7 @@ export function NotesPageClient({
   ownDeckIds: ownDeckIdsProp,
   userProfile,
 }: NotesPageClientProps) {
+  const router = useRouter()
   const [notes, setNotes] = useState<BrowsableNote[]>(initialNotes || [])
   const [total, setTotal] = useState(initialTotal || 0)
   const [editingNote, setEditingNote] = useState<BrowsableNote | null>(null)
@@ -256,7 +258,14 @@ export function NotesPageClient({
         deckNameMap={deckNameMap}
         canEdit={canEdit}
         canEditNote={isTeacherOrAdmin ? undefined : canEditNote}
-        onEditNote={(note) => setEditingNote(note)}
+        onEditNote={(note) => {
+          const fv = note.field_values || {}
+          if (fv['画像'] && fv['マスク領域'] !== undefined) {
+            router.push(`/notes/image-mask/${note.id}/edit`)
+          } else {
+            setEditingNote(note)
+          }
+        }}
         onDeleteNote={handleDeleteNote}
         onBulkDelete={handleBulkDelete}
         onCopyNotes={canEdit ? handleCopyNotes : undefined}

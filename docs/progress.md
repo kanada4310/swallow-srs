@@ -13,6 +13,20 @@
 
 ## セッション引継ぎメモ
 
+### 2026-06-16（画像マスキング 一括作成＋ビジュアル再編集＋共通化／退役モデル修正／裏面重なり／テンプレ同期）
+- **退役モデルで全AIが500**: `claude-sonnet-4-20250514`（6/15退役）＝候補検出/OCRの500原因。`claude-3-haiku-20240307`（4月退役）＝例文生成。→ `claude-sonnet-4-6` / `claude-haiku-4-5` に更新（`f8d296b`）。**今後モデルIDは退役に注意**（migration: Sonnet4→4.6, Haiku3→4.5）
+- **裏面の文字重なり解消**（`e1c8759`）: 裏面はマスク領域に枠＋番号バッジのみ、答えは画像下に番号付きリスト（`buildMaskHtml` 改修・上→下/左→右採番）
+- **Google Vision 検出エンジン表示**（`f4c886f`）: 編集UIに `source`（google-vision/claude-vision）を表示。Vision キーは課金プロジェクト上限エラーが出たら**既存の課金済みプロジェクトでキー作成**（キーはどのGCPプロジェクトでも可）
+- **★表面が空白だった真因＝カードテンプレ未同期**（`601ec4b`）: pull が note_types を `updated_at` 増分で絞るため「ノートタイプはあるが card_template がクライアントに無い」状態が起き、study が `{{Front}}/{{Back}}` フォールバックに落ち、Front/Back を持たない画像マスキングは表面が空白に。**アクセス可能な全ノートタイプ＋全 card_templates を毎回同期**して self-heal するよう修正（`src/app/api/sync/pull/route.ts`）。調査用 `data/debug-image-mask.mjs`
+- **一括作成＋ビジュアル再編集＋共通化（このセッション後半）**:
+  - 編集キャンバスを controlled な `MaskRegionEditor`（`src/components/image-mask/MaskRegionEditor.tsx`）に抽出。`EditRegion`/`candidateToRegion`/`maskJsonToRegions`/`regionsToMaskPayload`/`MIN_SIZE` を export。共有API `api.ts`（`uploadImage`/`detectCandidates`/`readAsDataUrl`）
+  - `ImageMaskEditor`（単一）を共通化に載せ替え
+  - **一括作成** `BulkImageMaskCreator` ＋ `/notes/image-mask/bulk?deck=X`：複数画像→**並列(同時3)でアップ＋AI検出**→各画像をカード表示（サムネ＋見出し＋状態）、「編集」で `MaskRegionEditor` 展開→「全て作成」で順次 POST→`fullSync`→デッキ。毎回隠す数は全件共通入力。各画像=1ノート
+  - **ビジュアル再編集** `ImageMaskNoteEditor` ＋ `/notes/image-mask/[id]/edit`：Dexie からノート読込→`MaskRegionEditor`＋設定→PUT `/api/notes/[id]`→`updateNoteLocally`＋`fullSync`。ノート一覧/デッキ詳細の編集は `画像`＋`マスク領域` を持つノートを自動でこのページへ（生フィールド編集の `NoteEditModal` を回避）
+  - デッキ詳細に「一括マスキング」ボタン追加。単一作成ページ下部にも一括への導線
+- **検証**: lint クリーン（既存 TemplatePreview 警告のみ）／テスト**352件**通過／build 成功（`/notes/image-mask/bulk` 4.13kB・`[id]/edit` 1.93kB）
+- **次セッション注意**: 一括は画像ごとに upload＋detect を並列3で投げる（大量だとVision/Claude APIコストとレート注意）。再編集は画像差し替え不可（マスク・設定のみ）。実機確認＝デプロイ後、デッキ詳細「一括マスキング」で複数枚→レビュー→全作成、`/study` で出題、ノート一覧の鉛筆で再編集
+
 ### 2026-06-15（画像マスキング bboxズレ対策 — プロンプト＋手直しUX＋OCR幾何）
 - **背景**: 実機で植物細胞図のAI候補枠が5〜15%ズレた。調査結果＝**座標系のバグではなく Claude Vision の位置推定精度の限界**（枠は正しい象限に落ちる＝表示マッピングは正常／ズレ方が枠ごとにバラバラ＝VLMの空間回帰の弱点）。用語の読みは当たるが位置だけ外す典型
 - **対応3点（ユーザーが全選択）**:

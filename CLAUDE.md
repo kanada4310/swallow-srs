@@ -277,6 +277,7 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 - **画像マスキング（Image Occlusion）✅（要実機確認）**: 画像内の用語を隠して暗記。`POST /api/image-mask-candidates` が用語を**%bbox付き**で検出→`ImageMaskEditor`（`/notes/image-mask/new?deck=X`）で**選択/自由描画/移動/リサイズ/答え編集**→ノート作成。`StudyCard` が `マスク領域`(JSON) から**レビュー毎にN領域ランダムで隠す**（例文プールと同じ思想・表示専用 `画像表`/`画像裏` を合成・保存フィールド非追加）。出題=視覚リコール＋めくり、隠す数=ノート毎設定＋既定30%（`resolveMaskCount`）。座標は**0-100の%**（表示サイズ非依存）。純ロジック `src/lib/image-mask/`（テスト12件）。ノートタイプ「画像マスキング」=`data/create-image-occlusion-notetype.mjs`（**要実行**・`is_system:true`・共有定義 `data/image-occlusion-template.mjs`）
   - **候補検出の2系統フォールバック**: ①`GOOGLE_CLOUD_VISION_API_KEY` があれば **Google Cloud Vision（DOCUMENT_TEXT_DETECTION）で正確なbbox**＋Claude テキストパスで暗記対象を選別（`recommended`）。②無ければ **Claude Vision で%bbox推定**（位置は**近似**＝UI微調整前提）。Vision キー未設定/失敗時は自動で②に縮退。レスポンスに `source: google-vision|claude-vision`
   - **編集UXの手直し高速化**: 枠タップ選択→ドラッグ移動／右下リサイズ／**選択中に画像タップでその位置へ移動**（モバイル）／オンスクリーン微調整パッド／PCは矢印キー（Shiftで大）／ドラッグ閾値でタップ誤作動防止
+  - **共通エディタ＋一括作成＋再編集**: 編集キャンバスを controlled な `MaskRegionEditor`（`src/components/image-mask/`）に共通化。①単一作成 `/notes/image-mask/new` ②**一括作成** `/notes/image-mask/bulk`（複数画像→並列アップ＋AI検出（同時3）→各画像レビュー（展開で編集）→「全て作成」・各画像=1ノート・毎回隠す数は全件共通） ③**ビジュアル再編集** `/notes/image-mask/[id]/edit`（既存ノートを開き直し→PUT）。デッキ詳細に「画像マスキング」「一括マスキング」ボタン。ノート一覧の編集はマスクノートを自動でビジュアルエディタへ（`画像`＋`マスク領域` を持つノートを判定）。共有API `src/components/image-mask/api.ts`（uploadImage/detectCandidates）
 
 ## 現在の進捗
 
