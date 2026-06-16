@@ -640,8 +640,9 @@ billing側のLINE Bot経由で復習カード通知を送信する。
 - [x] 数式: **KaTeX** をカード描画に統合（Anki互換 `\(…\)`・`\[…\]`・`$$…$$`）。`src/lib/template/math.ts`＝`renderMath`/`containsMath`。数式を含むカードでのみ**動的import**（`/study` バンドルを軽く保つ）。`StudyCard`＋`TemplatePreview` 対応・テスト7件
 - [x] サニタイズとの両立: カードは **iframe(sandbox, allow-same-origin なし) 隔離**で `dangerouslySetInnerHTML` 不使用 → KaTeX 出力をそのまま渡せる（サニタイザと衝突しない）。KaTeX CSS は iframe 側で `/public/katex/katex.min.css`＋woff2 を読み込み（自己ホスト＝オフライン可）
 - [x] 画像（URL）: `<img>` は iframe で既に表示可能（テンプレ/フィールドに `<img src>` で利用）
-- [x] 画像アップロード（`POST /api/images/upload`＝TTS の Storage 流用、`images` バケット）＋ オフライン（IndexedDB）画像キャッシュ（Dexie v13 `imageCache`・URLキー）。StudyCard が `<img>` URL を data: URL に書換えて sandbox iframe でオフライン表示（増分A・要実機確認）
-- [x] 画像マスキング（増分B・要実機確認）: AIが用語を%bbox付き検出（`/api/image-mask-candidates`）→`ImageMaskEditor` で選択/自由描画→ノート作成。`src/lib/image-mask`（純ロジック・テスト12件）。StudyCard が `マスク領域`(JSON) から**毎回ランダムにN領域**を隠して出題（視覚リコール＋めくり／隠す数=ノート毎設定＋既定30%）。ノートタイプ「画像マスキング」（`data/create-image-occlusion-notetype.mjs`・**要実行**）
+- [x] 画像アップロード（`POST /api/images/upload`＝TTS の Storage 流用、`images` バケット）＋ オフライン（IndexedDB）画像キャッシュ（Dexie v13 `imageCache`・URLキー）。StudyCard が `<img>` URL を data: URL に書換えて sandbox iframe でオフライン表示（実機確認済み）
+- [x] 画像マスキング（実機確認済み）: AI候補検出（**Google Vision 高精度OCR**＋Claude Vision フォールバック・`/api/image-mask-candidates`）→`MaskRegionEditor` で選択/自由描画/移動/リサイズ→ノート作成。`src/lib/image-mask`（純ロジック・テスト13件）。StudyCard が `マスク領域`(JSON) から**毎回ランダムにN領域**を隠して出題（視覚リコール＋めくり／裏面は枠＋番号＋画像下の答えリスト／隠す数=ノート毎設定＋既定30%）。ノートタイプ「画像マスキング」（`data/create-image-occlusion-notetype.mjs`）
+- [x] 画像マスキング 一括作成（`/notes/image-mask/bulk`：複数画像→並列アップ＋検出→レビュー→全作成）＋ ビジュアル再編集（`/notes/image-mask/[id]/edit`）。編集キャンバスは `MaskRegionEditor` に共通化
 - [ ] → 数学・理科デッキで「記憶のいきもの」を飼えるようにする（Phase 10 連携）
 
 ---
@@ -718,9 +719,9 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 
 ## 現在の進捗
 
-**Phase**: Phase 10 ほぼ完了（クラスランキングは見送り）＋**Phase 13.4 数式（KaTeX）完了**。画像はURL表示可、アップロード/オフラインキャッシュが次の増分
-**最終更新**: 2026-06-15
-**次のタスク**: 数式の実機確認 → 画像アップロード（Storage+オフラインキャッシュ）or 科目拡張デッキ作成
+**Phase**: Phase 10 ほぼ完了（クラスランキングは見送り）＋**Phase 13.4 数式・画像・画像マスキング完了（実機確認済み）**
+**最終更新**: 2026-06-16
+**次のタスク**: 一括作成/再編集の軽い実機確認 → 科目拡張（数学・理科デッキ＋そこのいきもの育成）
 
 ### 次回セッションでやること
 
@@ -768,3 +769,4 @@ SM-2からFSRSへのアップグレード。復習回数を20〜30%削減。
 - [x] **Phase 10.5 デイリーミッション（軽量版）**（2026-06-15）: `getDailyMission`（今日の水やり進捗を既存データから導出・テスト3件）＋`DailyMissionCard`（`/garden` 上部）。プッシュ連携は将来
 - [x] **Phase 10.2 PixiJS 大規模描画**（2026-06-15）: `GardenFieldPixi`（>150株を WebGL 全件描画・ドラッグ/ズーム・遅延ロード・SVG縮退）＋`tileTexture`（既存SVGを canvas 化キャッシュ）。pixi.js v8 導入。タップ選択のゴーストクリック不具合も修正済（実機でパン/ズーム/タップ確認済）
 - [x] **Phase 13.4 数式（KaTeX→MathML）**（2026-06-15・実機確認済み）: `math.ts`（renderMath/containsMath・テスト7件）＋数式カードのみ動的import。**`output:'mathml'` でブラウザネイティブ描画＝CSS/フォント不要**（iframe での二重表示/空欄を根本解消）。StudyCard/TemplatePreview 対応。庭の名札は `見出し` フィールド優先＋タイル天面をベージュ土に。画像は `<img>` で表示可（アップロード/オフラインキャッシュは次の増分）
+- [x] **Phase 13.4 画像アップロード＋画像マスキング**（2026-06-16・実機確認済み）: 画像アップ（`/api/images/upload`・`images`バケット）＋オフラインキャッシュ（Dexie v13・`<img>`→data:URL）。画像マスキング＝AI候補検出（**Google Vision 高精度OCR**＋Claude Vision フォールバック）＋毎回ランダム出題（`src/lib/image-mask`・テスト13件）＋裏面は枠+番号+答えリスト。**一括作成**（`/notes/image-mask/bulk`）＋**ビジュアル再編集**（`/notes/image-mask/[id]/edit`）、編集キャンバスは `MaskRegionEditor` 共通化。退役モデルID更新（Sonnet4→4.6・Haiku3→4.5）＋ pull で全ノートタイプ＋カードテンプレ毎回同期（表面空白の真因解消）

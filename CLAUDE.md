@@ -283,11 +283,11 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 
 詳細は @docs/progress.md を参照。
 
-- **最終更新**: 2026-06-15
-- **直近の修正**: **Phase 13.4 画像アップロード＋画像マスキング実装完了（要実機確認）**。画像アップ（`/api/images/upload`・`images`バケット）＋オフラインキャッシュ（Dexie v13・`<img>`→data:URL書換え）。画像マスキング＝AI候補検出（`/api/image-mask-candidates`）＋編集UI（`/notes/image-mask/new`）＋毎回ランダム出題（`src/lib/image-mask`）。ブランチ `feat/image-masking`。設計は @docs/memory-creatures-design.md
+- **最終更新**: 2026-06-16
+- **直近の修正**: **Phase 13.4 画像マスキング完成（実機確認済み）**。AI候補検出（Google Vision 高精度OCR＋Claude Vision フォールバック）／毎回ランダム出題／オフライン表示／裏面は枠＋番号＋画像下の答えリスト／**一括作成**（複数画像→並列アップ＋検出→レビュー→全作成）／**ビジュアル再編集**（`MaskRegionEditor` 共通化）。退役モデルID更新（Sonnet4→4.6・Haiku3→4.5）でAI全機能の500を修正。pull は全ノートタイプ＋カードテンプレを毎回同期（表面空白の真因＝テンプレ未同期を解消）。設計は @docs/memory-creatures-design.md
 - **次にやること**:
-  1. **画像マスキングの実機確認**: `node data/create-image-occlusion-notetype.mjs` 実行 → Vercelデプロイ → 再ログイン（Dexie v13）→ デッキ詳細「画像マスキング」で確認 → 良ければ main へマージ
-  2. **科目拡張**: 数学・理科デッキ作成（数式＋画像が使える）→ そこの「いきもの」も飼える（Phase 10 連携）
+  1. **一括作成/ビジュアル再編集の実機確認**（軽め）: デッキ詳細「一括マスキング」／ノート一覧の鉛筆
+  2. **科目拡張**: 数学・理科デッキ作成（数式＋画像マスキングが使える）→ そこの「いきもの」も飼える（Phase 10 連携）★次の主軸候補
   3. **10.2 残**: しきい値の実データ調整／デイリーミッションのプッシュ連携（Phase 12.3）
   4. **掃除（任意）**: `public/katex/`＋`/katex` publicPath/CORS は MathML 化で未使用＝撤去可
 
