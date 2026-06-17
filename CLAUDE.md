@@ -272,7 +272,7 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
   - **なぜ MathML**: iframe(sandbox=opaque origin) で KaTeX-HTML を使うと CSS/フォントの読込・CORS・高さ計測が壊れ、二重表示や空欄が頻発した。MathML は外部アセット不要で最も壊れにくい。`CardIframe` は KaTeX CSS link を持たず、`math` prop で最小 CSS（`math[display=block]` 中央寄せ）と最低高さ160pxのみ付与
   - **サニタイズとの両立**: カードは iframe(sandbox, allow-same-origin なし) 隔離描画で `dangerouslySetInnerHTML` 不使用 → MathML をそのまま渡せる
   - 庭の名札（`pickLabel`）は数式を描画しないので `\(…\)` 等を除去
-  - ※ `public/katex/`＋`/katex` の publicPath/CORS は旧 KaTeX-HTML 用で**現在未使用**（無害なので残置）
+  - ※ 旧 KaTeX-HTML 用の `public/katex/`＋`/katex` publicPath/CORS/SW キャッシュは MathML 化で不要になり**撤去済み**（2026-06-17）。`katex` npm パッケージは MathML 生成に引き続き使用
 - **画像（URL/アップロード/オフライン）✅**: `<img src>` は iframe で表示可能。アップロードは `POST /api/images/upload`（TTS の Storage 処理流用・`images` バケット・`{userId}/{uuid}`・公開URL返却）。`ImageUploadButton`＋`NoteEditModal` で挿入。**オフライン**=Dexie v13 `imageCache`（URLキー）＋`StudyCard` がカード内 `<img>` http(s) URL を **data: URL に書換え**て sandbox iframe に埋め込む（opaque origin では親の blob: が参照できないため）。`src/lib/template/images.ts`（純関数・テスト10件）
 - **画像マスキング（Image Occlusion）✅（要実機確認）**: 画像内の用語を隠して暗記。`POST /api/image-mask-candidates` が用語を**%bbox付き**で検出→`ImageMaskEditor`（`/notes/image-mask/new?deck=X`）で**選択/自由描画/移動/リサイズ/答え編集**→ノート作成。`StudyCard` が `マスク領域`(JSON) から**レビュー毎にN領域ランダムで隠す**（例文プールと同じ思想・表示専用 `画像表`/`画像裏` を合成・保存フィールド非追加）。出題=視覚リコール＋めくり、隠す数=ノート毎設定＋既定30%（`resolveMaskCount`）。座標は**0-100の%**（表示サイズ非依存）。純ロジック `src/lib/image-mask/`（テスト12件）。ノートタイプ「画像マスキング」=`data/create-image-occlusion-notetype.mjs`（**要実行**・`is_system:true`・共有定義 `data/image-occlusion-template.mjs`）
   - **候補検出の2系統フォールバック**: ①`GOOGLE_CLOUD_VISION_API_KEY` があれば **Google Cloud Vision（DOCUMENT_TEXT_DETECTION）で正確なbbox**＋Claude テキストパスで暗記対象を選別（`recommended`）。②無ければ **Claude Vision で%bbox推定**（位置は**近似**＝UI微調整前提）。Vision キー未設定/失敗時は自動で②に縮退。レスポンスに `source: google-vision|claude-vision`
@@ -283,13 +283,11 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 
 詳細は @docs/progress.md を参照。
 
-- **最終更新**: 2026-06-16
-- **直近の修正**: **Phase 13.4 画像マスキング完成（実機確認済み）**。AI候補検出（Google Vision 高精度OCR＋Claude Vision フォールバック）／毎回ランダム出題／オフライン表示／裏面は枠＋番号＋画像下の答えリスト／**一括作成**（複数画像→並列アップ＋検出→レビュー→全作成）／**ビジュアル再編集**（`MaskRegionEditor` 共通化）。退役モデルID更新（Sonnet4→4.6・Haiku3→4.5）でAI全機能の500を修正。pull は全ノートタイプ＋カードテンプレを毎回同期（表面空白の真因＝テンプレ未同期を解消）。設計は @docs/memory-creatures-design.md
+- **最終更新**: 2026-06-17
+- **直近の修正**: **未使用 KaTeX 自己ホスト資産を撤去**（MathML 化で不要に）。`public/katex/`（CSS＋フォント20本・328K）削除／`next.config.mjs` の `/katex` CORS `headers()`＋SW `katex-fonts` キャッシュ削除／`middleware.ts` の publicPaths から `/katex` 削除。`katex` npm パッケージ（MathML 生成）と `CardIframe` の `math` prop は維持。lint クリーン・テスト352件・build 成功。前回: Phase 13.4 画像マスキング完成（実機確認済み・一括作成/再編集まで）。設計は @docs/memory-creatures-design.md
 - **次にやること**:
-  1. **一括作成/ビジュアル再編集の実機確認**（軽め）: デッキ詳細「一括マスキング」／ノート一覧の鉛筆
-  2. **科目拡張**: 数学・理科デッキ作成（数式＋画像マスキングが使える）→ そこの「いきもの」も飼える（Phase 10 連携）★次の主軸候補
-  3. **10.2 残**: しきい値の実データ調整／デイリーミッションのプッシュ連携（Phase 12.3）
-  4. **掃除（任意）**: `public/katex/`＋`/katex` publicPath/CORS は MathML 化で未使用＝撤去可
+  1. **科目拡張**: 数学・理科デッキ作成（数式＋画像マスキングが使える）→ そこの「いきもの」も飼える（Phase 10 連携）★次の主軸候補
+  2. **10.2 残**: しきい値の実データ調整／デイリーミッションのプッシュ連携（Phase 12.3）
 
 ## 参照ドキュメント
 

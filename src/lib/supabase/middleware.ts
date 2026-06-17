@@ -2,8 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 // 認証不要のパス
-// /katex: カードの数式描画に使う KaTeX の CSS/フォント（iframe から無認証で読み込む静的アセット）
-const publicPaths = ['/login', '/auth/line', '/api/admin/billing-sync', '/api/admin/due-cards-summary', '/katex']
+const publicPaths = ['/login', '/auth/line', '/api/admin/billing-sync', '/api/admin/due-cards-summary']
 
 // プロフィール設定ページ
 const setupPath = '/setup'

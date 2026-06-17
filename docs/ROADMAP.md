@@ -638,7 +638,7 @@ billing側のLINE Bot経由で復習カード通知を送信する。
 カードで数式・画像を表示し、英語塾から数学・理科へ科目を拡張する土台。
 
 - [x] 数式: **KaTeX** をカード描画に統合（Anki互換 `\(…\)`・`\[…\]`・`$$…$$`）。`src/lib/template/math.ts`＝`renderMath`/`containsMath`。数式を含むカードでのみ**動的import**（`/study` バンドルを軽く保つ）。`StudyCard`＋`TemplatePreview` 対応・テスト7件
-- [x] サニタイズとの両立: カードは **iframe(sandbox, allow-same-origin なし) 隔離**で `dangerouslySetInnerHTML` 不使用 → KaTeX 出力をそのまま渡せる（サニタイザと衝突しない）。KaTeX CSS は iframe 側で `/public/katex/katex.min.css`＋woff2 を読み込み（自己ホスト＝オフライン可）
+- [x] サニタイズとの両立: カードは **iframe(sandbox, allow-same-origin なし) 隔離**で `dangerouslySetInnerHTML` 不使用 → KaTeX 出力をそのまま渡せる（サニタイザと衝突しない）。出力は **MathML（ブラウザネイティブ描画）** で外部 CSS/フォント不要。※旧 KaTeX-HTML 用の `public/katex/`＋`/katex` publicPath/CORS/SW キャッシュは MathML 化で撤去済み（2026-06-17）
 - [x] 画像（URL）: `<img>` は iframe で既に表示可能（テンプレ/フィールドに `<img src>` で利用）
 - [x] 画像アップロード（`POST /api/images/upload`＝TTS の Storage 流用、`images` バケット）＋ オフライン（IndexedDB）画像キャッシュ（Dexie v13 `imageCache`・URLキー）。StudyCard が `<img>` URL を data: URL に書換えて sandbox iframe でオフライン表示（実機確認済み）
 - [x] 画像マスキング（実機確認済み）: AI候補検出（**Google Vision 高精度OCR**＋Claude Vision フォールバック・`/api/image-mask-candidates`）→`MaskRegionEditor` で選択/自由描画/移動/リサイズ→ノート作成。`src/lib/image-mask`（純ロジック・テスト13件）。StudyCard が `マスク領域`(JSON) から**毎回ランダムにN領域**を隠して出題（視覚リコール＋めくり／裏面は枠＋番号＋画像下の答えリスト／隠す数=ノート毎設定＋既定30%）。ノートタイプ「画像マスキング」（`data/create-image-occlusion-notetype.mjs`）
