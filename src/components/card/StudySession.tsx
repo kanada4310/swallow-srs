@@ -95,6 +95,14 @@ interface StudySessionProps {
   initialCards: CardData[]
   userId: string
   deckSettings?: Partial<DeckSettings>
+  /** 練習モード（繰り上げ学習）。回答を card_states / review_logs に永続化しない */
+  practiceMode?: boolean
+  /** 完了画面の「もっと練習する」ボタン押下時に呼ばれる（親が練習カードを取得して再マウント） */
+  onRequestPractice?: () => void
+  /** 練習カードを取得中（ボタンをローディング表示にする） */
+  practiceLoading?: boolean
+  /** 繰り上げられるカードが無かった（ボタンの代わりにメッセージを出す） */
+  practiceUnavailable?: boolean
 }
 
 /**
@@ -111,7 +119,7 @@ function reorderWithPriority(cards: CardData[], priorityCardId?: string): CardDa
   return reordered
 }
 
-export function StudySession({ deckId, priorityCardId, deckName, initialCards, userId, deckSettings }: StudySessionProps) {
+export function StudySession({ deckId, priorityCardId, deckName, initialCards, userId, deckSettings, practiceMode = false, onRequestPractice, practiceLoading = false, practiceUnavailable = false }: StudySessionProps) {
   // Queue-based state (reorder to put priority card first if specified)
   const [mainQueue] = useState<CardData[]>(() => reorderWithPriority(initialCards, priorityCardId))
   const [mainIndex, setMainIndex] = useState(0)
@@ -206,7 +214,8 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
   // 未学習(new)で、まだ品種が刻まれていないノートだけ、学習前に1度だけ選ばせる。
   useEffect(() => {
     let cancelled = false
-    if (!GARDEN_ENABLED || !currentCard || currentCard.schedule.state !== 'new') {
+    // 練習モードでは品種インプリント（API 永続化を伴う）を出さない
+    if (!GARDEN_ENABLED || practiceMode || !currentCard || currentCard.schedule.state !== 'new') {
       setImprintPrompt(null)
       return
     }
@@ -232,7 +241,7 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
     return () => {
       cancelled = true
     }
-  }, [currentCard, userId])
+  }, [currentCard, userId, practiceMode])
 
   // 完了演出のスプライト用に、ノート→品種の対応を読み込む（オフライン可）
   useEffect(() => {
@@ -516,6 +525,12 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
 
       setIsSubmitting(false)
 
+      // 練習モードでは card_states / review_logs を一切更新しない（純粋な追加練習）。
+      // ローカル計算した newSchedule はキュー再提示の判定だけに使い、永続化はしない。
+      if (practiceMode) {
+        return
+      }
+
       // Fetch current card_state from IndexedDB for undo (async, non-blocking)
       getCardState(userId, cardId).then(previousCardState => {
         const snapshot: UndoSnapshot = {
@@ -700,9 +715,11 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">学習完了!</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">{practiceMode ? '練習完了!' : '学習完了!'}</h2>
         <p className="text-gray-600 mb-6">
-          {deckName}の今日の学習が終わりました。
+          {practiceMode
+            ? `${deckName}の練習が終わりました。`
+            : `${deckName}の今日の学習が終わりました。`}
         </p>
         <div className="bg-gray-100 rounded-lg p-4 mb-6">
           <div className="grid grid-cols-2 gap-4">
@@ -723,6 +740,11 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
         )}
         {undoSnapshot && <UndoBanner onUndo={handleUndo} />}
         <div className="flex flex-col items-center gap-3">
+          <MorePracticeSection
+            onRequestPractice={onRequestPractice}
+            loading={practiceLoading}
+            unavailable={practiceUnavailable}
+          />
           <Link
             href="/decks"
             className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -748,12 +770,19 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
         <p className="text-gray-600 mb-6">
           今日の学習は完了しています。また明日来てください!
         </p>
-        <Link
-          href="/decks"
-          className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          デッキ一覧に戻る
-        </Link>
+        <div className="flex flex-col items-center gap-3">
+          <MorePracticeSection
+            onRequestPractice={onRequestPractice}
+            loading={practiceLoading}
+            unavailable={practiceUnavailable}
+          />
+          <Link
+            href="/decks"
+            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            デッキ一覧に戻る
+          </Link>
+        </div>
       </div>
     )
   }
@@ -837,7 +866,10 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
       {/* Progress */}
       <div className="max-w-2xl mx-auto mb-6">
         <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
-          <span>{deckName}</span>
+          <span className="flex items-center gap-2 min-w-0">
+            <CardStateBadge state={currentCard.schedule.state} fromLearningQueue={fromLearningQueue} />
+            <span className="truncate">{deckName}</span>
+          </span>
           <div className="flex items-center gap-4">
             <span>
               {graduatedCount} / {totalCards}
@@ -961,6 +993,70 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
           .study-grow-pop, .study-water-drop { animation-duration: 0.01s; }
         }
       `}</style>
+    </div>
+  )
+}
+
+/** 現在のカードが「新規 / 復習 / 学習中」のどれかを示すバッジ */
+function CardStateBadge({
+  state,
+  fromLearningQueue,
+}: {
+  state: CardSchedule['state']
+  fromLearningQueue: boolean
+}) {
+  // セッション内で再提示中（Again/Hard）のカードは learning/relearning 状態。
+  // それ以外の learning/relearning（初回学習中）も含めて「学習中」として扱う。
+  let label: string
+  let cls: string
+  if (state === 'new') {
+    label = '🆕 新規'
+    cls = 'bg-green-100 text-green-700'
+  } else if (state === 'learning' || state === 'relearning' || fromLearningQueue) {
+    label = '📖 学習中'
+    cls = 'bg-orange-100 text-orange-700'
+  } else {
+    label = '🔁 復習'
+    cls = 'bg-blue-100 text-blue-700'
+  }
+  return (
+    <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold ${cls}`}>
+      {label}
+    </span>
+  )
+}
+
+/**
+ * 完了画面の「もっと練習する」セクション（繰り上げ学習）。
+ * 練習の結果はスケジュールに記録されない旨を明示する。
+ */
+function MorePracticeSection({
+  onRequestPractice,
+  loading,
+  unavailable,
+}: {
+  onRequestPractice?: () => void
+  loading: boolean
+  unavailable: boolean
+}) {
+  if (!onRequestPractice) return null
+  if (unavailable) {
+    return (
+      <p className="text-sm text-gray-500">
+        繰り上げて練習できるカードはありません。今日はよく頑張りました！
+      </p>
+    )
+  }
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <button
+        onClick={onRequestPractice}
+        disabled={loading}
+        className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-60"
+      >
+        {loading ? '読み込み中…' : '➕ もっと練習する'}
+      </button>
+      <span className="text-xs text-gray-400">※練習の結果はスケジュールに記録されません</span>
     </div>
   )
 }

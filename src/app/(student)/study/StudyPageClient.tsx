@@ -1,11 +1,12 @@
 'use client'
 
+import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { StudySession } from '@/components/card/StudySession'
 import { useAuth } from '@/contexts/AuthContext'
 import { useOnlineStatus } from '@/lib/db/hooks'
-import { getStudyCardsOffline, getDecksWithStatsOffline, getRootDeckId, db } from '@/lib/db/schema'
+import { getStudyCardsOffline, getPracticeCardsOffline, getDecksWithStatsOffline, getRootDeckId, db } from '@/lib/db/schema'
 import Link from 'next/link'
 import type { FieldDefinition, GeneratedContent, DeckSettings } from '@/types/database'
 import type { CardSchedule } from '@/lib/srs/scheduler'
@@ -116,6 +117,33 @@ export function StudyPageClient({
     [hasServerData, deckId, userId],
   )
 
+  // 練習モード（繰り上げ学習）の状態。完了画面の「もっと練習する」で起動する。
+  // 練習カードは getPracticeCardsOffline で都度取得し、key を変えて StudySession を再マウントする。
+  const [practiceRound, setPracticeRound] = useState(0)
+  const [practiceCards, setPracticeCards] = useState<CardData[] | null>(null)
+  const [practiceLoading, setPracticeLoading] = useState(false)
+  const [practiceUnavailable, setPracticeUnavailable] = useState(false)
+
+  const handleRequestPractice = async () => {
+    if (!userId || !deckId) return
+    setPracticeLoading(true)
+    setPracticeUnavailable(false)
+    try {
+      const cards = await getPracticeCardsOffline(userId, deckId, 20)
+      if (cards.length === 0) {
+        setPracticeUnavailable(true)
+      } else {
+        setPracticeCards(cards)
+        setPracticeRound(r => r + 1)
+      }
+    } catch (e) {
+      console.error('練習カードの取得に失敗:', e)
+      setPracticeUnavailable(true)
+    } finally {
+      setPracticeLoading(false)
+    }
+  }
+
   // Loading: still resolving userId or live queries
   if (!hasServerData && !userId && offlineUserId === undefined) {
     return <StudyLoadingSkeleton />
@@ -207,16 +235,25 @@ export function StudyPageClient({
     return <StudyLoadingSkeleton />
   }
 
+  // 練習中はその練習カードを使い、通常時はライブクエリのカードを使う。
+  const inPractice = practiceCards !== null
+  const sessionCards = practiceCards ?? cards
+
   return (
     <div className="py-0">
       {!isOnline && <OfflineBadge />}
       <StudySession
+        key={`session-${practiceRound}`}
         deckId={deckId || undefined}
-        priorityCardId={priorityCardId || undefined}
+        priorityCardId={inPractice ? undefined : priorityCardId || undefined}
         deckName={resolvedDeckName}
-        initialCards={cards}
+        initialCards={sessionCards}
         userId={userId}
         deckSettings={resolvedSettings}
+        practiceMode={inPractice}
+        onRequestPractice={handleRequestPractice}
+        practiceLoading={practiceLoading}
+        practiceUnavailable={practiceUnavailable}
       />
     </div>
   )

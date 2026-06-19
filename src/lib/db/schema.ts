@@ -1061,16 +1061,166 @@ export async function getStudyCardsOffline(
     }
   }
 
-  // Filter new cards by tags if this is a filter deck
-  const filteredNewCards = filterTags.length > 0
-    ? newCards.filter(card => {
-        const note = noteMap.get(card.noteId)
-        const noteTags = note?.tags || []
-        return noteTags.some((t: string) => filterTags.includes(t))
-      })
-    : newCards
+  // Filter cards by tags if this is a filter deck.
+  // 新規だけでなく復習(due)カードもタグで絞る。これによりサブデッキの学習が
+  // デッキ一覧の「復習 N」表示（getDecksWithStatsOffline でタグ絞り込み済み）と一致し、
+  // サブデッキ学習中に親デッキの無関係な復習カードが出てこなくなる。
+  // 全復習をまとめて消化したい場合はフィルタの無い親(ルート)デッキを学習すればよい。
+  const matchesFilterTags = (card: OfflineCardData) => {
+    const note = noteMap.get(card.noteId)
+    const noteTags = note?.tags || []
+    return noteTags.some((t: string) => filterTags.includes(t))
+  }
+  const isActiveFilterDeck = filterTags.length > 0
+  const filteredNewCards = isActiveFilterDeck ? newCards.filter(matchesFilterTags) : newCards
+  const filteredDueCards = isActiveFilterDeck ? dueCards.filter(matchesFilterTags) : dueCards
 
-  return orderStudyCards(dueCards, filteredNewCards, remainingNewCards, reviewCardLogs.length, settings)
+  return orderStudyCards(filteredDueCards, filteredNewCards, remainingNewCards, reviewCardLogs.length, settings)
+}
+
+/**
+ * 「もっと練習する」用カードを取得する（練習モード＝card_states を更新しない）。
+ *
+ * その日の復習・新規をやりきった後でも続けて学習したい時に、期限が近い順で
+ * 未来の復習カードを「繰り上げて」出題する。新規枠を使い切っていても、
+ * 残りの新規カードを後ろに足して練習できる。
+ *
+ * 返したカードへの回答は呼び出し側（StudySession の practiceMode）で永続化しない。
+ * これにより早期復習でスケジュールを乱さず、SRS の科学を壊さない。
+ *
+ * スコープ解決（ルートツリー／フィルタタグ）は getStudyCardsOffline と同じ。
+ */
+export async function getPracticeCardsOffline(
+  userId: string,
+  deckId: string,
+  limit = 20
+): Promise<OfflineCardData[]> {
+  const now = new Date()
+
+  const currentDeck = await db.decks.get(deckId)
+  const rootDeckId = await getRootDeckId(deckId)
+  const isRootDeck = rootDeckId === deckId
+  const filterTags = currentDeck?.filter_tags || []
+  const isFilterDeck = filterTags.length > 0 && !isRootDeck
+
+  let allDeckIds: string[]
+  if (isFilterDeck) {
+    const rootDescendantIds = await getDescendantDeckIds(rootDeckId)
+    allDeckIds = [rootDeckId, ...rootDescendantIds]
+  } else {
+    const descendantIds = await getDescendantDeckIds(deckId)
+    allDeckIds = [deckId, ...descendantIds]
+  }
+
+  const deckCards = await db.cards.where('deck_id').anyOf(allDeckIds).toArray()
+  if (deckCards.length === 0) return []
+
+  const noteIds = Array.from(new Set(deckCards.map(c => c.note_id)))
+  const notes = await db.notes.where('id').anyOf(noteIds).toArray()
+  const noteMap = new Map(notes.map(n => [n.id, n]))
+
+  const noteTypeIds = Array.from(new Set(notes.map(n => n.note_type_id)))
+  const noteTypes = await db.noteTypes.where('id').anyOf(noteTypeIds).toArray()
+  const fieldsMap = new Map<string, FieldDefinition[]>()
+  for (const nt of noteTypes) {
+    fieldsMap.set(nt.id, nt.fields as FieldDefinition[])
+  }
+
+  const templates = await db.cardTemplates.where('note_type_id').anyOf(noteTypeIds).toArray()
+  const templateMap = new Map<string, Array<{ front: string; back: string; css: string }>>()
+  for (const t of templates.sort((a, b) => a.ordinal - b.ordinal)) {
+    const existing = templateMap.get(t.note_type_id) || []
+    existing.push({ front: t.front_template, back: t.back_template, css: t.css || '' })
+    templateMap.set(t.note_type_id, existing)
+  }
+
+  const cardIds = deckCards.map(c => c.id)
+  const states = await db.cardStates
+    .where('user_id')
+    .equals(userId)
+    .filter(s => cardIds.includes(s.card_id))
+    .toArray()
+  const stateMap = new Map(states.map(s => [s.card_id, s]))
+
+  const matchesFilterTags = (noteId: string) => {
+    if (filterTags.length === 0) return true
+    const note = noteMap.get(noteId)
+    const noteTags = note?.tags || []
+    return noteTags.some((t: string) => filterTags.includes(t))
+  }
+
+  const buildCardData = (
+    card: typeof deckCards[number],
+    note: NonNullable<ReturnType<typeof noteMap.get>>,
+    state: ReturnType<typeof stateMap.get>
+  ): OfflineCardData => {
+    const cardTemplates = templateMap.get(note.note_type_id) || []
+    const template = cardTemplates[card.template_index] || {
+      front: '<div>{{Front}}</div>',
+      back: '<div>{{Front}}</div><hr><div>{{Back}}</div>',
+      css: '',
+    }
+    return {
+      id: card.id,
+      noteId: note.id,
+      fieldValues: note.field_values,
+      audioUrls: note.audio_urls || null,
+      generatedContent: note.generated_content || null,
+      template,
+      fields: fieldsMap.get(note.note_type_id),
+      schedule: state ? {
+        due: state.due,
+        interval: state.interval,
+        easeFactor: state.ease_factor,
+        repetitions: state.repetitions,
+        state: state.state as CardSchedule['state'],
+        learningStep: state.learning_step,
+        lapses: state.lapses ?? 0,
+        stability: state.stability ?? null,
+        difficulty: state.difficulty ?? null,
+        elapsed_days: state.elapsed_days ?? 0,
+        scheduled_days: state.scheduled_days ?? 0,
+        last_review: state.last_review ?? null,
+      } : {
+        due: now,
+        interval: 0,
+        easeFactor: 2.5,
+        repetitions: 0,
+        state: 'new' as const,
+        learningStep: 0,
+        lapses: 0,
+        stability: null,
+        difficulty: null,
+        elapsed_days: 0,
+        scheduled_days: 0,
+        last_review: null,
+      },
+    }
+  }
+
+  // 未来の復習カード（due > now）を「繰り上げ」対象とする。すでに due のカードは
+  // 通常学習で消化済み／消化対象なのでここでは含めない。新規は枠外として後ろに足す。
+  const futureReviews: { data: OfflineCardData; due: number }[] = []
+  const upcomingNew: OfflineCardData[] = []
+
+  for (const card of deckCards) {
+    const note = noteMap.get(card.note_id)
+    if (!note) continue
+    if (!matchesFilterTags(card.note_id)) continue
+
+    const state = stateMap.get(card.id)
+    if (state?.state === 'suspended') continue
+
+    if (!state || state.state === 'new') {
+      upcomingNew.push(buildCardData(card, note, state))
+    } else if (state.due > now) {
+      futureReviews.push({ data: buildCardData(card, note, state), due: state.due.getTime() })
+    }
+  }
+
+  futureReviews.sort((a, b) => a.due - b.due)
+  const ordered = [...futureReviews.map(f => f.data), ...upcomingNew]
+  return ordered.slice(0, limit)
 }
 
 // Offline deck with stats type

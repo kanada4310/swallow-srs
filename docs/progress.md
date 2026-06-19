@@ -1,15 +1,30 @@
 # 進捗管理
 
 ## 現在の作業
-- Phase: **多段階設問・識別演習（古文）実装完了（要実機確認）**。Phase 10 ほぼ完了＋Phase 13.4 数式・画像・画像マスキング完了（実機確認済み）
+- Phase: **学習体験の小改善4点（要実機確認）**＋多段階設問・識別演習（要実機確認）＋Phase 10 ほぼ完了＋Phase 13.4 完了
 - 最終更新: 2026-06-19
-- **多段階設問・識別演習**: 1カードに複数設問→例文単位で1回SRS評価。**正誤＋解答時間のスコアから SRS 評価を自動判定**（生徒はタップで手直し可）。詳細は CLAUDE.md「多段階設問・識別演習」節。`020_multi_step_scores.sql` は Supabase 適用済み。ノートタイプ「識別演習」作成済み・サンプルデッキ「識別演習（古文）」46ノート投入済み。lint クリーン・テスト374件・build 成功。**要 Vercel デプロイ＋再ログイン後に実機確認**
+- **学習体験の小改善（このセッション）**: ①講師アカウント作成スクリプト（荒井先生作成済み）②カード種別バッジ ③サブデッキの復習もタグで絞る ④繰り上げ学習（練習モード・card_states 非更新）。詳細は下のセッションメモ。lint クリーン・テスト379件・build 成功。**要 Vercel デプロイ＋再ログイン**
 - 次にやること:
-  1. **識別演習の実機確認**: `/study`「識別演習（古文）」で多段階出題・自動判定・スコア・`/stats` スコアカードを確認。自動判定しきい値を実データで調整
-  2. **科目拡張**: 数式＋画像マスキングが使えるので数学・理科デッキ作成 → そこの「いきもの」も飼える（Phase 10 連携）
-  3. **10.2 残**: しきい値の実データ調整／デイリーミッションのプッシュ連携（Phase 12.3）
+  1. **今回の4点を実機確認**: 荒井ログイン（メール+パスワード naobees70@gmail.com/swallow-srs）／学習画面の種別バッジ／サブデッキ復習がタグ範囲のみ／「もっと練習する」で未来カードが出て記録が変わらない
+  2. **識別演習の実機確認**: `/study`「識別演習（古文）」で多段階出題・自動判定・スコア・`/stats` スコアカードを確認。自動判定しきい値を実データで調整
+  3. **科目拡張**: 数式＋画像マスキングが使えるので数学・理科デッキ作成 → そこの「いきもの」も飼える（Phase 10 連携）
 
 ## セッション引継ぎメモ
+
+### 2026-06-19（学習体験の小改善4点 — 講師アカウント／種別バッジ／サブデッキ復習フィルタ／繰り上げ学習）
+- **依頼**: ①荒井先生用の講師ログインを作る ②学習開始時に新規/復習が分からずストレス ③サブデッキ学習で親デッキの復習が全部出て無関係なものまでやらされる ④やりきった後も続けたい・新規をやりきったら優先度の高いものを繰り上げるのはSRS的にOKか
+- **合意（AskUserQuestion）**: ④=**練習モード（card_states 非更新）**／①=この場でメール・パスワード受領（naobees70@gmail.com / swallow-srs）
+- **実装**:
+  - **① 講師アカウント**: `data/create-teacher-account.mjs` 新規（Supabase admin で createUser + profiles upsert role=teacher。`--email/--password/--name/--reset-password/--dry-run`）。**荒井先生は既存アカウント**（2026-04-22 作成・name=荒井尚緒・card_states 2/review_logs 8・class_members 0）だったので role=teacher に更新＋`--reset-password` で `swallow-srs` を設定
+  - **② 種別バッジ**: `StudySession` に `CardStateBadge`（`currentCard.schedule.state` → 🆕新規/🔁復習/📖学習中・learning/relearning と fromLearningQueue は学習中扱い）。進捗バー左に表示
+  - **③ サブデッキ復習フィルタ**: `getStudyCardsOffline`（`src/lib/db/schema.ts`）で**復習(due)もタグで絞る**よう変更（従来は新規のみ）。`matchesFilterTags` を新規・復習の両方に適用。デッキ一覧 `getDecksWithStatsOffline` の「復習 N」（元々タグ絞り）と一致。**設計逆転**＝CLAUDE.md フィルタデッキ節を更新。全件復習はフィルタ無し親デッキで。`filter-deck.test.ts` の純ロジックヘルパを `filterCardsByTags` に改名＋復習フィルタのテスト追加（13件）
+  - **④ 繰り上げ学習（練習モード）**: `getPracticeCardsOffline(userId, deckId, limit=20)`（`schema.ts`）＝スコープ解決は通常学習と同じ。**未来の復習（due>now）を期限近い順＋枠外の新規**を返す（すでに due のものは通常学習で消化済みなので除外）。`StudySession` に props `practiceMode/onRequestPractice/practiceLoading/practiceUnavailable`。`practiceMode` 時は handleAnswer が schedule をローカル計算してキュー再提示だけに使い、**永続化ブロック（getCardState/saveAnswerLocally/answer API/undo snapshot）を return でスキップ**＋インプリント effect も practiceMode で抑止。完了画面・「カードがありません」画面に `MorePracticeSection`（➕もっと練習する＋「記録されません」注記、繰り上げ無しなら案内文）。親 `StudyPageClient` が practice state を持ち `key=session-${round}` で再マウント
+- **検証**: lint クリーン（既存 TemplatePreview 警告のみ）／テスト**379件**（filter-deck +1）／build 成功（`/study` 3.66kB）
+- **次セッション注意**:
+  - **要 Vercel デプロイ＋再ログイン**（新ロジック・StudySession 改修）。荒井ログインは即時可（DB 反映済み）
+  - ③は「サブデッキは自分のタグ範囲だけ復習」に**一律変更**。「サブデッキでも全部復習したい」要望が出たらデッキ設定で切替式にできる
+  - ④の練習は **card_states を一切触らない**＝早期復習でスケジュールを汚さない。練習対象は「未来の復習＋枠外新規」。max_reviews_per_day で打ち切られた当日 due は含めていない（必要なら due<=now も含める拡張可）
+  - `getPracticeCardsOffline` は `getStudyCardsOffline` とデータ取得部が重複（リファクタ余地・現状は明快さ優先）
 
 ### 2026-06-19（多段階設問・識別演習（古文）— 例文単位SRS＋スコア自動判定）
 - **依頼**: 古典文法の識別演習（`swallow-base.com/kobun/shikibetsu`／手元 `SRS/index.html`）と同等の体験を SRS に組み込む。1例文に複数設問を順番に／選択式は自動判定＋記述式は自己採点／例文単位で間隔管理。追加で「**正誤＋解答時間でスコア化し、そのスコアから 正解/簡単 等を自動判定**」「生徒が手直しもできる」

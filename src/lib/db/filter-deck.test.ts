@@ -135,14 +135,16 @@ describe('getDescendantDeckIds', () => {
 })
 
 describe('Filter deck tag matching', () => {
-  // Test the pure filtering logic used in getStudyCardsOffline
-  const filterNewCardsByTags = (
-    newCards: Array<{ noteId: string }>,
+  // Test the pure filtering logic used in getStudyCardsOffline.
+  // フィルタサブデッキでは新規・復習(due)カードの両方にこの同じロジックを適用する
+  // （以前は新規のみだった）。これによりサブデッキ学習で親デッキの無関係な復習が出なくなる。
+  const filterCardsByTags = (
+    cards: Array<{ noteId: string }>,
     noteMap: Map<string, { tags?: string[] }>,
     filterTags: string[]
   ) => {
-    if (filterTags.length === 0) return newCards
-    return newCards.filter(card => {
+    if (filterTags.length === 0) return cards
+    return cards.filter(card => {
       const note = noteMap.get(card.noteId)
       const noteTags = note?.tags || []
       return noteTags.some(t => filterTags.includes(t))
@@ -150,74 +152,87 @@ describe('Filter deck tag matching', () => {
   }
 
   it('should return all cards when no filter tags', () => {
-    const newCards = [{ noteId: 'n1' }, { noteId: 'n2' }]
+    const cards = [{ noteId: 'n1' }, { noteId: 'n2' }]
     const noteMap = new Map([
       ['n1', { tags: ['tag1'] }],
       ['n2', { tags: ['tag2'] }],
     ])
 
-    const result = filterNewCardsByTags(newCards, noteMap, [])
+    const result = filterCardsByTags(cards, noteMap, [])
     expect(result).toHaveLength(2)
   })
 
   it('should filter new cards by matching tags', () => {
-    const newCards = [{ noteId: 'n1' }, { noteId: 'n2' }, { noteId: 'n3' }]
+    const cards = [{ noteId: 'n1' }, { noteId: 'n2' }, { noteId: 'n3' }]
     const noteMap = new Map([
       ['n1', { tags: ['SVO', 'verb'] }],
       ['n2', { tags: ['SVC'] }],
       ['n3', { tags: ['SVO', 'adjective'] }],
     ])
 
-    const result = filterNewCardsByTags(newCards, noteMap, ['SVO'])
+    const result = filterCardsByTags(cards, noteMap, ['SVO'])
     expect(result).toHaveLength(2)
     expect(result.map(c => c.noteId)).toEqual(['n1', 'n3'])
   })
 
+  it('should filter review/due cards by the same tags (new behavior)', () => {
+    // 復習カードもフィルタされることを明示的に固定する
+    const dueCards = [{ noteId: 'n1' }, { noteId: 'n2' }, { noteId: 'n3' }]
+    const noteMap = new Map([
+      ['n1', { tags: ['SVO'] }],
+      ['n2', { tags: ['SVC'] }],
+      ['n3', { tags: ['SVO'] }],
+    ])
+
+    const result = filterCardsByTags(dueCards, noteMap, ['SVO'])
+    expect(result.map(c => c.noteId)).toEqual(['n1', 'n3'])
+  })
+
   it('should match any of the filter tags (OR logic)', () => {
-    const newCards = [{ noteId: 'n1' }, { noteId: 'n2' }, { noteId: 'n3' }]
+    const cards = [{ noteId: 'n1' }, { noteId: 'n2' }, { noteId: 'n3' }]
     const noteMap = new Map([
       ['n1', { tags: ['SVO'] }],
       ['n2', { tags: ['SVC'] }],
       ['n3', { tags: ['SVOO'] }],
     ])
 
-    const result = filterNewCardsByTags(newCards, noteMap, ['SVO', 'SVC'])
+    const result = filterCardsByTags(cards, noteMap, ['SVO', 'SVC'])
     expect(result).toHaveLength(2)
     expect(result.map(c => c.noteId)).toEqual(['n1', 'n2'])
   })
 
   it('should exclude cards with no tags', () => {
-    const newCards = [{ noteId: 'n1' }, { noteId: 'n2' }]
+    const cards = [{ noteId: 'n1' }, { noteId: 'n2' }]
     const noteMap = new Map([
       ['n1', { tags: ['tag1'] }],
       ['n2', { tags: [] }],
     ])
 
-    const result = filterNewCardsByTags(newCards, noteMap, ['tag1'])
+    const result = filterCardsByTags(cards, noteMap, ['tag1'])
     expect(result).toHaveLength(1)
     expect(result[0].noteId).toBe('n1')
   })
 
   it('should handle notes without tags property', () => {
-    const newCards = [{ noteId: 'n1' }, { noteId: 'n2' }]
+    const cards = [{ noteId: 'n1' }, { noteId: 'n2' }]
     const noteMap = new Map([
       ['n1', { tags: ['tag1'] }],
       ['n2', {}],
     ])
 
-    const result = filterNewCardsByTags(newCards, noteMap, ['tag1'])
+    const result = filterCardsByTags(cards, noteMap, ['tag1'])
     expect(result).toHaveLength(1)
     expect(result[0].noteId).toBe('n1')
   })
 
   it('should return empty when no cards match filter', () => {
-    const newCards = [{ noteId: 'n1' }, { noteId: 'n2' }]
+    const cards = [{ noteId: 'n1' }, { noteId: 'n2' }]
     const noteMap = new Map([
       ['n1', { tags: ['tag1'] }],
       ['n2', { tags: ['tag2'] }],
     ])
 
-    const result = filterNewCardsByTags(newCards, noteMap, ['nonexistent'])
+    const result = filterCardsByTags(cards, noteMap, ['nonexistent'])
     expect(result).toHaveLength(0)
   })
 })
