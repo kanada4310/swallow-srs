@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { requireTeacher } from '@/lib/api/auth'
+import { requireTeacher, canManageDeck } from '@/lib/api/auth'
 import { generateCSV, NoteForExport } from '@/lib/csv/exporter'
 import type { FieldDefinition } from '@/types/database'
 
@@ -26,7 +26,7 @@ export async function GET(
       return NextResponse.json({ error: 'デッキが見つかりません' }, { status: 404 })
     }
 
-    if (deck.owner_id !== user.id && profile.role !== 'admin') {
+    if (!(await canManageDeck(supabase, user.id, deck.owner_id)) && profile.role !== 'admin') {
       return NextResponse.json({ error: '自分のデッキのみエクスポートできます' }, { status: 403 })
     }
 

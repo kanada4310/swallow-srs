@@ -204,6 +204,19 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 - **動詞の語法**: 13セクション別フィルタサブデッキ作成済み（スクリプト: `data/create-filter-subdecks.mjs`）
 - **★復習もタグで絞る（2026-06-19 変更）**: 以前は「復習はフィルタ無視・親全体から」だったが、サブデッキ学習で無関係な親の復習が出るのを嫌い、`getStudyCardsOffline` で**新規・復習の両方をタグで絞る**よう変更。デッキ一覧の「復習 N」表示（元々タグ絞り済み）と一致。全件まとめて復習したい時はフィルタの無い親（ルート）デッキを学習する
 
+## 講師デッキの自動共有・共同編集（2026-06-19）
+
+講師（teacher/admin）が作ったデッキ・ノートは講師間で**自動共有・共同編集**できる（生徒には共有しない）。
+- **RLS** `021_teacher_shared_decks.sql`（**要 Supabase 適用**）: 既存 `is_teacher_or_admin()` を使い、decks/notes/cards/deck_assignments に「講師は講師所有のものを全操作可」、note_types/card_templates に「講師は講師所有のものを閲覧可」の permissive ポリシーを追加（編集はオーナーのみ＝構造破壊回避）
+- **サーバー権限** `canManageDeck(supabase, userId, deckOwnerId)`（`src/lib/api/auth.ts`）= 自分のデッキ or（自分が講師 かつ 所有者も講師）。各 API の `owner_id !== user.id` 判定を一括置換（decks/[id]・notes・notes/[id]・bulk-delete・bulk-tags・copy-move・import・search・decks(親)・deck-assignments・export）
+- **pull API**: 講師には他講師の全デッキ＋ノートタイプ＋テンプレートを admin client で配信（`isTeacher`＋`teacherIds`）。共有デッキのノート/カードも admin client で読む（RLS 適用前でも表示は可・編集は 021 必須）
+- **クライアント**: デッキ詳細 `canEdit = isOwner || isTeacher`（設定も実デッキを編集）。デッキ一覧は非自分デッキを講師なら「講師共有デッキ」節に出し、削除・設定（実デッキ）を許可。`/notes` は既存の `isTeacherOrAdmin` 判定で対応済み
+- **注意**: 講師数は少数だが、共有で各講師が全講師デッキ（中学英単語6858等含む）を pull するため同期は重め。編集は 021 適用後に有効
+
+## デッキ一覧のサブデッキ折りたたみ（2026-06-19）
+
+- デッキ一覧でサブデッキを**既定で折りたたみ**（アコーディオン）。`DecksPageClient` の `expandedDecks`（展開中 id 集合・既定空）＋`getVisibleNodes`（祖先が全展開のノードのみ表示）。親デッキの行頭シェブロンで開閉。検索中は全展開（一致が見えるように）
+
 ## 学習体験の小改善（2026-06-19）
 
 - **カード種別バッジ**: 学習画面の進捗バー左に 🆕新規 / 🔁復習 / 📖学習中 を色分け表示（`CardStateBadge`・`currentCard.schedule.state` で判定）
@@ -305,6 +318,7 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 詳細は @docs/progress.md を参照。
 
 - **最終更新**: 2026-06-19
+- **直近の修正（最新）**: **講師デッキの自動共有・共同編集＋デッキ一覧のサブデッキ折りたたみ**。講師同士で他講師のデッキ・ノートを閲覧/編集/削除/配布可（生徒は不可）。RLS `021_teacher_shared_decks.sql` は**要 Supabase 適用**（未適用だと閲覧はできるが編集が404になる）。詳細は上の専用節。lint クリーン・テスト379件・build 成功。**要 Vercel デプロイ＋再ログイン**
 - **直近の修正**: **学習体験の小改善4点（要実機確認）**。①講師アカウント作成スクリプト `data/create-teacher-account.mjs`（荒井先生 naobees70@gmail.com を role=teacher で作成済み）②学習画面に**カード種別バッジ**（🆕新規/🔁復習/📖学習中）③**サブデッキの復習もタグで絞る**（`getStudyCardsOffline`・親の無関係な復習が混ざらない／全件復習は親デッキで）④**繰り上げ学習（練習モード）**＝完了後も「➕ もっと練習する」で続行、`getPracticeCardsOffline`（期限近い順の未来復習＋枠外新規）を `StudySession` の `practiceMode`（**card_states/review_logs 非更新**）で出題。lint クリーン・テスト379件・build 成功。**直前**: 多段階設問・識別演習（古文）実装（要実機確認・庭は `GARDEN_ENABLED=false` で停止中）
 - **次にやること**:
   1. **今回の4点を実機確認**: 荒井ログイン（メール+パスワード）／種別バッジ／サブデッキ復習がタグ範囲のみ／「もっと練習する」で未来カードが出て記録が変わらないこと

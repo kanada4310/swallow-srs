@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { requireAuth } from '@/lib/api/auth'
+import { requireAuth, canManageDeck } from '@/lib/api/auth'
 import { CLOZE_NOTE_TYPE_ID } from '@/lib/constants'
 import { countClozeDeletions } from '@/lib/srs/cloze'
 
@@ -35,7 +35,7 @@ export async function PUT(
     }
 
     const deck = note.decks as unknown as { owner_id: string }
-    if (deck.owner_id !== user.id) {
+    if (!(await canManageDeck(supabase, user.id, deck.owner_id))) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
@@ -155,7 +155,7 @@ export async function DELETE(
 
     // Check if user owns the deck
     const deck = note.decks as unknown as { owner_id: string }
-    if (deck.owner_id !== user.id) {
+    if (!(await canManageDeck(supabase, user.id, deck.owner_id))) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 

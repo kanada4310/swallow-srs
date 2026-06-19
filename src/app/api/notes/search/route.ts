@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { requireAuth } from '@/lib/api/auth'
+import { requireAuth, canManageDeck } from '@/lib/api/auth'
 
 // GET /api/notes/search?deckId=X&q=検索語&noteTypeId=Y&sort=created_at&order=desc&offset=0&limit=50
 export async function GET(request: NextRequest) {
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
       }
 
-      if (deck.owner_id !== user.id) {
+      if (!(await canManageDeck(supabase, user.id, deck.owner_id))) {
         const { data: assignment } = await supabase
           .from('deck_assignments')
           .select('id')

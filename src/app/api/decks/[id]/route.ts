@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { requireAuth } from '@/lib/api/auth'
+import { requireAuth, canManageDeck } from '@/lib/api/auth'
 import { validateDeckSettings } from '@/lib/srs/settings-validation'
 
 // PUT /api/decks/[id] - Update a deck (name, settings, etc.)
@@ -29,8 +29,11 @@ export async function PUT(
       return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
     }
 
-    // Non-owner: only allow settings override via user_deck_settings
-    if (deck.owner_id !== user.id) {
+    // 講師の共同編集対象（または自分のデッキ）なら実デッキを直接編集できる。
+    const canManage = await canManageDeck(supabase, user.id, deck.owner_id)
+
+    // 管理権限なし（配布された生徒など）: settings の個人オーバーライドのみ
+    if (!canManage) {
       if (name !== undefined) {
         return NextResponse.json({ error: 'Access denied' }, { status: 403 })
       }
@@ -124,7 +127,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
     }
 
-    if (deck.owner_id !== user.id) {
+    if (!(await canManageDeck(supabase, user.id, deck.owner_id))) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 

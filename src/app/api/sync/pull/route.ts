@@ -43,23 +43,55 @@ export async function POST(request: NextRequest) {
     response.profiles = [profile]
   }
 
+  // 講師同士のデッキ共有: 講師には他の講師が作ったデッキ・ノートタイプも配信する。
+  // 生徒には共有しない（role で厳格に分岐）。
+  const isTeacher = profile?.role === 'teacher' || profile?.role === 'admin'
+  const adminClient = createAdminSupabase(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  )
+  let teacherIds: string[] = []
+  if (isTeacher) {
+    const { data: teachers } = await adminClient
+      .from('profiles')
+      .select('id')
+      .in('role', ['teacher', 'admin'])
+    teacherIds = (teachers || []).map((t) => t.id as string)
+  }
+
   // Fetch accessible note types (system + owned).
   // NOTE: note types are few and small, so we always sync the FULL set + all their
   // card templates (not just incrementally-changed ones). Incrementally filtering
   // note types could leave a note type in the client without its card_template
   // (e.g. the type was synced in an earlier batch but its template never arrived),
   // which makes the study card fall back to a {{Front}}/{{Back}} template and render blank.
-  const { data: noteTypes } = await supabase
+  const { data: ownNoteTypes } = await supabase
     .from('note_types')
     .select('*')
     .or(`is_system.eq.true,owner_id.eq.${user.id}`)
 
-  if (noteTypes && noteTypes.length > 0) {
+  // 講師は他講師所有のノートタイプも取得（共有デッキのカードを正しく描画するため）
+  let sharedNoteTypes: Record<string, unknown>[] = []
+  if (isTeacher && teacherIds.length > 0) {
+    const { data } = await adminClient
+      .from('note_types')
+      .select('*')
+      .in('owner_id', teacherIds)
+    sharedNoteTypes = (data as Record<string, unknown>[]) || []
+  }
+
+  const noteTypes = Array.from(
+    new Map(
+      [...(ownNoteTypes || []), ...sharedNoteTypes].map((nt) => [nt.id as string, nt]),
+    ).values(),
+  )
+
+  if (noteTypes.length > 0) {
     response.noteTypes = noteTypes
 
     // Always fetch card templates for ALL accessible note types (self-heals missing templates)
-    const noteTypeIds = noteTypes.map((nt) => nt.id)
-    const { data: cardTemplates } = await supabase
+    const noteTypeIds = noteTypes.map((nt) => nt.id as string)
+    const { data: cardTemplates } = await adminClient
       .from('card_templates')
       .select('*')
       .in('note_type_id', noteTypeIds)
@@ -109,11 +141,6 @@ export async function POST(request: NextRequest) {
   // Use admin client to bypass RLS — subdecks don't have their own deck_assignments,
   // so the normal RLS policy "is_deck_assigned_to_user" would block them.
   if (assignedDeckIds.length > 0) {
-    const adminClient = createAdminSupabase(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    )
-
     const { data: childDecks } = await adminClient
       .from('decks')
       .select('*')
@@ -135,7 +162,17 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const allDecks = [...(ownDecks ?? []), ...assignedDecks]
+  // 講師は他の講師が作った全デッキ（自動共有）も取得する
+  let sharedTeacherDecks: NonNullable<typeof ownDecks> = []
+  if (isTeacher && teacherIds.length > 0) {
+    const { data } = await adminClient
+      .from('decks')
+      .select('*')
+      .in('owner_id', teacherIds)
+    sharedTeacherDecks = (data as NonNullable<typeof ownDecks>) ?? []
+  }
+
+  const allDecks = [...(ownDecks ?? []), ...assignedDecks, ...sharedTeacherDecks]
   const uniqueDecks = Array.from(new Map(allDecks.map((d) => [d.id, d])).values())
 
   // Filter by lastSyncAt if provided
@@ -157,10 +194,13 @@ export async function POST(request: NextRequest) {
     // Fetch notes — paginate (PostgREST caps responses at 1000 rows, so large
     // decks like 中学英単語(6858) would otherwise sync only the first 1000 notes).
     const PAGE = 1000
+    // 講師は共有デッキ（他講師所有）のノート/カードも取得する必要があるため admin client で読む。
+    // deckIds は uniqueDecks（own+assigned+shared）に限定済みなので過剰公開はない。
+    const readClient = isTeacher ? adminClient : supabase
 
     const notes: Record<string, unknown>[] = []
     for (let from = 0; ; from += PAGE) {
-      let q = supabase.from('notes').select('*').in('deck_id', deckIds)
+      let q = readClient.from('notes').select('*').in('deck_id', deckIds)
       if (lastSyncAt) q = q.gt('updated_at', lastSyncAt.toISOString())
       const { data } = await q.order('id', { ascending: true }).range(from, from + PAGE - 1)
       if (!data || data.length === 0) break
@@ -174,7 +214,7 @@ export async function POST(request: NextRequest) {
     // Fetch cards — paginate for the same reason.
     const cards: Record<string, unknown>[] = []
     for (let from = 0; ; from += PAGE) {
-      let q = supabase.from('cards').select('*').in('deck_id', deckIds)
+      let q = readClient.from('cards').select('*').in('deck_id', deckIds)
       if (lastSyncAt) q = q.gt('updated_at', lastSyncAt.toISOString())
       const { data } = await q.order('id', { ascending: true }).range(from, from + PAGE - 1)
       if (!data || data.length === 0) break

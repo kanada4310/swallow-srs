@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { requireAuth } from '@/lib/api/auth'
+import { requireAuth, canManageDeck } from '@/lib/api/auth'
 import { validateDeckSettings } from '@/lib/srs/settings-validation'
 
 export async function POST(request: NextRequest) {
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: '親デッキが見つかりません' }, { status: 404 })
       }
 
-      if (parentDeck.owner_id !== user.id) {
+      if (!(await canManageDeck(supabase, user.id, parentDeck.owner_id))) {
         return NextResponse.json({ error: '親デッキへのアクセス権がありません' }, { status: 403 })
       }
 

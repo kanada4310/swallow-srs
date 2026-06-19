@@ -91,6 +91,28 @@ function flattenTree(nodes: DeckTreeNode[]): DeckTreeNode[] {
   return result
 }
 
+/**
+ * アコーディオン表示用: 祖先がすべて展開されているノードだけを返す。
+ * （ルート=深さ0 は常に表示。サブデッキは親が展開されている時のみ表示）
+ * expandAll が true（検索中など）の時は全ノードを返す。
+ */
+function getVisibleNodes(
+  flat: DeckTreeNode[],
+  expanded: Set<string>,
+  expandAll: boolean,
+): DeckTreeNode[] {
+  if (expandAll) return flat
+  const byId = new Map(flat.map((n) => [n.id, n]))
+  return flat.filter((node) => {
+    let pid = node.parent_deck_id
+    while (pid) {
+      if (!expanded.has(pid)) return false
+      pid = byId.get(pid)?.parent_deck_id ?? null
+    }
+    return true
+  })
+}
+
 /** Filter decks by search query, preserving parent-child relationships */
 function filterDecksByQuery(decks: DeckWithStats[], query: string): DeckWithStats[] {
   if (!query) return decks
@@ -152,6 +174,8 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
   const [isDeletingDeck, setIsDeletingDeck] = useState(false)
   const [deckDeleteError, setDeckDeleteError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  // アコーディオン: 展開中の親デッキ id 集合（既定は空＝サブデッキは折りたたみ）
+  const [expandedDecks, setExpandedDecks] = useState<Set<string>>(new Set())
 
   // Settings modal state
   const [settingsDeckId, setSettingsDeckId] = useState<string | null>(null)
@@ -265,16 +289,34 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
   const ownDecks = filteredDecks.filter(d => d.is_own)
   const assignedDecks = filteredDecks.filter(d => !d.is_own)
 
+  // 講師は他講師のデッキを共同編集できる（自動共有）。非自分デッキの扱いを役割で分岐。
+  const isTeacher = userProfile?.role === 'teacher' || userProfile?.role === 'admin'
+
   // Build tree for own decks
   const ownDeckTree = buildDeckTree(ownDecks)
   const flatOwnDecks = flattenTree(ownDeckTree)
 
-  // Build tree for assigned decks (includes subdecks)
+  // Build tree for assigned/shared decks (includes subdecks)
   const assignedDeckTree = buildDeckTree(assignedDecks)
   const flatAssignedDecks = flattenTree(assignedDeckTree)
 
+  // 検索中は折りたたみを無視して全件表示（一致が見えるように）
+  const expandAll = !!searchQuery
+  const visibleOwnDecks = getVisibleNodes(flatOwnDecks, expandedDecks, expandAll)
+  const visibleAssignedDecks = getVisibleNodes(flatAssignedDecks, expandedDecks, expandAll)
+
+  const toggleExpand = (id: string) => {
+    setExpandedDecks(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   const hasResults = flatOwnDecks.length > 0 || flatAssignedDecks.length > 0
   const hasDecks = decks.length > 0
+  const assignedSectionTitle = isTeacher ? '講師共有デッキ' : '配布デッキ'
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
@@ -330,7 +372,7 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-gray-700 mb-4">マイデッキ</h2>
           <div className="space-y-3">
-            {flatOwnDecks.map((deck) => (
+            {visibleOwnDecks.map((deck) => (
               <DeckCard
                 key={deck.id}
                 deck={deck}
@@ -341,6 +383,9 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
                   learning_count: deck.aggregated_learning_count,
                   review_count: deck.aggregated_review_count,
                 } : undefined}
+                hasChildren={deck.children.length > 0}
+                isExpanded={expandAll || expandedDecks.has(deck.id)}
+                onToggleExpand={() => toggleExpand(deck.id)}
                 canDelete={true}
                 onDelete={() => setShowDeleteConfirm(deck.id)}
                 canSettings={true}
@@ -351,12 +396,12 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
         </section>
       )}
 
-      {/* 配布されたデッキ */}
+      {/* 配布／講師共有デッキ */}
       {flatAssignedDecks.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">配布デッキ</h2>
+          <h2 className="text-lg font-semibold text-gray-700 mb-4">{assignedSectionTitle}</h2>
           <div className="space-y-3">
-            {flatAssignedDecks.map((node) => (
+            {visibleAssignedDecks.map((node) => (
               <DeckCard
                 key={node.id}
                 deck={node}
@@ -367,6 +412,11 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
                   learning_count: node.aggregated_learning_count,
                   review_count: node.aggregated_review_count,
                 } : undefined}
+                hasChildren={node.children.length > 0}
+                isExpanded={expandAll || expandedDecks.has(node.id)}
+                onToggleExpand={() => toggleExpand(node.id)}
+                canDelete={isTeacher}
+                onDelete={isTeacher ? () => setShowDeleteConfirm(node.id) : undefined}
                 canSettings={true}
                 onSettings={() => handleOpenSettings(node.id)}
               />
@@ -450,7 +500,7 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
               <div>
                 <h2 className="text-lg font-bold text-gray-900">デッキ設定</h2>
                 <p className="text-sm text-gray-500 mt-1">{settingsDeckName}</p>
-                {settingsDeckId && decks?.find(d => d.id === settingsDeckId && !d.is_own) && (
+                {settingsDeckId && !isTeacher && decks?.find(d => d.id === settingsDeckId && !d.is_own) && (
                   <p className="text-sm text-blue-600 mt-1">
                     この設定はあなたの学習にのみ影響します。
                   </p>
@@ -499,7 +549,7 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
   )
 }
 
-function DeckCard({ deck, depth = 0, aggregatedStats, canDelete, onDelete, canSettings, onSettings }: {
+function DeckCard({ deck, depth = 0, aggregatedStats, canDelete, onDelete, canSettings, onSettings, hasChildren, isExpanded, onToggleExpand }: {
   deck: DeckWithStats
   depth?: number
   aggregatedStats?: { total_cards: number; new_count: number; learning_count: number; review_count: number }
@@ -507,6 +557,9 @@ function DeckCard({ deck, depth = 0, aggregatedStats, canDelete, onDelete, canSe
   onDelete?: () => void
   canSettings?: boolean
   onSettings?: () => void
+  hasChildren?: boolean
+  isExpanded?: boolean
+  onToggleExpand?: () => void
 }) {
   const stats = aggregatedStats || deck
   const hasDueCards = stats.review_count > 0 || stats.learning_count > 0 || stats.new_count > 0
@@ -517,6 +570,28 @@ function DeckCard({ deck, depth = 0, aggregatedStats, canDelete, onDelete, canSe
       style={depth > 0 ? { marginLeft: depth * 24 } : undefined}
     >
       <div className="flex items-center justify-between gap-2">
+        {/* 展開トグル（サブデッキを持つデッキのみ） */}
+        {hasChildren ? (
+          <button
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onToggleExpand?.()
+            }}
+            className="p-1 -ml-1 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded flex-shrink-0"
+            title={isExpanded ? 'サブデッキを折りたたむ' : 'サブデッキを展開'}
+            aria-label={isExpanded ? '折りたたむ' : '展開'}
+          >
+            <svg
+              className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        ) : (
+          depth > 0 && <span className="w-4 flex-shrink-0" />
+        )}
         <Link href={`/decks/${deck.id}`} className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             {depth > 0 && (

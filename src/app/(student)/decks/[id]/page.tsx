@@ -161,10 +161,13 @@ export default function DeckDetailPage() {
         childDecks.sort((a, b) => a.name.localeCompare(b.name))
 
         const isOwner = deck.owner_id === profile.id
+        // 講師は他講師のデッキも共同編集できる（サーバー側 canManageDeck で最終判定）
+        const isTeacher = profile.role === 'teacher' || profile.role === 'admin'
+        const canEdit = isOwner || isTeacher
         const isFilterDeck = !!(deck.filter_tags && deck.filter_tags.length > 0 && deck.parent_deck_id)
 
         let mergedSettings: Partial<DeckSettings> = (deck.settings || {}) as Partial<DeckSettings>
-        if (!isOwner) {
+        if (!canEdit) {
           try {
             const settingsKey = `${profile.id}:${deckId}`
             const userSettings = await db.userDeckSettings.get(settingsKey)
@@ -191,7 +194,7 @@ export default function DeckDetailPage() {
             noteTypes,
             deckTags,
             childDecks: childDecks.map(d => ({ id: d.id, name: d.name })),
-            canEdit: isOwner,
+            canEdit,
             userRole: profile.role,
             isFilterDeck,
           },

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { requireAuth } from '@/lib/api/auth'
+import { requireAuth, canManageDeck } from '@/lib/api/auth'
 
 // POST /api/notes/bulk-tags - Bulk add/remove tags for multiple notes
 export async function POST(request: NextRequest) {
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
       }
 
-      if (deck.owner_id !== user.id) {
+      if (!(await canManageDeck(supabase, user.id, deck.owner_id))) {
         return NextResponse.json({ error: 'Access denied' }, { status: 403 })
       }
     } else {
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
         .in('id', deckIds)
 
       for (const deck of decks || []) {
-        if (deck.owner_id !== user.id) {
+        if (!(await canManageDeck(supabase, user.id, deck.owner_id))) {
           return NextResponse.json({ error: 'Access denied: you do not own all involved decks' }, { status: 403 })
         }
       }

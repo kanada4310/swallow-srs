@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { requireAuth } from '@/lib/api/auth'
+import { requireAuth, canManageDeck } from '@/lib/api/auth'
 
 // GET /api/deck-assignments?deckId=xxx - Get assignments for a deck
 export async function GET(request: NextRequest) {
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       .eq('id', deckId)
       .single()
 
-    if (!deck || deck.owner_id !== user.id) {
+    if (!deck || !(await canManageDeck(supabase, user.id, deck.owner_id))) {
       return NextResponse.json({ error: 'Deck not found or access denied' }, { status: 404 })
     }
 
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
       .eq('id', deckId)
       .single()
 
-    if (!deck || deck.owner_id !== user.id) {
+    if (!deck || !(await canManageDeck(supabase, user.id, deck.owner_id))) {
       return NextResponse.json({ error: 'Deck not found or access denied' }, { status: 404 })
     }
 
@@ -193,7 +193,7 @@ export async function DELETE(request: NextRequest) {
       .eq('id', assignment.deck_id)
       .single()
 
-    if (!deck || deck.owner_id !== user.id) {
+    if (!deck || !(await canManageDeck(supabase, user.id, deck.owner_id))) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
