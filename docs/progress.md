@@ -3,20 +3,19 @@
 ## 現在の作業
 - Phase: **講師デッキ共同編集＋サブデッキ折りたたみ＋学習体験の小改善（要実機確認）**＋多段階設問（要実機確認）＋Phase 10 ほぼ完了＋Phase 13.4 完了
 - 最終更新: 2026-06-19
-- **講師デッキの自動共有・共同編集（最新）**: 講師同士で他講師のデッキ・ノートを閲覧/編集/削除/配布可（生徒は不可）。**★`021_teacher_shared_decks.sql` を Supabase に要適用**（未適用だと閲覧可・編集404）。＋デッキ一覧のサブデッキ折りたたみ。詳細は下のセッションメモ
+- **講師デッキの自動共有・共同編集（最新）✅実機確認済み**: 講師同士で他講師のデッキ・ノートを閲覧/編集/削除/配布可（生徒は不可）。`021_teacher_shared_decks.sql` **Supabase 適用済み**。＋デッキ一覧のサブデッキ折りたたみ。詳細は下のセッションメモ
 - **学習体験の小改善（同日先行）**: ①講師アカウント作成スクリプト（荒井先生作成済み）②カード種別バッジ ③サブデッキの復習もタグで絞る ④繰り上げ学習（練習モード・card_states 非更新）。lint クリーン・テスト379件・build 成功
 - 次にやること:
-  0. **★021 を Supabase に適用 ＋ Vercel デプロイ＋再ログイン**（共有デッキの編集に必須）。荒井(teacher)で gaimon のデッキが「講師共有デッキ」に出て編集できるか確認
   1. **小改善4点を実機確認**: 荒井ログイン（naobees70@gmail.com/swallow-srs）／種別バッジ／サブデッキ復習がタグ範囲のみ／「もっと練習する」で未来カードが出て記録が変わらない
   2. **識別演習の実機確認**: `/study`「識別演習（古文）」で多段階出題・自動判定・スコア・`/stats` スコアカードを確認。自動判定しきい値を実データで調整
   3. **科目拡張**: 数式＋画像マスキングが使えるので数学・理科デッキ作成 → そこの「いきもの」も飼える（Phase 10 連携）
 
 ## セッション引継ぎメモ
 
-### 2026-06-19（講師デッキの自動共有・共同編集 ＋ サブデッキ折りたたみ）
+### 2026-06-19（講師デッキの自動共有・共同編集 ＋ サブデッキ折りたたみ）✅実機確認済み
 - **依頼**: ①講師が作ったデッキを講師同士で自動共有 ②デッキ一覧でサブデッキを既定でアコーディオン折りたたみ
 - **合意（AskUserQuestion）**: 共有デッキは**全講師が編集可能（共同編集）**
-- **★要 Supabase 適用**: `supabase/migrations/021_teacher_shared_decks.sql`（**未適用だと共有デッキの編集が404／閲覧は pull の admin 経由で可**）。020 と同様 SQL Editor で実行 or `npx supabase db push`（要トークン）
+- **Supabase 適用済み**: `supabase/migrations/021_teacher_shared_decks.sql`（SQL Editor で実行済み・実機で共有/共同編集を確認）
 - **実装**:
   - **RLS 021**: 既存 `is_teacher_or_admin()` を再利用。decks/notes/cards/deck_assignments に「講師は講師所有を全操作」、note_types/card_templates に「講師は講師所有を閲覧」の permissive ポリシー追加（編集はオーナーのみ＝構造破壊回避）
   - **`canManageDeck(supabase, userId, deckOwnerId)`**（`src/lib/api/auth.ts`）= 自分 or（自分が講師 かつ 所有者も講師）。profiles を読んで role 判定（teachers は 003 で全 profiles 可読／生徒は owner 行が取れず false）。各 API の `owner_id !== user.id` 403判定を一括置換: decks/[id](PUT/DELETE)・notes(POST)・notes/[id](PUT/DELETE)・bulk-delete・bulk-tags・copy-move・import・search・decks(親)・deck-assignments(3)・export
