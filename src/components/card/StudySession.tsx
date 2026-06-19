@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { StudyCard } from './StudyCard'
+import { MultiStepCard } from './MultiStepCard'
+import { isMultiStepNote, type EaseValue, type StepResult } from '@/lib/multi-step'
 import {
   Ease,
   getNextIntervalPreview,
@@ -372,10 +374,15 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
     // timer_action === 'none': do nothing
   }, [settings.timer_action])
 
-  const handleAnswer = (ease: Ease) => {
+  const handleAnswer = (
+    ease: Ease,
+    extra?: { score?: number | null; stepResults?: StepResult[] | null }
+  ) => {
     if (!currentCard || isSubmitting) return
 
     setIsSubmitting(true)
+    const score = extra?.score ?? null
+    const stepResults = extra?.stepResults ?? null
     const timeMs = Date.now() - cardStartTime.current
     const now = new Date()
     const cardId = currentCard.id
@@ -543,7 +550,9 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
           lastInterval,
           timeMs,
           reviewLogId,
-          deckId
+          deckId,
+          score,
+          stepResults
         ).then(() => {
           // Set undo snapshot after local save completes
           setUndoSnapshot(prev => {
@@ -557,7 +566,7 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
             fetch('/api/study/answer', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ cardId, ease, timeMs, deckId }),
+              body: JSON.stringify({ cardId, ease, timeMs, deckId, score, stepResults }),
             }).catch(syncError => {
               console.warn('Server sync failed, will retry later:', syncError)
             })
@@ -591,13 +600,15 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
           lastInterval,
           timeMs,
           reviewLogId,
-          deckId
+          deckId,
+          score,
+          stepResults
         ).then(() => {
           if (isOnline) {
             fetch('/api/study/answer', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ cardId, ease, timeMs, deckId }),
+              body: JSON.stringify({ cardId, ease, timeMs, deckId, score, stepResults }),
             }).catch(syncError => {
               console.warn('Server sync failed, will retry later:', syncError)
             })
@@ -795,6 +806,7 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
   if (!currentCard) return null
 
   const intervalPreviews = getNextIntervalPreview(currentCard.schedule, undefined, deckSettings)
+  const isMultiStep = isMultiStepNote(currentCard.fieldValues)
 
   return (
     <div className="py-6">
@@ -854,8 +866,8 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
         </div>
       )}
 
-      {/* Countdown Timer */}
-      {settings.answer_time_limit > 0 && (
+      {/* Countdown Timer（多段階設問はフリップしないので無効） */}
+      {settings.answer_time_limit > 0 && !isMultiStep && (
         <CountdownTimer
           key={'timer-' + currentCard.id + '-' + stats.reviewed}
           totalSeconds={settings.answer_time_limit}
@@ -875,26 +887,35 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
       )}
 
       {/* Card */}
-      <StudyCard
-        key={currentCard.id + '-' + stats.reviewed}
-        noteId={currentCard.noteId}
-        fieldValues={currentCard.fieldValues}
-        audioUrls={currentCard.audioUrls}
-        generatedContent={currentCard.generatedContent}
-        template={currentCard.template}
-        fields={currentCard.fields}
-        clozeNumber={currentCard.clozeNumber}
-        intervalPreviews={intervalPreviews}
-        onAnswer={handleAnswer}
-        autoFlip={autoFlipTrigger}
-        onFlipped={() => setIsCardFlipped(true)}
-        autoAgainCountdown={autoAgainCountdown}
-        swipeEnabled={settings.swipe_enabled}
-        ttsVoice={settings.tts_voice}
-        ttsSpeed={settings.tts_speed}
-        ttsAutoplay={settings.tts_autoplay}
-        ttsAutoButton={settings.tts_auto_button}
-      />
+      {isMultiStep ? (
+        <MultiStepCard
+          key={currentCard.id + '-' + stats.reviewed}
+          fieldValues={currentCard.fieldValues}
+          intervalPreviews={intervalPreviews as Record<EaseValue, string>}
+          onComplete={(ease, extra) => handleAnswer(ease as Ease, extra)}
+        />
+      ) : (
+        <StudyCard
+          key={currentCard.id + '-' + stats.reviewed}
+          noteId={currentCard.noteId}
+          fieldValues={currentCard.fieldValues}
+          audioUrls={currentCard.audioUrls}
+          generatedContent={currentCard.generatedContent}
+          template={currentCard.template}
+          fields={currentCard.fields}
+          clozeNumber={currentCard.clozeNumber}
+          intervalPreviews={intervalPreviews}
+          onAnswer={handleAnswer}
+          autoFlip={autoFlipTrigger}
+          onFlipped={() => setIsCardFlipped(true)}
+          autoAgainCountdown={autoAgainCountdown}
+          swipeEnabled={settings.swipe_enabled}
+          ttsVoice={settings.tts_voice}
+          ttsSpeed={settings.tts_speed}
+          ttsAutoplay={settings.tts_autoplay}
+          ttsAutoButton={settings.tts_auto_button}
+        />
+      )}
 
       {/* 回答ごとの「水やり→成長」演出（非ブロッキング・操作を妨げない） */}
       {waterFx && (

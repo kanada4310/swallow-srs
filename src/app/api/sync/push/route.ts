@@ -35,6 +35,8 @@ interface ReviewLogPayload {
   last_interval: number
   time_ms: number | null
   reviewed_at: string
+  score?: number | null
+  step_results?: unknown
 }
 
 interface PushRequest {
@@ -118,6 +120,8 @@ export async function POST(request: NextRequest) {
           last_interval: l.last_interval,
           time_ms: l.time_ms,
           reviewed_at: l.reviewed_at,
+          // 識別演習のときだけ score/step_results を含める（後方互換）
+          ...(l.score != null ? { score: l.score, step_results: l.step_results ?? null } : {}),
           synced_at: new Date().toISOString(),
         })),
         {

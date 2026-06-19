@@ -57,6 +57,10 @@ export interface LocalReviewLog {
   time_ms: number | null
   reviewed_at: Date
   synced_at: Date | null
+  /** 多段階設問（識別演習）の総合スコア 0-100。通常カードは null/未設定 */
+  score?: number | null
+  /** 多段階設問の設問別正誤。通常カードは null/未設定 */
+  step_results?: { id: string; mainCorrect: boolean; followCorrect: boolean | null; overallCorrect: boolean }[] | null
 }
 
 // Sync queue entry for pending changes

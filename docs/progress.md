@@ -1,16 +1,35 @@
 # 進捗管理
 
 ## 現在の作業
-- Phase: **Phase 10 ほぼ完了**＋**Phase 13.4 数式・画像・画像マスキング完了（実機確認済み）**。main にマージ済み（`feat/image-masking` 廃止可）
-- 最終更新: 2026-06-17
-- **画像マスキングは実機確認済み**：Google Vision 高精度OCR・手直しUX・毎回ランダム出題・オフライン・裏面リスト表示・一括作成・ビジュアル再編集まで動作確認済み（一括/再編集も 2026-06-17 にユーザー確認OK）
-- **未使用 KaTeX 自己ホスト資産を撤去済み**（2026-06-17）: `public/katex/`（CSS+フォント20本）／`next.config.mjs` の `/katex` CORS+SW `katex-fonts`／`middleware.ts` publicPaths の `/katex`。`katex` npm パッケージ（MathML 生成）と `CardIframe` の `math` prop は維持
+- Phase: **多段階設問・識別演習（古文）実装完了（要実機確認）**。Phase 10 ほぼ完了＋Phase 13.4 数式・画像・画像マスキング完了（実機確認済み）
+- 最終更新: 2026-06-19
+- **多段階設問・識別演習**: 1カードに複数設問→例文単位で1回SRS評価。**正誤＋解答時間のスコアから SRS 評価を自動判定**（生徒はタップで手直し可）。詳細は CLAUDE.md「多段階設問・識別演習」節。`020_multi_step_scores.sql` は Supabase 適用済み。ノートタイプ「識別演習」作成済み・サンプルデッキ「識別演習（古文）」46ノート投入済み。lint クリーン・テスト374件・build 成功。**要 Vercel デプロイ＋再ログイン後に実機確認**
 - 次にやること:
-  1. **科目拡張**: 数式＋画像マスキングが使えるので数学・理科デッキ作成 → そこの「いきもの」も飼える（Phase 10 連携）★次の主軸候補
-  2. **10.2 残**: しきい値の実データ調整／デイリーミッションのプッシュ連携（Phase 12.3）
-  3. パイロット系（別軸）: OOV例文リペア / 全語展開
+  1. **識別演習の実機確認**: `/study`「識別演習（古文）」で多段階出題・自動判定・スコア・`/stats` スコアカードを確認。自動判定しきい値を実データで調整
+  2. **科目拡張**: 数式＋画像マスキングが使えるので数学・理科デッキ作成 → そこの「いきもの」も飼える（Phase 10 連携）
+  3. **10.2 残**: しきい値の実データ調整／デイリーミッションのプッシュ連携（Phase 12.3）
 
 ## セッション引継ぎメモ
+
+### 2026-06-19（多段階設問・識別演習（古文）— 例文単位SRS＋スコア自動判定）
+- **依頼**: 古典文法の識別演習（`swallow-base.com/kobun/shikibetsu`／手元 `SRS/index.html`）と同等の体験を SRS に組み込む。1例文に複数設問を順番に／選択式は自動判定＋記述式は自己採点／例文単位で間隔管理。追加で「**正誤＋解答時間でスコア化し、そのスコアから 正解/簡単 等を自動判定**」「生徒が手直しもできる」
+- **元データ整合**: `index.html` の `QUESTION_DATA` を確認。傍線部ハイライト・**follow_up（根拠問題）**・question_type バッジ・「わからない」選択肢・`correct_answer` は文字列一致。元プロトタイプのSRSはセッション内再出題だが、要件どおり**つばめSRSの本物のエンジン（例文単位・日付ベース）に置換**
+- **実装**:
+  - 純ロジック `src/lib/multi-step/`（types/parse/grade/score/index＋テスト24件）。パーサは snake_case/camelCase 両対応で元教材を無変換取り込み
+  - **スコア** = 正誤85%＋解答時間15%（目標=設問数×20秒）。**`deriveEase(score)` がスコアから ease を自動判定**（全問正解＆速→簡単／全問正解→正解／一部正解≥50%→難しい／<50%→もう一度）。しきい値は定数で調整可
+  - `MultiStepCard.tsx`（傍線/バッジ/follow_up/ステップドット/古文CSS、React直接描画＝iframe不使用）。完了画面は**自動判定をハイライト＋4択常時表示でタップ手直し可**（変更すると「手動：◯◯」＋「自動判定に戻す」）
+  - `StudySession`: `isMultiStepNote()` で `MultiStepCard` に分岐、timer/swipe 無効化、`handleAnswer(ease,{score,stepResults})`
+  - 永続化: `020_multi_step_scores.sql`（`review_logs` に score/step_results）**Supabase 適用済み**（Management API ではなくユーザーが SQL Editor で実行）。`LocalReviewLog`・`saveAnswerLocally`・push route・answer API にスレッド。**通常カードは新列に触れない後方互換**（識別演習時のみ含める）
+  - `/stats`: `useIdentificationScores`（Dexie/オフライン）＋`IdentificationScoreCard`（平均スコア/例文数/平均解答時間/直近推移、データ無ければ非表示）
+  - ノートタイプ「識別演習」: `data/multi-step-template.mjs`＋`data/create-multi-step-notetype.mjs`（is_system・**作成済み** id=2475cb3d…）。サンプル `data/import-kobun-shikibetsu.mjs`（**投入済み** デッキ「識別演習（古文）」id=52fe36f3… 46ノート）
+- **検証**: lint クリーン／テスト374件（+22）／build 成功（`/study` 3.66kB 不変）
+- **次セッション注意**:
+  - **要 Vercel デプロイ＋再ログイン**（新コンポーネント・Dexie の score 列は field-only でバージョン据え置き）。デプロイ後 `/study` で「識別演習（古文）」を実機確認
+  - 自動判定しきい値（`TARGET_MS_PER_QUESTION=20000`/`SPEED_EASY_THRESHOLD=0.8`/`ACCURACY_HARD_THRESHOLD=0.5`、いずれも `src/lib/multi-step/score.ts`）は実データで要調整
+  - スコアは Dexie のみ表示（review_logs は pull 同期対象外＝push専用のため端末ローカル。サーバーにも score 列はあるが pull しない）。手直しオーバーライドは常時表示（不要なら隠す調整可）
+  - 識別演習は new カードで品種インプリント（ImprintPicker）が出る（既存仕様・無害）。気になるなら将来このノートタイプで抑止可
+
+### 旧セッション引継ぎメモ
 
 ### 2026-06-16（画像マスキング 一括作成＋ビジュアル再編集＋共通化／退役モデル修正／裏面重なり／テンプレ同期）
 - **退役モデルで全AIが500**: `claude-sonnet-4-20250514`（6/15退役）＝候補検出/OCRの500原因。`claude-3-haiku-20240307`（4月退役）＝例文生成。→ `claude-sonnet-4-6` / `claude-haiku-4-5` に更新（`f8d296b`）。**今後モデルIDは退役に注意**（migration: Sonnet4→4.6, Haiku3→4.5）

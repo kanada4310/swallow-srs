@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     if (authError) return authError
 
     const body = await request.json()
-    const { cardId, ease, deckId } = body
+    const { cardId, ease, deckId, timeMs, score, stepResults } = body
 
     if (!cardId || ease === undefined || ease < 1 || ease > 4) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
@@ -131,6 +131,9 @@ export async function POST(request: NextRequest) {
         ease: ease,
         interval: newSchedule.interval,
         last_interval: schedule.interval,
+        time_ms: typeof timeMs === 'number' ? timeMs : null,
+        // 識別演習のときだけ score/step_results を含める（後方互換）
+        ...(typeof score === 'number' ? { score, step_results: stepResults ?? null } : {}),
         reviewed_at: now.toISOString(),
       })
 

@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { StreakHeatmap } from '@/components/stats'
+import { StreakHeatmap, IdentificationScoreCard } from '@/components/stats'
 import { StatsContent } from './StatsContent'
 
 export default function StatsPage() {
@@ -28,6 +28,9 @@ export default function StatsPage() {
         <h1 className="text-2xl font-bold text-gray-900 mb-6">学習統計</h1>
         <div className="mb-6">
           <StreakHeatmap userId={userId} />
+        </div>
+        <div className="mb-6">
+          <IdentificationScoreCard userId={userId} />
         </div>
         <StatsContent />
       </div>

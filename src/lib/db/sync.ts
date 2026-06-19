@@ -383,7 +383,11 @@ export async function saveAnswerLocally(
   lastInterval: number,
   timeMs: number | null,
   reviewLogId?: string,
-  deckId?: string
+  deckId?: string,
+  /** 多段階設問（識別演習）のスコア。通常カードは null */
+  score?: number | null,
+  /** 多段階設問の設問別正誤。通常カードは null */
+  stepResults?: unknown
 ): Promise<void> {
   const now = new Date()
   const logId = reviewLogId || crypto.randomUUID()
@@ -423,6 +427,8 @@ export async function saveAnswerLocally(
       time_ms: timeMs,
       reviewed_at: now,
       synced_at: null,
+      score: score ?? null,
+      step_results: (stepResults as LocalReviewLog['step_results']) ?? null,
     }
     await db.reviewLogs.add(reviewLog)
 
@@ -466,6 +472,9 @@ export async function saveAnswerLocally(
         last_interval: lastInterval,
         time_ms: timeMs,
         reviewed_at: formatForServer(now),
+        // 識別演習のときだけ score/step_results を含める（通常カードは列に触れない＝
+        // マイグレーション未適用環境でも従来通り同期できる後方互換）
+        ...(score != null ? { score, step_results: stepResults ?? null } : {}),
       },
       created_at: now,
       attempts: 0,
