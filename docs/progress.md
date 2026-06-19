@@ -28,6 +28,9 @@
   - 自動判定しきい値（`TARGET_MS_PER_QUESTION=20000`/`SPEED_EASY_THRESHOLD=0.8`/`ACCURACY_HARD_THRESHOLD=0.5`、いずれも `src/lib/multi-step/score.ts`）は実データで要調整
   - スコアは Dexie のみ表示（review_logs は pull 同期対象外＝push専用のため端末ローカル。サーバーにも score 列はあるが pull しない）。手直しオーバーライドは常時表示（不要なら隠す調整可）
   - 識別演習は new カードで品種インプリント（ImprintPicker）が出る（既存仕様・無害）。気になるなら将来このノートタイプで抑止可
+- **追記（同日・ユーザー指摘2件）**:
+  1. **記述式（現代語訳）の自己採点「△もう一度／◯正解だった」を削除**（修了ページの判定と重複していた）。記述式は模範解答＋「次へ」のみ。`StepResult.graded` を追加し、**記述式はスコアの正答率に算入しない**（最終判定に委ねる）。`gradeText`→`completeText`、`computeScore` は graded のみで正答率、`deriveEase` は `accuracyPct` 基準に変更。テスト26件
+  2. **庭（記憶のいきもの育成）を一括停止**：`src/lib/garden/feature.ts` の `GARDEN_ENABLED=false` フラグで、ナビの「庭」タブ非表示／`/garden` は `/decks` へリダイレクト／学習中の成長・水やりアニメ・品種インプリント・完了時の成長演出を停止。**機能は残置・true で再開可**。`/stats` の 🔥ストリーク/ヒートマップ（StreakHeatmap）は学習統計として残置（庭の生き物ではないため）
 
 ### 旧セッション引継ぎメモ
 

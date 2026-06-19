@@ -35,6 +35,7 @@ export function gradeSelect(
       mainCorrect,
       followCorrect,
       overallCorrect: mainCorrect && followCorrect,
+      graded: true,
     }
   }
   return {
@@ -42,17 +43,20 @@ export function gradeSelect(
     mainCorrect,
     followCorrect: null,
     overallCorrect: mainCorrect,
+    graded: true,
   }
 }
 
 /**
- * 記述式の採点。生徒の自己申告（◯＝正解だった / △＝もう一度）をそのまま結果にする。
+ * 記述式（現代語訳など）の完了。自己採点はせず、模範解答を見て進むだけ。
+ * スコアの正答率には算入しない（graded:false）。最終判定は修了ページに委ねる。
  */
-export function gradeText(question: MultiStepQuestion, selfCorrect: boolean): StepResult {
+export function completeText(question: MultiStepQuestion): StepResult {
   return {
     id: question.id,
-    mainCorrect: selfCorrect,
+    mainCorrect: true,
     followCorrect: null,
-    overallCorrect: selfCorrect,
+    overallCorrect: true,
+    graded: false,
   }
 }

@@ -284,7 +284,7 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 1枚のカードに複数の設問を順番に解かせる演習（古典文法の識別演習が母体）。元プロトタイプ `swallow-base.com/kobun/shikibetsu`（手元の `SRS/index.html`）の構造を保持しつつ、**SRSはつばめSRSの本物のFSRS/SM-2エンジンで例文単位・日付ベース**に置換。
 
 - **設計核**: 1ノート＝1例文＝1カード。例文に紐づく全設問を解き終えたら、正誤を集約して `onAnswer(ease)` を**1回だけ**呼ぶ（要件3「例文単位で間隔管理／設問ごとに別管理しない」）。スケジューラ・学習キュー・Undo・同期は無改修で再利用
-- **純ロジック** `src/lib/multi-step/`（テスト24件）: `parse`（設問/傍線JSON・元教材の snake_case と camelCase 両対応）・`grade`（選択式の自動判定＋follow_up根拠問題の合算／記述式の自己採点／選択肢シャッフル／「わからない」）・`score`（**正誤85%＋解答時間15%で 0-100 のスコア**）・`deriveEase`（**スコアから SRS 評価を自動判定**）
+- **純ロジック** `src/lib/multi-step/`（テスト26件）: `parse`（設問/傍線JSON・元教材の snake_case と camelCase 両対応）・`grade`（選択式の自動判定＋follow_up根拠問題の合算／選択肢シャッフル／「わからない」／記述式は `completeText`＝模範解答を見て進むだけ・採点なし）・`score`（**正誤85%＋解答時間15%で 0-100 のスコア**。`StepResult.graded` で記述式は正答率に算入しない）・`deriveEase`（**スコア(accuracyPct)から SRS 評価を自動判定**）
 - **自動判定ルール**（`deriveEase(score)`・しきい値は定数 `TARGET_MS_PER_QUESTION`/`SPEED_EASY_THRESHOLD`/`ACCURACY_HARD_THRESHOLD` で調整可）: 全問正解＆速い（目標=設問数×20秒の約1.25倍以内）→ 簡単 / 全問正解＆普通〜遅い → 正解 / 一部正解(正答率≥50%) → 難しい / <50% → もう一度
 - **UI** `src/components/card/MultiStepCard.tsx`: 傍線ハイライト・question_type バッジ・follow_up根拠問題・ステップ進捗ドット・古文の世界観CSS。完了画面は**スコアによる自動判定をハイライト表示＋4択は常時表示で生徒がタップ手直し可**（既定=自動／変更すると「手動：◯◯」＋「自動判定に戻す」）。**iframe ではなく React で直接描画**（テキストは React エスケープで安全・`dangerouslySetInnerHTML` 不使用）
 - **StudySession 連携**: `isMultiStepNote()` で検出し `MultiStepCard` に分岐。多段階カードは timer/swipe を無効化。`handleAnswer(ease, {score, stepResults})` でスコアも記録
@@ -298,7 +298,7 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 詳細は @docs/progress.md を参照。
 
 - **最終更新**: 2026-06-19
-- **直近の修正**: **多段階設問・識別演習（古文）を実装**（要実機確認）。1カードに複数設問→例文単位で1回SRS評価。**正誤＋解答時間のスコアから SRS 評価を自動判定**（生徒はタップで手直し可）。`src/lib/multi-step/`（テスト24件）＋`MultiStepCard`＋StudySession分岐＋`review_logs` に score/step_results（`020` 適用済み・後方互換）＋`/stats` スコアカード＋ノートタイプ「識別演習」＋サンプルデッキ46ノート。lint クリーン・テスト374件・build 成功
+- **直近の修正**: **多段階設問・識別演習（古文）を実装**（要実機確認）。1カードに複数設問→例文単位で1回SRS評価。**正誤＋解答時間のスコアから SRS 評価を自動判定**（生徒はタップで手直し可）。`src/lib/multi-step/`＋`MultiStepCard`＋StudySession分岐＋`review_logs` に score/step_results（`020` 適用済み・後方互換）＋`/stats` スコアカード＋ノートタイプ「識別演習」＋サンプルデッキ46ノート。**追記**: 記述式の自己採点を削除し採点対象外に（修了ページの判定と重複していた）／**庭（記憶のいきもの育成）を `GARDEN_ENABLED=false` で一括停止**（ナビ非表示・`/garden`→`/decks`・学習中アニメ/品種インプリント/完了演出オフ・true で再開可）。lint クリーン・テスト378件・build 成功
 - **次にやること**:
   1. **識別演習の実機確認**: デプロイ＋再ログイン後、`/study`「識別演習（古文）」で多段階出題・自動判定・スコア・`/stats` スコアカードを確認。自動判定しきい値の調整も実データで
   2. **科目拡張**: 数学・理科デッキ作成（数式＋画像マスキングが使える）→ そこの「いきもの」も飼える（Phase 10 連携）

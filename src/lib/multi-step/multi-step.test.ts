@@ -4,7 +4,7 @@ import {
   parseHighlights,
   isMultiStepNote,
   gradeSelect,
-  gradeText,
+  completeText,
   shuffle,
   computeScore,
   deriveEase,
@@ -135,11 +135,11 @@ describe('gradeSelect', () => {
   })
 })
 
-describe('gradeText', () => {
-  it('自己申告をそのまま結果にする', () => {
+describe('completeText', () => {
+  it('記述式は採点対象外（graded:false）で完了する', () => {
     const q = { ...Q_SELECT, format: 'text' as const, followUp: null }
-    expect(gradeText(q, true).overallCorrect).toBe(true)
-    expect(gradeText(q, false).overallCorrect).toBe(false)
+    const r = completeText(q)
+    expect(r).toMatchObject({ overallCorrect: true, graded: false })
   })
 })
 
@@ -155,7 +155,7 @@ describe('shuffle', () => {
 
 function mkResults(pattern: boolean[]): StepResult[] {
   return pattern.map((ok, i) => ({
-    id: `q${i}`, mainCorrect: ok, followCorrect: null, overallCorrect: ok,
+    id: `q${i}`, mainCorrect: ok, followCorrect: null, overallCorrect: ok, graded: true,
   }))
 }
 
@@ -185,6 +185,22 @@ describe('computeScore', () => {
   })
   it('総設問0は score 0', () => {
     expect(computeScore([], 0).score).toBe(0)
+  })
+  it('記述式(graded:false)は正答率に算入しない', () => {
+    const results: StepResult[] = [
+      { id: 'q1', mainCorrect: false, followCorrect: null, overallCorrect: false, graded: true }, // 選択・誤答
+      { id: 'q2', mainCorrect: true, followCorrect: null, overallCorrect: true, graded: false }, // 記述（対象外）
+    ]
+    const s = computeScore(results, 2 * TARGET_MS_PER_QUESTION)
+    // 採点対象は選択1問のみ＝誤答 → 0%（記述で50%に薄まらない）
+    expect(s.total).toBe(1)
+    expect(s.accuracyPct).toBe(0)
+  })
+  it('記述のみ（採点対象なし）は正答率100%扱い', () => {
+    const results: StepResult[] = [
+      { id: 'q1', mainCorrect: true, followCorrect: null, overallCorrect: true, graded: false },
+    ]
+    expect(computeScore(results, TARGET_MS_PER_QUESTION).accuracyPct).toBe(100)
   })
 })
 

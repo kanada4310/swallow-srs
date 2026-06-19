@@ -23,6 +23,7 @@ import { PlantSprite } from '@/components/garden/PlantSprite'
 import { pickLabel } from '@/lib/garden/garden-data'
 import { pickVarietyByHash, getVariety, type Variety } from '@/lib/garden/varieties'
 import { derivePlantState, GROWTH_ORDER, type GrowthStage } from '@/lib/garden/plant-state'
+import { GARDEN_ENABLED } from '@/lib/garden/feature'
 import Link from 'next/link'
 import type { GeneratedContent, FieldDefinition, DeckSettings, CreatureImprint } from '@/types/database'
 
@@ -205,7 +206,7 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
   // 未学習(new)で、まだ品種が刻まれていないノートだけ、学習前に1度だけ選ばせる。
   useEffect(() => {
     let cancelled = false
-    if (!currentCard || currentCard.schedule.state !== 'new') {
+    if (!GARDEN_ENABLED || !currentCard || currentCard.schedule.state !== 'new') {
       setImprintPrompt(null)
       return
     }
@@ -235,6 +236,7 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
 
   // 完了演出のスプライト用に、ノート→品種の対応を読み込む（オフライン可）
   useEffect(() => {
+    if (!GARDEN_ENABLED) return
     getCreatureStatesMap(userId).then(setImprintMap).catch(() => {})
   }, [userId])
 
@@ -401,35 +403,37 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
       // Calculate new schedule locally
       const newSchedule = calculateNextReview(currentCard.schedule, ease, now, deckSettings)
 
-      // 成長（段階アップ）の検出（Phase 10.2 残・完了演出用）。
-      // セッション開始時の段階をノートごとに基準として保持し、最新段階と比べる。
-      const growthNoteId = currentCard.noteId
-      if (!growthBaselineRef.current.has(growthNoteId)) {
-        growthBaselineRef.current.set(growthNoteId, growthOf(currentCard.schedule, now))
-      }
-      const baselineStage = growthBaselineRef.current.get(growthNoteId)!
-      const preStage = growthOf(currentCard.schedule, now)
-      const postStage = growthOf(newSchedule, now)
-      if (GROWTH_ORDER[postStage] > GROWTH_ORDER[baselineStage]) {
-        const label = pickLabel(currentCard.fieldValues)
-        setGrownEvents((prev) => [
-          ...prev.filter((e) => e.noteId !== growthNoteId),
-          { noteId: growthNoteId, label, from: baselineStage, to: postStage },
-        ])
-      } else {
-        // Again などで基準まで戻った場合は演出から外す
-        setGrownEvents((prev) => prev.filter((e) => e.noteId !== growthNoteId))
-      }
+      // 成長（段階アップ）の検出・回答ごとの演出（庭機能が有効なときのみ）
+      if (GARDEN_ENABLED) {
+        // セッション開始時の段階をノートごとに基準として保持し、最新段階と比べる。
+        const growthNoteId = currentCard.noteId
+        if (!growthBaselineRef.current.has(growthNoteId)) {
+          growthBaselineRef.current.set(growthNoteId, growthOf(currentCard.schedule, now))
+        }
+        const baselineStage = growthBaselineRef.current.get(growthNoteId)!
+        const preStage = growthOf(currentCard.schedule, now)
+        const postStage = growthOf(newSchedule, now)
+        if (GROWTH_ORDER[postStage] > GROWTH_ORDER[baselineStage]) {
+          const label = pickLabel(currentCard.fieldValues)
+          setGrownEvents((prev) => [
+            ...prev.filter((e) => e.noteId !== growthNoteId),
+            { noteId: growthNoteId, label, from: baselineStage, to: postStage },
+          ])
+        } else {
+          // Again などで基準まで戻った場合は演出から外す
+          setGrownEvents((prev) => prev.filter((e) => e.noteId !== growthNoteId))
+        }
 
-      // 回答ごとの一時演出（非ブロッキング）。この回答で段階が上がれば「成長ポップ」、
-      // それ以外でも正答（Good/Easy）なら「水やり」しずく。Again/Hard は出さない（うるさくしない）。
-      const grewThisAnswer = GROWTH_ORDER[postStage] > GROWTH_ORDER[preStage]
-      if (grewThisAnswer || ease >= Ease.Good) {
-        const fxVariety = getVariety(imprintMap.get(growthNoteId)?.variety)
-        fxKeyRef.current += 1
-        setWaterFx({ key: fxKeyRef.current, grewTo: grewThisAnswer ? postStage : null, variety: fxVariety })
-        if (fxTimerRef.current) clearTimeout(fxTimerRef.current)
-        fxTimerRef.current = setTimeout(() => setWaterFx(null), 1100)
+        // 回答ごとの一時演出（非ブロッキング）。この回答で段階が上がれば「成長ポップ」、
+        // それ以外でも正答（Good/Easy）なら「水やり」しずく。Again/Hard は出さない（うるさくしない）。
+        const grewThisAnswer = GROWTH_ORDER[postStage] > GROWTH_ORDER[preStage]
+        if (grewThisAnswer || ease >= Ease.Good) {
+          const fxVariety = getVariety(imprintMap.get(growthNoteId)?.variety)
+          fxKeyRef.current += 1
+          setWaterFx({ key: fxKeyRef.current, grewTo: grewThisAnswer ? postStage : null, variety: fxVariety })
+          if (fxTimerRef.current) clearTimeout(fxTimerRef.current)
+          fxTimerRef.current = setTimeout(() => setWaterFx(null), 1100)
+        }
       }
 
       // Check for leech

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { GARDEN_ENABLED } from '@/lib/garden/feature'
 
 interface NavItem {
   href: string
@@ -56,10 +57,12 @@ const NoteTypesIcon = () => (
   </svg>
 )
 
+const gardenNavItem: NavItem = { href: '/garden', label: '庭', icon: <GardenIcon /> }
+
 const studentNavItems: NavItem[] = [
   { href: '/', label: 'ホーム', icon: <HomeIcon /> },
   { href: '/decks', label: 'デッキ', icon: <DecksIcon /> },
-  { href: '/garden', label: '庭', icon: <GardenIcon /> },
+  ...(GARDEN_ENABLED ? [gardenNavItem] : []),
   { href: '/notes', label: 'ノート', icon: <NotesIcon /> },
   { href: '/note-types', label: 'テンプレート', icon: <NoteTypesIcon /> },
   { href: '/stats', label: '統計', icon: <StatsIcon /> },
@@ -68,7 +71,7 @@ const studentNavItems: NavItem[] = [
 const teacherNavItems: NavItem[] = [
   { href: '/', label: 'ホーム', icon: <HomeIcon /> },
   { href: '/decks', label: 'デッキ', icon: <DecksIcon /> },
-  { href: '/garden', label: '庭', icon: <GardenIcon /> },
+  ...(GARDEN_ENABLED ? [gardenNavItem] : []),
   { href: '/notes', label: 'ノート', icon: <NotesIcon /> },
   { href: '/students', label: '生徒', icon: <StudentsIcon /> },
   { href: '/note-types', label: 'テンプレート', icon: <NoteTypesIcon /> },

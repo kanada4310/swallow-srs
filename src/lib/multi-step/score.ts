@@ -25,17 +25,22 @@ function clamp01(x: number): number {
  * - 総合スコア = round(100 * (0.85*正答率 + 0.15*速さ))
  */
 export function computeScore(results: readonly StepResult[], elapsedMs: number): ExampleScore {
-  const total = results.length
-  const correct = results.filter((r) => r.overallCorrect).length
+  const totalQuestions = results.length
+  const safeElapsed = Math.max(0, elapsedMs)
 
-  if (total === 0) {
-    return { score: 0, accuracyPct: 0, correct: 0, total: 0, elapsedMs: Math.max(0, elapsedMs), speedScore: 0 }
+  if (totalQuestions === 0) {
+    return { score: 0, accuracyPct: 0, correct: 0, total: 0, elapsedMs: safeElapsed, speedScore: 0 }
   }
 
-  const accuracy = correct / total
+  // 正答率は採点対象（選択式）のみ。記述式（graded:false）は算入しない。
+  // 採点対象が無い（記述のみ）例文は「誤りなし＝100%」扱い（最終判定は生徒に委ねる）。
+  const graded = results.filter((r) => r.graded)
+  const total = graded.length
+  const correct = graded.filter((r) => r.overallCorrect).length
+  const accuracy = total > 0 ? correct / total : 1
 
-  const targetMs = Math.max(1, total * TARGET_MS_PER_QUESTION)
-  const safeElapsed = Math.max(0, elapsedMs)
+  // 解答時間は全設問にかかるので目標時間は総設問数で見る
+  const targetMs = Math.max(1, totalQuestions * TARGET_MS_PER_QUESTION)
   // 解答時間が0（即答すり抜け等）の場合は速さ満点扱い
   const speedScore = safeElapsed <= 0 ? 1 : clamp01(targetMs / safeElapsed)
 
@@ -71,8 +76,7 @@ export const ACCURACY_HARD_THRESHOLD = 0.5
  * しきい値は SPEED_EASY_THRESHOLD / ACCURACY_HARD_THRESHOLD で調整可能。
  */
 export function deriveEase(score: ExampleScore): EaseValue {
-  if (score.total === 0) return 1
-  const accuracy = score.correct / score.total
+  const accuracy = score.accuracyPct / 100
   if (accuracy < ACCURACY_HARD_THRESHOLD) return 1 // Again
   if (accuracy < 1) return 2 // Hard
   return score.speedScore >= SPEED_EASY_THRESHOLD ? 4 : 3 // Easy or Good

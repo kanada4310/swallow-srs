@@ -9,7 +9,7 @@ export {
   parseHighlights,
   isMultiStepNote,
 } from './parse'
-export { UNKNOWN_ANSWER, UNKNOWN_LABEL, shuffle, gradeSelect, gradeText } from './grade'
+export { UNKNOWN_ANSWER, UNKNOWN_LABEL, shuffle, gradeSelect, completeText } from './grade'
 export {
   TARGET_MS_PER_QUESTION,
   ACCURACY_WEIGHT,

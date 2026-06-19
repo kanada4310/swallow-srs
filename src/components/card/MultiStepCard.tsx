@@ -5,7 +5,7 @@ import {
   parseQuestions,
   parseHighlights,
   gradeSelect,
-  gradeText,
+  completeText,
   shuffle,
   computeScore,
   deriveEase,
@@ -198,8 +198,8 @@ function QuestionBlock({
     setRevealed(true)
   }
 
-  const handleTextJudge = (selfCorrect: boolean) => {
-    onComplete(gradeText(question, selfCorrect))
+  const handleTextNext = () => {
+    onComplete(completeText(question))
   }
 
   const choiceClass = (choice: string, selected: string | null, correct: string) => {
@@ -318,7 +318,7 @@ function QuestionBlock({
 
       {!isSelect && textRevealed && (
         <>
-          <div className="ms-selfnote">あなたの解答と模範解答を見比べて、自己採点してください。</div>
+          <div className="ms-selfnote">あなたの解答と模範解答を見比べてください。</div>
           <div className="ms-model user">
             <div className="ms-model-label">あなたの解答</div>
             <div className="ms-model-text">{textAnswer}</div>
@@ -334,11 +334,8 @@ function QuestionBlock({
             </div>
           )}
           <div className="ms-actions">
-            <button className="ms-btn gold" onClick={() => handleTextJudge(false)}>
-              △ もう一度
-            </button>
-            <button className="ms-btn moss" onClick={() => handleTextJudge(true)}>
-              ◯ 正解だった
+            <button className="ms-btn primary" onClick={handleTextNext}>
+              {questionIndex + 1 >= totalQuestions ? '結果を見る →' : '次の問題へ →'}
             </button>
           </div>
         </>

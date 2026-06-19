@@ -58,6 +58,11 @@ export interface StepResult {
   followCorrect: boolean | null
   /** 総合正誤（根拠ありは main && follow） */
   overallCorrect: boolean
+  /**
+   * スコアの正答率に算入するか。選択式=true、記述式（自己採点なし）=false。
+   * 記述式は模範解答を見て進むだけで、最終判定（修了ページ）に委ねる。
+   */
+  graded: boolean
 }
 
 /** 例文1件分のスコア（正誤＋解答時間から算出） */

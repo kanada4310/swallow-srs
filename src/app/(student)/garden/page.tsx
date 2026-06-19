@@ -2,7 +2,9 @@
 
 import { useMemo, useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
+import { GARDEN_ENABLED } from '@/lib/garden/feature'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useAuth } from '@/contexts/AuthContext'
 import { getDecksWithStatsOffline } from '@/lib/db/schema'
@@ -37,7 +39,30 @@ const CARE_LABEL: Record<CareState, string> = {
   healthy: '健やか', thirsty: '乾き気味', wilting: 'しおれ', dryingOut: '枯れかけ', withered: '枯れ',
 }
 
+/** 庭機能が停止中のときの表示（/decks へリダイレクト） */
+function GardenDisabled() {
+  const router = useRouter()
+  useEffect(() => {
+    router.replace('/decks')
+  }, [router])
+  return (
+    <AppLayout>
+      <div className="max-w-lg mx-auto text-center py-16">
+        <p className="text-gray-600 mb-4">庭は現在ご利用いただけません。</p>
+        <Link href="/decks" className="text-blue-600 hover:underline">
+          デッキ一覧へ
+        </Link>
+      </div>
+    </AppLayout>
+  )
+}
+
 export default function GardenPage() {
+  if (!GARDEN_ENABLED) return <GardenDisabled />
+  return <GardenPageInner />
+}
+
+function GardenPageInner() {
   const { userId: authUserId, profile } = useAuth()
   const userId = authUserId || profile?.id || null
 
