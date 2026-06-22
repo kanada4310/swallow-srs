@@ -15,7 +15,7 @@ gen-context-prod.js
 gen-context-prod-*.js
 gen-ctxmiss-*.js
 prod_deck_p*.json
-prod_deck_miss_p*.json
+prod_deck_miss*.json
 ctx_missing_keys.json
 context_result_prod_*.json
 __pycache__/
