@@ -174,9 +174,10 @@ npm run test:watch   # Vitest 監視モード
 - **同期ページング修正**: `/api/sync/pull` と `/api/decks/[id]/offline-data` の notes/cards/card_states を1000件ずつ `.range()` で全件取得（PostgREST の1000行上限対策、大規模デッキ必須）
 - **イディオムタグ**: 全コロケーションをAIで「推測可能/推測困難イディオム」分類 → 1059ノートにタグ「イディオム」＋フィルタサブデッキ「★ イディオム（推測困難）」（`tag-idioms.mjs`, in-place更新）
 
-## コロケーション中心デッキ（パイロット・実装中）
+## コロケーション中心デッキ（本番974語・投入済み）
 
-L2語彙論（高頻度語はコロケーション/フレーズで覚える、構文=コア+スロット）に基づく設計のパイロット（50語）。
+L2語彙論（高頻度語はコロケーション/フレーズで覚える、構文=コア+スロット）に基づく設計。パイロット50語で検証後、**本番974語**に拡張・投入済み。
+- **本番デッキ（2026-06-22）**: パイロット50語を拡張。対象=**動詞343＋形容詞361＋副詞148＋前置詞42＋接続詞42＋助動詞19＝955語スコープ ∪ パイロット多義名詞19 = 974語**（名詞/代名詞/冠詞/間投詞は具体名詞中心ゆえ除外＝暗誦デッキに任せる）。デッキ「中学英単語 コロケーション」(`95cffa07…`, owner gaimon.maam, **未配布**)＝**2916ノート**。生成: `build_prod_words.py`→`build_colloc_workflow`(2743コロケ)→`build_exemplar_workflow`(例文プール5本)→`build_prod_deck.py`→文脈→`combine_decks.py`＋`build_colloc_notes.py`→`import-colloc-deck.mjs --notes=prod_colloc_notes.json --deck=...`。**文脈アシストは約70%（1911/2742）でAPI月次上限に到達**＝残825は上限回復後に `update-colloc-context.mjs` で in-place top-up（@docs/progress.md 2026-06-22 メモに手順）。**context ワークフローは順次実行**（並列だとレート制限）
 - **設計核**: 語義はコロケーションが担う（run=走る/経営する）→ 語義軸はコロケーションに畳む。学習単位=構文(コア+スロット)、**SRSは構文単位・表示例文は毎回ローテーション**（token頻度=定着, type頻度=生産性）
 - **3層統制**: ①語義レベルA1/A2（LLM+EVP/GSE基準, 経営する義B2等は除外）②共起語統制（`words.tsv`照合 `vocab_validate.py`）③コーパス頻度裏取り（Google Ngrams, ただし弱く補助のみ）
 - **パイプライン**（`data/中学英単語/`）: `gen-colloc.js`(コロケーション選定)→`corpus_attest.py`→`gen-exemplar.js`(語彙統制例文プール5本)→`build_colloc_notes.py`(実現コロケーション全体を空所化)

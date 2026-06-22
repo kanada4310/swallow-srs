@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """pilot2_deck.json から、コロケーション構文ノート（例文プールJSON付き）を組み立てる。
-各コロケーション = 1ノート。例文プールは [{en(強調), blank(穴埋め), ja}] の配列。
-Usage: python build_colloc_notes.py pilot2_deck.json colloc_notes.json
+各コロケーション = 1ノート。例文プールは [{en(強調), blank(穴埋め), ja, ctx}] の配列。
+Usage: python build_colloc_notes.py <deck.json> <out.json> [words.json=pilot2_words.json]
+  words.json は id→pos のPOSタグ用（本番は prod_words_all.json を指定）
 """
 import json, sys, csv, html
 from build_deck_tsv import emphasize, _match, _TOKEN_RE, _is_placeholder, _blank_for, _trim
 
 src, out = sys.argv[1], sys.argv[2]
+WORDS_FILE = sys.argv[3] if len(sys.argv) > 3 else 'pilot2_words.json'
 
 def realize_blank(en, core, filler, word):
     """実現したコロケーション（コアの固定語 + スロットに入った filler）全体の範囲を
@@ -46,7 +48,7 @@ def realize_blank(en, core, filler, word):
 
 # id -> pos
 pos_by_id = {}
-with open('pilot2_words.json', encoding='utf-8') as f:
+with open(WORDS_FILE, encoding='utf-8') as f:
     for d in json.load(f):
         pos_by_id[d['id']] = d['pos']
 

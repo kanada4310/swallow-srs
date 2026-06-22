@@ -1,8 +1,9 @@
 # 進捗管理
 
 ## 現在の作業
-- Phase: **講師デッキ共同編集＋サブデッキ折りたたみ＋学習体験の小改善（要実機確認）**＋多段階設問（要実機確認）＋Phase 10 ほぼ完了＋Phase 13.4 完了
-- 最終更新: 2026-06-19
+- Phase: **コロケーション本番デッキ作成・投入（955語スコープ＝974語）✅DB投入済み・文脈アシスト約70%**＋講師デッキ共同編集＋多段階設問＋Phase 10 ほぼ完了＋Phase 13.4 完了
+- 最終更新: 2026-06-22
+- **コロケーション本番デッキ（最新）**: パイロット50語を拡張し、動詞343＋形容詞361＋副詞148＋前置詞42＋接続詞42＋助動詞19＝**955語スコープ＋パイロット多義名詞19＝974語**を投入。デッキ「中学英単語 コロケーション」(id `95cffa07-bb4d-4bf7-8714-56d51ab35a10`, owner gaimon.maam, **未配布**)＝**2916ノート**。文脈アシストは**約70%（1911/2742コロケーション）**でAPI月次上限に到達し残り825は未生成。詳細・残作業の手順は下のセッションメモ
 - **講師デッキの自動共有・共同編集（最新）✅実機確認済み**: 講師同士で他講師のデッキ・ノートを閲覧/編集/削除/配布可（生徒は不可）。`021_teacher_shared_decks.sql` **Supabase 適用済み**。＋デッキ一覧のサブデッキ折りたたみ。詳細は下のセッションメモ
 - **学習体験の小改善（同日先行）**: ①講師アカウント作成スクリプト（荒井先生作成済み）②カード種別バッジ ③サブデッキの復習もタグで絞る ④繰り上げ学習（練習モード・card_states 非更新）。lint クリーン・テスト379件・build 成功
 - 次にやること:
@@ -11,6 +12,28 @@
   3. **科目拡張**: 数式＋画像マスキングが使えるので数学・理科デッキ作成 → そこの「いきもの」も飼える（Phase 10 連携）
 
 ## セッション引継ぎメモ
+
+### 2026-06-22（コロケーション本番デッキ作成・投入＝パイロット50語→974語）
+- **依頼**: パイロット版を確認できたので拡張して本番運用デッキを作成・インポート
+- **合意（AskUserQuestion）**: 対象=**動詞＋形容詞＋副詞＋機能語（約955語）**（名詞・代名詞・冠詞・間投詞は除外＝暗誦デッキに任せる）／語彙統制=**標準生成＋後で要修正のみ手直し**
+- **対象語**: `build_prod_words.py`（words.tsv から POS={動詞343,形容詞361,副詞148,前置詞42,接続詞42,助動詞19}=955語抽出 ∪ パイロット50語）→ `prod_words_new.json`（新規生成924語）＋`prod_words_all.json`（最終974語・POSタグ用）
+- **生成パイプライン（既存スクリプト流用＋本番版）**:
+  1. `build_colloc_workflow.py prod_words_new.json gen-colloc-prod.js` → Workflow → `colloc_result_prod.json`（924語→**2743コロケーション**, 失敗0, ~8Mトークン）
+  2. `build_exemplar_workflow.py colloc_result_prod.json gen-exemplar-prod.js` → Workflow → `exemplar_result_prod.json`（2743×5本=例文プール, 失敗0, ~20Mトークン, ~23分）。**corpus_attest.py は省略**（Google Ngrams が遅く補助のみ＝`build_prod_deck.py` が freq=null/rare=false を補完）
+  3. `build_prod_deck.py colloc_result_prod.json exemplar_result_prod.json prod_deck.json`（例文を結合した deck スケルトン, pilot2_deck.json と同形）
+  4. **文脈アシスト**: `build_context_workflow.py prod_deck.json gen-context-prod.js` だが**1.7MB>512KB上限**→ deck を5分割して `gen-context-prod-1..5.js`。**5並列実行はレート制限を誘発**（5×16=80同時で大量失敗）→**順次実行**に変更。さらに途中で **API月次上限（monthly spend limit）に到達**し残りが生成不可に
+  5. `merge_ctx_outputs.mjs context_result_prod.json <各.output...>`（ctx を key 単位で union・蓄積）→ **1911/2742コロケーションに文脈付与（約70%）**。残825は未生成
+  6. `merge_context.py context_result_prod.json prod_deck.json`（ctx 書き戻し）→ `combine_decks.py full_deck.json prod_deck.json pilot2_deck.json`（974語）→ `build_colloc_notes.py full_deck.json prod_colloc_notes.json prod_words_all.json`（**2916ノート**, 穴埋め失敗0）
+  7. `import-colloc-deck.mjs --notes=prod_colloc_notes.json --deck="中学英単語 コロケーション"` → デッキ `95cffa07…` に2916ノート＋カード投入（既存ノートタイプ「コロケーション構文」`0cfab65b…` を再利用＝説明文削除・左揃えの最新テンプレ）
+- **★残作業（文脈アシスト残り825コロケーション）— API月次上限リセット/引き上げ後に**:
+  1. 上限回復後、`merge_ctx_outputs.mjs` が出力した `ctx_missing_keys.json`（825キー）から未生成分の deck を作る → 分割 → `build_context_workflow.py` → Workflow（**順次・並列禁止**）→ `merge_ctx_outputs.mjs` で `context_result_prod.json` に追記
+  2. `merge_context.py context_result_prod.json prod_deck.json` → `combine_decks.py` → `build_colloc_notes.py ... prod_words_all.json`
+  3. **再インポート不要**: `update-colloc-context.mjs --deck="中学英単語 コロケーション" --notes=prod_colloc_notes.json` で例文プールを**in-place 更新**（note ID 不変＝SRS進捗保持）。文脈テンプレは既存で対応済み（空 ctx は `.context:empty{display:none}` で非表示）
+- **次セッション注意**:
+  - デッキは**未配布**（is_distributed=false）。実機確認後にクラス/個人へ配布する。**要 Vercel デプロイは不要**（アプリ改修なし＝StudyCard は既に ctx 対応済み）。**再同期（再ログイン）で表示**。講師は teacher-shared で見える
+  - 文脈が**ないカードは表面が「英文穴埋め＋和訳ヒント」のみ**（lead-in 非表示）＝機能上は問題なし。825件は上限回復後に top-up
+  - レート制限の教訓: **context ワークフローは順次実行**（並列だと 80同時でサーバ側 throttle）。月次 spend limit は claude.ai/settings/usage で確認
+  - 大規模（2916ノート）なので各講師の pull 同期が重い（既知の共有同期コスト）
 
 ### 2026-06-19（講師デッキの自動共有・共同編集 ＋ サブデッキ折りたたみ）✅実機確認済み
 - **依頼**: ①講師が作ったデッキを講師同士で自動共有 ②デッキ一覧でサブデッキを既定でアコーディオン折りたたみ
