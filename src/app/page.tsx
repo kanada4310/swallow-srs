@@ -1,10 +1,12 @@
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { SwallowMark } from '@/components/ui/SwallowMark'
+import { StudyDeckPicker } from '@/components/home/StudyDeckPicker'
 import { useStreak } from '@/lib/stats/useStreak'
 import { resolveDeckSettings } from '@/lib/srs/scheduler'
 import { db } from '@/lib/db/schema'
@@ -17,6 +19,15 @@ interface TodayMission {
   reviewsToday: number
   /** 残数が最も多いルートデッキ（開始ボタンの遷移先） */
   primaryDeckId: string | null
+  /** 今日やるカードがあるルートデッキの内訳（残数が多い順） */
+  perDeck: MissionDeck[]
+}
+
+export interface MissionDeck {
+  deckId: string
+  deckName: string
+  due: number
+  newToday: number
 }
 
 interface RecentDeck {
@@ -105,7 +116,7 @@ async function getTodayMissionLocal(userId: string): Promise<TodayMission> {
 
   let reviewDue = 0
   let newToday = 0
-  let best: { deckId: string; count: number } | null = null
+  const perDeck: MissionDeck[] = []
   for (const [rootId, v] of Array.from(perRoot.entries())) {
     const settings = resolveDeckSettings({
       ...(deckMap.get(rootId)?.settings || {}),
@@ -117,11 +128,16 @@ async function getTodayMissionLocal(userId: string): Promise<TodayMission> {
     )
     reviewDue += v.due
     newToday += rootNewToday
-    const count = v.due + rootNewToday
-    if (count > 0 && (!best || count > best.count)) {
-      best = { deckId: rootId, count }
+    if (v.due + rootNewToday > 0) {
+      perDeck.push({
+        deckId: rootId,
+        deckName: deckMap.get(rootId)?.name || 'デッキ',
+        due: v.due,
+        newToday: rootNewToday,
+      })
     }
   }
+  perDeck.sort((a, b) => (b.due + b.newToday) - (a.due + a.newToday))
 
   // 今日レビューした枚数（distinct card）
   const reviewsToday = new Set(todayLogs.map(l => l.card_id)).size
@@ -131,7 +147,8 @@ async function getTodayMissionLocal(userId: string): Promise<TodayMission> {
     newToday,
     total: reviewDue + newToday,
     reviewsToday,
-    primaryDeckId: best?.deckId ?? null,
+    primaryDeckId: perDeck[0]?.deckId ?? null,
+    perDeck,
   }
 }
 
@@ -291,6 +308,7 @@ function StudentDashboard({ userId }: { userId: string }) {
   // This is what makes the dashboard auto-refresh when the first sync after LINE login completes.
   const mission = useLiveQuery(() => getTodayMissionLocal(userId), [userId])
   const recentDecks = useLiveQuery(() => getRecentDecksLocal(userId), [userId]) ?? []
+  const [showDeckPicker, setShowDeckPicker] = useState(false)
 
   return (
     <div className="space-y-6">
@@ -309,17 +327,43 @@ function StudentDashboard({ userId }: { userId: string }) {
                 </span>
                 <span className="text-sm text-[#C9D6F3]">枚 / 約{estimateMinutes(mission.total)}分</span>
               </div>
-              <div className="mt-1 mb-4 text-[13px] text-[#AEC4F5]">
+              <div className="mt-1 text-[13px] text-[#AEC4F5]">
                 新規 <b className="text-white">{mission.newToday}</b> ・ 復習{' '}
                 <b className="text-white">{mission.reviewDue}</b>
                 {mission.reviewsToday > 0 && <>（今日すでに {mission.reviewsToday} 枚学習）</>}
               </div>
-              <Link
-                href={mission.primaryDeckId ? `/study?deck=${mission.primaryDeckId}` : '/decks'}
-                className="block w-full rounded-2xl bg-nodo py-3.5 text-center text-base font-extrabold text-white shadow-[0_4px_14px_rgba(255,120,73,.35)] transition-colors hover:bg-nodo-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-              >
-                学習をはじめる
-              </Link>
+              {/* 出題元デッキの内訳（どのデッキから出るかを明示） */}
+              <div className="mt-2 mb-4 space-y-0.5">
+                {mission.perDeck.slice(0, 3).map((d) => (
+                  <div key={d.deckId} className="flex items-baseline gap-2 text-[13px]">
+                    <span className="truncate font-bold text-white">{d.deckName}</span>
+                    <span className="flex-shrink-0 tabular-nums text-[#AEC4F5]">
+                      {d.due + d.newToday}枚
+                    </span>
+                  </div>
+                ))}
+                {mission.perDeck.length > 3 && (
+                  <div className="text-[12px] text-[#AEC4F5]">他 {mission.perDeck.length - 3} 個のデッキ</div>
+                )}
+              </div>
+              {mission.perDeck.length > 1 ? (
+                <button
+                  onClick={() => setShowDeckPicker(true)}
+                  className="block w-full rounded-2xl bg-nodo py-3.5 text-center text-base font-extrabold text-white shadow-[0_4px_14px_rgba(255,120,73,.35)] transition-colors hover:bg-nodo-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                >
+                  学習をはじめる（デッキを選ぶ）
+                </button>
+              ) : (
+                <Link
+                  href={mission.primaryDeckId ? `/study?deck=${mission.primaryDeckId}` : '/decks'}
+                  className="block w-full rounded-2xl bg-nodo py-3.5 text-center text-base font-extrabold text-white shadow-[0_4px_14px_rgba(255,120,73,.35)] transition-colors hover:bg-nodo-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                >
+                  学習をはじめる
+                </Link>
+              )}
+              {showDeckPicker && (
+                <StudyDeckPicker decks={mission.perDeck} onClose={() => setShowDeckPicker(false)} />
+              )}
             </>
           ) : (
             <>
