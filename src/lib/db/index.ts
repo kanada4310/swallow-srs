@@ -29,8 +29,11 @@ export {
   addToSyncQueue,
   processSyncQueue,
   getPendingSyncCount,
+  getQuarantinedCount,
+  getSyncQueueSummary,
   clearSyncQueue,
   retryFailedSync,
+  QUARANTINE_ATTEMPTS,
 } from './sync-queue'
 
 export {

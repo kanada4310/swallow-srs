@@ -4,8 +4,40 @@
 
 import { db, type SyncQueueEntry } from './schema'
 
-const MAX_RETRY_ATTEMPTS = 5
+/**
+ * 累積失敗回数がこの値に達したエントリは「隔離（要確認）」扱いにする。
+ *
+ * 以前は失敗5回で自動リトライ対象からも保留カウントからも外れ、記録が静かに
+ * 埋もれていた（=「同期済み」に見えるのに未送信）。この値まではオンラインの
+ * 同期サイクルごとに再送を続け（アップサートで冪等なので二重送信は無害）、
+ * それを超えて初めて「壊れている可能性が高い1件」として隔離・可視化する。
+ * 同期は5分間隔なので 20 回 ≒ 100 分の連続失敗が隔離条件。
+ */
+export const QUARANTINE_ATTEMPTS = 20
 const BATCH_SIZE = 50
+
+/**
+ * 累積失敗が隔離しきい値に達しているか（純関数・テスト対象）
+ */
+export function isQuarantined(entry: Pick<SyncQueueEntry, 'attempts'>): boolean {
+  return entry.attempts >= QUARANTINE_ATTEMPTS
+}
+
+/**
+ * 送信待ちキューを「再送継続中」と「隔離（要確認）」に集計する（純関数）
+ */
+export function summarizeQueue(entries: Array<Pick<SyncQueueEntry, 'attempts'>>): {
+  pending: number
+  quarantined: number
+} {
+  let pending = 0
+  let quarantined = 0
+  for (const entry of entries) {
+    if (isQuarantined(entry)) quarantined++
+    else pending++
+  }
+  return { pending, quarantined }
+}
 
 /**
  * Add an entry to the sync queue
@@ -36,16 +68,34 @@ export async function getPendingEntries(
 ): Promise<SyncQueueEntry[]> {
   return db.syncQueue
     .where('attempts')
-    .below(MAX_RETRY_ATTEMPTS)
+    .below(QUARANTINE_ATTEMPTS)
     .limit(limit)
     .sortBy('created_at')
 }
 
 /**
- * Get count of pending sync entries
+ * Get count of pending sync entries (再送継続中＝隔離前のもの)
  */
 export async function getPendingSyncCount(): Promise<number> {
-  return db.syncQueue.where('attempts').below(MAX_RETRY_ATTEMPTS).count()
+  return db.syncQueue.where('attempts').below(QUARANTINE_ATTEMPTS).count()
+}
+
+/**
+ * 隔離（要確認）エントリ数 = 連続失敗が続き送信できていない記録の件数
+ */
+export async function getQuarantinedCount(): Promise<number> {
+  return db.syncQueue.where('attempts').aboveOrEqual(QUARANTINE_ATTEMPTS).count()
+}
+
+/**
+ * キュー全体を「再送継続中」と「隔離」に集計して返す
+ */
+export async function getSyncQueueSummary(): Promise<{
+  pending: number
+  quarantined: number
+}> {
+  const entries = await db.syncQueue.toArray()
+  return summarizeQueue(entries)
 }
 
 /**
@@ -112,17 +162,17 @@ export async function clearSyncQueue(): Promise<void> {
 }
 
 /**
- * Get entries that have exceeded max retry attempts
+ * 隔離（要確認）状態のエントリ一覧
  */
 export async function getFailedEntries(): Promise<SyncQueueEntry[]> {
   return db.syncQueue
     .where('attempts')
-    .aboveOrEqual(MAX_RETRY_ATTEMPTS)
+    .aboveOrEqual(QUARANTINE_ATTEMPTS)
     .toArray()
 }
 
 /**
- * Reset failed entries to retry
+ * 隔離エントリを再送対象に戻す（失敗回数を0にリセット）
  */
 export async function retryFailedSync(): Promise<number> {
   const failed = await getFailedEntries()

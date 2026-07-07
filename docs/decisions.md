@@ -17,6 +17,7 @@
 ## ADR 一覧 (新しい順)
 
 ### 2026-07-07
+- [20260707-sync-queue-durability](decisions/20260707-sync-queue-durability.md) `#sync` `#offline` `#srs` _(Phase SRS総合評価レポート)_ — 送信キューは「失敗を静かに埋もれさせない」設計にする
 - [20260707-ops-rules-cms](decisions/20260707-ops-rules-cms.md) `#convention` — 開発運用ルールを CMS 方式に揃える
 - [20260707-learn-ahead](decisions/20260707-learn-ahead.md) `#srs` `#scheduling` `#ui-ux` — 学習ステップの待ち時間を learn-ahead（前倒し出題）で解消する
 

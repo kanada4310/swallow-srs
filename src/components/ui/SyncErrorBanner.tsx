@@ -3,10 +3,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { subscribeSyncStatus, getSyncStatus, fullSync, type SyncStatus } from '@/lib/db/sync'
+import { retryFailedSync } from '@/lib/db/sync-queue'
 
 /**
- * Top-of-screen banner that surfaces fullSync errors silently swallowed by
- * AuthContext.fullSync(...).catch(console.error).
+ * Top-of-screen banner that surfaces sync problems that would otherwise be
+ * invisible:
+ *  - fullSync errors silently swallowed by AuthContext.fullSync(...).catch(console.error)
+ *  - 送信キューの「隔離」記録（連続失敗でサーバーに届いていない学習記録）。
+ *    これは以前カウントからも消え「同期済み」に見えていた=データ消失の予兆。
  *
  * Auto-hides while syncing or after the user dismisses it for the current session.
  * Dismissal is intentionally per-tab — the banner re-appears next page load if the
@@ -23,8 +27,8 @@ export function SyncErrorBanner() {
     setStatus(getSyncStatus())
     const unsub = subscribeSyncStatus((s) => {
       setStatus(s)
-      // A successful sync clears the dismissal so a new error after recovery is shown again.
-      if (!s.error) setDismissed(false)
+      // A successful sync clears the dismissal so a new problem after recovery is shown again.
+      if (!s.error && s.quarantinedCount === 0) setDismissed(false)
     })
     return unsub
   }, [])
@@ -33,15 +37,18 @@ export function SyncErrorBanner() {
     if (!userId || retrying) return
     setRetrying(true)
     try {
+      // 隔離された記録を再送対象に戻してから同期（アップサートなので二重送信は無害）
+      await retryFailedSync()
       await fullSync(userId)
     } catch {
-      // status.error will reflect the new failure
+      // status.error / quarantinedCount will reflect the result
     } finally {
       setRetrying(false)
     }
   }, [userId, retrying])
 
-  if (!status.error || status.isSyncing || dismissed) return null
+  const hasQuarantine = status.quarantinedCount > 0
+  if ((!status.error && !hasQuarantine) || status.isSyncing || dismissed) return null
 
   return (
     <div role="alert" className="px-3 pt-2">
@@ -50,8 +57,19 @@ export function SyncErrorBanner() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
         </svg>
         <div className="flex-1 min-w-0">
-          <span className="font-bold text-ai">同期エラー</span>
-          <span className="text-ink-2 ml-2 truncate">{status.error}</span>
+          {hasQuarantine ? (
+            <>
+              <span className="font-bold text-ai">未送信の記録があります</span>
+              <span className="text-ink-2 ml-2 truncate">
+                {status.quarantinedCount}件の学習記録がまだ届いていません
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="font-bold text-ai">同期エラー</span>
+              <span className="text-ink-2 ml-2 truncate">{status.error}</span>
+            </>
+          )}
         </div>
         <button
           onClick={handleRetry}

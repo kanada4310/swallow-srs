@@ -13,6 +13,7 @@ import {
 import {
   processSyncQueue,
   getPendingSyncCount,
+  getSyncQueueSummary,
   groupEntriesByTable,
 } from './sync-queue'
 import { detectConflicts, type ConflictInfo } from './conflict'
@@ -22,6 +23,8 @@ export interface SyncStatus {
   isOnline: boolean
   isSyncing: boolean
   pendingCount: number
+  /** 連続失敗で送信できていない記録数（要確認・データ消失の予兆） */
+  quarantinedCount: number
   lastSyncAt: Date | null
   conflicts: ConflictInfo[]
   error: string | null
@@ -31,6 +34,7 @@ let syncStatus: SyncStatus = {
   isOnline: true,
   isSyncing: false,
   pendingCount: 0,
+  quarantinedCount: 0,
   lastSyncAt: null,
   conflicts: [],
   error: null,
@@ -80,10 +84,12 @@ export async function fullSync(userId: string): Promise<void> {
     // Update last sync time
     const now = new Date()
     await setSyncMeta('lastSyncAt', now.toISOString())
+    const summary = await getSyncQueueSummary()
     updateStatus({
       isSyncing: false,
       lastSyncAt: now,
-      pendingCount: await getPendingSyncCount(),
+      pendingCount: summary.pending,
+      quarantinedCount: summary.quarantined,
     })
   } catch (error) {
     updateStatus({
@@ -268,6 +274,8 @@ export async function pushToServer(): Promise<void> {
   updateStatus({ pendingCount })
 
   if (pendingCount === 0) {
+    // 送るものは無いが、隔離（要確認）件数だけは最新化しておく
+    updateStatus({ quarantinedCount: (await getSyncQueueSummary()).quarantined })
     return
   }
 
@@ -355,7 +363,11 @@ export async function pushToServer(): Promise<void> {
     return { success, failed }
   })
 
-  updateStatus({ pendingCount: await getPendingSyncCount() })
+  const summary = await getSyncQueueSummary()
+  updateStatus({
+    pendingCount: summary.pending,
+    quarantinedCount: summary.quarantined,
+  })
 }
 
 /**
