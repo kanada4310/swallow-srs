@@ -289,7 +289,7 @@ export async function calculateDeckProgress(
 
   const { data: decks } = await supabase
     .from('decks')
-    .select('id, name')
+    .select('id, name, parent_deck_id')
     .in('id', allDeckIds)
 
   const deckProgress: DeckProgressData[] = []
@@ -307,6 +307,7 @@ export async function calculateDeckProgress(
       deckProgress.push({
         deckId: deck.id,
         deckName: deck.name,
+        parentDeckId: deck.parent_deck_id ?? null,
         totalCards: 0,
         masteredCards: 0,
         learningCards: 0,
@@ -341,6 +342,7 @@ export async function calculateDeckProgress(
     deckProgress.push({
       deckId: deck.id,
       deckName: deck.name,
+      parentDeckId: deck.parent_deck_id ?? null,
       totalCards,
       masteredCards,
       learningCards,

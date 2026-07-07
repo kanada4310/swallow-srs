@@ -310,6 +310,8 @@ export interface AccuracyData {
 export interface DeckProgressData {
   deckId: string
   deckName: string
+  /** 親デッキID（null=ルートデッキ）。講師の生徒別設定⚙はルートのみ表示 */
+  parentDeckId?: string | null
   totalCards: number
   masteredCards: number
   learningCards: number

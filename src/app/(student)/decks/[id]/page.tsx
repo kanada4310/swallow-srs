@@ -185,7 +185,8 @@ export default function DeckDetailPage() {
         let mergedSettings: Partial<DeckSettings> = (deck.settings || {}) as Partial<DeckSettings>
         if (!canEdit) {
           try {
-            const settingsKey = `${profile.id}:${deckId}`
+            // 個人オーバーライドはルートデッキIDキー（学習時のマージと同じ規則）
+            const settingsKey = `${profile.id}:${scope.rootDeckId}`
             const userSettings = await db.userDeckSettings.get(settingsKey)
             if (userSettings?.settings) {
               mergedSettings = { ...mergedSettings, ...userSettings.settings } as Partial<DeckSettings>

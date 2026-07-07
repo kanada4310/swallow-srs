@@ -21,7 +21,7 @@ export async function PUT(
     // Get deck and verify ownership
     const { data: deck, error: deckError } = await supabase
       .from('decks')
-      .select('id, owner_id')
+      .select('id, owner_id, parent_deck_id')
       .eq('id', deckId)
       .single()
 
@@ -42,11 +42,25 @@ export async function PUT(
         if (errors.length > 0) {
           return NextResponse.json({ error: errors.map(e => e.message).join(', ') }, { status: 400 })
         }
+        // 個人オーバーライドはルートデッキIDで保存する。
+        // 学習時のマージキーが `${userId}:${rootDeckId}` のため（サブデッキIDで保存すると読まれない）
+        let rootDeckId = deck.id
+        let parentId: string | null = deck.parent_deck_id
+        for (let depth = 0; parentId && depth < 4; depth++) {
+          const { data: parent } = await supabase
+            .from('decks')
+            .select('id, parent_deck_id')
+            .eq('id', parentId)
+            .single()
+          if (!parent) break
+          rootDeckId = parent.id
+          parentId = parent.parent_deck_id
+        }
         const { error: upsertError } = await supabase
           .from('user_deck_settings')
           .upsert({
             user_id: user.id,
-            deck_id: deckId,
+            deck_id: rootDeckId,
             settings,
           })
         if (upsertError) {
