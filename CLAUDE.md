@@ -326,6 +326,16 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 - **ノートタイプ**: `data/kobun-tango-template.mjs`（A/B 定義の共有元）＋`data/create-kobun-tango-notetype.mjs`（両方を is_system で作成・**作成済み**）。「古文単語演習A（単語→意味）」=通し番号/品詞/見出し語/漢字/問題 ／「古文単語演習B（例文→傍線部）」=通し番号/品詞/見出し語/漢字/例文/傍線形/出典/現代語訳/問題
 - **デッキ「古文単語315」**（**投入済み** owner=gaimon.maam）: `data/import-kobun-tango.mjs`（`--reset` で旧デッキ/旧単一ノートタイプを削除して再投入）。**904ノート**（A=315／B=589。A はノートタイプA、B はノートタイプB）＋モード別フィルタサブデッキ「モードA（単語→意味）」「モードB（例文→意味）」（filter_tags でモード選択を再現）
 - **要実機確認**: Vercel デプロイ＋再ログイン後 `/study`「古文単語315」or モードサブデッキで出題・自動判定・スコア。`deriveKobunEase` のしきい値（`grade.ts` の TARGET_MS/SPEED_EASY_THRESHOLD/ACCURACY_HARD_THRESHOLD）は実データで要調整
+- **表示改善（2026-07-07）**: ①**モードA は出題中に漢字（読み仮名）を非表示**（答えの推測防止・採点後フィードバックの `見出し語（漢字）` は従来どおり）②**解答表示で「あなたの解答」＋「正しい選択肢」を両タグ表示**（A/B共通。正解が複数あり1つだけ選んだ時に選んだ正解が誤答と誤解されるのを防止）。`KobunTangoCard.tsx` の `optTag` を複数タグ返却に変更
+
+## 単語帳（定着度ビュー）＝マイ単語帳（2026-07-07）✅（要実機確認）
+
+「間違えを蓄積して苦手単語を一覧化・全単語を定着度で可視化・定着度で絞り込み」（タゲ友「マイ単語帳」イメージ）。**全デッキ共通**。ログイン中ユーザー自身の `card_states`（FSRS）から導出する**純表示層**で学習エンジンには一切触れない（庭 `plant-state` と同じ思想・オフライン可）。
+- **入口**: デッキ詳細ページのノート一覧セクションに**タブ切替**「ノート一覧」⇄「単語帳（定着度）」（`DeckDetailClient.tsx`・`useAuth()` の userId を渡す）。生徒・講師とも表示
+- **純ロジック** `src/lib/wordbook/mastery.ts`（テスト13件）: `deriveMastery(card_states)` → 5段階 **未学習/苦手/学習中/定着中/定着済み**。しきい値 `MASTERY_THRESHOLDS`=学習中<7日≤定着中<21日≤定着済み（実効 stability＝FSRS stability or SM-2 interval）。**苦手**＝relearning／learning での失敗／`lapses≥WEAK_LAPSES(2)` かつ未固定（eff<21）。`aggregateMastery`（1単語=複数カード時は一番弱いレベル採用）・`MASTERY_ORDER`（苦手=最優先）
+- **データ** `src/lib/wordbook/wordbook-data.ts`: `getWordbookForDeck(deckId, userId)`＝デッキ＋子孫の全カード×card_states を**見出し語（無ければ note 単位）でグループ化**して `WordbookEntry[]`（label/sub/pos/mastery/reviewCardId/reviewDeckId）。`pickLabel` 再利用。`Array.from(map.values())` 必須（downlevelIteration）
+- **UI** `src/components/deck/WordbookView.tsx`: `useLiveQuery`。定着度フィルタチップ（件数バッジ＋色）＋検索＋苦手が上の並び。単語タップ→`/study?deck=X&card=cardId`（既存 priorityCardId で当該カードを最優先復習）。100件ずつ「もっと見る」
+- **注意**: 定着度は本人の card_states 由来（講師が生徒の定着度を見るのは `/students/progress`）。sub（補足）は汎用フィールド（意味/和訳/Back/漢字…）から拾うため古文モードA は漢字が出る（語義は 問題 JSON 内で未抽出＝将来強化余地）
 
 ## デザインシステム「藍・空・喉の橙」（2026-07-07）✅ 全画面適用済み
 
@@ -348,7 +358,8 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 詳細は @docs/progress.md を参照。
 
 - **最終更新**: 2026-07-07
-- **直近の修正（最新）**: **デザイン全面刷新＋チュートリアル第1弾**（上の2節）。lint クリーン・テスト397件・build 成功・主要画面ブラウザ確認済み。**要 Vercel デプロイ＋再ログイン**
+- **直近の修正（最新）**: **古文単語演習の表示改善＋単語帳「定着度ビュー」**（`f31a66c`）。①モードA は出題中に漢字（読み仮名）を隠す（採点後は表示）②A/B の解答表示で「あなたの解答」＋「正しい選択肢」を両方表示（正解を1つだけ選んだ時の誤解防止）③デッキ詳細のノート一覧に**タブ「単語帳（定着度）」**を追加＝`card_states` から5段階の定着度（未学習/苦手/学習中/定着中/定着済み）を導出し苦手単語を可視化・フィルタ・タップで即復習（全デッキ共通・オフライン・純表示層＝`src/lib/wordbook/`＋`WordbookView`）。tsc/lint クリーン・テスト410件・build 成功。**要 Vercel デプロイ＋再ログイン**
+- **直近の修正**: **デザイン全面刷新＋チュートリアル第1弾**（上の2節）。lint クリーン・テスト397件・build 成功・主要画面ブラウザ確認済み。**要 Vercel デプロイ＋再ログイン**
 - **直近の修正**: 古文単語演習（tango.html モードA/B）コミット済み・DB投入確認済み（904ノート）
 - **直近の修正**: **講師デッキの自動共有・共同編集＋デッキ一覧のサブデッキ折りたたみ（✅実機確認済み）**。講師同士で他講師のデッキ・ノートを閲覧/編集/削除/配布可（生徒は不可）。RLS `021_teacher_shared_decks.sql` は**Supabase 適用済み**。詳細は上の専用節。lint クリーン・テスト379件・build 成功
 - **直近の修正**: **学習体験の小改善4点（要実機確認）**。①講師アカウント作成スクリプト `data/create-teacher-account.mjs`（荒井先生 naobees70@gmail.com を role=teacher で作成済み）②学習画面に**カード種別バッジ**（🆕新規/🔁復習/📖学習中）③**サブデッキの復習もタグで絞る**（`getStudyCardsOffline`・親の無関係な復習が混ざらない／全件復習は親デッキで）④**繰り上げ学習（練習モード）**＝完了後も「➕ もっと練習する」で続行、`getPracticeCardsOffline`（期限近い順の未来復習＋枠外新規）を `StudySession` の `practiceMode`（**card_states/review_logs 非更新**）で出題。lint クリーン・テスト379件・build 成功。**直前**: 多段階設問・識別演習（古文）実装（要実機確認・庭は `GARDEN_ENABLED=false` で停止中）
