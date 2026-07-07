@@ -16,6 +16,10 @@
 
 ## ADR 一覧 (新しい順)
 
+### 2026-07-08
+- [20260708-teacher-student-deck-settings](decisions/20260708-teacher-student-deck-settings.md) `#rls` `#srs` `#ui-ux` `#scheduling` — 配布デッキの学習設定は講師が生徒ごとに上書きできる（user_deck_settings 共有）
+- [20260708-subdeck-assignments](decisions/20260708-subdeck-assignments.md) `#rls` `#schema` `#sync` `#ui-ux` — サブデッキの配布は「継承配布行」を明示的に作る（source_deck_id）
+
 ### 2026-07-07
 - [20260707-sync-queue-durability](decisions/20260707-sync-queue-durability.md) `#sync` `#offline` `#srs` _(Phase SRS総合評価レポート)_ — 送信キューは「失敗を静かに埋もれさせない」設計にする
 - [20260707-student-first-navigation](decisions/20260707-student-first-navigation.md) `#ui-ux` `#convention` — 生徒ファーストのナビゲーション（下メニューは毎日使う4つ＋「もっと」に格納）
