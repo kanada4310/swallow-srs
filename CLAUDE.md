@@ -262,7 +262,7 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 ## 学習体験の小改善（2026-06-19）
 
 - **カード種別バッジ**: 学習画面の進捗バー左に 🆕新規 / 🔁復習 / 📖学習中 を色分け表示（`CardStateBadge`・`currentCard.schedule.state` で判定）
-- **繰り上げ学習（練習モード）**: その日の復習・新規をやりきった後でも「➕ もっと練習する」で続行可。`getPracticeCardsOffline`（期限が近い順の未来復習＋枠外の新規、スコープは通常学習と同じ）＋ `StudySession` の `practiceMode`（**回答を card_states / review_logs に永続化しない**＝早期復習でスケジュールを乱さない安全設計）。完了画面・「カードがありません」画面の両方にボタン。インプリント等の永続化も practiceMode でスキップ
+- **繰り上げ学習（練習モード）**: その日の復習・新規をやりきった後でも「➕ もっと練習する」で続行可。`getPracticeCardsOffline`（期限が近い順の未来復習＋枠外の新規、スコープは通常学習と同じ）＋ `StudySession` の `practiceMode`（**card_states は更新しない**＝早期復習でスケジュールを乱さない安全設計。インプリント等の永続化も practiceMode でスキップ）。**練習実績は端末内だけに `practice:true` 付き review_log を残す**（`savePracticeReviewLog`・サーバー非同期・sync_queue非経由）＝連続日数/デイリーミッションには数え、`/stats`・講師進捗（サーバー由来）と識別スコアは汚さない。ADR `20260707-practice-mode-local-logging`。完了画面・「カードがありません」画面の両方にボタン
 - **講師アカウント作成スクリプト**: `data/create-teacher-account.mjs`（Supabase admin で email+password ユーザー作成＋profiles を role=teacher で upsert。`--email/--password/--name/--reset-password/--dry-run`）。荒井先生（naobees70@gmail.com）作成済み
 
 ## billing-SRSミラーリング同期 ✅ 完了

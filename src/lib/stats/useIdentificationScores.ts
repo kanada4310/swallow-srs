@@ -36,7 +36,9 @@ export function useIdentificationScores(
     if (!userId) return null
     const logs = await db.reviewLogs.where('user_id').equals(userId).toArray()
     return logs
-      .filter((l) => typeof l.score === 'number')
+      // 練習モードの回答はスコア分析から除外（実績としては連続日数等に数えるが、
+      // 識別演習の平均スコア等は本番の回答だけで測る）
+      .filter((l) => typeof l.score === 'number' && !l.practice)
       .map((l) => ({
         score: l.score as number,
         timeMs: typeof l.time_ms === 'number' ? l.time_ms : null,

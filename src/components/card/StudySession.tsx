@@ -17,7 +17,7 @@ import {
 import { pickFromQueues, LEARN_AHEAD_LIMIT_MINUTES } from '@/lib/srs/session-queue'
 import type { FieldValues } from '@/lib/template'
 import { saveAnswerLocally, undoAnswerLocally, pushToServer, getSyncStatus } from '@/lib/db/sync'
-import { getCardState, getCreatureState, saveCreatureState, getCreatureStatesMap, type LocalCardState } from '@/lib/db/schema'
+import { getCardState, getCreatureState, saveCreatureState, getCreatureStatesMap, savePracticeReviewLog, type LocalCardState } from '@/lib/db/schema'
 import { isOnline as checkOnline } from '@/lib/db/utils'
 import { SyncStatusBadge } from '@/components/ui/SyncStatusBadge'
 import { ImprintPicker } from '@/components/garden/ImprintPicker'
@@ -526,9 +526,24 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
 
       setIsSubmitting(false)
 
-      // 練習モードでは card_states / review_logs を一切更新しない（純粋な追加練習）。
-      // ローカル計算した newSchedule はキュー再提示の判定だけに使い、永続化はしない。
+      // 練習モード（繰り上げ学習）: SRSスケジュール（card_states）は一切更新しない。
+      // ただし「がんばり実績」として端末内だけに練習ログを残す（連続日数・デイリー
+      // ミッションに反映）。practice フラグ付きでサーバーには同期せず、成績表・講師の
+      // 進捗は汚さない。非ブロッキングで保存し高速フローを止めない。
       if (practiceMode) {
+        savePracticeReviewLog({
+          id: reviewLogId,
+          user_id: userId,
+          card_id: cardId,
+          deck_id: deckId,
+          ease,
+          interval: newSchedule.interval,
+          last_interval: lastInterval,
+          time_ms: timeMs,
+          reviewed_at: now,
+          score,
+          step_results: stepResults,
+        }).catch((err) => console.error('練習ログの保存に失敗:', err))
         return
       }
 

@@ -2,10 +2,12 @@
  * Tests for Dexie.js schema and database operations
  */
 
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   createCardStateId,
   generateId,
+  savePracticeReviewLog,
+  db,
 } from './schema'
 
 // Mock IndexedDB
@@ -122,6 +124,36 @@ describe('LocalCardState', () => {
     expect(state.id).toBe('user:card')
     expect(state.state).toBe('review')
     expect(state.ease_factor).toBe(2.5)
+  })
+})
+
+describe('savePracticeReviewLog', () => {
+  beforeEach(() => {
+    vi.mocked(db.reviewLogs.put).mockClear()
+  })
+
+  it('practice フラグを付け、reviewed_at で同期不要扱いにする（サーバーへ漏らさない）', async () => {
+    const reviewedAt = new Date('2026-07-07T05:00:00Z')
+    await savePracticeReviewLog({
+      id: 'log-1',
+      user_id: 'u1',
+      card_id: 'c1',
+      deck_id: 'd1',
+      ease: 3,
+      interval: 0,
+      last_interval: 0,
+      time_ms: 1200,
+      reviewed_at: reviewedAt,
+      score: null,
+      step_results: null,
+    })
+
+    expect(db.reviewLogs.put).toHaveBeenCalledTimes(1)
+    const saved = vi.mocked(db.reviewLogs.put).mock.calls[0][0]
+    expect(saved.practice).toBe(true)
+    // synced_at が null でない = getUnsyncedReviewLogs に拾われない
+    expect(saved.synced_at).toEqual(reviewedAt)
+    expect(saved.card_id).toBe('c1')
   })
 })
 

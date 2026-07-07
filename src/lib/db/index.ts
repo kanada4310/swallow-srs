@@ -11,6 +11,7 @@ export {
   getDueCards,
   saveReviewLog,
   getUnsyncedReviewLogs,
+  savePracticeReviewLog,
   markReviewLogsSynced,
   clearAllData,
   getSyncMeta,

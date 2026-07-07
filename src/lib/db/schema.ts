@@ -61,6 +61,12 @@ export interface LocalReviewLog {
   score?: number | null
   /** 多段階設問の設問別正誤。通常カードは null/未設定 */
   step_results?: { id: string; mainCorrect: boolean; followCorrect: boolean | null; overallCorrect: boolean }[] | null
+  /**
+   * 練習モード（繰り上げ学習）での回答。true の記録は「がんばり実績」として
+   * 連続日数・デイリーミッションには数えるが、SRSスケジュール（card_states）は
+   * 一切更新せず、サーバーへも同期しない（成績表・講師の進捗を汚さない）。
+   */
+  practice?: boolean
 }
 
 // Sync queue entry for pending changes
@@ -508,6 +514,24 @@ export async function saveReviewLog(
   await db.reviewLogs.put({
     ...log,
     synced_at: null,
+  })
+}
+
+/**
+ * 練習モードの回答を端末内だけに記録する（連続日数・ミッション用の実績）。
+ *
+ * - `practice: true` を必ず付与
+ * - `synced_at` を reviewed_at で埋めて「同期不要」扱いにし、getUnsyncedReviewLogs
+ *   などから拾われてサーバーへ漏れるのを二重に防ぐ（そもそも sync_queue にも積まない）
+ * - card_states は呼び出し側で更新しない＝SRSスケジュールに影響しない
+ */
+export async function savePracticeReviewLog(
+  log: Omit<LocalReviewLog, 'synced_at' | 'practice'>
+): Promise<void> {
+  await db.reviewLogs.put({
+    ...log,
+    practice: true,
+    synced_at: log.reviewed_at,
   })
 }
 
