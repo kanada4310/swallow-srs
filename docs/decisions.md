@@ -18,6 +18,7 @@
 
 ### 2026-07-07
 - [20260707-ops-rules-cms](decisions/20260707-ops-rules-cms.md) `#convention` — 開発運用ルールを CMS 方式に揃える
+- [20260707-learn-ahead](decisions/20260707-learn-ahead.md) `#srs` `#scheduling` `#ui-ux` — 学習ステップの待ち時間を learn-ahead（前倒し出題）で解消する
 
 ### 2026-06-19
 - [20260619-teacher-shared-decks](decisions/20260619-teacher-shared-decks.md) `#rls` `#auth` `#sync` — 講師デッキは講師間で自動共有・共同編集にする

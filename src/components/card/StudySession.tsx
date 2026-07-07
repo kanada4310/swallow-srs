@@ -14,6 +14,7 @@ import {
   resolveDeckSettings,
   type CardSchedule,
 } from '@/lib/srs/scheduler'
+import { pickFromQueues, LEARN_AHEAD_LIMIT_MINUTES } from '@/lib/srs/session-queue'
 import type { FieldValues } from '@/lib/template'
 import { saveAnswerLocally, undoAnswerLocally, pushToServer, getSyncStatus } from '@/lib/db/sync'
 import { getCardState, getCreatureState, saveCreatureState, getCreatureStatesMap, type LocalCardState } from '@/lib/db/schema'
@@ -170,33 +171,20 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
     if (!hasSeenCoach('answer-buttons')) setShowAnswerCoach(true)
   }, [])
 
-  // Pick next card from queues
+  // Pick next card from queues.
+  // learn-ahead: main キューが空でも、次の学習カードが LEARN_AHEAD_LIMIT_MINUTES 以内なら
+  // 待たせず前倒しで出す（待ち時間解消）。判定は純ロジック pickFromQueues に委譲。
   const pickNextCard = useCallback((
     currentMainIndex: number,
     currentLearningQueue: LearningQueueItem[]
   ): { card: CardData | null; fromLearning: boolean; waiting: boolean } => {
-    const now = Date.now()
-
-    // Sort learning queue by due time
-    const sorted = [...currentLearningQueue].sort((a, b) => a.dueAt - b.dueAt)
-
-    // Check if any learning card is due
-    if (sorted.length > 0 && sorted[0].dueAt <= now) {
-      return { card: sorted[0].card, fromLearning: true, waiting: false }
-    }
-
-    // Try main queue
-    if (currentMainIndex < mainQueue.length) {
-      return { card: mainQueue[currentMainIndex], fromLearning: false, waiting: false }
-    }
-
-    // No main queue cards left — check if learning cards are pending
-    if (sorted.length > 0) {
-      return { card: null, fromLearning: false, waiting: true }
-    }
-
-    // Session complete
-    return { card: null, fromLearning: false, waiting: false }
+    return pickFromQueues<CardData>({
+      mainQueue,
+      mainIndex: currentMainIndex,
+      learningQueue: currentLearningQueue,
+      now: Date.now(),
+      learnAheadMs: LEARN_AHEAD_LIMIT_MINUTES * 60_000,
+    })
   }, [mainQueue])
 
   // Track online status
