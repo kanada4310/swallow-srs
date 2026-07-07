@@ -1,0 +1,5200 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>つばめ古文 — 古文単語演習 v1.1</title>
+        <style>
+            :root {
+                --paper: #f5f0e6;
+                --paper-2: #efe8d8;
+                --ink: #26303a;
+                --ink-soft: #4a5560;
+                --indigo: #2b4257;
+                --indigo-2: #3a5a73;
+                --enji: #9c3848;
+                --enji-2: #b14a5a;
+                --gold: #a9852f;
+                --line: #d8cfba;
+                --line-soft: #e7dfcd;
+                --ok: #3f7d57;
+                --ok-bg: #e7f0e8;
+                --ng: #a8434f;
+                --ng-bg: #f4e4e4;
+                --shadow: 0 1px 2px rgba(38,48,58,.06),0 8px 24px rgba(38,48,58,.08);
+                --radius: 14px;
+                --maxw: 680px;
+            }
+
+            * {
+                box-sizing: border-box
+            }
+
+            html,body {
+                margin: 0;
+                padding: 0
+            }
+
+            body {
+                background: var(--paper);
+                color: var(--ink);
+                font-family: "Hiragino Mincho ProN","Yu Mincho",serif;
+                line-height: 1.7;
+                -webkit-text-size-adjust: 100%;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .wrap {
+                width: 100%;
+                max-width: var(--maxw);
+                margin: 0 auto;
+                padding: 0 18px;
+                flex: 1 0 auto
+            }
+
+            /* header */
+            header {
+                border-bottom: 1px solid var(--line);
+                background: rgba(245,240,230,.92);
+                backdrop-filter: saturate(1.1) blur(4px);
+                position: sticky;
+                top: 0;
+                z-index: 20;
+            }
+
+            .head-in {
+                max-width: var(--maxw);
+                margin: 0 auto;
+                padding: 10px 16px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+            }
+
+            .brand {
+                display: flex;
+                align-items: baseline;
+                gap: 9px;
+                font-weight: 600;
+                letter-spacing: .02em;
+                flex-shrink: 0
+            }
+
+            .brand .mark {
+                font-family: "Hiragino Mincho ProN",serif;
+                color: var(--enji);
+                font-size: 1.12rem;
+                white-space: nowrap;
+            }
+
+            .brand .sub {
+                font-size: .82rem;
+                color: var(--ink-soft);
+                letter-spacing: .06em;
+                white-space: nowrap
+            }
+
+            .ver {
+                font-size: .72rem;
+                color: var(--ink-soft);
+                font-family: system-ui,sans-serif;
+                letter-spacing: .04em
+            }
+
+            .nav-group {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-shrink: 0
+            }
+
+            .home-btn {
+                font-family: system-ui,sans-serif;
+                font-size: .8rem;
+                color: var(--ink-soft);
+                background: none;
+                border: 1px solid var(--line);
+                border-radius: 999px;
+                padding: 5px 12px;
+                cursor: pointer;
+                transition: .15s;
+                text-decoration: none;
+                white-space: nowrap;
+            }
+
+            .home-btn:hover {
+                background: var(--paper-2);
+                color: var(--ink)
+            }
+
+            @media (max-width: 560px) {
+                .brand .sub {
+                    display:none
+                }
+
+                .ver {
+                    display: none
+                }
+
+                .home-btn {
+                    font-size: .76rem;
+                    padding: 5px 10px
+                }
+            }
+
+            /* footer */
+            footer {
+                flex-shrink: 0;
+                border-top: 1px solid var(--line);
+                margin-top: 40px;
+                padding: 18px;
+                text-align: center;
+                color: var(--ink-soft);
+                font-size: .74rem;
+                letter-spacing: .08em;
+                font-family: system-ui,sans-serif;
+            }
+
+            /* generic */
+            .screen {
+                display: none;
+                padding-top: 26px;
+                animation: fade .35s ease
+            }
+
+            .screen.active {
+                display: block
+            }
+
+            @keyframes fade {
+                from {
+                    opacity: 0;
+                    transform: translateY(6px)
+                }
+
+                to {
+                    opacity: 1;
+                    transform: none
+                }
+            }
+
+            h1.title {
+                font-size: 1.55rem;
+                margin: .2em 0 .15em;
+                letter-spacing: .04em;
+                font-weight: 600;
+            }
+
+            .lead {
+                color: var(--ink-soft);
+                font-size: .95rem;
+                margin: 0 0 22px
+            }
+
+            .eyebrow {
+                font-family: system-ui,sans-serif;
+                font-size: .72rem;
+                letter-spacing: .18em;
+                color: var(--enji);
+                font-weight: 600;
+                text-transform: none;
+                margin-bottom: 6px;
+            }
+
+            /* range stats */
+            .stats {
+                display: flex;
+                gap: 10px;
+                margin: 0 0 24px;
+                flex-wrap: wrap;
+            }
+
+            .stat {
+                flex: 1;
+                min-width: 90px;
+                background: var(--paper-2);
+                border: 1px solid var(--line-soft);
+                border-radius: 12px;
+                padding: 12px 14px;
+                text-align: center;
+            }
+
+            .stat .num {
+                font-size: 1.4rem;
+                font-weight: 600;
+                color: var(--indigo);
+                font-variant-numeric: tabular-nums
+            }
+
+            .stat .lab {
+                font-size: .72rem;
+                color: var(--ink-soft);
+                font-family: system-ui,sans-serif;
+                letter-spacing: .06em;
+                margin-top: 2px
+            }
+
+            /* mode cards */
+            .modes {
+                display: flex;
+                flex-direction: column;
+                gap: 14px
+            }
+
+            .mode-card {
+                text-align: left;
+                width: 100%;
+                cursor: pointer;
+                background: #fffdf8;
+                border: 1px solid var(--line);
+                border-radius: var(--radius);
+                padding: 18px 20px;
+                box-shadow: var(--shadow);
+                transition: .18s;
+                display: flex;
+                gap: 16px;
+                align-items: flex-start;
+            }
+
+            .mode-card:hover {
+                transform: translateY(-2px);
+                border-color: var(--indigo-2)
+            }
+
+            .mode-card:focus-visible {
+                outline: 2px solid var(--indigo);
+                outline-offset: 2px
+            }
+
+            .mode-badge {
+                flex-shrink: 0;
+                width: 42px;
+                height: 42px;
+                border-radius: 11px;
+                display: grid;
+                place-items: center;
+                font-size: 1.2rem;
+                font-weight: 600;
+                background: var(--indigo);
+                color: #fff;
+                font-family: "Hiragino Mincho ProN",serif;
+            }
+
+            .mode-card.b .mode-badge {
+                background: var(--enji)
+            }
+
+            .mode-h {
+                font-size: 1.08rem;
+                font-weight: 600;
+                margin: 0 0 3px;
+                letter-spacing: .03em
+            }
+
+            .mode-d {
+                font-size: .86rem;
+                color: var(--ink-soft);
+                margin: 0
+            }
+
+            .mode-meta {
+                font-size: .74rem;
+                color: var(--gold);
+                font-family: system-ui,sans-serif;
+                margin-top: 7px;
+                letter-spacing: .04em
+            }
+
+            /* progress */
+            .topbar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 14px;
+                margin-bottom: 18px
+            }
+
+            .qcount {
+                font-family: system-ui,sans-serif;
+                font-size: .8rem;
+                color: var(--ink-soft);
+                letter-spacing: .05em
+            }
+
+            .qcount b {
+                color: var(--indigo);
+                font-size: 1.05rem
+            }
+
+            .bar {
+                flex: 1;
+                height: 6px;
+                background: var(--line-soft);
+                border-radius: 99px;
+                overflow: hidden
+            }
+
+            .bar > i {
+                display: block;
+                height: 100%;
+                background: linear-gradient(90deg,var(--indigo),var(--indigo-2));
+                width: 0;
+                transition: width .4s
+            }
+
+            .pill {
+                font-family: system-ui,sans-serif;
+                font-size: .72rem;
+                padding: 3px 10px;
+                border-radius: 99px;
+                background: var(--paper-2);
+                color: var(--ink-soft);
+                border: 1px solid var(--line-soft);
+                white-space: nowrap;
+            }
+
+            /* question */
+            .qstem {
+                background: #fffdf8;
+                border: 1px solid var(--line);
+                border-radius: var(--radius) var(--radius) 0 0;
+                border-bottom: none;
+                padding: 18px 22px 14px;
+                box-shadow: var(--shadow);
+                position: sticky;
+                top: var(--head-h,56px);
+                z-index: 15;
+            }
+
+            .qopts {
+                background: #fffdf8;
+                border: 1px solid var(--line);
+                border-top: 1px dashed var(--line-soft);
+                border-radius: 0 0 var(--radius) var(--radius);
+                padding: 16px 22px 22px;
+                box-shadow: var(--shadow);
+            }
+
+            .pos-tag {
+                display: inline-block;
+                font-family: system-ui,sans-serif;
+                font-size: .72rem;
+                color: var(--ink-soft);
+                border: 1px solid var(--line);
+                border-radius: 99px;
+                padding: 2px 10px;
+                margin-bottom: 10px;
+                letter-spacing: .05em;
+            }
+
+            .headword {
+                font-size: 2.1rem;
+                font-weight: 600;
+                letter-spacing: .05em;
+                margin: .05em 0 .05em;
+                color: var(--ink);
+            }
+
+            .kanji {
+                font-size: 1rem;
+                color: var(--ink-soft);
+                margin-bottom: 2px
+            }
+
+            .ask {
+                font-size: .86rem;
+                color: var(--ink-soft);
+                margin: 10px 0 2px;
+                font-family: system-ui,sans-serif
+            }
+
+            .ask.multi {
+                color: var(--enji)
+            }
+
+            .passage {
+                font-size: 1.18rem;
+                line-height: 1.95;
+                letter-spacing: .02em;
+                margin: 4px 0 4px;
+            }
+
+            .uline {
+                border-bottom: 2.5px solid var(--enji);
+                padding: 0 1px 1px;
+                font-weight: 600;
+                color: var(--ink);
+            }
+
+            .source {
+                font-size: .8rem;
+                color: var(--gold);
+                font-family: system-ui,sans-serif;
+                text-align: right;
+                margin-top: 4px;
+                letter-spacing: .04em
+            }
+
+            /* options */
+            .opts {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                margin-top: 0
+            }
+
+            .opt {
+                text-align: left;
+                width: 100%;
+                cursor: pointer;
+                font-family: inherit;
+                font-size: 1.02rem;
+                background: #fff;
+                border: 1.5px solid var(--line);
+                border-radius: 11px;
+                padding: 13px 16px;
+                transition: .13s;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                color: var(--ink);
+            }
+
+            .opt:hover:not(:disabled) {
+                border-color: var(--indigo-2);
+                background: #fffdf6
+            }
+
+            .opt:focus-visible {
+                outline: 2px solid var(--indigo);
+                outline-offset: 2px
+            }
+
+            .opt .box {
+                flex-shrink: 0;
+                width: 22px;
+                height: 22px;
+                border: 1.5px solid var(--line);
+                border-radius: 6px;
+                display: grid;
+                place-items: center;
+                font-size: .85rem;
+                color: #fff;
+                background: #fff;
+                transition: .13s;
+            }
+
+            .opt.radio .box {
+                border-radius: 99px
+            }
+
+            .opt.sel {
+                border-color: var(--indigo);
+                background: #eef2f5
+            }
+
+            .opt.sel .box {
+                background: var(--indigo);
+                border-color: var(--indigo)
+            }
+
+            .opt.dontknow {
+                font-family: system-ui,sans-serif;
+                font-size: .92rem;
+                color: var(--ink-soft);
+                border-style: dashed
+            }
+
+            .opt.correct {
+                border-color: var(--ok);
+                background: var(--ok-bg)
+            }
+
+            .opt.correct .box {
+                background: var(--ok);
+                border-color: var(--ok)
+            }
+
+            .opt.wrong {
+                border-color: var(--ng);
+                background: var(--ng-bg)
+            }
+
+            .opt.wrong .box {
+                background: var(--ng);
+                border-color: var(--ng)
+            }
+
+            .opt.missed {
+                border-color: var(--ok);
+                border-style: dashed;
+                background: #fff
+            }
+
+            .opt.missed .box {
+                border-color: var(--ok)
+            }
+
+            .opt:disabled {
+                cursor: default
+            }
+
+            .opt .lab {
+                flex: 1
+            }
+
+            .opt-tag {
+                flex-shrink: 0;
+                font-family: system-ui,sans-serif;
+                font-size: .68rem;
+                font-weight: 600;
+                letter-spacing: .04em;
+                padding: 2px 8px;
+                border-radius: 99px;
+                white-space: nowrap;
+            }
+
+            .opt-tag.you {
+                background: var(--ng);
+                color: #fff
+            }
+
+            .opt-tag.right {
+                background: var(--ok);
+                color: #fff
+            }
+
+            .opt-tag.right-line {
+                background: transparent;
+                color: var(--ok);
+                border: 1px solid var(--ok)
+            }
+
+            /* action row */
+            .actions {
+                margin-top: 20px;
+                display: flex;
+                gap: 10px
+            }
+
+            .btn {
+                font-family: system-ui,sans-serif;
+                font-size: .95rem;
+                font-weight: 600;
+                letter-spacing: .04em;
+                border: none;
+                border-radius: 11px;
+                padding: 13px 22px;
+                cursor: pointer;
+                transition: .15s;
+            }
+
+            .btn:focus-visible {
+                outline: 2px solid var(--indigo);
+                outline-offset: 2px
+            }
+
+            .btn-primary {
+                background: var(--indigo);
+                color: #fff;
+                flex: 1
+            }
+
+            .btn-primary:hover {
+                background: var(--indigo-2)
+            }
+
+            .btn-primary:disabled {
+                background: var(--line);
+                color: var(--ink-soft);
+                cursor: not-allowed
+            }
+
+            .btn-ghost {
+                background: var(--paper-2);
+                color: var(--ink);
+                border: 1px solid var(--line)
+            }
+
+            .btn-ghost:hover {
+                background: var(--line-soft)
+            }
+
+            .btn-enji {
+                background: var(--enji);
+                color: #fff
+            }
+
+            .btn-enji:hover {
+                background: var(--enji-2)
+            }
+
+            .btn-block {
+                width: 100%
+            }
+
+            /* feedback */
+            .feedback {
+                margin-top: 18px;
+                border-radius: 11px;
+                padding: 14px 16px;
+                font-size: .92rem;
+                border: 1px solid var(--line-soft);
+                background: var(--paper-2);
+                display: none;
+            }
+
+            .feedback.show {
+                display: block;
+                animation: fade .25s
+            }
+
+            .feedback .verdict {
+                font-weight: 600;
+                font-family: system-ui,sans-serif;
+                letter-spacing: .04em;
+                margin-bottom: 6px
+            }
+
+            .verdict-row {
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
+                gap: 10px;
+                margin-bottom: 6px;
+                flex-wrap: wrap
+            }
+
+            .verdict-row .verdict {
+                margin-bottom: 0
+            }
+
+            .word-no {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                font-family: system-ui,sans-serif;
+                letter-spacing: .02em;
+            }
+
+            .no-badge {
+                font-family: system-ui,sans-serif;
+                font-size: 1rem;
+                font-weight: 700;
+                color: #fff;
+                background: var(--enji);
+                border-radius: 8px;
+                padding: 3px 12px;
+                letter-spacing: .02em;
+                white-space: nowrap;
+                box-shadow: 0 1px 3px rgba(156,56,72,.25);
+            }
+
+            .word-name {
+                font-size: .95rem;
+                color: var(--ink);
+                font-weight: 600
+            }
+
+            .feedback.ok .verdict {
+                color: var(--ok)
+            }
+
+            .feedback.ng .verdict {
+                color: var(--ng)
+            }
+
+            .feedback .ans {
+                color: var(--ink-soft);
+                font-size: .88rem
+            }
+
+            .feedback .ans b {
+                color: var(--ink)
+            }
+
+            .feedback .trans {
+                margin-top: 8px;
+                font-size: .85rem;
+                color: var(--ink-soft);
+                line-height: 1.65
+            }
+
+            .gloss-list {
+                list-style: none;
+                margin: 6px 0 0;
+                padding: 0
+            }
+
+            .gloss-list li {
+                position: relative;
+                padding-left: 1.1em;
+                margin: 3px 0;
+                color: var(--ink);
+                font-size: .92rem;
+                line-height: 1.55;
+            }
+
+            .gloss-list li::before {
+                content: "・";
+                position: absolute;
+                left: 0;
+                color: var(--ok);
+                font-weight: 700;
+            }
+
+            .gloss-label {
+                font-size: .82rem;
+                color: var(--ink-soft);
+                font-family: system-ui,sans-serif
+            }
+
+            /* result */
+            .result-head {
+                text-align: center;
+                margin-bottom: 8px
+            }
+
+            .score-big {
+                font-size: 3rem;
+                font-weight: 600;
+                color: var(--indigo);
+                font-variant-numeric: tabular-nums;
+                letter-spacing: .02em
+            }
+
+            .score-big small {
+                font-size: 1.1rem;
+                color: var(--ink-soft);
+                font-weight: 400
+            }
+
+            .result-msg {
+                color: var(--ink-soft);
+                font-size: .95rem;
+                margin-bottom: 24px;
+                text-align: center
+            }
+
+            .review-h {
+                font-size: 1rem;
+                font-weight: 600;
+                margin: 24px 0 10px;
+                letter-spacing: .04em;
+                display: flex;
+                align-items: center;
+                gap: 8px
+            }
+
+            .review-h .cnt {
+                font-family: system-ui,sans-serif;
+                font-size: .78rem;
+                color: #fff;
+                background: var(--enji);
+                border-radius: 99px;
+                padding: 1px 9px
+            }
+
+            .rev-item {
+                background: #fffdf8;
+                border: 1px solid var(--line);
+                border-left: 3px solid var(--enji);
+                border-radius: 10px;
+                padding: 13px 15px;
+                margin-bottom: 10px;
+            }
+
+            .rev-q {
+                font-size: 1.05rem;
+                font-weight: 600;
+                margin-bottom: 3px
+            }
+
+            .rev-no {
+                display: inline-block;
+                font-family: system-ui,sans-serif;
+                font-size: .7rem;
+                font-weight: 600;
+                color: #fff;
+                background: var(--enji);
+                border-radius: 6px;
+                padding: 1px 7px;
+                margin-right: 8px;
+                letter-spacing: .03em;
+                vertical-align: middle;
+            }
+
+            .rev-no.inline {
+                background: var(--gold);
+                margin-right: 7px
+            }
+
+            .rev-q .uline {
+                font-size: 1rem
+            }
+
+            .rev-meta {
+                font-size: .74rem;
+                color: var(--ink-soft);
+                font-family: system-ui,sans-serif;
+                margin-bottom: 6px
+            }
+
+            .rev-line {
+                font-size: .85rem;
+                margin: 6px 0 0;
+                display: flex;
+                gap: 8px;
+                align-items: baseline
+            }
+
+            .rev-line .lab {
+                flex-shrink: 0;
+                display: inline-block;
+                width: 5.6em;
+                color: var(--ink-soft);
+                font-family: system-ui,sans-serif;
+                font-size: .74rem;
+            }
+
+            .rev-line.your .val {
+                color: var(--ng)
+            }
+
+            .rev-line.true .val {
+                color: var(--ok);
+                font-weight: 600
+            }
+
+            .rev-line.true .gloss-list {
+                margin: 0
+            }
+
+            .rev-line.true .gloss-list li {
+                color: var(--ok);
+                font-weight: 600;
+                font-size: .85rem
+            }
+
+            .perfect {
+                text-align: center;
+                padding: 30px 16px;
+                color: var(--ok);
+                font-size: 1.05rem;
+            }
+
+            .perfect .big {
+                font-size: 2.4rem;
+                display: block;
+                margin-bottom: 8px
+            }
+
+            .result-actions {
+                display: flex;
+                flex-direction: column;
+                gap: 11px;
+                margin-top: 26px
+            }
+
+            /* modal */
+            .modal-bg {
+                position: fixed;
+                inset: 0;
+                background: rgba(38,48,58,.45);
+                z-index: 50;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                padding: 24px;
+                animation: fade .2s;
+            }
+
+            .modal-bg.show {
+                display: flex
+            }
+
+            .modal {
+                background: var(--paper);
+                border-radius: 16px;
+                padding: 26px 24px;
+                max-width: 340px;
+                width: 100%;
+                box-shadow: 0 12px 40px rgba(38,48,58,.25);
+                text-align: center;
+            }
+
+            .modal p {
+                margin: 0 0 20px;
+                font-size: .98rem;
+                line-height: 1.7
+            }
+
+            .modal .row {
+                display: flex;
+                gap: 10px
+            }
+
+            .modal .row .btn {
+                flex: 1;
+                padding: 11px
+            }
+
+            .modal-actions {
+                display: flex;
+                flex-direction: column;
+                gap: 9px
+            }
+
+            .modal-actions .btn {
+                width: 100%;
+                padding: 11px
+            }
+
+            @media (max-width: 480px) {
+                h1.title {
+                    font-size:1.35rem
+                }
+
+                .headword {
+                    font-size: 2rem
+                }
+
+                .passage {
+                    font-size: 1.12rem
+                }
+
+                .score-big {
+                    font-size: 2.5rem
+                }
+            }
+
+            @media (prefers-reduced-motion:reduce) {
+                * {
+                    animation: none!important;
+                    transition: none!important
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <div class="head-in">
+                <div class="brand">
+                    <span class="mark">つばめ古文</span>
+                    <span class="sub">古文単語</span>
+                </div>
+                <div class="nav-group">
+                    <span class="ver">v1.1</span>
+                    <a class="home-btn nav-tango" href="https://swallow-base.com/kobun/tango/">単語トップ</a>
+                    <a class="home-btn nav-kobun" href="https://swallow-base.com/kobun/">⌂ 古文</a>
+                </div>
+            </div>
+        </header>
+        <div class="wrap">
+            <!-- ===== HOME ===== -->
+            <section id="home" class="screen active">
+                <div class="eyebrow">重要古文単語315 ／ No.1–150</div>
+                <h1 class="title">古文単語演習</h1>
+                <p class="lead">第一章 最重要語を中心とした150語から出題します。モードを選んでください。</p>
+                <div class="stats">
+                    <div class="stat">
+                        <div class="num">150</div>
+                        <div class="lab">収録語数</div>
+                    </div>
+                    <div class="stat">
+                        <div class="num">279</div>
+                        <div class="lab">例文数</div>
+                    </div>
+                    <div class="stat">
+                        <div class="num" id="stat-q">20</div>
+                        <div class="lab">出題数</div>
+                    </div>
+                </div>
+                <div class="modes">
+                    <button class="mode-card a" onclick="startSession('A')">
+                        <span class="mode-badge">意</span>
+                        <span>
+                            <p class="mode-h">モードA　単語 → 意味</p>
+                            <p class="mode-d">見出し語を見て、現代語の意味を選びます。該当する意味を漏れなく、余分なく選んで正解です。</p>
+                            <p class="mode-meta">20問 ／ 複数選択</p>
+                        </span>
+                    </button>
+                    <button class="mode-card b" onclick="startSession('B')">
+                        <span class="mode-badge">文</span>
+                        <span>
+                            <p class="mode-h">モードB　例文 → 傍線部の意味</p>
+                            <p class="mode-d">例文の傍線部に着目し、その意味として最も適切なものを一つ選びます。</p>
+                            <p class="mode-meta">10問 ／ 四択</p>
+                        </span>
+                    </button>
+                </div>
+            </section>
+            <!-- ===== QUIZ ===== -->
+            <section id="quiz" class="screen">
+                <div class="topbar">
+                    <span class="qcount">
+                        <b id="q-now">1</b>
+                        / <span id="q-total">20</span>
+                    </span>
+                    <span class="bar">
+                        <i id="q-bar"></i>
+                    </span>
+                    <span class="pill" id="q-mode">モードA</span>
+                </div>
+                <div class="qstem" id="q-stem">
+                <!-- filled: 固定される問い -->
+                </div>
+                <div class="qopts" id="q-opts">
+                <!-- filled: 選択肢 -->
+                </div>
+                <div class="feedback" id="q-feedback"></div>
+                <div class="actions">
+                    <button class="btn btn-primary" id="q-action" disabled>解答する</button>
+                </div>
+            </section>
+            <!-- ===== RESULT ===== -->
+            <section id="result" class="screen">
+                <div class="result-head">
+                    <div class="eyebrow" style="text-align:center">演習完了</div>
+                    <div class="score-big">
+                        <span id="r-score">0</span>
+                        <small>
+                            / <span id="r-total">20</span>
+                            正解
+                        </small>
+                    </div>
+                </div>
+                <p class="result-msg" id="r-msg"></p>
+                <div id="r-review">
+                <!-- filled -->
+                </div>
+                <div class="result-actions" id="r-actions">
+                <!-- filled -->
+                </div>
+            </section>
+        </div>
+        <footer>SWALLOW-BASE — つばめ古文 ／ 古文単語演習 v1.1</footer>
+        <!-- modal -->
+        <div class="modal-bg" id="modal">
+            <div class="modal">
+                <p id="modal-msg">
+                    現在の演習を終了して<br>移動しますか？
+                </p>
+                <div class="modal-actions" id="modal-actions">
+                <!-- filled -->
+                </div>
+            </div>
+        </div>
+        <script>
+            const TANGO_DATA = [{
+                "no": "001",
+                "pos": "動詞",
+                "headword": "みる",
+                "kanji": "見る",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "見る・会う"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "思う・分かる"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "（男女の）関係を結ぶ・結婚する・妻とする"
+                }, {
+                    "sense_no": 4,
+                    "gloss": "面倒を見る・世話をする"
+                }],
+                "examples": [{
+                    "gloss": "思う・分かる",
+                    "text": "めでたしとみる人の、心劣りせらるる本性見えむこそ、口惜しかるべけれ。",
+                    "headword_form": "みる",
+                    "source": "徒然・一段",
+                    "translation": "すばらしいと（思う）人が、思っていたより劣っている人だと感じられるような本性が見えるのは、残念であるにちがいない。"
+                }, {
+                    "gloss": "（男女の）関係を結ぶ・結婚する・妻とする",
+                    "text": "はやくみし女のこと、ほめ言ひ出でなどするも、程経たることなれど、なほにくし。",
+                    "headword_form": "みし",
+                    "source": "枕・にくきもの",
+                    "translation": "（今の彼が）以前（関係を結ん）だ女性のことを、ほめて口に出したりするのも、時がたったことであっても、やはり気にくわない。"
+                }, {
+                    "gloss": "面倒を見る・世話をする",
+                    "text": "《帝に差し上げようと大切に育ててきた娘であったが、》娘に恋しい人ができたので、親も見ずなりにけり。",
+                    "headword_form": "見ず",
+                    "source": "大和・一〇五段",
+                    "translation": "《娘に恋しい人ができたので、》親も（娘の）（面倒を見）なくなってしまった。"
+                }]
+            }, {
+                "no": "002",
+                "pos": "動詞",
+                "headword": "みす",
+                "kanji": "見す",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "見せる・（様子を）見せる"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "結婚させる"
+                }],
+                "examples": [{
+                    "gloss": "結婚させる",
+                    "text": "宮仕へに次ぎては、親王たちにこそは見せ奉らめ。",
+                    "headword_form": "見せ",
+                    "source": "源氏・若菜下",
+                    "translation": "（大切に育てている娘の将来は）宮仕え（をさせるか、それ）に次いでは、親王たちと（結婚させ）申し上げるのがよかろう。"
+                }]
+            }, {
+                "no": "003",
+                "pos": "動詞",
+                "headword": "みゆ",
+                "kanji": "見ゆ",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "見える・思われる"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "見られる・見せる"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "（女性が）結婚する"
+                }],
+                "examples": [{
+                    "gloss": "見える・思われる",
+                    "text": "都の中とも見えぬ所のさまなり。",
+                    "headword_form": "見え",
+                    "source": "更級",
+                    "translation": "都の中とも（見え（思われ））ない場所の様子である。"
+                }, {
+                    "gloss": "見られる・見せる",
+                    "text": "さて、出でて行くと見えて、前栽の中に隠れて、",
+                    "headword_form": "見え",
+                    "source": "大和・一四九段",
+                    "translation": "（男は）出て行くと（見せ）て、庭の植ゑ込みの中に隠れて、"
+                }, {
+                    "gloss": "（女性が）結婚する",
+                    "text": "いかならむ人にもみえて、身をも助け、幼き者どもをはぐくみ給ふべし。",
+                    "headword_form": "みえ",
+                    "source": "平家・巻七",
+                    "translation": "（相手が）どのような男でも（結婚し）て、（あなた自身の）身を守り、幼い子どもたちを（大切に）育ててください。"
+                }]
+            }, {
+                "no": "004",
+                "pos": "動詞",
+                "headword": "かいまみる",
+                "kanji": "垣間見る",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "のぞき見る"
+                }],
+                "examples": [{
+                    "gloss": "のぞき見る",
+                    "text": "女、をとこの家にいきてかいまみけるを、",
+                    "headword_form": "かいまみ",
+                    "source": "伊勢・六三段",
+                    "translation": "女は、男の家に行って（のぞき見）たところ、"
+                }]
+            }, {
+                "no": "005",
+                "pos": "動詞",
+                "headword": "よばふ",
+                "kanji": "呼ばふ",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "呼び続ける"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "求婚する・言い寄る"
+                }],
+                "examples": [{
+                    "gloss": "呼び続ける",
+                    "text": "あとに呼ばふ声あり。かへりみれば人なし。",
+                    "headword_form": "呼ばふ",
+                    "source": "宇治・巻十五・十一話",
+                    "translation": "後ろで（呼び続ける）声がする。振り返ってみると誰もいない。"
+                }, {
+                    "gloss": "求婚する・言い寄る",
+                    "text": "《実に奥ゆかしくて、》よばふ人もいと多かりけれど、かへりごともせざりけり。",
+                    "headword_form": "よばふ",
+                    "source": "大和・一四段",
+                    "translation": "《実にかわいらしい人だったので、》（求婚する）人も実に多かったが、返事もしなかった。"
+                }]
+            }, {
+                "no": "006",
+                "pos": "動詞",
+                "headword": "すく",
+                "kanji": "好く",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "風流を好む・芸道に熱中する"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "色ごとを好む・恋愛に熱中する"
+                }],
+                "examples": [{
+                    "gloss": "風流を好む・芸道に熱中する",
+                    "text": "よき人は、ひとへにすける様にも見えず、",
+                    "headword_form": "すける",
+                    "source": "徒然・三五段",
+                    "translation": "身分が高く教養がある人は、ひたすら（風流を好ん）でいるようにも見えず、"
+                }, {
+                    "gloss": "色ごとを好む・恋愛に熱中する",
+                    "text": "《光源氏の息子の夕霧は自分のことを棚に上げ説教する父を、》「かかるすきにいでや」と見奉り給ふ。",
+                    "headword_form": "すき",
+                    "source": "源氏・横笛",
+                    "translation": "《光源氏の息子の夕霧は自分のことを棚に上げ説教する父を、》「父上もご自身のこのような（色好み（恋愛））はさあどうだろうか」と思い申し上げなさる。"
+                }]
+            }, {
+                "no": "007",
+                "pos": "動詞",
+                "headword": "わたる",
+                "kanji": "渡る",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "行く・来る・通る〔移動を表す〕"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（主に「わたらせ給ふ」の形で）いらっしゃる〔存在・状態を表す〕"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "（動詞の連用形について）〜続ける"
+                }, {
+                    "sense_no": 4,
+                    "gloss": "（動詞の連用形について）一面に〔〜する〕"
+                }],
+                "examples": [{
+                    "gloss": "行く・来る・通る〔移動を表す〕",
+                    "text": "むかし、男、後涼殿のはさまを渡りければ、",
+                    "headword_form": "渡り",
+                    "source": "伊勢・一〇〇段",
+                    "translation": "昔、男が、後涼殿（と清涼殿）のすき間を（通っ）たところ、"
+                }, {
+                    "gloss": "（主に「わたらせ給ふ」の形で）いらっしゃる〔存在・状態を表す〕",
+                    "text": "高倉の宮の御子の宮たちのあまたわたらせ給ふ候ふなる。",
+                    "headword_form": "わたらせ給ふ",
+                    "source": "平家・巻四",
+                    "translation": "高倉の宮のお子様の宮たちが大勢（いらっしゃる）そうです。"
+                }, {
+                    "gloss": "（動詞の連用形について）〜続ける",
+                    "text": "女のえ得まじかりけるを、年を経てよばひわたりけるを、",
+                    "headword_form": "わたり",
+                    "source": "伊勢・六段",
+                    "translation": "女で手に入れられそうもなかった女（＝妻にしたくてもできなかった女）を、何年間も求婚し（続け）ていたが、"
+                }, {
+                    "gloss": "（動詞の連用形について）一面に〔〜する〕",
+                    "text": "夕霧立ちわたりて、",
+                    "headword_form": "わたり",
+                    "source": "更級",
+                    "translation": "夕霧が（一面に）立って、"
+                }]
+            }, {
+                "no": "008",
+                "pos": "動詞",
+                "headword": "ありく",
+                "kanji": "歩く",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "歩き回る・動き回る・出歩く"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（動詞の連用形について）〜しまわる"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "（動詞の連用形について）〜続ける"
+                }],
+                "examples": [{
+                    "gloss": "歩き回る・動き回る・出歩く",
+                    "text": "もし歩くべきことあれば、自ら歩む。",
+                    "headword_form": "歩く",
+                    "source": "方丈",
+                    "translation": "もし（出歩か）なければならないことがあると、自分（の足）で歩く。"
+                }, {
+                    "gloss": "（動詞の連用形について）〜しまわる",
+                    "text": "蛍のとびありきけるを、",
+                    "headword_form": "ありき",
+                    "source": "大和・四〇段",
+                    "translation": "蛍が飛び（まわっ）ていたのを、"
+                }, {
+                    "gloss": "（動詞の連用形について）〜続ける",
+                    "text": "後ろ見ありき給ふめる。",
+                    "headword_form": "ありき",
+                    "source": "源氏・東屋",
+                    "translation": "世話をし（続け）なさっているようだ。"
+                }]
+            }, {
+                "no": "009",
+                "pos": "動詞",
+                "headword": "おこなふ",
+                "kanji": "行ふ",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "仏道修行をする・勤行する"
+                }],
+                "examples": [{
+                    "gloss": "仏道修行をする・勤行する",
+                    "text": "山にこもりておこなはむ。",
+                    "headword_form": "おこなは",
+                    "source": "宇津保・忠こそ",
+                    "translation": "山に籠もって（仏道修行をし）よう。"
+                }]
+            }, {
+                "no": "010",
+                "pos": "動詞",
+                "headword": "なやむ",
+                "kanji": "悩む",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "病気になる・病気で苦しむ"
+                }],
+                "examples": [{
+                    "gloss": "病気になる・病気で苦しむ",
+                    "text": "身にやむごとなく思ふ人のなやむを聞きて、",
+                    "headword_form": "なやむ",
+                    "source": "枕・うれしき物",
+                    "translation": "自分にとって大事に思っている人が（病気で苦しむ）のを聞いて、"
+                }]
+            }, {
+                "no": "011",
+                "pos": "動詞",
+                "headword": "おこたる",
+                "kanji": "怠る",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "病気が治る"
+                }],
+                "examples": [{
+                    "gloss": "病気が治る",
+                    "text": "おこたりたる由、消息ある、いとうれし。",
+                    "headword_form": "おこたり",
+                    "source": "枕・うれしき物",
+                    "translation": "（病気が治っ）たという知らせを聞くのも、とてもうれしい。"
+                }]
+            }, {
+                "no": "012",
+                "pos": "動詞",
+                "headword": "おくる",
+                "kanji": "後る・遅る",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "先立たれる・死に後れる"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "後になる・残される・劣る"
+                }],
+                "examples": [{
+                    "gloss": "先立たれる・死に後れる",
+                    "text": "故姫君は、十ばかりにて殿におくれ給ひしほどは、",
+                    "headword_form": "おくれ",
+                    "source": "源氏・若紫",
+                    "translation": "亡くなった姫君は、十歳ぐらいで父君に（先立たれ）なさったとき、"
+                }]
+            }, {
+                "no": "013",
+                "pos": "動詞",
+                "headword": "ながむ",
+                "kanji": "眺む／詠む",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "Ⓐ もの思いに沈む・もの思いにふける・もの思いしながらぼんやり見る"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "Ⓑ （漢詩や和歌を）口ずさむ・（声に出して）歌う"
+                }],
+                "examples": [{
+                    "gloss": "Ⓐ もの思いに沈む・もの思いにふける・もの思いしながらぼんやり見る",
+                    "text": "暮れがたき夏の日ぐらしながむれば",
+                    "headword_form": "ながむれ",
+                    "source": "伊勢・四五段",
+                    "translation": "なかなか暮れない夏の（日に）一日中（もの思いに沈んでいる）と、"
+                }, {
+                    "gloss": "Ⓑ （漢詩や和歌を）口ずさむ・（声に出して）歌う",
+                    "text": "「こぼれてにほふ花桜かな」とながめければ、その声を院聞こしめさせたまひて、",
+                    "headword_form": "ながめ",
+                    "source": "今昔・二七巻・二九話",
+                    "translation": "（誰かが）「咲きこぼれて美しい桜の花よ」と（口ずさん）だので、その声を院がお聞きになって、"
+                }]
+            }, {
+                "no": "014",
+                "pos": "動詞",
+                "headword": "ときめく",
+                "kanji": "時めく",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "寵愛を受ける・特別に愛される"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（時流に乗って・時宜を得て）栄える・もてはやされる"
+                }],
+                "examples": [{
+                    "gloss": "寵愛を受ける・特別に愛される",
+                    "text": "いとやむごとなき際にはあらぬが、すぐれてときめき給ふありけり。",
+                    "headword_form": "ときめき",
+                    "source": "源氏・桐壺",
+                    "translation": "それほど高貴な身分ではない方で、際だって（帝の）（寵愛を受け）ていらっしゃる方があった。"
+                }, {
+                    "gloss": "（時流に乗って・時宜を得て）栄える・もてはやされる",
+                    "text": "世の中にときめき給ふ雲客、桂より遊びて帰り給ふが、",
+                    "headword_form": "ときめき",
+                    "source": "著聞・和歌",
+                    "translation": "世の中で（時流に乗って）栄え）なさっている殿上人が、桂から遊んでお帰りになっていたが、"
+                }]
+            }, {
+                "no": "015",
+                "pos": "動詞",
+                "headword": "かしづく",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "大切に育てる"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "大切に世話をする"
+                }],
+                "examples": [{
+                    "gloss": "大切に育てる",
+                    "text": "親たちかしづき給ふことかぎりなし。",
+                    "headword_form": "かしづき",
+                    "source": "堤中納言・虫めづる姫君",
+                    "translation": "親たちが（姫君を）（大切に育て）なさることこの上ない。"
+                }, {
+                    "gloss": "大切に世話をする",
+                    "text": "この少将をばよき聟（むこ）とてかしづき、",
+                    "headword_form": "かしづき",
+                    "source": "宇治・巻三八話",
+                    "translation": "この少将をよい婿として（大切に世話をし）、"
+                }]
+            }, {
+                "no": "016",
+                "pos": "動詞",
+                "headword": "めづ",
+                "kanji": "愛づ",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "愛する・好む・かわいがる"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "ほめる・たたえる・感嘆する"
+                }],
+                "examples": [{
+                    "gloss": "愛する・好む・かわいがる",
+                    "text": "いかなる人、蝶めづる姫君につかまつるらむ。",
+                    "headword_form": "めづる",
+                    "source": "堤中納言・虫めづる姫君",
+                    "translation": "どのような人が、蝶を（愛する）姫君にお仕えしているのだろう。"
+                }, {
+                    "gloss": "ほめる・たたえる・感嘆する",
+                    "text": "この歌にめでてあひにけり。",
+                    "headword_form": "めで",
+                    "source": "伊勢・九段",
+                    "translation": "（女は）この歌に（感嘆し）て（男に）逢ってしまった。"
+                }]
+            }, {
+                "no": "017",
+                "pos": "動詞",
+                "headword": "おどろく",
+                "kanji": "驚く",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "目を覚ます・起きる"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（はっと）気づく"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "驚く〔現代語と同じ〕"
+                }],
+                "examples": [{
+                    "gloss": "目を覚ます・起きる",
+                    "text": "抱きて寝たるに、おどろきて児を見るになし。",
+                    "headword_form": "おどろき",
+                    "source": "今昔・十二巻・四話",
+                    "translation": "抱いて寝たのに、（目を覚まし）て子どもを見るといない。"
+                }, {
+                    "gloss": "（はっと）気づく",
+                    "text": "秋来ぬと目にはさやかに見えねども風の音にぞおどろかれぬる",
+                    "headword_form": "おどろか",
+                    "source": "古今・一六九",
+                    "translation": "秋が来たと目にははっきりと見えないが、風の音に自然と（気づい）てしまった。"
+                }]
+            }, {
+                "no": "018",
+                "pos": "動詞",
+                "headword": "こうず",
+                "kanji": "困ず",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "疲れる"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "悩む・困る"
+                }],
+                "examples": [{
+                    "gloss": "疲れる",
+                    "text": "このごろ物の怪にあづかりてこうじにけるにや、ゐるままにすなはちねぶり声なる、いとにくし。",
+                    "headword_form": "こうじ",
+                    "source": "枕・にくきもの",
+                    "translation": "（験者は）このごろ物の怪（の退治）にかかわって（疲れ）てしまったのであろうか、座るとすぐにそのまま眠り声である（＝眠たそうな声になる）のは、実に気にくわない。"
+                }]
+            }, {
+                "no": "019",
+                "pos": "動詞",
+                "headword": "おぼゆ",
+                "kanji": "覚ゆ",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "思われる"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "思い出す・思い出される"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "似る・似ている"
+                }],
+                "examples": [{
+                    "gloss": "思われる",
+                    "text": "世の中にまた類ある事ともおぼえず。",
+                    "headword_form": "おぼえ",
+                    "source": "更級",
+                    "translation": "世の中にまた類例があることとも（思われ）ない。"
+                }, {
+                    "gloss": "思い出す・思い出される",
+                    "text": "うちある調度も昔おぼえて、",
+                    "headword_form": "おぼえ",
+                    "source": "徒然・十段",
+                    "translation": "ちょっと（置いて）ある調度も昔が（思い出され）て、"
+                }, {
+                    "gloss": "似る・似ている",
+                    "text": "少しおぼえたるところあれば、子なめりと見給ふ。",
+                    "headword_form": "おぼえ",
+                    "source": "源氏・若紫",
+                    "translation": "少し（似）ているところがあるので、（尼君の）子であろうと（光源氏は）ご覧になる。"
+                }]
+            }, {
+                "no": "020",
+                "pos": "動詞",
+                "headword": "きこゆ",
+                "kanji": "聞こゆ",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "聞こえる"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "噂される・評判になる"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "分かる"
+                }],
+                "examples": [{
+                    "gloss": "聞こえる",
+                    "text": "鶴は、いとこちたきさまなれど、鳴く声雲居まできこゆる、いとめでたし。",
+                    "headword_form": "きこゆる",
+                    "source": "枕・鳥は",
+                    "translation": "鶴は、とても大げさな様子（＝姿）であるが、鳴く声が天まで（聞こえる）のは、実にすばらしい。"
+                }, {
+                    "gloss": "噂される・評判になる",
+                    "text": "都にきこえたる白拍子の上手一人出で来たり。",
+                    "headword_form": "きこえ",
+                    "source": "平家・巻一",
+                    "translation": "都で（評判になっ）ている（＝評判の）白拍子の名人が一人出て来た。"
+                }, {
+                    "gloss": "分かる",
+                    "text": "きこえぬことども言ひつつよろめきたる、いとかはゆし。",
+                    "headword_form": "きこえ",
+                    "source": "徒然・一七五段",
+                    "translation": "（年をとった法師が）（分から）ないことを言ってはよろめいているのは、とても見るにたえない。"
+                }]
+            }, {
+                "no": "021",
+                "pos": "動詞",
+                "headword": "まもる・まぼる",
+                "kanji": "守る",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "見つめる"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "監視する"
+                }],
+                "examples": [{
+                    "gloss": "見つめる",
+                    "text": "《匂の宮は、養母の紫の上に死後の供養を頼まれて、》うちうなづきて、御顔をまもりて、涙の落つべかめれば立ちておはしぬ。",
+                    "headword_form": "まもり",
+                    "source": "源氏・御法",
+                    "translation": "（匂の宮は）うなずいて、（紫の上の）お顔を（見つめ）て、涙が落ちてきそうなので立って（部屋の外へ）いらっしゃった。"
+                }]
+            }, {
+                "no": "022",
+                "pos": "動詞",
+                "headword": "たのむ",
+                "kanji": "頼む",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "あてにする・頼りにする・期待する"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "頼りにさせる・あてにさせる・期待させる"
+                }],
+                "examples": [{
+                    "gloss": "あてにする・頼りにする・期待する",
+                    "text": "あとの矢をたのみて、初めの矢になほざりの心あり。",
+                    "headword_form": "たのみ",
+                    "source": "徒然・九二段",
+                    "translation": "あとの矢を（あてにし）て、最初の矢（を射るの）にいい加減な気持ちが起こる。"
+                }, {
+                    "gloss": "頼りにさせる・あてにさせる・期待させる",
+                    "text": "たのめしをなほや待つべき",
+                    "headword_form": "たのめ",
+                    "source": "更級",
+                    "translation": "（あなたがわたしに）（あてにさせ）たことをやはり待つべきでしょうか。"
+                }]
+            }, {
+                "no": "023",
+                "pos": "動詞",
+                "headword": "かづく",
+                "kanji": "被く",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "かぶる"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（貴人から）ほうびとしていただく"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "かぶせる"
+                }, {
+                    "sense_no": 4,
+                    "gloss": "（貴人がほうびとして）与える"
+                }],
+                "examples": [{
+                    "gloss": "かぶる",
+                    "text": "《仁和寺の法師が酔って興に入ったあまり、》足鼎を取りて、頭にかづきたれば、",
+                    "headword_form": "かづき",
+                    "source": "徒然・五三段",
+                    "translation": "（三本）足の鼎（＝食物を煮るのに用いる鉄や土製の容器）を取って、頭に（かぶっ）たところ、"
+                }, {
+                    "gloss": "（貴人から）ほうびとしていただく",
+                    "text": "大袿かづきて、",
+                    "headword_form": "かづき",
+                    "source": "大和・三三段",
+                    "translation": "ほうびとして大袿を（いただい）て、"
+                }, {
+                    "gloss": "（貴人がほうびとして）与える",
+                    "text": "中納言は御衣脱ぎてかづけ給うつ。",
+                    "headword_form": "かづけ",
+                    "source": "竹取・燕の子安貝",
+                    "translation": "（中納言は）お召し物を脱いで（ほうびとして）（与え）なさった。"
+                }]
+            }, {
+                "no": "024",
+                "pos": "動詞",
+                "headword": "ののしる",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "大声を出す・大声で騒ぐ"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "評判になる・噂になる"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "勢いが盛んである・羽振りをきかす"
+                }],
+                "examples": [{
+                    "gloss": "大声を出す・大声で騒ぐ",
+                    "text": "田舎びたる声したる犬どもの出で来てののしるも、いと恐ろしく、",
+                    "headword_form": "ののしる",
+                    "source": "源氏・浮舟",
+                    "translation": "田舎びた声をした何匹かの犬が出て来て（大声で騒ぐ）のも、とても恐ろしく、"
+                }, {
+                    "gloss": "評判になる・噂になる",
+                    "text": "この世にののしりたまふ光源氏、かかるついでに見たてまつりたまはんや。",
+                    "headword_form": "ののしり",
+                    "source": "源氏・若紫",
+                    "translation": "この世で（評判になっ）ていらっしゃる光源氏を、この機会に拝見なさいませんか。"
+                }, {
+                    "gloss": "勢いが盛んである・羽振りをきかす",
+                    "text": "左大臣の北の方にてののしり給ひける時、",
+                    "headword_form": "ののしり",
+                    "source": "大和・三四段",
+                    "translation": "左大臣の夫人として（羽振りをきかせ）ていらっしゃったときに、"
+                }]
+            }, {
+                "no": "025",
+                "pos": "動詞",
+                "headword": "やる",
+                "kanji": "遣る",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "人を行かせる・物を送る"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（動詞＋「やらず」の形で）～しきれない・最後まで（～し）ない"
+                }],
+                "examples": [{
+                    "gloss": "人を行かせる・物を送る",
+                    "text": "（ある）人の許に言ふべき事ありて、文をやるとて、",
+                    "headword_form": "やる",
+                    "source": "徒然・三段",
+                    "translation": "（ある）人のもとへ言わなければならないことがあって、手紙を（送る）といって（＝ときに）、"
+                }, {
+                    "gloss": "（動詞＋「やらず」の形で）～しきれない・最後まで（～し）ない",
+                    "text": "言ひもやらず泣くさま、ことわりなり。",
+                    "headword_form": "やら",
+                    "source": "源氏・総角",
+                    "translation": "（老人が）言い（きれず）泣く様子は、もっともである。"
+                }]
+            }, {
+                "no": "026",
+                "pos": "動詞",
+                "headword": "いらふ",
+                "kanji": "答ふ",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "答える"
+                }],
+                "examples": [{
+                    "gloss": "答える",
+                    "text": "一度にいらへむも、待ちけるかともぞ思ふとて、",
+                    "headword_form": "いらへ",
+                    "source": "宇治・巻十・二話",
+                    "translation": "ただ一度で（答える）ようなのも、待っていたのかと思うと困ると考えて、"
+                }]
+            }, {
+                "no": "027",
+                "pos": "動詞",
+                "headword": "あきらむ",
+                "kanji": "明らむ",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "明らかにする・はっきりさせる"
+                }],
+                "examples": [{
+                    "gloss": "明らかにする・はっきりさせる",
+                    "text": "なりともあきらめ申さん。",
+                    "headword_form": "あきらめ",
+                    "source": "徒然・二三五段",
+                    "translation": "事であっても（明らかにし）て差し上げよう。"
+                }]
+            }, {
+                "no": "028",
+                "pos": "動詞",
+                "headword": "にほふ",
+                "kanji": "匂ふ",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "美しく映える・美しく輝く"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "香りがする〔現代語と同じ〕"
+                }],
+                "examples": [{
+                    "gloss": "美しく映える・美しく輝く",
+                    "text": "いにしへの奈良の都の八重桜けふ九重ににほひぬるかな",
+                    "headword_form": "にほひ",
+                    "source": "詞花・二九",
+                    "translation": "昔の（都である）奈良の都で咲いた八重桜が、今日この宮中で（美しく咲い）たなあ。"
+                }]
+            }, {
+                "no": "029",
+                "pos": "動詞",
+                "headword": "ねんず",
+                "kanji": "念ず",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "我慢する"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（心の中で）祈る〔現代語と同じ〕"
+                }],
+                "examples": [{
+                    "gloss": "我慢する",
+                    "text": "《伏見稲荷に一念発起して参詣したときに、》御社のほどの、わりなうくるしきを、念じのぼるに、",
+                    "headword_form": "念じ",
+                    "source": "枕・うらやましげなる物",
+                    "translation": "《伏見稲荷に一念発起して参詣したときに、》お社のあたりが（急坂で）、どうしようもなく苦しいのを、（我慢して）登っていると、"
+                }]
+            }, {
+                "no": "030",
+                "pos": "動詞",
+                "headword": "まうく",
+                "kanji": "設く",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "準備する・用意する"
+                }],
+                "examples": [{
+                    "gloss": "準備する・用意する",
+                    "text": "惟光は、懐に設けたる、柄短き筆など、御車とどむる所にて奉れり。",
+                    "headword_form": "設け",
+                    "source": "源氏・澪標",
+                    "translation": "惟光は、懐に（用意し）ていた、柄の短い筆などを、お車をとめた場所で（光源氏に）差し上げた。"
+                }]
+            }, {
+                "no": "031",
+                "pos": "動詞",
+                "headword": "ゐる",
+                "kanji": "Ａ 居る／Ｂ 率る",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "居る・じっとしている・（人が）留まる・（鳥が）とまる"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "（動詞の連用形について）～ている"
+                }, {
+                    "sense_no": 4,
+                    "gloss": "連れる・伴う"
+                }],
+                "examples": [{
+                    "gloss": "居る・じっとしている・（人が）留まる・（鳥が）とまる",
+                    "text": "三寸ばかりなる人、いとうつくしうてゐたり。",
+                    "headword_form": "ゐ",
+                    "source": "竹取・かぐや姫の生ひ立ち",
+                    "translation": "三寸（＝約九センチ）くらいの人が、とてもかわいらしく（座っ）ていた。"
+                }]
+            }, {
+                "no": "032",
+                "pos": "動詞",
+                "headword": "ぐす",
+                "kanji": "具す",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "伴う・連れる・添える"
+                }],
+                "examples": [{
+                    "gloss": "伴う・連れる・添える",
+                    "text": "うつはものども具せざりければ、手にむすびて食はす。",
+                    "headword_form": "具せ",
+                    "source": "伊勢・異一段",
+                    "translation": "（男は）器なども（伴っ）（＝持っ）ていなかったので、（水を）手ですくって（女に）飲ませる。"
+                }]
+            }, {
+                "no": "033",
+                "pos": "動詞",
+                "headword": "ふ",
+                "kanji": "経",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "（時間が）たつ・経過する"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（場所を）通る・経由する"
+                }],
+                "examples": [{
+                    "gloss": "（時間が）たつ・経過する",
+                    "text": "日ごろ経て、宮に帰りたまうけり。",
+                    "headword_form": "経",
+                    "source": "伊勢・八三段",
+                    "translation": "日が（たっ）て、御所にお帰りになった。"
+                }, {
+                    "gloss": "（場所を）通る・経由する",
+                    "text": "の松原をへて行く。",
+                    "headword_form": "へ",
+                    "source": "土佐・二月一日",
+                    "translation": "崎の松原を（通っ）て行く。"
+                }]
+            }, {
+                "no": "034",
+                "pos": "動詞",
+                "headword": "さる",
+                "kanji": "Ａ 避る／Ｂ 去る",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "避ける"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（時節が）来る・（その時に）なる〔現代語と同じ〕"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "立ち去る・過ぎ去る〔現代語と同じ〕"
+                }],
+                "examples": [{
+                    "gloss": "避ける",
+                    "text": "さらぬことのみいとど重なりて、",
+                    "headword_form": "さら",
+                    "source": "徒然・五九段",
+                    "translation": "（避ける）ことのできないことばかりがますます重なって、"
+                }, {
+                    "gloss": "（時節が）来る・（その時に）なる〔現代語と同じ〕",
+                    "text": "夕されば野辺の秋風身にしみて鶉鳴くなり深草の里",
+                    "headword_form": "され",
+                    "source": "千載・二五九",
+                    "translation": "夕方に（なる）と野辺の秋風が身にしみて、鶉が鳴いているような深草の里で。"
+                }]
+            }, {
+                "no": "035",
+                "pos": "動詞",
+                "headword": "ものす",
+                "kanji": "物す",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "あり・ある・いる"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（ものごとを）する"
+                }],
+                "examples": [{
+                    "gloss": "あり・ある・いる",
+                    "text": "（夕霧は）いづこよりものしつるぞ。",
+                    "headword_form": "ものし",
+                    "source": "源氏・野分",
+                    "translation": "《（夕霧は）どこから（来）たのか》と源氏はお尋ねになった。"
+                }, {
+                    "gloss": "（ものごとを）する",
+                    "text": "御文をだにものせさせ給へ。",
+                    "headword_form": "ものせ",
+                    "source": "落窪・巻一",
+                    "translation": "せめてそのようなお手紙だけでもお（書き）ください。"
+                }]
+            }, {
+                "no": "036",
+                "pos": "動詞",
+                "headword": "ならふ",
+                "kanji": "慣らふ・馴らふ",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "慣れる"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "親しくなる・なじむ"
+                }],
+                "examples": [{
+                    "gloss": "慣れる",
+                    "text": "ならはぬ道なれば、",
+                    "headword_form": "ならは",
+                    "source": "とはずがたり・巻四",
+                    "translation": "それでもやはり（慣れ）ない道であるので、"
+                }, {
+                    "gloss": "親しくなる・なじむ",
+                    "text": "かかる有様もならひ給はず、ところせき御身にて、珍しく",
+                    "headword_form": "ならひ",
+                    "source": "源氏・若紫",
+                    "translation": "《光源氏は、》このような（山の）様子にも（なじみ）なさっていなくて、（簡単には外出できない）窮屈なご身分で、（山の景色を）すらしいとお思いになった。"
+                }]
+            }, {
+                "no": "037",
+                "pos": "動詞",
+                "headword": "しのぶ",
+                "kanji": "Ａ 忍ぶ／Ｂ 偲ぶ",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "我慢する・こらえる〔耐え忍ぶ〕"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "人目につかないようにする〔人目を忍ぶ〕"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "思い出す・恋い慕う〔過去・人を偲ぶ〕"
+                }],
+                "examples": [{
+                    "gloss": "我慢する・こらえる〔耐え忍ぶ〕",
+                    "text": "うちにはかぎりなく妬く心憂く思ふを、しのぶるになむありける。",
+                    "headword_form": "しのぶる",
+                    "source": "大和・一四九段",
+                    "translation": "《ほかの女のもとに夫が通うようになった妻は平気を装っていたが、》（妻は）心ではこの上なく妬ましくつらく思っているのを、（我慢する）のであった。"
+                }, {
+                    "gloss": "思い出す・恋い慕う〔過去・人を偲ぶ〕",
+                    "text": "き人をしのぶる宵のむら雨に濡れてや来つる山時鳥",
+                    "headword_form": "しのぶる",
+                    "source": "源氏・幻",
+                    "translation": "（亡き人を）（思い出す）夜の俄雨に濡れてやってきたのか。山の時鳥は。"
+                }]
+            }, {
+                "no": "038",
+                "pos": "動詞",
+                "headword": "わぶ",
+                "kanji": "侘ぶ",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "困る・嘆く・つらく思う"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（動詞の連用形について）～かねる・～することができない"
+                }],
+                "examples": [{
+                    "gloss": "困る・嘆く・つらく思う",
+                    "text": "いたう強ひられて、わびにて侍り。",
+                    "headword_form": "わび",
+                    "source": "源氏・花宴",
+                    "translation": "にひどく（酒を）強制されて、（困っ）てしまっております。"
+                }, {
+                    "gloss": "困る・嘆く・つらく思う",
+                    "text": "遠くも来にけるかな、とわび合へるに、",
+                    "headword_form": "わび",
+                    "source": "伊勢・九段",
+                    "translation": "（男たちは）この上なく遠くまで来てしまったものだなあと、（嘆）き合っていると、"
+                }, {
+                    "gloss": "（動詞の連用形について）～かねる・～することができない",
+                    "text": "わびつつ、様々の財物かたはしより捨つるが如くすれども、",
+                    "headword_form": "わび",
+                    "source": "方丈",
+                    "translation": "（人々は飢饉に苦しんで）（困っ）（かね）て、様々な宝物を片っ端から捨てるようにする（＝安売り払う）が、"
+                }]
+            }, {
+                "no": "039",
+                "pos": "形容詞",
+                "headword": "をかし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "すばらしい〔美しい・かわいい・おもしろい・風流だなど肯定的に評価する様子や心情を表す〕"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "おかしい・滑稽だ"
+                }],
+                "examples": [{
+                    "gloss": "すばらしい〔美しい・かわいい・おもしろい・風流だなど肯定的に評価する様子や心情を表す〕",
+                    "text": "また、一匹か二匹など、ほのかに光って（飛んで）行くもをかし。",
+                    "headword_form": "をかし",
+                    "source": "枕・春は曙",
+                    "translation": "また、一匹か二匹ほど、ほのかに光って（飛んで）行くのも、（すばらしい〔すてきだ・美しい・風情がある〕）。"
+                }, {
+                    "gloss": "すばらしい〔美しい・かわいい・おもしろい・風流だなど肯定的に評価する様子や心情を表す〕",
+                    "text": "笛をいとをかしく吹き澄まして、過ぎぬなり。",
+                    "headword_form": "をかしく",
+                    "source": "更級",
+                    "translation": "笛をとても（すばらしく〔うまく〕）澄んだ音色で吹いて、通り過ぎて行ってしまったようだ。"
+                }, {
+                    "gloss": "おかしい・滑稽だ",
+                    "text": "妻、「をかし」と思ひて、笑ひてやみにけり。",
+                    "headword_form": "をかし",
+                    "source": "今昔・二八巻・四二話",
+                    "translation": "妻は、「（滑稽だ〔おかしい〕）」と思って、笑って終わった。"
+                }]
+            }, {
+                "no": "040",
+                "pos": "形容詞",
+                "headword": "よろし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "悪くはない・まあよい"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "普通だ"
+                }],
+                "examples": [{
+                    "gloss": "悪くはない・まあよい",
+                    "text": "「よろしく侍り。」",
+                    "headword_form": "よろしく",
+                    "source": "無名抄",
+                    "translation": "「（悪くはない）」です（＝悪くはありません）。"
+                }, {
+                    "gloss": "普通だ",
+                    "text": "よろしき事にだに、かかる別れの悲しからぬはなきわざなるを、ましてあはれに言ふかひなし。",
+                    "headword_form": "よろしき",
+                    "source": "源氏・桐壺",
+                    "translation": "《普通の》状況でさえ、このような（母子の）別れが悲しくないことはないことだが、まして（源氏の幼さを考えると）かわいそうでどうしようもない。"
+                }]
+            }, {
+                "no": "041",
+                "pos": "形容詞",
+                "headword": "ありがたし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "めったにない・珍しい"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（めったにないほど）すばらしい"
+                }],
+                "examples": [{
+                    "gloss": "めったにない・珍しい",
+                    "text": "ありがたきもの。舅にほめらるる婿。",
+                    "headword_form": "ありがたき",
+                    "source": "枕・ありがたき物",
+                    "translation": "めったにない（＝珍しい）もの。舅（＝妻の父）にほめられる婿。"
+                }, {
+                    "gloss": "（めったにないほど）すばらしい",
+                    "text": "「さ候へばこそ、世に有り難きものには侍りけれ」とていよいよ秘蔵しけり。",
+                    "headword_form": "有り難き",
+                    "source": "徒然・八八段",
+                    "translation": "「そうでございますから、実に（すばらしい）ものなのでございますよ」と言ってますます大切にしまっていた。"
+                }]
+            }, {
+                "no": "042",
+                "pos": "形容詞",
+                "headword": "つきづきし",
+                "kanji": "付き付きし",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "似つかわしい・ふさわしい"
+                }],
+                "examples": [{
+                    "gloss": "似つかわしい・ふさわしい",
+                    "text": "家居のつきづきしく、あらまほしきこそ、仮の宿りとは思へど、興あるものなれ。",
+                    "headword_form": "つきづきしく",
+                    "source": "徒然・十段",
+                    "translation": "住居が（住んでいる人に）（似つかわしく）、理想的であるのは、（現世における）仮の宿だとは思っても、興味をそそられるものである。"
+                }]
+            }, {
+                "no": "043",
+                "pos": "形容詞",
+                "headword": "なまめかし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "優美だ・上品だ"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "若々しい・みずみずしい"
+                }],
+                "examples": [{
+                    "gloss": "優美だ・上品だ",
+                    "text": "《春宮は》あてになまめかしくおはします。",
+                    "headword_form": "なまめかしく",
+                    "source": "源氏・若菜下",
+                    "translation": "《皇太子は》高貴で（上品で（優美で））いらっしゃる。"
+                }, {
+                    "gloss": "若々しい・みずみずしい",
+                    "text": "《光源氏は四十歳のお祝いをお迎えになるが》なまめかしく、人の親げなくおはしますを、",
+                    "headword_form": "なまめかしく",
+                    "source": "源氏・若菜上",
+                    "translation": "《光源氏は四十歳のお祝いをお迎えになるが》（若々しく）、人の親という様子ではなくていらっしゃるので、"
+                }]
+            }, {
+                "no": "044",
+                "pos": "形容詞",
+                "headword": "めでたし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "すばらしい"
+                }],
+                "examples": [{
+                    "gloss": "すばらしい",
+                    "text": "藤の花は、しなひ長く、色濃く咲きたる、いとめでたし。",
+                    "headword_form": "めでたし",
+                    "source": "枕・木の花は",
+                    "translation": "藤の花は、花房のしだれが長く、色が濃く咲いているのが、とても（すばらしい）。"
+                }]
+            }, {
+                "no": "045",
+                "pos": "形容詞",
+                "headword": "うるはし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "きちんとしている・整っている・端正だ"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "立派だ・美しい・見事だ"
+                }],
+                "examples": [{
+                    "gloss": "きちんとしている・整っている・端正だ",
+                    "text": "日の装束うるはしくしたる人の、太刀帯きて笏取り、",
+                    "headword_form": "うるはしく",
+                    "source": "今昔・二八巻・二話",
+                    "translation": "晴れの装束を（きちんと）着た人が、太刀を身につけて笏を（手に）取り、"
+                }, {
+                    "gloss": "立派だ・美しい・見事だ",
+                    "text": "枇杷殿はあまり御心うるはしくすなほにて、へつらひ飾りたる小国には負はぬ御相なり。",
+                    "headword_form": "うるはしく",
+                    "source": "大鏡・雄々物語",
+                    "translation": "枇杷殿はあまりにお気持ちが（美しく）素直で、へつらい飾った小国（＝この国）には似合わないご人相である。"
+                }]
+            }, {
+                "no": "046",
+                "pos": "形容詞",
+                "headword": "やむごとなし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "高貴だ・尊い"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "格別だ・並々でない・優れている"
+                }],
+                "examples": [{
+                    "gloss": "高貴だ・尊い",
+                    "text": "やむごとなき人のかくれ給へるもあまた聞こゆ。",
+                    "headword_form": "やむごとなき",
+                    "source": "方丈",
+                    "translation": "（高貴な）人がお亡くなりになったということもたくさん聞こえる（＝耳にした）。"
+                }, {
+                    "gloss": "格別だ・並々でない・優れている",
+                    "text": "この大臣の御おぼえいとやむごとなきに、",
+                    "headword_form": "やむごとなき",
+                    "source": "源氏・桐壺",
+                    "translation": ""
+                }]
+            }, {
+                "no": "047",
+                "pos": "形容詞",
+                "headword": "おとなし",
+                "kanji": "大人し",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "大人らしい・大人びている・ませている"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "思慮分別がある・落ち着いている"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "主だっている・年配で中心的な立場の者である"
+                }],
+                "examples": [{
+                    "gloss": "大人らしい・大人びている・ませている",
+                    "text": "《春宮は》十一になりたまへど、ほどより大きに大人しうきよらに、",
+                    "headword_form": "大人しう",
+                    "source": "源氏・澪標",
+                    "translation": "《皇太子は》十一歳におなりになるが、年齢よりも大いに（大人びていて）美しく、"
+                }, {
+                    "gloss": "思慮分別がある・落ち着いている",
+                    "text": "上人なほゆかしがりて、おとなしく物知りぬべき顔したる神官を呼びて、",
+                    "headword_form": "おとなしく",
+                    "source": "徒然・二三六段",
+                    "translation": "上人はやはり知りたがって、（思慮分別があり）物を（よく）知っていそうな神官を呼んで、"
+                }, {
+                    "gloss": "主だっている・年配で中心的な立場の者である",
+                    "text": "おとなしく、もどきぬべくもあらぬ人のいひ聞かするを、",
+                    "headword_form": "おとなしく",
+                    "source": "徒然・二三六段",
+                    "translation": "（主だっている）、逆らって非難することができそうもない人が言い聞かせるのを、"
+                }]
+            }, {
+                "no": "048",
+                "pos": "形容詞",
+                "headword": "ゆかし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "見たい・聞きたい・知りたい"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "心ひかれる・慕わしい"
+                }],
+                "examples": [{
+                    "gloss": "見たい・聞きたい・知りたい",
+                    "text": "《天香具山は》年ごろゆかしう思ひわたりし所なりければ、",
+                    "headword_form": "ゆかしう",
+                    "source": "菅笠・下巻",
+                    "translation": "《天香具山は》長年（見たいと）（＝登りたく）思い続けていた所であったので、"
+                }, {
+                    "gloss": "心ひかれる・慕わしい",
+                    "text": "山路来て何やらゆかしすみれ草",
+                    "headword_form": "ゆかし",
+                    "source": "野ざらし",
+                    "translation": "（さびしい）山道をやってきて何やら（心ひかれる）。すみれ草よ。"
+                }]
+            }, {
+                "no": "049",
+                "pos": "形容詞",
+                "headword": "なつかし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "親しみ深い・心ひかれる・好ましい"
+                }],
+                "examples": [{
+                    "gloss": "親しみ深い・心ひかれる・好ましい",
+                    "text": "《村上天皇は》なつかしうなまめきたる方は、延喜にはまさり申させたまへり。",
+                    "headword_form": "なつかしう",
+                    "source": "大鏡・雑々物語",
+                    "translation": "《村上天皇は》（親しみ深く）優美な点では、醍醐天皇にまさり申し上げなさっている。"
+                }]
+            }, {
+                "no": "050",
+                "pos": "形容詞",
+                "headword": "はづかし",
+                "kanji": "恥づかし",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "恥ずかしい・きまりが悪い〔現代語と同じ〕"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（こちらが恥ずかしくなるほど相手が）立派だ"
+                }],
+                "examples": [{
+                    "gloss": "（こちらが恥ずかしくなるほど相手が）立派だ",
+                    "text": "はづかしき人の、歌の本末問ひたるに、ふとおぼえたる、我ながらうれし。",
+                    "headword_form": "はづかしき",
+                    "source": "枕・うれしき物",
+                    "translation": "（こちらが恥ずかしくなるほど立派な）方が、歌の上の句や下の句を尋ねたときに、ふと思い出したのは、我ながらうれしい。"
+                }]
+            }, {
+                "no": "051",
+                "pos": "形容詞",
+                "headword": "こころにくし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "奥ゆかしい・上品だ・心ひかれる"
+                }],
+                "examples": [{
+                    "gloss": "奥ゆかしい・上品だ・心ひかれる",
+                    "text": "《身分が高く教養がある人の住まいというものは、》うちある調度も昔覚えてやすらかなるこそ、心にくしと見ゆれ。",
+                    "headword_form": "心にくし",
+                    "source": "徒然・十段",
+                    "translation": "《身分が高く教養がある人の住まいというものは、》ちょっと（置いて）ある調度も昔が思い出されて（＝古風で）落ち着いているのが、（奥ゆかしい）と思われる。"
+                }]
+            }, {
+                "no": "052",
+                "pos": "形容詞",
+                "headword": "うつくし",
+                "kanji": "美し",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "かわいい・いとしい"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "美しい〔現代語と同じ〕"
+                }],
+                "examples": [{
+                    "gloss": "かわいい・いとしい",
+                    "text": "うつくしきもの。瓜にかきたるちごの顔。",
+                    "headword_form": "うつくしき",
+                    "source": "枕・うつくしき物",
+                    "translation": "（かわいい）もの。瓜に描いた幼児の顔。"
+                }]
+            }, {
+                "no": "053",
+                "pos": "形容詞",
+                "headword": "かなし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "いとしい・かわいい"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "悲しい〔現代語と同じ〕"
+                }],
+                "examples": [{
+                    "gloss": "いとしい・かわいい",
+                    "text": "《男は新しい妻を河内に持った。もとからの妻は河内に出かける男をこころよく送り出す。疑念を抱いた男は出かけるふりをして庭の植え込みに身を隠す。妻は男の向かったであろう遠く険しい山の方を見つめ、男の身を案じる歌を詠んだのだった。》（男は）限りなくかなしとおもひて、河内へも行かずなりにけり。",
+                    "headword_form": "かなし",
+                    "source": "伊勢・三段",
+                    "translation": "《男はもとからの妻を》この上なく（いとしい）と思って、河内へも行かなくなってしまった。"
+                }]
+            }, {
+                "no": "054",
+                "pos": "形容詞",
+                "headword": "らうたし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "かわいい・いじらしい"
+                }],
+                "examples": [{
+                    "gloss": "かわいい・いじらしい",
+                    "text": "《赤ちゃんが》かい付きて寝たる、いとらうたし。",
+                    "headword_form": "らうたし",
+                    "source": "枕・うつくしき物",
+                    "translation": "《赤ちゃんが》抱きついて寝てしまったのは、とても（かわいい）。"
+                }, {
+                    "gloss": "かわいい・いじらしい",
+                    "text": "《若紫は》頬つきいとらうたげにて、",
+                    "headword_form": "らうたげ",
+                    "source": "源氏・若紫",
+                    "translation": "《若紫は》顔つきがとても（かわいらしく）て、"
+                }]
+            }, {
+                "no": "055",
+                "pos": "形容詞",
+                "headword": "めやすし",
+                "kanji": "目安し",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "（見た目の）感じがよい・見苦しくない"
+                }],
+                "examples": [{
+                    "gloss": "（見た目の）感じがよい・見苦しくない",
+                    "text": "《女房は》髪ゆるるかに、いと長く、めやすき人なめり。",
+                    "headword_form": "めやすき",
+                    "source": "源氏・若紫",
+                    "translation": "《女房は》髪がゆったりと（して）、とても長く、（感じがよい）人であるようだ。"
+                }]
+            }, {
+                "no": "056",
+                "pos": "形容詞",
+                "headword": "あやし",
+                "kanji": "怪し／賤し",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "不思議だ・変だ・妙だ"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "身分が低い・卑しい"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "粗末だ・みすぼらしい"
+                }],
+                "examples": [{
+                    "gloss": "不思議だ・変だ・妙だ",
+                    "text": "ただ文字一つに、あやしう、あてにもいやしうもなるは",
+                    "headword_form": "あやしう",
+                    "source": "枕",
+                    "translation": "ただ文字一つで、（不思議に）品にも下品にもなるのは、どういうことであろうか。"
+                }, {
+                    "gloss": "身分が低い・卑しい",
+                    "text": "あやしの身には得がたき物にて、",
+                    "headword_form": "あやしの",
+                    "source": "発心・第六七",
+                    "translation": "（身分が低い）わが身には手に入れにくい物で、"
+                }, {
+                    "gloss": "粗末だ・みすぼらしい",
+                    "text": "あやしき舟どもに柴刈り積み、",
+                    "headword_form": "あやしき",
+                    "source": "源氏・橋姫",
+                    "translation": "（粗末な）舟に木の枝を刈って積み、"
+                }]
+            }, {
+                "no": "057",
+                "pos": "形容詞",
+                "headword": "さうざうし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "もの足りない・さびしい"
+                }],
+                "examples": [{
+                    "gloss": "もの足りない・さびしい",
+                    "text": "帝、さうざうしとや思し召しけむ、殿上に出でさせおはしまして、",
+                    "headword_form": "さうざうし",
+                    "source": "大鏡・道長",
+                    "translation": "帝は、（もの足りない）とお思いになったのだろうか、殿上の間に出ていらっしゃって、"
+                }]
+            }, {
+                "no": "058",
+                "pos": "形容詞",
+                "headword": "つれなし",
+                "kanji": "連れ無し",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "平然としている・平気だ"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "冷淡だ・薄情だ"
+                }],
+                "examples": [{
+                    "gloss": "平然としている・平気だ",
+                    "text": "つれなく、なにとも思ひたらぬさまにて、たゆめ過ぐすも、またをかし。",
+                    "headword_form": "つれなく",
+                    "source": "枕・うれしき物",
+                    "translation": "まったく（平然として）、なんとも思っていない様子で、（相手を）油断させ過ごすのも、またおもしろい。"
+                }, {
+                    "gloss": "冷淡だ・薄情だ",
+                    "text": "をとこ、つれなかりける女にいひやりける。",
+                    "headword_form": "つれなかり",
+                    "source": "伊勢・五四段",
+                    "translation": "男が、（自分に）（冷淡だっ）た女に言い贈った（歌）。"
+                }]
+            }, {
+                "no": "059",
+                "pos": "形容詞",
+                "headword": "なめし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "無礼だ"
+                }],
+                "examples": [{
+                    "gloss": "無礼だ",
+                    "text": "ことばなめき人こそいとにくけれ。",
+                    "headword_form": "なめき",
+                    "source": "枕・こと葉なめき人こそ",
+                    "translation": "〓の言葉が（無礼な）人はほんとうに気にくわない。"
+                }]
+            }, {
+                "no": "060",
+                "pos": "形容詞",
+                "headword": "おどろおどろし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "大げさだ・仰々しい"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "気味が悪い・恐ろしい"
+                }],
+                "examples": [{
+                    "gloss": "大げさだ・仰々しい",
+                    "text": "夜いたくふけて、門をいたうおどろおどろしうたたけば、",
+                    "headword_form": "おどろおどろしう",
+                    "source": "大鏡・道長",
+                    "translation": "夜がひどく更けて、門をとても（大げさに）たたくので、"
+                }, {
+                    "gloss": "気味が悪い・恐ろしい",
+                    "text": "おどろおどろしくかきたれ雨の降る夜、",
+                    "headword_form": "おどろおどろしく",
+                    "source": "枕・里にまかでたるに",
+                    "translation": "（気味悪く）激しく雨の降る夜、"
+                }]
+            }, {
+                "no": "061",
+                "pos": "形容詞",
+                "headword": "うし",
+                "kanji": "憂し",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "つらい・いやだ・情けない"
+                }],
+                "examples": [{
+                    "gloss": "つらい・いやだ・情けない",
+                    "text": "今日よりはうき世の中をいかでわたらむ。",
+                    "headword_form": "うき",
+                    "source": "大和・一五七段",
+                    "translation": "今日からは（つらい）世の中をどうして渡ってゆけばいいのだろう。"
+                }]
+            }, {
+                "no": "062",
+                "pos": "形容詞",
+                "headword": "むつかし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "不快だ・煩わしい・うっとうしい"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "気味が悪い・恐ろしい"
+                }],
+                "examples": [{
+                    "gloss": "不快だ・煩わしい・うっとうしい",
+                    "text": "女君は、暑くむつかしとて、御髪すまして、",
+                    "headword_form": "むつかし",
+                    "source": "源氏・若菜下",
+                    "translation": "女君（＝紫の上）は、「暑く、（うっとうしい）」と言って、御髪を洗って、"
+                }, {
+                    "gloss": "気味が悪い・恐ろしい",
+                    "text": "奥の方は暗うものむつかしと、女は思ひたれば、",
+                    "headword_form": "むつかし",
+                    "source": "源氏・夕顔",
+                    "translation": "《光源氏は女（＝夕顔）をある荒れ果てた院に連れていった。》奥の方は暗くなんとなく（気味が悪い）と、女は思っているので、"
+                }]
+            }, {
+                "no": "063",
+                "pos": "形容詞",
+                "headword": "すさまじ",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "興ざめだ・おもしろくない・しらけている"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "殺風景だ・寒々としている・荒涼とした"
+                }],
+                "examples": [{
+                    "gloss": "興ざめだ・おもしろくない・しらけている",
+                    "text": "すさまじきもの。昼ほゆる犬、春の網代。",
+                    "headword_form": "すさまじき",
+                    "source": "枕・すさまじき物",
+                    "translation": "（興ざめな）もの。昼ほえる犬、春の網代。"
+                }, {
+                    "gloss": "殺風景だ・寒々としている・荒涼とした",
+                    "text": "冬の夜の月は、昔よりすさまじき物の例にひかれて侍りけるに、",
+                    "headword_form": "すさまじき",
+                    "source": "更級",
+                    "translation": "冬の夜の月は、昔から（殺風景な）（寒々とした）物の例として引かれて"
+                }]
+            }, {
+                "no": "064",
+                "pos": "形容詞",
+                "headword": "びんなし",
+                "kanji": "便無し",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "不都合だ・具合が悪い・いたわしい"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "気の毒だ"
+                }],
+                "examples": [{
+                    "gloss": "不都合だ・具合が悪い・いたわしい",
+                    "text": "左の大臣の、一の人といひながら、美麗ことのほかにて参れる、びんなきことなり。",
+                    "headword_form": "びんなき",
+                    "source": "大鏡・時平",
+                    "translation": "《帝はぜいたくを禁じていた。》左大臣（＝藤原時平）が、最高の身分の人とはいいながらも、ことのほか華美な衣服で参内したのは、（不都合な）ことである。"
+                }]
+            }, {
+                "no": "065",
+                "pos": "形容詞",
+                "headword": "いとほし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "気の毒だ・かわいそうだ"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "いとしい・かわいい"
+                }],
+                "examples": [{
+                    "gloss": "気の毒だ・かわいそうだ",
+                    "text": "翁をいとほし、かなしと思しつることも失せぬ。",
+                    "headword_form": "いとほし",
+                    "source": "竹取・かぐや姫の昇天",
+                    "translation": "（かぐや姫は）翁を（気の毒だ）、いとしいとお思いになっていたこと（＝気持ち）もなくなってしまった。"
+                }, {
+                    "gloss": "気の毒だ・かわいそうだ",
+                    "text": "「きのふの価かへしくれたびてんや」と侘びぬ。いとほしうて、許しやりぬ。",
+                    "headword_form": "いとほしう",
+                    "source": "落柿舎",
+                    "translation": "（買った人が）「昨日の代金を返してくださいませんか」と嘆いて、とても（気の毒な）ので、（わたしは）許して（＝返して）やった。"
+                }]
+            }, {
+                "no": "066",
+                "pos": "形容詞",
+                "headword": "いはけなし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "幼い・あどけない・子どもっぽい"
+                }],
+                "examples": [{
+                    "gloss": "幼い・あどけない・子どもっぽい",
+                    "text": "若紫が、いはけなくかいやりたる額つき、髪ざし、いみじううつくし。",
+                    "headword_form": "いはけなく",
+                    "source": "源氏・若紫",
+                    "translation": "（若紫が）（子どもっぽく）（髪を）かきあげた額のようす、髪のはえ具合が、とてもかわいらしい。"
+                }]
+            }, {
+                "no": "067",
+                "pos": "形容詞",
+                "headword": "つらし",
+                "kanji": "辛し",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "薄情だ・冷淡だ"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "つらい（現代語と同じ）"
+                }],
+                "examples": [{
+                    "gloss": "薄情だ・冷淡だ",
+                    "text": "つらくもおはしますかな。",
+                    "headword_form": "つらく",
+                    "source": "源氏・少女",
+                    "translation": "《部屋に閉じ込められて勉強を強いられて…ことをこう思った。》（父上は）（薄情で）いらっしゃるなあ。"
+                }]
+            }, {
+                "no": "068",
+                "pos": "形容詞",
+                "headword": "ところせし",
+                "kanji": "所狭し",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "（物理的に）窮屈だ・（窮屈なほどその場に）あふれている"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（心理的に）窮屈だ・気詰まりだ"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "仰々しい・大げさだ"
+                }],
+                "examples": [{
+                    "gloss": "（物理的に）窮屈だ・（窮屈なほどその場に）あふれている",
+                    "text": "小さき屋ども作り集めて奉り給へるを、ところせきまで遊び広げ給ふ。",
+                    "headword_form": "ところせき",
+                    "source": "源氏・紅葉賀",
+                    "translation": "（光源氏が人形の）小さな家をたくさん作り集めて差し上げなさったのを、（紫の上は）（窮屈な）ほど広げて遊んでいらっしゃる。"
+                }, {
+                    "gloss": "（心理的に）窮屈だ・気詰まりだ",
+                    "text": "かかる有様もならひ給はず、ところせき御身にて、珍しう思されけり。",
+                    "headword_form": "ところせき",
+                    "source": "源氏・若紫",
+                    "translation": "《病気になった光源氏は加持祈祷を受けるため北山の寺へ赴いた。》（光源氏は）このような（山の）様子にもなじみなさっていなく、（簡単には外出できない）（窮屈な）ご身分で、（山の景色を）珍しいとお思いになった。"
+                }]
+            }, {
+                "no": "069",
+                "pos": "形容詞",
+                "headword": "うしろめた（な）し",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "気がかりだ"
+                }],
+                "examples": [{
+                    "gloss": "気がかりだ",
+                    "text": "いとはかなうものし給ふこそ、あはれにうしろめたけれ。",
+                    "headword_form": "うしろめたけれ",
+                    "source": "源氏・若紫",
+                    "translation": "《尼君は若紫の髪をなでながら言った。》（あなたが）とても頼りなくていらっしゃるのが、かわいそうで（気がかりだ）。"
+                }]
+            }, {
+                "no": "070",
+                "pos": "形容詞",
+                "headword": "かたはらいたし",
+                "kanji": "傍ら痛し",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "きまり悪い・恥ずかしい"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "苦々しい・腹立たしい・見苦しい・聞き苦しい"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "気の毒だ・心苦しい"
+                }],
+                "examples": [{
+                    "gloss": "きまり悪い・恥ずかしい",
+                    "text": "御前にて申すはかたはらいたき事には候へども、",
+                    "headword_form": "かたはらいたき",
+                    "source": "今昔・二三巻・八話",
+                    "translation": "《平中（＝平貞文）は大臣に言う。》（大臣の）御前で申し上げるのは（きまり悪い）ことではございますが、"
+                }, {
+                    "gloss": "苦々しい・腹立たしい・見苦しい・聞き苦しい",
+                    "text": "すべていとも知らぬ道の物がたりしたる、かたはらいたく聞きにくし。",
+                    "headword_form": "かたはらいたく",
+                    "source": "徒然・五七段",
+                    "translation": "何ごともあまり知らない方面の話をしているのは、（苦々しく）（みっともなく）聞きづらい。"
+                }, {
+                    "gloss": "気の毒だ・心苦しい",
+                    "text": "すのこはかたはらいたければ、南のひさしに入れ奉る。",
+                    "headword_form": "かたはらいたけれ",
+                    "source": "源氏・朝顔",
+                    "translation": "縁側（にお座りいただくの）は（気の毒な）ので、南の廂の間に（源氏を）お入れ申し上げる。"
+                }]
+            }, {
+                "no": "071",
+                "pos": "形容詞",
+                "headword": "わりなし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "道理に合わない・ひどい・無理やりだ"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "しかたがない・どうしようもない"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "苦しい・つらい・困っている"
+                }],
+                "examples": [{
+                    "gloss": "道理に合わない・ひどい・無理やりだ",
+                    "text": "わりなくものうたがひする男にいみじう思はれたる女。",
+                    "headword_form": "わりなく",
+                    "source": "枕・くるしげなる物",
+                    "translation": "（ひどく）もの疑いをする（＝疑い深い）男にとても愛された女。"
+                }, {
+                    "gloss": "しかたがない・どうしようもない",
+                    "text": "わりなうおぼし乱れぬべし。",
+                    "headword_form": "わりなう",
+                    "source": "枕・清涼殿のうしとらのすみの",
+                    "translation": "きっと（どうしようもなく）思い乱れなさるにちがいない。"
+                }, {
+                    "gloss": "苦しい・つらい・困っている",
+                    "text": "一昨日より腹を病みて、いとわりなければ、",
+                    "headword_form": "わりなけれ",
+                    "source": "源氏・空蝉",
+                    "translation": "おとといから腹が痛くて、とても（苦しい）ので、"
+                }]
+            }, {
+                "no": "072",
+                "pos": "形容詞",
+                "headword": "本意なし",
+                "kanji": "本意なし",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "不本意だ・残念だ"
+                }],
+                "examples": [{
+                    "gloss": "不本意だ・残念だ",
+                    "text": "人の語りいでたる歌物語の、歌のわろきこそほいなけれ。",
+                    "headword_form": "ほいなけれ",
+                    "source": "徒然・五七段",
+                    "translation": "人が語り始めた歌物語で、歌のよくないのは（残念だ）。"
+                }]
+            }, {
+                "no": "073",
+                "pos": "形容詞",
+                "headword": "あさまし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "驚くほどだ"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "あきれるほどだ"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "情けない・嘆かわしい"
+                }],
+                "examples": [{
+                    "gloss": "驚くほどだ",
+                    "text": "このゐたる犬のふるひわななきて、涙をただおとしにおとすに、いとあさまし。",
+                    "headword_form": "あさまし",
+                    "source": "枕・うへにさぶらふ御ねこは",
+                    "translation": "このうずくまっていた犬がぶるぶる震えて、涙をただ落としに落とすので、ほんとうに（驚くほどだ）。"
+                }]
+            }, {
+                "no": "074",
+                "pos": "形容詞",
+                "headword": "めざまし",
+                "kanji": "目覚まし",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "気にくわない・目障りだ"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "すばらしい・立派だ"
+                }],
+                "examples": [{
+                    "gloss": "気にくわない・目障りだ",
+                    "text": "《新しく桐壺の帝のもとに入内してきた桐壺の更衣に対して》はじめより我はと思ひ上がり給へる御方々、めざましきものにおとしめそねみ給ふ。",
+                    "headword_form": "めざましき",
+                    "source": "源氏・桐壺",
+                    "translation": "はじめから我こそはと思い上がりなさっていた方々は（桐壺の更衣を）（気にくわない）者としてさげすみ、ねたみなさる。"
+                }]
+            }, {
+                "no": "075",
+                "pos": "形容詞",
+                "headword": "いみじ",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "とてもよい・すばらしい"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "とても悪い・ひどい"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "《いみじく（う）》の形で副詞的に用いて）とても・はなはだしく"
+                }],
+                "examples": [{
+                    "gloss": "とてもよい・すばらしい",
+                    "text": "世は定めなきこそ、いみじけれ。",
+                    "headword_form": "いみじけれ",
+                    "source": "徒然・七段",
+                    "translation": "この世は無常であるからこそ、（すばらしい）。"
+                }, {
+                    "gloss": "とても悪い・ひどい",
+                    "text": "あないみじ。犬を蔵人二人してうち給ふ。死ぬべし。",
+                    "headword_form": "いみじ",
+                    "source": "",
+                    "translation": ""
+                }]
+            }, {
+                "no": "076",
+                "pos": "形容詞",
+                "headword": "ゆゆし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "不吉だ・縁起が悪い・恐ろしい"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "とてもよい・すばらしい・立派だ"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "《ゆゆしく（う）》の形で副詞的に用いて）とても・はなはだしく"
+                }],
+                "examples": [{
+                    "gloss": "不吉だ・縁起が悪い・恐ろしい",
+                    "text": "《桐壺の更衣（＝光源氏の母）の母は娘を亡くして》ゆゆしき身にはべれば、",
+                    "headword_form": "ゆゆしき",
+                    "source": "源氏・桐壺",
+                    "translation": "（わたしは娘に先立たれて）（不吉な）身でございますので、"
+                }, {
+                    "gloss": "とてもよい・すばらしい・立派だ",
+                    "text": "ゆゆしかりける者どもの心の大きさ広さかな。",
+                    "headword_form": "ゆゆしかり",
+                    "source": "宇治・巻三九話",
+                    "translation": "（すばらしかっ）た者たちの心の大きさ広さだなあ（＝すばらしい、心の大きさ・広さをもった者たちだなあ）。"
+                }, {
+                    "gloss": "《ゆゆしく（う）》の形で副詞的に用いて）とても・はなはだしく",
+                    "text": "各々拝みて、ゆゆしく信おこしたり。",
+                    "headword_form": "ゆゆしく",
+                    "source": "徒然・二三六段",
+                    "translation": "それぞれが拝んで、（はなはだしく）信仰心を起こした。"
+                }]
+            }, {
+                "no": "077",
+                "pos": "形容詞",
+                "headword": "やさし",
+                "kanji": "恥し・優し",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "恥ずかしい・きまり悪い"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "優美だ・上品だ・風流だ"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "けなげだ・殊勝だ・感心だ"
+                }],
+                "examples": [{
+                    "gloss": "恥ずかしい・きまり悪い",
+                    "text": "昨日今日御門ののたまはむことにつかむ、人聞きやさし。",
+                    "headword_form": "やさし",
+                    "source": "竹取・御門の求婚",
+                    "translation": "昨日今日、帝のおっしゃることに付き従うようなこと（＝帝の求婚に応じること）は、人聞きが（恥ずかしい）（＝人聞きが悪い）。"
+                }, {
+                    "gloss": "優美だ・上品だ・風流だ",
+                    "text": "いと若やかに愛敬づき、やさしきところ添ひたり。",
+                    "headword_form": "やさしき",
+                    "source": "源氏・蜻蛉",
+                    "translation": "（宮の君は）実に若々しくかわいらしく、さらに（上品な）ところもある。"
+                }, {
+                    "gloss": "けなげだ・殊勝だ・感心だ",
+                    "text": "《味方の軍勢はみな落ち延びたのに、実盛ただ一人敵と交戦するために残った。》あなやさし。",
+                    "headword_form": "やさし",
+                    "source": "平家・巻七",
+                    "translation": "ああ、（殊勝だ）（＝なんと、感心なことだ）。"
+                }]
+            }, {
+                "no": "078",
+                "pos": "形容詞",
+                "headword": "しるし",
+                "kanji": "著し",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "はっきりと分かる・はっきりしている"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "《〜もしるく》の形で）〜（の）とおりに"
+                }],
+                "examples": [{
+                    "gloss": "はっきりと分かる・はっきりしている",
+                    "text": "東よりの使ひ帰り来たる気色しるけれど、",
+                    "headword_form": "しるけれ",
+                    "source": "増鏡・十六巻",
+                    "translation": "関東からの使者が帰ってきた様子は（はっきりと分かる）が、"
+                }, {
+                    "gloss": "《〜もしるく》の形で）〜（の）とおりに",
+                    "text": "《亡くなった御息所の姉にあたる方は、一生結婚はしないと言っておられた。》世とともにいひけるもしるく、男もせで、二十九にてなむ、うせたまひにける。",
+                    "headword_form": "しるく",
+                    "source": "大和・一四三段",
+                    "translation": "常に言っていた（とおりに）、夫ももたないで、二十九歳で、お亡くなりになってしまいました。"
+                }]
+            }, {
+                "no": "079",
+                "pos": "形容詞",
+                "headword": "とし",
+                "kanji": "疾し",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "早い・速い"
+                }],
+                "examples": [{
+                    "gloss": "早い・速い",
+                    "text": "梅は白き、うす紅梅、一重なるがとく咲きたるも、重なりたる紅梅の、匂ひめでたきも、みなをかし。",
+                    "headword_form": "とく",
+                    "source": "徒然・一三九段",
+                    "translation": "梅は白いのも、薄紅梅色のも、一重の梅で（早く）咲いたのも、八重の紅梅で、色美しく咲いたのも、みなすばらしい。"
+                }]
+            }, {
+                "no": "080",
+                "pos": "形容詞",
+                "headword": "ゆくりなし",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "突然だ・思いがけない"
+                }],
+                "examples": [{
+                    "gloss": "突然だ・思いがけない",
+                    "text": "眺めつつ来る間に、ゆくりなく風吹きて、",
+                    "headword_form": "ゆくりなく",
+                    "source": "土佐・二月五日",
+                    "translation": "もの思いにふけりながら（舟を漕いで）来るうちに、（突然に）風が吹いて、"
+                }]
+            }, {
+                "no": "081",
+                "pos": "形容詞",
+                "headword": "おぼつかなし",
+                "kanji": "覚束無し",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "はっきりしない"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "気がかりだ・不安だ"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "待ち遠しい・じれったい"
+                }],
+                "examples": [{
+                    "gloss": "はっきりしない",
+                    "text": "小町が盛りなる事、その後のことにや、なほおぼつかなし。",
+                    "headword_form": "おぼつかなし",
+                    "source": "徒然・一七三段",
+                    "translation": "（小野小町が）（若くて女）盛りであったのは、その（弘法大師の亡くなられた）後のことだろうか、やはり（はっきりしない）。"
+                }, {
+                    "gloss": "気がかりだ・不安だ",
+                    "text": "《昔、ある僧が大納言家の法事に招かれたが、少し顔色が悪く、》やや久しく物もいはでありければ、人どもおぼつかなく思ひける程に、",
+                    "headword_form": "おぼつかなく",
+                    "source": "宇治・巻二十一話",
+                    "translation": "（僧は）かなりの間ものも言わないでいたので、人々は（気がかりに）思っていたときに、"
+                }]
+            }, {
+                "no": "082",
+                "pos": "形容詞",
+                "headword": "こころもとなし",
+                "kanji": "心許無し",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "はっきりしない・かすかだ"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "気がかりだ・不安だ"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "待ち遠しい・じれったい"
+                }],
+                "examples": [{
+                    "gloss": "はっきりしない・かすかだ",
+                    "text": "花びらの端に、をかしきにほひこそ、こころもとなうつきためれ。",
+                    "headword_form": "こころもとなう",
+                    "source": "枕・木の花は",
+                    "translation": "花びらの端に、美しい色つやが、（かすかに）ついているようだ。"
+                }, {
+                    "gloss": "気がかりだ・不安だ",
+                    "text": "こころもとなき日数重なるままに、白河の関にかかりて、旅心定まりぬ。",
+                    "headword_form": "こころもとなき",
+                    "source": "奥の細道・白河の関",
+                    "translation": "（不安な）日々が重なるうちに、白河の関にさしかかって、ようやく旅の覚悟が定まった。"
+                }, {
+                    "gloss": "待ち遠しい・じれったい",
+                    "text": "《作者はやっと念願の『源氏物語』を叔母からもらった。》わづかに見つつ心も得ずこころもとなく思ふ源氏を、一の巻よりして、（中略）",
+                    "headword_form": "こころもとなく",
+                    "source": "",
+                    "translation": "少し見て内容も分からず（じれったく）思っていた『源氏物語』を、最初の巻からはじめて、"
+                }]
+            }, {
+                "no": "083",
+                "pos": "形容動詞",
+                "headword": "あはれなり",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "しみじみと心に深く感じられる"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "かわいい"
+                }],
+                "examples": [{
+                    "gloss": "しみじみと心に深く感じられる",
+                    "text": "あはれなりつる心のほどなむ忘れむ世あるまじき。",
+                    "headword_form": "あはれなり",
+                    "source": "更級",
+                    "translation": "（心に深く感じられ）た（あなたの）心は忘れるときはないでしょう。"
+                }, {
+                    "gloss": "かわいい",
+                    "text": "あはれなる人を見つるかな。",
+                    "headword_form": "あはれなる",
+                    "source": "源氏・若紫",
+                    "translation": "（かわいい）人を見たものだなあ。"
+                }]
+            }, {
+                "no": "084",
+                "pos": "形容動詞",
+                "headword": "つれづれなり",
+                "kanji": "徒然なり",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "（することもなく）退屈である・所在ない"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（しんみりと）ものさびしい"
+                }],
+                "examples": [{
+                    "gloss": "（することもなく）退屈である・所在ない",
+                    "text": "日もいと長きに、つれづれなれば、（光源氏は）夕暮れのいたう霞みたるに紛れて、かの小柴垣のもとに立ち出で給ふ。",
+                    "headword_form": "つれづれなれ",
+                    "source": "源氏・若紫",
+                    "translation": "春の日も大変長く、（することもなく）（退屈である）ので、（光源氏は）夕方の立ちこめた霞に紛れて、あの小柴垣の所に出て行きなさる。"
+                }, {
+                    "gloss": "（しんみりと）ものさびしい",
+                    "text": "そこはかとなく、つれづれに心細うのみ覚ゆるを、",
+                    "headword_form": "つれづれに",
+                    "source": "源氏・末摘花",
+                    "translation": "なんとなく、（しんみりと）（ものさびしく）心細いとだけ思われるので、"
+                }]
+            }, {
+                "no": "085",
+                "pos": "形容動詞",
+                "headword": "すずろなり・そぞろなり",
+                "kanji": "漫ろなり",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "なんということ（わけ）もない"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "思いがけない"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "むやみやたらだ"
+                }],
+                "examples": [{
+                    "gloss": "なんということ（わけ）もない",
+                    "text": "昔、男、すずろに陸奥の国までまどひいにけり。",
+                    "headword_form": "すずろに",
+                    "source": "伊勢・二六段",
+                    "translation": "昔、男が、（なんというわけもなく）陸奥の国までさまよい出かけた。"
+                }, {
+                    "gloss": "思いがけない",
+                    "text": "心細く、すずろなる目を見ることと思ふに、",
+                    "headword_form": "すずろなる",
+                    "source": "伊勢・九段",
+                    "translation": "なんとなく心細く、（思いがけない）目に遭うことだと思うと、"
+                }, {
+                    "gloss": "むやみやたらだ",
+                    "text": "すずろに言ひ散らすは、さばかりの才にはあらぬにや。",
+                    "headword_form": "すずろに",
+                    "source": "徒然・六六段",
+                    "translation": "（むやみやたらに）言い散らすのは、それほどの学識ではないのでは（ないだろうか）。"
+                }]
+            }, {
+                "no": "086",
+                "pos": "形容動詞",
+                "headword": "まめなり・まめやかなり",
+                "kanji": "実なり・忠実なり／実やかなり・忠実やかなり",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "まじめである・誠実である"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "実用的である"
+                }],
+                "examples": [{
+                    "gloss": "まじめである・誠実である",
+                    "text": "大方の人がらまめやかに、あだめきたる所なく、",
+                    "headword_form": "まめやかに",
+                    "source": "源氏・少女",
+                    "translation": "おおよその人柄は（まじめで）、浮いたところがなく、"
+                }, {
+                    "gloss": "実用的である",
+                    "text": "小舎人童を走らせて、すなはち、車にてまめなる物、さまざまにももて来たり。",
+                    "headword_form": "まめなる",
+                    "source": "大和・一七三段",
+                    "translation": "小舎人童（＝召し使いの少年）を走らせて、すぐに、牛車で（実用的な）もの（＝生活に直接必要なもの）を、いろいろと持って来た。"
+                }]
+            }, {
+                "no": "087",
+                "pos": "形容動詞",
+                "headword": "あだなり",
+                "kanji": "徒なり",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "はかない・頼りにならない・もろい"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "誠実さがない・浮ついている・浮気だ"
+                }],
+                "examples": [{
+                    "gloss": "はかない・頼りにならない・もろい",
+                    "text": "命をばあだなるものと聞きしかどつらきがためは長くもあるかな",
+                    "headword_form": "あだなる",
+                    "source": "新古今・一三六三",
+                    "translation": "人の命とは（はかない）ものと聞いていたけれども、つらい（恋をしているわたし）にとっては長く思われることだなあ。"
+                }, {
+                    "gloss": "誠実さがない・浮ついている・浮気だ",
+                    "text": "あだなる男の形見とて置きたる物どもを見て、",
+                    "headword_form": "あだなる",
+                    "source": "伊勢・二九段",
+                    "translation": "（女は）（浮気な）男が形見だと言って残した品々を見て、"
+                }]
+            }, {
+                "no": "088",
+                "pos": "形容動詞",
+                "headword": "いたづらなり",
+                "kanji": "徒らなり",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "役に立たない・むだだ・かいがない"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "むなしい・はかない"
+                }],
+                "examples": [{
+                    "gloss": "役に立たない・むだだ・かいがない",
+                    "text": "（水車を）とかく直しけれどもつひに回らでいたづらに立てりけり。",
+                    "headword_form": "いたづらに",
+                    "source": "徒然・五一段",
+                    "translation": "（水車を）あれこれ修理したけれどもとうとう回らないで（役にも立たず）（むなしく）立っていた。"
+                }, {
+                    "gloss": "むなしい・はかない",
+                    "text": "かく濡れ濡れ参りて、いたづらに帰らむ愁へを、姫君の御方に聞こえて、",
+                    "headword_form": "いたづらに",
+                    "source": "源氏・橋姫",
+                    "translation": "このように（露に）濡れて参上して、（むなしく）姫君のもとに帰るつらさを、姫君のもとに申し上げて、（会えず）"
+                }]
+            }, {
+                "no": "089",
+                "pos": "形容動詞",
+                "headword": "いうなり",
+                "kanji": "優なり",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "優れている・すばらしく立派だ"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "上品で美しい・優雅である"
+                }],
+                "examples": [{
+                    "gloss": "優れている・すばらしく立派だ",
+                    "text": "（花山院が）遊ばしたる和歌はいづれも人の口に乗らぬなく、優にこそ承れな。",
+                    "headword_form": "優に",
+                    "source": "大鏡・伊尹",
+                    "translation": "（花山院が）お詠みになった和歌はどれも人に口ずさまれないものはなく、（優れている）とお聞きしていますよ。"
+                }, {
+                    "gloss": "上品で美しい・優雅である",
+                    "text": "内侍所の御鈴の音は、めでたく優なるものなり。",
+                    "headword_form": "優なる",
+                    "source": "徒然・二三段",
+                    "translation": "内侍所の（女官が鳴らす）鈴の音は、すばらしく（優雅な）ものである。"
+                }]
+            }, {
+                "no": "090",
+                "pos": "形容動詞",
+                "headword": "あてなり",
+                "kanji": "貴なり",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "高貴である・身分が高い"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "気品がある・上品である"
+                }],
+                "examples": [{
+                    "gloss": "高貴である・身分が高い",
+                    "text": "世界の男、貴なるも賤しきも、いかでこのかぐや姫を得てしがな見てしがなと、音に聞きめでてまどふ。",
+                    "headword_form": "貴なる",
+                    "source": "竹取・かぐや姫の生ひ立ち",
+                    "translation": "世の中の男は、（高貴な）人も身分の低い人も、なんとかしてこのかぐや姫を妻にしたい、会いたいと、噂を聞き心ひかれて夢中になる。"
+                }, {
+                    "gloss": "気品がある・上品である",
+                    "text": "四十余ばかりにて、いと白うあてに、やせたれど、",
+                    "headword_form": "あてに",
+                    "source": "源氏・若紫",
+                    "translation": "（尼君は）四十過ぎくらいで、とても色が白く（上品で）、やせているけれど、"
+                }]
+            }, {
+                "no": "091",
+                "pos": "形容動詞",
+                "headword": "あからさまなり",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "（「あからさまに」の形で）ほんのちょっと・一時的に"
+                }],
+                "examples": [{
+                    "gloss": "（「あからさまに」の形で）ほんのちょっと・一時的に",
+                    "text": "入らせ給はぬさきに雪降らなむ。この御前の有様、いかにをかしからむ」と思ふに、あからさまにまかでたるほど、二日ばかりありてしも雪は降るものか。",
+                    "headword_form": "あからさまに",
+                    "source": "紫式部",
+                    "translation": "「中宮様が宮中にお帰りにならない前に雪が降ってほしい。（雪が降ったら中宮様のお部屋の前の庭は、どんなに趣があることだろう」と思ううちに、（わたしが）（ほんのちょっと）（実家に）退出した間に、二日ほどして雪が降るではないか。"
+                }]
+            }, {
+                "no": "092",
+                "pos": "形容動詞",
+                "headword": "みそかなり",
+                "kanji": "密かなり",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "（「みそかに」の形で）ひそかに・こっそりと"
+                }],
+                "examples": [{
+                    "gloss": "（「みそかに」の形で）ひそかに・こっそりと",
+                    "text": "六月二十二日の夜、あさましくさぶらひしことは、（花山院は）人にも知らせたまはで、みそかに花山寺におはしまして、御出家入道せさせたまへりしこそ、",
+                    "headword_form": "みそかに",
+                    "source": "大鏡・花山院",
+                    "translation": "六月二十二日の夜に、驚きあきれましたことには、（花山院は）誰にもお知らせになられずに、（ひそかに）花山寺にいらっしゃって、ご出家入道なさったのですよ、"
+                }]
+            }, {
+                "no": "093",
+                "pos": "形容動詞",
+                "headword": "おろかなり",
+                "kanji": "疎かなり",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "いい加減だ・疎略だ"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "並ひととおりだ"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "（「〜とはおろかなり」などの形で）（〜という言葉では）言い尽くせない"
+                }],
+                "examples": [{
+                    "gloss": "いい加減だ・疎略だ",
+                    "text": "帝の御使ひをばいかでかおろかにせむ。",
+                    "headword_form": "おろかに",
+                    "source": "竹取・御狩のみゆき",
+                    "translation": "帝からの使者をどうして（いい加減に）するだろうか。"
+                }, {
+                    "gloss": "並ひととおりだ",
+                    "text": "年頃はおろかならず頼みて過ぐしつるに、",
+                    "headword_form": "おろかならず",
+                    "source": "今鏡・昔語第九",
+                    "translation": "この数年は（並ひととおりで）なく信頼して過ごしてきたのに、"
+                }, {
+                    "gloss": "（「〜とはおろかなり」などの形で）（〜という言葉では）言い尽くせない",
+                    "text": "恐ろしなんどもおろかなり。",
+                    "headword_form": "おろかなり",
+                    "source": "平家・巻十一",
+                    "translation": "恐ろしいなどという言葉では（言い尽くせない）。"
+                }]
+            }, {
+                "no": "094",
+                "pos": "形容動詞",
+                "headword": "をこなり",
+                "kanji": "痴なり・烏許なり・尾籠なり",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "愚かだ・まぬけだ・ばかばかしい"
+                }],
+                "examples": [{
+                    "gloss": "愚かだ・まぬけだ・ばかばかしい",
+                    "text": "義仲、をこの者で候ふ。ただ今朝敵になり候ひなんず。急ぎ追討せさせ給へ」と申しければ、",
+                    "headword_form": "をこ",
+                    "source": "平家・巻八",
+                    "translation": "（後白河法皇に向かって）平知康は「木曽義仲は、（愚か）な者でございます。すぐにも朝廷に反逆する者になるでしょう。急いで（義仲を）追討する命をお出しください」と申し上げたので、"
+                }, {
+                    "gloss": "愚かだ・まぬけだ・ばかばかしい",
+                    "text": "虚言をねんごろに信じたるもをこがましく、",
+                    "headword_form": "をこがましく",
+                    "source": "徒然・七三段",
+                    "translation": "嘘を心底から信じているのも（ばかばかしく）、"
+                }]
+            }, {
+                "no": "095",
+                "pos": "形容動詞",
+                "headword": "むげなり",
+                "kanji": "無下なり",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "ひどい・最低最悪だ"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（「むげに」の形で副詞的に用いて）むやみに・ひどく"
+                }],
+                "examples": [{
+                    "gloss": "ひどい・最低最悪だ",
+                    "text": "賤しの田舎人なれども、みなさやうのことは知りたるものを。かの郡司は無下なりける奴かな。",
+                    "headword_form": "無下なりける",
+                    "source": "今昔・巻二八七語",
+                    "translation": "卑しい田舎者であっても、誰もみなそれくらいのことは知っているのに。あの郡司は（ひどかっ）た奴だなあ（＝ひどい奴だったなあ）。"
+                }, {
+                    "gloss": "（「むげに」の形で副詞的に用いて）むやみに・ひどく",
+                    "text": "むげに思ひしをれて、心細かりければ、",
+                    "headword_form": "むげに",
+                    "source": "源氏・帚木",
+                    "translation": "（ひどく）気落ちして、心細かったので、"
+                }]
+            }, {
+                "no": "096",
+                "pos": "形容動詞",
+                "headword": "なかなかなり",
+                "kanji": "中々なり",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "中途半端だ・どっちつかずだ"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "かえってしないほうがよい・かえってないほうがましだ"
+                }],
+                "examples": [{
+                    "gloss": "中途半端だ・どっちつかずだ",
+                    "text": "七日が程の御有様、書きつづくるもなかなかなれば、えもまねばず。",
+                    "headword_form": "なかなかなれ",
+                    "source": "栄花・さまざまのよろこび",
+                    "translation": "（出産後）七日ほどの（たくさんのお祝いの儀式の）ご様子を、書き続けるのも（中途半端である）ので、そのまま（すべてをここに）書き記すことはできない。"
+                }, {
+                    "gloss": "かえってしないほうがよい・かえってないほうがましだ",
+                    "text": "さる言には、何のいらへをかせむ。なかなかならむ。",
+                    "headword_form": "なかなかならむ",
+                    "source": "枕・五月ばかり",
+                    "translation": "あんな（すばらしい）言葉には、どんな返事をすることができようか。（かえってしないほうがよい）だろう。"
+                }, {
+                    "gloss": "かえってしないほうがよい・かえってないほうがましだ",
+                    "text": "「御忘れ形見もなかなかなる御もの思ひの催しぐさなりや」と、おぼしめすらむかし。",
+                    "headword_form": "なかなかなる",
+                    "source": "源家長日記",
+                    "translation": "若宮が参上なさったときには、（若宮という）忘れ形見も（かえってないほうがましな）物思いを引き起こすもとであるよ」と、（上皇は）お思いになっていることだろうよ。"
+                }]
+            }, {
+                "no": "097",
+                "pos": "名詞",
+                "headword": "て",
+                "kanji": "手",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "字・筆跡"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（楽器の）演奏法・曲"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "手段・方法・やり方"
+                }, {
+                    "sense_no": 4,
+                    "gloss": "傷・負傷"
+                }],
+                "examples": [{
+                    "gloss": "字・筆跡",
+                    "text": "手のわろき人の、はばからず文書きちらすはよし。",
+                    "headword_form": "手",
+                    "source": "徒然・三五段",
+                    "translation": "〔字〕の下手な人が、（下手なことを）少しも気にかけずに手紙をどんどん書くのはよいものである。"
+                }, {
+                    "gloss": "（楽器の）演奏法・曲",
+                    "text": "父が弾く手、一つ残さず習ひとり。",
+                    "headword_form": "手",
+                    "source": "宇津保・俊蔭",
+                    "translation": "（娘は）父が弾く（琴の）（演奏法）は、一つ残らず習得した。"
+                }]
+            }, {
+                "no": "098",
+                "pos": "名詞",
+                "headword": "ふみ",
+                "kanji": "文・書",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "手紙"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "漢詩・漢文・漢学・漢籍〔漢文の書物〕"
+                }],
+                "examples": [{
+                    "gloss": "手紙",
+                    "text": "文に思ひける事どもの限り多う書きて取らせたりければ、",
+                    "headword_form": "文",
+                    "source": "平中・一八段",
+                    "translation": "《平中は女に恋文を送っても色よい返事がないので、》（手紙）に思ったことのすべてをたくさん書いて与えたので、"
+                }, {
+                    "gloss": "漢詩・漢文・漢学・漢籍〔漢文の書物〕",
+                    "text": "「長恨歌」といふ文を、物語に書きてあるところあんなり。",
+                    "headword_form": "文",
+                    "source": "更級",
+                    "translation": "（白楽天の）「長恨歌」という（漢詩）を、物語に書いて（持って）いる人がいるそうだ。"
+                }]
+            }, {
+                "no": "099",
+                "pos": "名詞",
+                "headword": "せうそこ",
+                "kanji": "消息",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "手紙"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "訪問の申し入れ・訪問のあいさつ"
+                }],
+                "examples": [{
+                    "gloss": "手紙",
+                    "text": "心に忘れずながら、消息などもせで久しくはべりしに、",
+                    "headword_form": "消息",
+                    "source": "源氏・帚木",
+                    "translation": "（女のことを）心の中では忘れていないながら、長く（会わないで）いましたところ、（手紙）などもやら"
+                }, {
+                    "gloss": "訪問の申し入れ・訪問のあいさつ",
+                    "text": "消息を言ひ入るれど、なにのかひなし。",
+                    "headword_form": "消息",
+                    "source": "大和・一〇二段",
+                    "translation": "（家の中の者に）（訪問の申し入れ）をしてみるが、なんのかいもない。"
+                }]
+            }, {
+                "no": "100",
+                "pos": "名詞",
+                "headword": "あそび",
+                "kanji": "遊び",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "遊び〔楽しむこと〕〔現代語と同じ〕"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "管弦の遊び〔音楽を楽しむこと〕"
+                }],
+                "examples": [{
+                    "gloss": "管弦の遊び〔音楽を楽しむこと〕",
+                    "text": "あはれがらせ給ひて、ものもきこしめさず。御遊びなどもなかりけり。",
+                    "headword_form": "遊び",
+                    "source": "竹取・富士の煙",
+                    "translation": "《かぐや姫は帝にお別れの手紙を残して月の都に去ってしまう。帝はその手紙を見て、》（帝は）しみじみとお悲しみになって、何も召し上がらない。（管弦の）（遊び）なども停止された。"
+                }, {
+                    "gloss": "管弦の遊び〔音楽を楽しむこと〕",
+                    "text": "ひとわたり遊びて、琵琶弾きやみたるに、",
+                    "headword_form": "遊び",
+                    "source": "枕・御仏名のまたの日",
+                    "translation": "（道方の少納言は、）琵琶がとてもすばらしい。済政の箏の琴、行義の笛、経房の中将の笙の笛なども、おもしろい。みながひととおり（音楽を奏で楽しん）で、琵琶を弾くのをやめたときに、"
+                }]
+            }, {
+                "no": "101",
+                "pos": "名詞",
+                "headword": "うへ",
+                "kanji": "上",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "高貴な人のいる所"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "帝・天皇"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "（貴人の）奥様〔「北の方」という〕"
+                }, {
+                    "sense_no": 4,
+                    "gloss": "身の上・〜に関わること"
+                }],
+                "examples": [{
+                    "gloss": "帝・天皇",
+                    "text": "「無名」といふ琵琶の御琴を、上の持てわたらせ給へるに、",
+                    "headword_form": "上",
+                    "source": "枕・無名といふ琵琶の御琴を",
+                    "translation": "「無名」という名の琵琶のお琴を、（帝）が持っておいでになったので、"
+                }, {
+                    "gloss": "（貴人の）奥様〔「北の方」という〕",
+                    "text": "上も大臣も、かく、つと添ひおはすれば、",
+                    "headword_form": "上",
+                    "source": "源氏・柏木",
+                    "translation": "（母）（北の方）も（父）大臣も、こうして、（病床の息子に）ぴったり寄り添っていらっしゃるので、"
+                }]
+            }, {
+                "no": "102",
+                "pos": "名詞",
+                "headword": "おほやけ",
+                "kanji": "公",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "朝廷・政府"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "帝・天皇"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "公的なこと〔現代語と同じ〕"
+                }],
+                "examples": [{
+                    "gloss": "朝廷・政府",
+                    "text": "おほやけの宮仕へしければ、（親王のもとに）常にはえまうでず。",
+                    "headword_form": "おほやけ",
+                    "source": "伊勢・八四段",
+                    "translation": "（男は、）（朝廷）に宮仕えをしていたので、（公務で忙しく、親王の所に）絶えず参上することはできない。"
+                }, {
+                    "gloss": "帝・天皇",
+                    "text": "大臣のかく世をのがれ給へば、おほやけも心細う思され、",
+                    "headword_form": "おほやけ",
+                    "source": "源氏・賢木",
+                    "translation": "大臣がこのように出家なさったので、（帝）も心細くお思いになり、"
+                }]
+            }, {
+                "no": "103",
+                "pos": "名詞",
+                "headword": "うち",
+                "kanji": "内裏・内",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "（建物の）内部"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "宮中・内裏"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "帝・天皇"
+                }],
+                "examples": [{
+                    "gloss": "宮中・内裏",
+                    "text": "君は二日三日うちへも参り給はで、",
+                    "headword_form": "うち",
+                    "source": "源氏・若紫",
+                    "translation": "（光源氏の）君は二、三日（宮中）へも参上なさらないで、"
+                }, {
+                    "gloss": "宮中・内裏",
+                    "text": "ひきや深山の奥に住まひして雲居の月をよそに見むとは",
+                    "headword_form": "雲居",
+                    "source": "平家・灌頂巻",
+                    "translation": "《高倉天皇の中宮であった建礼門院は、出家して大原（比叡山の西北）の寂光院で余生を送った。そのときの歌。》こんなに深い山の奥に住んで、（かつて眺めた）（宮中）の月をほかの所で見ようとは思いもかけなかったよ。"
+                }, {
+                    "gloss": "帝・天皇",
+                    "text": "うちにも、（春宮を）めでたしと見奉り給ひて、世の中ゆづり聞こえ給ふべきことなど、なつかしう聞こえ知らせ給ふ。",
+                    "headword_form": "うち",
+                    "source": "源氏・澪標",
+                    "translation": "（帝）も（皇太子を）立派だと見申し上げ（＝拝見）なさって、国の政治を譲り（＝譲位）申し上げなさるつもりであることを、やさしく（皇太子に）お話ししてお聞かせになる。"
+                }]
+            }, {
+                "no": "104",
+                "pos": "名詞",
+                "headword": "おまへ",
+                "kanji": "御前",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "（神仏や貴人の）御前・お側"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "〔貴人への敬称、または貴人その人を表す〕"
+                }],
+                "examples": [{
+                    "gloss": "（神仏や貴人の）御前・お側",
+                    "text": "帝は愛する更衣を、あながちに御前去らずもてなさせ給ひしほど、",
+                    "headword_form": "御前",
+                    "source": "源氏・桐壺",
+                    "translation": "帝は愛する更衣を、無理に（お側）から離さずに大切になさっていたと"
+                }, {
+                    "gloss": "〔貴人への敬称、または貴人その人を表す〕",
+                    "text": "宮の御前のうち笑ませ給へる、いとをかし。",
+                    "headword_form": "御前",
+                    "source": "枕・関白殿、二月廿一日に",
+                    "translation": "中宮（様）がほほえんでいらっしゃる様子は、とてもすてきだ。"
+                }]
+            }, {
+                "no": "105",
+                "pos": "名詞",
+                "headword": "みゆき",
+                "kanji": "行幸・御幸",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "（帝や上皇の）お出かけ・お出まし〔帝には「行幸」を、上皇には「御幸」の字をあて、前者は「ぎょうごう」または「ぎょうこう」、後者は「ごこう」とも読む〕"
+                }],
+                "examples": [{
+                    "gloss": "（帝や上皇の）お出かけ・お出まし〔帝には「行幸」を、上皇には「御幸」の字をあて、前者は「ぎょうごう」または「ぎょうこう」、後者は「ごこう」とも読む〕",
+                    "text": "小倉山峰のもみぢ葉心あらば今一度のみゆき待たなむ",
+                    "headword_form": "みゆき",
+                    "source": "拾遺・一一二八（百人一首）",
+                    "translation": "小倉山の峰の紅葉よ、もしおまえに心があるならば、もう一度の（帝の）（お出まし）を（散らずに）待っていてほしい。"
+                }, {
+                    "gloss": "（帝や上皇の）お出かけ・お出まし〔帝には「行幸」を、上皇には「御幸」の字をあて、前者は「ぎょうごう」または「ぎょうこう」、後者は「ごこう」とも読む〕",
+                    "text": "法皇夜をこめて大原の奥へぞ御幸なる。",
+                    "headword_form": "御幸",
+                    "source": "平家・灌頂巻",
+                    "translation": "法皇はまだ夜も深いうちに大原の奥へ（お出まし）になる。"
+                }]
+            }, {
+                "no": "106",
+                "pos": "名詞",
+                "headword": "たより",
+                "kanji": "頼り・便り",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "よりどころ・頼みにできるもの"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "つて・縁故・手づる"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "よい機会・都合のよい折・ついで"
+                }],
+                "examples": [{
+                    "gloss": "よりどころ・頼みにできるもの",
+                    "text": "さて年ごろ経るほどに、女、親なく、たよりなくなるままに、",
+                    "headword_form": "たより",
+                    "source": "伊勢・三段",
+                    "translation": "そうして何年か過ぎるうちに、女は、親が死に、（暮らしの）（よりどころ）がなくなるにつれ、"
+                }, {
+                    "gloss": "つて・縁故・手づる",
+                    "text": "たよりあらばいかで都へ告げやらむ今日白河の関は越えぬと",
+                    "headword_form": "たより",
+                    "source": "拾遺・三三九",
+                    "translation": "（何か）（つて）があるならばなんとかして都へ知らせてやりたいものだ。今日（陸奥の）白河の関を越えたと。"
+                }, {
+                    "gloss": "よい機会・都合のよい折・ついで",
+                    "text": "たよりごとに物も絶えず得させたり。",
+                    "headword_form": "たより",
+                    "source": "土佐・二月十六日",
+                    "translation": "（何か）（よい機会）があるごとに（お礼の）品物も絶えず与えていた。"
+                }]
+            }, {
+                "no": "107",
+                "pos": "名詞",
+                "headword": "ものがたり",
+                "kanji": "物語",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "世間話・雑談"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "物語〔『竹取物語』や『源氏物語』などの物語〕〔現代語と同じ〕"
+                }],
+                "examples": [{
+                    "gloss": "世間話・雑談",
+                    "text": "おなじ心なる人二三人ばかり、火桶を中に据ゑて、物語などするに、",
+                    "headword_form": "物語",
+                    "source": "枕・雪のいと高うはあらで",
+                    "translation": "気の合う人二、三人くらいが、火桶を中に置いて、（世間話）などするうちに、"
+                }, {
+                    "gloss": "物語〔『竹取物語』や『源氏物語』などの物語〕〔現代語と同じ〕",
+                    "text": "世の中に『源氏物語』などの物語といふもののあんなるを、いかで見ばやと思ひつつ、",
+                    "headword_form": "物語",
+                    "source": "更級",
+                    "translation": "世の中に『源氏物語』などの（物語）というものがあるそうだが、（それを）どうにかして読みたいと（わたしは）思いながら、"
+                }]
+            }, {
+                "no": "108",
+                "pos": "名詞",
+                "headword": "ためし",
+                "kanji": "例",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "前例・先例〔以前にあった事柄〕"
+                }],
+                "examples": [{
+                    "gloss": "前例・先例〔以前にあった事柄〕",
+                    "text": "集をえらぶ人はためし多かれども、再び勅をうけて、代々に聞こえ侍る家は、たぐひなほありがたくやあらむ。",
+                    "headword_form": "ためし",
+                    "source": "十六夜",
+                    "translation": "（和歌の）勅撰集を編集する人は（先例）がたくさんあるけれど、その御代御代の天皇に（勅撰和歌集を）二度勅命を受けて、奏上した家柄は、類例がやはりめったになかったことだろうか。"
+                }]
+            }, {
+                "no": "109",
+                "pos": "名詞",
+                "headword": "いそぎ",
+                "kanji": "急ぎ",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "急なこと・急用〔現代語と同じ〕"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "支度・準備"
+                }],
+                "examples": [{
+                    "gloss": "支度・準備",
+                    "text": "十二月には公事どもしげく、春の急ぎにとり重ねて催し行はるるさまぞ、いみじきや。",
+                    "headword_form": "急ぎ",
+                    "source": "徒然・十九段",
+                    "translation": "（十二月には）朝廷の政務や儀式などが頻繁にあり、新春の（準備）が（十二月には）（それらが）重複して催し行われる有様は、たいそうなものだ。"
+                }, {
+                    "gloss": "支度・準備",
+                    "text": "正月の御装束急ぎ給ふ。",
+                    "headword_form": "急ぎ",
+                    "source": "宇津保・嵯峨の院",
+                    "translation": "正月のご衣装を（準備し）なさる。"
+                }]
+            }, {
+                "no": "110",
+                "pos": "名詞",
+                "headword": "ようい",
+                "kanji": "用意",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "気配り・心づかい"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "支度・準備〔現代語と同じ〕"
+                }],
+                "examples": [{
+                    "gloss": "気配り・心づかい",
+                    "text": "頭の中将、容貌用意、人にはことなるを、なほ花のかたはらの深山木なり。",
+                    "headword_form": "用意",
+                    "source": "源氏・紅葉賀",
+                    "translation": "頭の中将は、顔立ちも（気配り）も、人よりは優れているが、（光源氏と）立ち並ぶと、やはり桜の花のかたわらの山奥の木である。"
+                }]
+            }, {
+                "no": "111",
+                "pos": "名詞",
+                "headword": "かたち",
+                "kanji": "形・容貌",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "形・外見〔現代語と同じ〕"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "容貌・顔立ち"
+                }],
+                "examples": [{
+                    "gloss": "容貌・顔立ち",
+                    "text": "さかりにならば、かたちも限りなくよく、髪もいみじく長くなりなむ。宇治の大将の浮舟の女君のやうにこそあらめ。",
+                    "headword_form": "かたち",
+                    "source": "更級",
+                    "translation": "（わたしも）年ごろになったら、きっと（容貌）もこの上なく美しく、光源氏の（恋人の）夕顔、（大将）（薫）の（恋人の）浮舟の女君のようになるだろう。"
+                }]
+            }, {
+                "no": "112",
+                "pos": "名詞",
+                "headword": "かげ",
+                "kanji": "影・陰",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "光〔Ａ 影〕"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "姿・形〔Ａ 影〕"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "陰〔光の当たらない所〕・物陰〔現代語と同じ〕〔Ｂ 陰〕"
+                }],
+                "examples": [{
+                    "gloss": "光〔Ａ 影〕",
+                    "text": "木の間よりもりくる月の影見れば心づくしの秋は来にけり",
+                    "headword_form": "影",
+                    "source": "古今・一八四",
+                    "translation": "木々の枝の間から漏れてくる月の（光）を見ると、もの思いをすることが多い秋が来たことだなあ。"
+                }, {
+                    "gloss": "姿・形〔Ａ 影〕",
+                    "text": "月隈なくさし出でて、ふと人の影見えければ、",
+                    "headword_form": "影",
+                    "source": "源氏・空蝉",
+                    "translation": "月が隈なく差し出て、月の光がこうこうと照りはじめて、すっと人の（姿）が見えたので、"
+                }]
+            }, {
+                "no": "113",
+                "pos": "名詞",
+                "headword": "けしき",
+                "kanji": "気色",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "様子"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "顔色・機嫌〔顔の様子〕"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "意向・意中〔心の中の様子〕"
+                }],
+                "examples": [{
+                    "gloss": "様子",
+                    "text": "切に物思へる気色なり。",
+                    "headword_form": "気色",
+                    "source": "竹取・天の羽衣",
+                    "translation": "いちずに何か思っている（様子）である。"
+                }, {
+                    "gloss": "顔色・機嫌〔顔の様子〕",
+                    "text": "おほやけの御気色悪しかりけり。",
+                    "headword_form": "気色",
+                    "source": "伊勢・二四段",
+                    "translation": "帝のご（機嫌）は悪かった。"
+                }, {
+                    "gloss": "意向・意中〔心の中の様子〕",
+                    "text": "わざとの御消息とはあらねど、御気色ありけるを、",
+                    "headword_form": "気色",
+                    "source": "源氏・若菜上",
+                    "translation": "正式な形でのお手紙ということではないが、ご（意向）を示されたのを、"
+                }]
+            }, {
+                "no": "114",
+                "pos": "名詞",
+                "headword": "こころざし",
+                "kanji": "心ざし・志",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "意志・意向〔何かをしようとする気持ち〕〔現代語と同じ〕"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "愛情・好意〔相手に寄せる気持ち〕"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "お礼の贈り物"
+                }],
+                "examples": [{
+                    "gloss": "愛情・好意〔相手に寄せる気持ち〕",
+                    "text": "「心ざしのまさらむにこそはあはめ」と思ふに、",
+                    "headword_form": "心ざし",
+                    "source": "大和・一四七段",
+                    "translation": "「（自分への）（愛情）がまさっているほうの男性と結婚しよう」と思うが、"
+                }, {
+                    "gloss": "お礼の贈り物",
+                    "text": "《留守中、家の管理を頼んでいた隣の人は、荒れるにまかせていた。》とはつらく見ゆれど、志はせむとす。",
+                    "headword_form": "志",
+                    "source": "土佐・二月十六日",
+                    "translation": "とても薄情に見えるけれども、（お礼の贈り物）はしようと思う。"
+                }]
+            }, {
+                "no": "115",
+                "pos": "名詞",
+                "headword": "ほい",
+                "kanji": "本意",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "本来の意志・かねてからの願い"
+                }],
+                "examples": [{
+                    "gloss": "本来の意志・かねてからの願い",
+                    "text": "山籠りの本意深く、今年は出でじと思ひけれど、",
+                    "headword_form": "本意",
+                    "source": "源氏・手習",
+                    "translation": "山寺に籠もって仏道修行したいという（かねてからの願い）が深く、今年は（山から）出まいと思っていたけれども、"
+                }]
+            }, {
+                "no": "116",
+                "pos": "名詞",
+                "headword": "こと",
+                "kanji": "言",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "言葉"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "和歌"
+                }],
+                "examples": [{
+                    "gloss": "言葉",
+                    "text": "言に出でて言はぬばかりぞ",
+                    "headword_form": "言",
+                    "source": "古今・六〇七",
+                    "translation": "（言葉）に出して言わないだけだ（心の中では思っているよ）。"
+                }, {
+                    "gloss": "和歌",
+                    "text": "ただ今覚えむ古き言、ひとつづつ書け。",
+                    "headword_form": "言",
+                    "source": "枕・清涼殿のうしとらのすみの",
+                    "translation": "この紙に、今すぐ思い出せる古い（和歌）を、各自一首ずつ書け。"
+                }]
+            }, {
+                "no": "117",
+                "pos": "名詞",
+                "headword": "わざ",
+                "kanji": "業",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "こと（事）・行い"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "葬儀・法事〔葬送の儀や追善供養〕"
+                }],
+                "examples": [{
+                    "gloss": "こと（事）・行い",
+                    "text": "夜泣きといふわざする乳児の乳母。",
+                    "headword_form": "わざ",
+                    "source": "枕・くるしげなる物",
+                    "translation": "（苦しそうなのは）夜泣きという（こと）をする赤ん坊の養育係。"
+                }, {
+                    "gloss": "葬儀・法事〔葬送の儀や追善供養〕",
+                    "text": "それ失せ給ひて、安祥寺にて御わざしけり。",
+                    "headword_form": "わざ",
+                    "source": "伊勢・七七段",
+                    "translation": "その方がお亡くなりになって、安祥寺で御（葬儀）をした。"
+                }]
+            }, {
+                "no": "118",
+                "pos": "名詞",
+                "headword": "よろづ",
+                "kanji": "万",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "多くの数・さまざま・万事"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "〔副詞として使われ〕何ごとにつけても・すべてにわたって"
+                }],
+                "examples": [{
+                    "gloss": "多くの数・さまざま・万事",
+                    "text": "やまと歌は人の心を種として、よろづの言の葉とぞなれりける。",
+                    "headword_form": "よろづ",
+                    "source": "古今・仮名序",
+                    "translation": "和歌というものは人の心を種として、（さまざま）の言葉となったものである。"
+                }, {
+                    "gloss": "〔副詞として使われ〕何ごとにつけても・すべてにわたって",
+                    "text": "世の中変はりてのち、（光源氏は）よろづもの憂く思され、",
+                    "headword_form": "よろづ",
+                    "source": "源氏・葵",
+                    "translation": "ご治世が変わってから、（光源氏は）（何ごとにつけても）もの憂く"
+                }]
+            }, {
+                "no": "119",
+                "pos": "名詞",
+                "headword": "ことわり",
+                "kanji": "理",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "道理〔もっともであること〕"
+                }],
+                "examples": [{
+                    "gloss": "道理〔もっともであること〕",
+                    "text": "我を知らずして、外を知るといふことわりあるべからず。",
+                    "headword_form": "ことわり",
+                    "source": "徒然・一三四段",
+                    "translation": "自分（のこと）を知らないで、他人を知るという（道理）があるはずがない。"
+                }]
+            }, {
+                "no": "120",
+                "pos": "名詞",
+                "headword": "ひがこと・ひがごと",
+                "kanji": "僻事",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "間違い・誤り〔道理にはずれたこと〕"
+                }],
+                "examples": [{
+                    "gloss": "間違い・誤り〔道理にはずれたこと〕",
+                    "text": "道理と僻事を並べんに、いかでか道理につかざるべき。",
+                    "headword_form": "僻事",
+                    "source": "平家・巻一",
+                    "translation": "道理と（間違い）を並べたときに、どうして道理に従わないことがあろうか（道理に従うものだ）。"
+                }]
+            }, {
+                "no": "121",
+                "pos": "名詞",
+                "headword": "そらごと",
+                "kanji": "空言・虚言",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "嘘・偽り・作りごと"
+                }],
+                "examples": [{
+                    "gloss": "嘘・偽り・作りごと",
+                    "text": "まこと蓬莱の木かとこそ思ひつれ。かくあさましきそらごとにてありければ、はや返し給へ。",
+                    "headword_form": "そらごと",
+                    "source": "竹取・蓬莱の玉の枝",
+                    "translation": "本当に蓬莱山の木かと思ったことであった。（しかしそれは）このようにあきれるほどの（嘘）であったので、早くお返しください。"
+                }]
+            }, {
+                "no": "122",
+                "pos": "名詞",
+                "headword": "しるし",
+                "kanji": "験・徴",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "効き目・効果・効験"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（神仏の）霊験・ご利益"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "前兆・きざし"
+                }],
+                "examples": [{
+                    "gloss": "効き目・効果・効験",
+                    "text": "さまざまの御祈りはじまりて、なべてならぬ法ども行はるれど、さらにそのしるしなし。",
+                    "headword_form": "しるし",
+                    "source": "方丈",
+                    "translation": "いろいろなご祈祷が始まって、並々でない加持祈祷が行われたが、少しもその（効き目）がない。"
+                }, {
+                    "gloss": "（神仏の）霊験・ご利益",
+                    "text": "必ず仏の御験を見むと思ひ立ちて、その暁に京を出づるに、",
+                    "headword_form": "験",
+                    "source": "更級",
+                    "translation": "必ず仏の（ご利益）を受けようと思い立って、その日の夜明け前に都を出たが、"
+                }, {
+                    "gloss": "前兆・きざし",
+                    "text": "年も返りぬ。春のしるしも見えず、凍りわたれる水の音せぬさへ心細",
+                    "headword_form": "しるし",
+                    "source": "源氏・手習",
+                    "translation": "年も改まった。（しかし、辺りは）春の（きざし）も見られず、一面に凍りついている（谷川の）水の（流れる）音もしないことまでもが心細く感じられて、"
+                }]
+            }, {
+                "no": "123",
+                "pos": "名詞",
+                "headword": "りやう",
+                "kanji": "料",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "ため・（何かの）ためのもの"
+                }],
+                "examples": [{
+                    "gloss": "ため・（何かの）ためのもの",
+                    "text": "見れば、（庭に）長むしろをぞ四五枚敷きたる。何の料にかあらんと見るに、",
+                    "headword_form": "料",
+                    "source": "宇治・巻一・二十八話",
+                    "translation": "見ると、（庭に）長いむしろを四、五枚敷いてある。なんの（ため（のもの））だろうかと見ていると、"
+                }]
+            }, {
+                "no": "124",
+                "pos": "名詞",
+                "headword": "ろく",
+                "kanji": "禄",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "ほうび（の品物）"
+                }],
+                "examples": [{
+                    "gloss": "ほうび（の品物）",
+                    "text": "禄を出ださるれば、肩に掛けて、拝して退く。",
+                    "headword_form": "禄",
+                    "source": "徒然・六四段",
+                    "translation": "（ほうび）を下さると、肩に掛けて、礼をして退出する。"
+                }]
+            }, {
+                "no": "125",
+                "pos": "名詞",
+                "headword": "としごろ",
+                "kanji": "年頃・年比・年来",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "数年（の間）・数年来・長年"
+                }],
+                "examples": [{
+                    "gloss": "数年（の間）・数年来・長年",
+                    "text": "夜中ばかりに、皮の聖のもとにおはして「われ法師になし給へ。年頃の本意なり」とのたまひければ、",
+                    "headword_form": "年頃",
+                    "source": "栄花・ひがけのかづら",
+                    "translation": "夜中ごろに、行円上人の所にいらっしゃって「わたしを法師にしてください。（長年）の望みである」とおっしゃったので、"
+                }]
+            }, {
+                "no": "126",
+                "pos": "名詞",
+                "headword": "つとめて",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "早朝"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "翌朝"
+                }],
+                "examples": [{
+                    "gloss": "早朝",
+                    "text": "九日のつとめて、大湊より（中略）漕ぎ出でけり。",
+                    "headword_form": "つとめて",
+                    "source": "土佐・一月九日",
+                    "translation": "九日の（早朝）、大湊から（中略）舟を漕ぎ出した。"
+                }, {
+                    "gloss": "翌朝",
+                    "text": "そのあひけるつとめて、人おこせむと思ひけるに、",
+                    "headword_form": "つとめて",
+                    "source": "大和・一〇三段",
+                    "translation": "平中という男は、（女と）夫婦の縁を結んだその（翌朝）（早く）、使いの人を（女に）よこそうと思ったが、"
+                }]
+            }, {
+                "no": "127",
+                "pos": "名詞",
+                "headword": "よ・よのなか",
+                "kanji": "世・世の中",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "世の中・世間〔現代語と同じ〕"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（世の中の）人間関係・男女の仲・夫婦の仲"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "（人の）一生・（ある）御代　※「世」は単に「時・折」の意でも使う。"
+                }],
+                "examples": [{
+                    "gloss": "（世の中の）人間関係・男女の仲・夫婦の仲",
+                    "text": "心もゆかぬ世とはいひながら、まだいとかかる目は見ざりつれば、",
+                    "headword_form": "世",
+                    "source": "蜻蛉・中巻",
+                    "translation": "思いどおりにならない（夫婦の仲）とはいいながら、まだこんなひどい目に遭ったことはなかったので、"
+                }, {
+                    "gloss": "（世の中の）人間関係・男女の仲・夫婦の仲",
+                    "text": "夢よりもはかなき世の中を嘆きわびつつ明かし暮らすほどに、",
+                    "headword_form": "世の中",
+                    "source": "和泉式部",
+                    "translation": "夢よりもむなしい（亡き親王との）（男女の仲）を嘆き悲しみなが"
+                }]
+            }, {
+                "no": "128",
+                "pos": "副詞",
+                "headword": "いかで・いかでか",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "どうして・どのように（〜だろうか）〔疑問〕"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "どうして（〜だろうか、いや、〜ない）〔反語〕"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "なんとかして（〜よう・〜たい・〜てほしい）〔意志・自己の願望・他への願望〕"
+                }],
+                "examples": [{
+                    "gloss": "どうして・どのように（〜だろうか）〔疑問〕",
+                    "text": "心細げなる有様、いかで過ぐすらんと、いと心ぐるし。",
+                    "headword_form": "いかで",
+                    "source": "徒然・二百段",
+                    "translation": "頼りなげなありさまで、（どのように）過ごしているのだろうかと、とても気がかりだ。"
+                }, {
+                    "gloss": "どうして（〜だろうか、いや、〜ない）〔反語〕",
+                    "text": "いかで月を見ではあらむ」とて、なほ月出づれば、出でつつ嘆き思へり。",
+                    "headword_form": "いかで",
+                    "source": "竹取・天の羽衣",
+                    "translation": "（どうして）月を見ないでいられようか、いや、いられない」と言って、やはり月が出ると、（かぐや姫は）縁側に出て座って嘆き悲しんでいる。"
+                }, {
+                    "gloss": "なんとかして（〜よう・〜たい・〜てほしい）〔意志・自己の願望・他への願望〕",
+                    "text": "今は、いかでこの若き人々おとなびさせむと思ふよりほかのことなきに、",
+                    "headword_form": "いかで",
+                    "source": "更級",
+                    "translation": "（夫が信濃守となり都にいない）今はもう、（なんとかして）（妻であるわたしが）この子どもたちを一人前に仕立てようと思うばかりであるが、"
+                }, {
+                    "gloss": "なんとかして（〜よう・〜たい・〜てほしい）〔意志・自己の願望・他への願望〕",
+                    "text": "いかでこのかぐや姫を得てしがな。",
+                    "headword_form": "いかで",
+                    "source": "竹取・かぐや姫の生ひ立ち",
+                    "translation": "（なんとかして）このかぐや姫を手に入れ（て妻にし）たいものだ。"
+                }]
+            }, {
+                "no": "129",
+                "pos": "副詞",
+                "headword": "いかが・いかに",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "どのように・どうして（〜だろうか）〔疑問〕"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "どうして（〜だろうか、いや、〜ない）〔反語〕"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "どんなに・どれほど・なんとまあ（〜だろう）〔程度の強調・感嘆〕"
+                }],
+                "examples": [{
+                    "gloss": "どのように・どうして（〜だろうか）〔疑問〕",
+                    "text": "あはれ、いかにし給はむずらむ。",
+                    "headword_form": "いかに",
+                    "source": "蜻蛉・上巻",
+                    "translation": "ああ、（あなたはこの先）（どのように）なさるのだろうか。"
+                }, {
+                    "gloss": "どのように・どうして（〜だろうか）〔疑問〕",
+                    "text": "昔、男ありけり。いかがありけむ、その男住まずなりにけり。",
+                    "headword_form": "いかが",
+                    "source": "伊勢・九四段",
+                    "translation": "昔、男がいた。（どう）したのだろうか、その男は（女の所に）通わなくなってしまった。"
+                }, {
+                    "gloss": "どうして（〜だろうか、いや、〜ない）〔反語〕",
+                    "text": "かくばかり逢ふ日のまれになる人をいかがつらしと思はざるべき",
+                    "headword_form": "いかが",
+                    "source": "古今・四三三",
+                    "translation": "これほどまでに逢う日がまれになるあの人のことを、（どうして）薄情だと思わないでいられようか、いや、薄情だと思ってしまいます。"
+                }, {
+                    "gloss": "どんなに・どれほど・なんとまあ（〜だろう）〔程度の強調・感嘆〕",
+                    "text": "このごろの山の紅葉はいかにをかしからむ。",
+                    "headword_form": "いかに",
+                    "source": "和泉式部",
+                    "translation": "この時期の山の紅葉は（どんなにか）美しいことだろう。"
+                }]
+            }, {
+                "no": "130",
+                "pos": "副詞",
+                "headword": "など・などか・などて・なじかは",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "なぜ・どうして（〜か）"
+                }],
+                "examples": [{
+                    "gloss": "なぜ・どうして（〜か）",
+                    "text": "「など答へもせぬ」と言へば、",
+                    "headword_form": "など",
+                    "source": "伊勢・六二段",
+                    "translation": "「（どうして）返事もしないのか」と言うと、"
+                }, {
+                    "gloss": "なぜ・どうして（〜か）",
+                    "text": "なぞかう暑きにこの格子は下ろされたる。",
+                    "headword_form": "なぞ",
+                    "source": "源氏・空蝉",
+                    "translation": "（どうして）こんなに暑いのにこの格子をお下ろしになっているのか。"
+                }, {
+                    "gloss": "なぜ・どうして（〜か）",
+                    "text": "春霞なに隠すらむ桜花散る間をだにも見るべきものを",
+                    "headword_form": "なに",
+                    "source": "古今・七九",
+                    "translation": "春霞は（どうして）桜の花を隠しているのだろうか。（咲いている期間が短い桜は）散るときでさえも見ていたいものなのに。"
+                }, {
+                    "gloss": "なぜ・どうして（〜か）",
+                    "text": "かからでよき日もあらむものを、なにしに詣でつらむ。",
+                    "headword_form": "なにしに",
+                    "source": "枕・うらやましげなる物",
+                    "translation": "こんな日でなくて（ほかに）よい日もあるだろうに、（どうして）お参りに来てしまったのだろうか。"
+                }]
+            }, {
+                "no": "131",
+                "pos": "副詞",
+                "headword": "いつしか",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "いつの間にか・早くも"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（できるだけ）早く（〜たい・〜てほしい）"
+                }],
+                "examples": [{
+                    "gloss": "いつの間にか・早くも",
+                    "text": "鶯ばかりぞいつしか音したるを、あはれと聞く。",
+                    "headword_form": "いつしか",
+                    "source": "蜻蛉・下巻",
+                    "translation": "鶯だけが（いつの間にか）来て鳴いたのを、しみじみと聞く。"
+                }, {
+                    "gloss": "（できるだけ）早く（〜たい・〜てほしい）",
+                    "text": "いつしか梅咲かなむ。",
+                    "headword_form": "いつしか",
+                    "source": "更級",
+                    "translation": "（できるだけ）早く梅が咲いてほしい。"
+                }]
+            }, {
+                "no": "132",
+                "pos": "副詞",
+                "headword": "おのづから",
+                "kanji": "自ら",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "自然と・ひとりでに"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "偶然・たまたま"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "〈仮定・推定表現を伴い〉万一・もしかして"
+                }],
+                "examples": [{
+                    "gloss": "偶然・たまたま",
+                    "text": "おのづから人の上などうち言ひそしりたるに、幼き子どもの聞き取りて、その人のあるに言ひ出でたる。",
+                    "headword_form": "おのづから",
+                    "source": "枕・はしたなきもの",
+                    "translation": "（たまたま）ある人の悪口を言っていたときに、幼い子たちが耳にとめて、その人がいる所で言い出したこと（はきまりが悪い）。"
+                }, {
+                    "gloss": "〈仮定・推定表現を伴い〉万一・もしかして",
+                    "text": "おのづから歌など（集に）入ると思ひて、",
+                    "headword_form": "おのづから",
+                    "source": "宇治・巻二・十話",
+                    "translation": "（もしかして）（自分の）歌などが（勅撰集に）選ばれるかと思っ…"
+                }]
+            }, {
+                "no": "133",
+                "pos": "副詞",
+                "headword": "なほ",
+                "kanji": "猶",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "依然として・やはり（変らず）"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "なんといってもやはり・それでもやはり"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "さらに・いっそう"
+                }],
+                "examples": [{
+                    "gloss": "依然として・やはり（変らず）",
+                    "text": "風波やまねば、なほ同じところにあり。",
+                    "headword_form": "なほ",
+                    "source": "土佐・一月五日",
+                    "translation": "風や波がおさまらないので、（舟は）（依然として）同じ所にいる。"
+                }, {
+                    "gloss": "なんといってもやはり・それでもやはり",
+                    "text": "世の中になほいと心憂きものは、人に憎まれむことこそあるべけれ。",
+                    "headword_form": "なほ",
+                    "source": "枕・世の中になほいと心うき物は",
+                    "translation": "世の中で（なんといってもやはり）とてもいやなものは、人に憎まれることであるにちがいない。"
+                }, {
+                    "gloss": "なんといってもやはり・それでもやはり",
+                    "text": "《須磨でのわび住まいの中にあって、光源氏は八月十五夜の月（＝中秋の名月）を眺めながら都の恋しい人々を思い、涙する。》をりをりの事思ひ出で給ふに、よよと泣かれ給ふ。「夜更けはべりぬ」と…なほ入り給はず。",
+                    "headword_form": "なほ",
+                    "source": "源氏・須磨",
+                    "translation": "「夜も更けました」と（側に仕える者が）申し上げるけれども、（光源氏は月を眺め続け）（それでもやはり）部屋の中にお入りにならない。"
+                }, {
+                    "gloss": "さらに・いっそう",
+                    "text": "東路の道の果てよりも、なほ奥つ方に生ひ出でたる人、",
+                    "headword_form": "なほ",
+                    "source": "更級",
+                    "translation": "東国の道の果てよりも、（さらに）奥の方で育った人、"
+                }]
+            }, {
+                "no": "134",
+                "pos": "副詞",
+                "headword": "いとど",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "いっそう・ますます"
+                }],
+                "examples": [{
+                    "gloss": "いっそう・ますます",
+                    "text": "散ればこそいとど桜はめでたけれ",
+                    "headword_form": "いとど",
+                    "source": "伊勢・八二段",
+                    "translation": "（花が美しい上に）散るからこそ（ますます）桜はすばらしい。"
+                }]
+            }, {
+                "no": "135",
+                "pos": "副詞",
+                "headword": "げに",
+                "kanji": "実に",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "〈実際〉本当に・なるほど（そのとおり）"
+                }],
+                "examples": [{
+                    "gloss": "〈実際〉本当に・なるほど（そのとおり）",
+                    "text": "この歌よしとにはあらねど、げにと思ひて人々忘れず。",
+                    "headword_form": "げに",
+                    "source": "土佐・一月十一日",
+                    "translation": "この歌はよいというほどではないが、（本当に）（そのとおりだ）と思って人々は忘れない。"
+                }]
+            }, {
+                "no": "136",
+                "pos": "副詞",
+                "headword": "かく",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "こう・このように"
+                }],
+                "examples": [{
+                    "gloss": "こう・このように",
+                    "text": "かくうつくしうおはする御髪を、え見ぬこそ心憂く口惜しけれ。",
+                    "headword_form": "かく",
+                    "source": "大鏡・三条院",
+                    "translation": "（このように）美しくていらっしゃる御髪を、見ることができないのは情けなく残念である。"
+                }]
+            }, {
+                "no": "137",
+                "pos": "副詞",
+                "headword": "さ",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "そう・そのように"
+                }],
+                "examples": [{
+                    "gloss": "そう・そのように",
+                    "text": "さおぼす故はべらむかし。",
+                    "headword_form": "さ",
+                    "source": "更級",
+                    "translation": "（そのように）お思いになるわけがあるのでしょうよ。"
+                }, {
+                    "gloss": "そう・そのように",
+                    "text": "若人は、さる好ける物思ひをなむしける。",
+                    "headword_form": "さる",
+                    "source": "伊勢・四〇段",
+                    "translation": "若者は、（そのような）いちずな恋の苦悩をしたものである。"
+                }]
+            }, {
+                "no": "138",
+                "pos": "副詞",
+                "headword": "しか",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "そう・そのように"
+                }],
+                "examples": [{
+                    "gloss": "そう・そのように",
+                    "text": "大将も、しか見奉り給ひて、ことわりに思す。",
+                    "headword_form": "しか",
+                    "source": "源氏・賢木",
+                    "translation": "源氏の大将も、（そのように）（中宮のお心を）ご推察申し上げなさって、（それも）ごもっともなことだとお思いになる。"
+                }, {
+                    "gloss": "そう・そのように",
+                    "text": "…日に力を尽くしたること、少なからず。しかるに、禄いまだ賜はらず。",
+                    "headword_form": "しかるに",
+                    "source": "竹取・蓬莱の玉の枝",
+                    "translation": "十余日の間に努力したことは、少なくはない（＝並たいていのことではない）。しかるに、禄をいまだいただいていない。"
+                }]
+            }, {
+                "no": "139",
+                "pos": "副詞",
+                "headword": "と",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "そのように・あのように"
+                }],
+                "examples": [{
+                    "gloss": "そのように・あのように",
+                    "text": "と言ひかく言ひ、恨み給ふ。",
+                    "headword_form": "と",
+                    "source": "源氏・東屋",
+                    "translation": "（ああ）言ったり（こう）言ったりなさって、恨みなさる。"
+                }]
+            }, {
+                "no": "140",
+                "pos": "副詞",
+                "headword": "やがて",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "（ある状態が）そのまま"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "（時間的に）すぐに"
+                }],
+                "examples": [{
+                    "gloss": "（ある状態が）そのまま",
+                    "text": "薬も食はず。やがて起きもあがらで、病みふせり。",
+                    "headword_form": "やがて",
+                    "source": "竹取・富士の煙",
+                    "translation": "薬も飲まない。（そのまま）起きあがらないで、病気になって伏していた。"
+                }, {
+                    "gloss": "（時間的に）すぐに",
+                    "text": "名を聞くよりやがて面影は推しはからるる心地するを、",
+                    "headword_form": "やがて",
+                    "source": "徒然・七一段",
+                    "translation": "名前を聞くやいなや（すぐに）（その人の）面影が想像される気持ちがするのに、"
+                }]
+            }, {
+                "no": "141",
+                "pos": "副詞",
+                "headword": "すなはち",
+                "kanji": "即ち・則ち・乃ち",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "すぐに・ただちに"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "つまり・言い換えれば（現代語と同じ）"
+                }],
+                "examples": [{
+                    "gloss": "すぐに・ただちに",
+                    "text": "「歌仕うまつれ」と（帝が遊女に）仰せられければ、すなはち詠みたてまつりける。",
+                    "headword_form": "すなはち",
+                    "source": "大和・一四五段",
+                    "translation": "「歌を詠め」と（帝が遊女に）おっしゃったところ、（すぐに）お詠み申し上げた。"
+                }]
+            }, {
+                "no": "142",
+                "pos": "副詞",
+                "headword": "やうやう・やうやく",
+                "kanji": "漸う・漸く",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "しだいに・だんだんと"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "やっと・かろうじて"
+                }],
+                "examples": [{
+                    "gloss": "しだいに・だんだんと",
+                    "text": "春は、曙。やうやう白くなりゆく山際、少し明かりて、紫だちたる雲の、細くたなびきたる。",
+                    "headword_form": "やうやう",
+                    "source": "枕・春は曙",
+                    "translation": "春は夜明け前（がいい）。（しだいに）白くなりつつある山際の空が、少し明るくなって、紫がかった雲が、細くたなびいているの"
+                }]
+            }, {
+                "no": "143",
+                "pos": "副詞",
+                "headword": "やをら・やはら",
+                "kanji": "柔ら・和ら",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "そっと・静かに"
+                }],
+                "examples": [{
+                    "gloss": "そっと・静かに",
+                    "text": "几帳の片つかたにうちかけて、人の臥したるを、奥の方よりやをら覗いたるも、いとをかし。",
+                    "headword_form": "やをら",
+                    "source": "枕・心にくきもの",
+                    "translation": "（脱いだ着物を）几帳の片方にひっかけて、女房が寝ているのを、部屋の奥のほうから（そっと）覗いているのも、とてもおもしろい。"
+                }]
+            }, {
+                "no": "144",
+                "pos": "副詞",
+                "headword": "なかなか",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "中途半端に・なまじ"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "かえって・むしろ"
+                }],
+                "examples": [{
+                    "gloss": "中途半端に・なまじ",
+                    "text": "なかなか返事して、門立てられ、錠さされては悪しかりなんと思ひて、",
+                    "headword_form": "なかなか",
+                    "source": "平家・巻六",
+                    "translation": "（中途半端に）返事をして、門を閉められ、錠をかけられてはまずいだろうと思って、"
+                }, {
+                    "gloss": "かえって・むしろ",
+                    "text": "なかなかに寝も寝られず。これは夢かとのみ覚ゆ。",
+                    "headword_form": "なかなかに",
+                    "source": "成尋阿闍梨母集",
+                    "translation": "（息子になまじ会ったために）（かえって）眠ることもできない。これ（＝息子に会ったこと）は夢ではないかとばかり思われる。"
+                }, {
+                    "gloss": "かえって・むしろ",
+                    "text": "忘れてもあるべきものをなかなかに問ふにつらさを思ひ出でつる",
+                    "headword_form": "なかなかに",
+                    "source": "続古今・一三四",
+                    "translation": "（ほうっておかれたら）忘れてもいられるのに、（どうかと）尋ねるので、（かえって）つらさを思い出してしまった。"
+                }]
+            }, {
+                "no": "145",
+                "pos": "副詞",
+                "headword": "さすがに",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "そうはいってもやはり"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "なんといってもやはり"
+                }],
+                "examples": [{
+                    "gloss": "そうはいってもやはり",
+                    "text": "祇王もとより思ひまうけたる道なれども、さすがに昨日今日とは思ひよらず。",
+                    "headword_form": "さすがに",
+                    "source": "平家・巻一",
+                    "translation": "祇王は以前から予想していたことではあるけれども、（そうはいってもやはり）昨日今日（というさし迫ったもの）とは思いもよらない。"
+                }, {
+                    "gloss": "なんといってもやはり",
+                    "text": "男君も、さすがに貴人の子なれば、けはひも貴やかに、",
+                    "headword_form": "さすがに",
+                    "source": "古本・上巻・二六話",
+                    "translation": "男君も、（なんといってもやはり）高貴な方の子であるので、様子（態度）も高貴な感じで、"
+                }]
+            }, {
+                "no": "146",
+                "pos": "副詞",
+                "headword": "かたみに",
+                "kanji": "互に",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "互いに"
+                }],
+                "examples": [{
+                    "gloss": "互いに",
+                    "text": "同じ心に、かやうに言ひかはし、世の中の憂きもつらきをかしきも、かたみに言ひかたらふ人、筑前に下りて後、",
+                    "headword_form": "かたみに",
+                    "source": "更級",
+                    "translation": "気が合って、このように手紙のやり取りをし、世間のいやなこともつらいこともおもしろいことも、（互いに）語り合っている人が、筑前に下って後、"
+                }]
+            }, {
+                "no": "147",
+                "pos": "副詞",
+                "headword": "うたて",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "不快に・いやな感じに"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "気味悪く・異様に怪しく"
+                }],
+                "examples": [{
+                    "gloss": "不快に・いやな感じに",
+                    "text": "花も散りたるのちは、うたてぞ見ゆる。",
+                    "headword_form": "うたて",
+                    "source": "枕・比は正月",
+                    "translation": "桜の花も散ってしまったあとは、（いやな感じに）見える。"
+                }, {
+                    "gloss": "不快に・いやな感じに",
+                    "text": "俊寛僧都一人、憂かりし島の島守になりにけるこそうたてけれ。",
+                    "headword_form": "うたてけれ",
+                    "source": "平家・巻三",
+                    "translation": "俊寛僧都一人だけ、つらかった島の番人になってしまった（＝都に帰されることもなく、鬼界が島に留め置かれた）のは（嘆かわしい）（いやな）ことである。"
+                }, {
+                    "gloss": "気味悪く・異様に怪しく",
+                    "text": "物に襲はるる心地して、驚き給へれば、灯も消えにけり。うたて思さるれば、太刀を引き抜きて、",
+                    "headword_form": "うたて",
+                    "source": "源氏・夕顔",
+                    "translation": "（光源氏は夢の中で）物の怪が何かに襲われるような気持ちがして、はっとお目覚めになったところ、灯火も消えてしまった。（異様に怪しく）（気味悪く）お思いになったので、太刀を引き抜いて、"
+                }]
+            }, {
+                "no": "148",
+                "pos": "副詞",
+                "headword": "なべて",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "一般に・すべて・みな同様に"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "並ひととおり・普通・平凡"
+                }],
+                "examples": [{
+                    "gloss": "一般に・すべて・みな同様に",
+                    "text": "（都の人は）なべて心やはらかに、情けあるゆゑに、人のいふほどのこと、けやけくいなびがたくて、",
+                    "headword_form": "なべて",
+                    "source": "徒然・一四一段",
+                    "translation": "（都の人は）（一般に）（＝誰もみな同様に）心が穏やかで、人情があるので、人が頼むようなことを、きっぱりと断りにくくて、"
+                }, {
+                    "gloss": "並ひととおり・普通・平凡",
+                    "text": "二の宮におはすらんと目とどむれば、御髪のかかりなべてならで、",
+                    "headword_form": "なべてならで",
+                    "source": "狭衣・巻二",
+                    "translation": "二の宮でいらっしゃるかと目を留めてみると、御髪のかかり具合が（並ひととおりでなく）（＝格別に美しく）、"
+                }]
+            }, {
+                "no": "149",
+                "pos": "副詞",
+                "headword": "わざと",
+                "kanji": "",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "わざわざ"
+                }, {
+                    "sense_no": 2,
+                    "gloss": "特に・とりわけ・格別に"
+                }, {
+                    "sense_no": 3,
+                    "gloss": "（下に「の」を伴い）正式な・本格的な"
+                }],
+                "examples": [{
+                    "gloss": "特に・とりわけ・格別に",
+                    "text": "わざとめでたき冊子ども、硯の箱の蓋に入れて遣せたり。",
+                    "headword_form": "わざと",
+                    "source": "更級",
+                    "translation": "（親戚の人がわたしに）（特に）立派な物語の本などを、硯の箱の蓋に入れて送ってくれた。"
+                }, {
+                    "gloss": "（下に「の」を伴い）正式な・本格的な",
+                    "text": "わざとの御学問はさるものにて、琴笛の音にも、",
+                    "headword_form": "わざと",
+                    "source": "源氏・桐壺",
+                    "translation": "（正式な）御学問はいうまでもなく、琴や笛（の演奏）の音色でも、"
+                }]
+            }, {
+                "no": "150",
+                "pos": "副詞",
+                "headword": "あまた",
+                "kanji": "数多",
+                "senses": [{
+                    "sense_no": 1,
+                    "gloss": "たくさん・数多く"
+                }],
+                "examples": [{
+                    "gloss": "たくさん・数多く",
+                    "text": "女御・更衣あまたさぶらひ給ひけるなかに、",
+                    "headword_form": "あまた",
+                    "source": "源氏・桐壺",
+                    "translation": "女御・更衣（などの后妃）が（たくさん）お仕えなさっていた中で、"
+                }]
+            }];
+        </script>
+        <script>
+            "use strict";
+            /* ---------- utilities ---------- */
+            const $ = s => document.querySelector(s);
+            const shuffle = a => {
+                a = a.slice();
+                for (let i = a.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [a[i],a[j]] = [a[j], a[i]];
+                }
+                return a;
+            }
+            ;
+            const sample = (arr, n) => shuffle(arr).slice(0, n);
+            const eq = (a, b) => a.length === b.length && a.every(x => b.includes(x));
+
+            const SESSION_A = 20
+              , SESSION_B = 10;
+
+            /* ---------- state ---------- */
+            let S = null;
+            // session
+
+            /* ---------- screen switch ---------- */
+            function show(id) {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                $('#' + id).classList.add('active');
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'instant'
+                });
+            }
+
+            /* ---------- build questions ---------- */
+            function buildQuestionsA(pool) {
+                // pool: array of words. one question per word.
+                const picked = sample(pool, Math.min(SESSION_A, pool.length));
+                return picked.map(w => {
+                    const correct = w.senses.map(s => s.gloss);
+                    // distractors from same pos, other words
+                    const distPool = [];
+                    const seen = new Set(correct);
+                    TANGO_DATA.forEach(o => {
+                        if (o.no === w.no || o.pos !== w.pos)
+                            return;
+                        o.senses.forEach(s => {
+                            if (!seen.has(s.gloss)) {
+                                seen.add(s.gloss);
+                                distPool.push(s.gloss);
+                            }
+                        }
+                        );
+                    }
+                    );
+                    // distractor count: at least as many as correct, and enough to reach >=4 total options
+                    const dn = Math.max(correct.length, 4 - correct.length, 2);
+                    // 正解語義のいずれかと酷似するダミーは除外
+                    const cleanDist = distPool.filter(d => !correct.some(c => glossSim(c, d)));
+                    const distractors = sample(cleanDist, Math.min(dn, cleanDist.length));
+                    const options = shuffle(correct.concat(distractors));
+                    return {
+                        mode: 'A',
+                        word: w,
+                        headword: w.headword,
+                        kanji: w.kanji,
+                        pos: w.pos,
+                        correct,
+                        options,
+                        multi: true
+                    };
+                }
+                );
+            }
+            function glossSim(a, b) {
+                // 「・」区切りの語義片どうしに共通要素があれば類似とみなす
+                if (a === b)
+                    return true;
+                const pa = a.split(/[・／]/).map(s => s.trim()).filter(Boolean);
+                const pb = b.split(/[・／]/).map(s => s.trim()).filter(Boolean);
+                return pa.some(x => pb.some(y => x === y || (x.length >= 3 && y.includes(x)) || (y.length >= 3 && x.includes(y))));
+            }
+            function buildQuestionsB(pool) {
+                // one question per example
+                const exQ = [];
+                pool.forEach(w => {
+                    w.examples.forEach(ex => {
+                        if (ex.text.indexOf(ex.headword_form) < 0)
+                            return;
+                        // 傍線が引けない例文は除外
+                        exQ.push({
+                            word: w,
+                            ex
+                        });
+                    }
+                    );
+                }
+                );
+                const picked = sample(exQ, Math.min(SESSION_B, exQ.length));
+                return picked.map( ({word, ex}) => {
+                    const correct = ex.gloss;
+                    // 選択肢: 正解と酷似しない語義を集めて四択にする
+                    const opts = [correct];
+                    const used = [correct];
+                    const tryAdd = g => {
+                        if (opts.length >= 4)
+                            return;
+                        if (used.some(u => glossSim(u, g)))
+                            return;
+                        opts.push(g);
+                        used.push(g);
+                    }
+                    ;
+                    // まず同一単語の他語義
+                    word.senses.forEach(s => tryAdd(s.gloss));
+                    // 次に同品詞の他語の語義
+                    if (opts.length < 4) {
+                        const extra = [];
+                        TANGO_DATA.forEach(o => {
+                            if (o.pos !== word.pos)
+                                return;
+                            o.senses.forEach(s => extra.push(s.gloss));
+                        }
+                        );
+                        shuffle(extra).forEach(tryAdd);
+                    }
+                    // 最後の保険: 全品詞
+                    if (opts.length < 4) {
+                        const all = [];
+                        TANGO_DATA.forEach(o => o.senses.forEach(s => all.push(s.gloss)));
+                        shuffle(all).forEach(tryAdd);
+                    }
+                    return {
+                        mode: 'B',
+                        word,
+                        ex,
+                        headword: word.headword,
+                        pos: word.pos,
+                        correct: [correct],
+                        options: shuffle(opts),
+                        multi: false
+                    };
+                }
+                );
+            }
+
+            /* ---------- session ---------- */
+            function startSession(mode, reuse) {
+                const questions = reuse ? reuse : (mode === 'A' ? buildQuestionsA(TANGO_DATA) : buildQuestionsB(TANGO_DATA));
+                S = {
+                    mode,
+                    questions,
+                    idx: 0,
+                    score: 0,
+                    wrong: [],
+                    selected: [],
+                    answered: false
+                };
+                $('#q-total').textContent = questions.length;
+                $('#q-mode').textContent = 'モード' + mode;
+                show('quiz');
+                renderQuestion();
+            }
+
+            function renderQuestion() {
+                S.selected = [];
+                S.answered = false;
+                const q = S.questions[S.idx];
+                $('#q-now').textContent = S.idx + 1;
+                $('#q-total').textContent = S.questions.length;
+                $('#q-bar').style.width = ((S.idx) / S.questions.length * 100) + '%';
+
+                const fb = $('#q-feedback');
+                fb.className = 'feedback';
+                fb.innerHTML = '';
+                const stem = $('#q-stem');
+                const optsCard = $('#q-opts');
+
+                if (q.mode === 'A') {
+                    stem.innerHTML = '<span class="pos-tag">' + q.pos + '</span>' + '<div class="headword">' + esc(q.headword) + '</div>' + (q.kanji ? '<div class="kanji">' + esc(q.kanji) + '</div>' : '') + '<p class="ask multi">該当する意味を<b>すべて</b>選んでください</p>';
+                } else {
+                    const passage = markHeadword(q.ex.text, q.ex.headword_form);
+                    stem.innerHTML = '<span class="pos-tag">' + q.pos + '</span>' + '<p class="passage">' + passage + '</p>' + (q.ex.source ? '<p class="source">〔' + esc(q.ex.source) + '〕</p>' : '') + '<p class="ask">傍線部の意味として適切なものを選んでください</p>';
+                }
+
+                // options
+                optsCard.innerHTML = '';
+                const optsWrap = document.createElement('div');
+                optsWrap.className = 'opts';
+                const radio = !q.multi;
+                q.options.forEach(opt => {
+                    const b = document.createElement('button');
+                    b.className = 'opt' + (radio ? ' radio' : '');
+                    b.dataset.val = opt;
+                    b.innerHTML = '<span class="box"></span><span class="lab">' + esc(opt) + '</span>';
+                    b.onclick = () => toggleOpt(b, opt, radio);
+                    optsWrap.appendChild(b);
+                }
+                );
+                // dont-know
+                const dk = document.createElement('button');
+                dk.className = 'opt dontknow' + (radio ? ' radio' : '');
+                dk.dataset.val = '__dk__';
+                dk.innerHTML = '<span class="box"></span><span class="lab">わからない</span>';
+                dk.onclick = () => toggleOpt(dk, '__dk__', true);
+                // dontknow always exclusive
+                optsWrap.appendChild(dk);
+                optsCard.appendChild(optsWrap);
+
+                const act = $('#q-action');
+                act.textContent = '解答する';
+                act.disabled = true;
+                act.className = 'btn btn-primary';
+                act.onclick = submitAnswer;
+                updateActionState();
+            }
+
+            function toggleOpt(btn, val, radio) {
+                if (S.answered)
+                    return;
+                const card = $('#q-opts');
+                if (val === '__dk__') {
+                    const on = btn.classList.contains('sel');
+                    card.querySelectorAll('.opt').forEach(o => o.classList.remove('sel'));
+                    S.selected = [];
+                    if (!on) {
+                        btn.classList.add('sel');
+                        S.selected = ['__dk__'];
+                    }
+                } else if (radio) {
+                    card.querySelectorAll('.opt').forEach(o => o.classList.remove('sel'));
+                    btn.classList.add('sel');
+                    S.selected = [val];
+                } else {
+                    // multi: deselect dontknow if active
+                    const dk = card.querySelector('.opt.dontknow');
+                    if (dk.classList.contains('sel')) {
+                        dk.classList.remove('sel');
+                        S.selected = S.selected.filter(v => v !== '__dk__');
+                    }
+                    if (btn.classList.contains('sel')) {
+                        btn.classList.remove('sel');
+                        S.selected = S.selected.filter(v => v !== val);
+                    } else {
+                        btn.classList.add('sel');
+                        S.selected.push(val);
+                    }
+                }
+                updateActionState();
+            }
+            function updateActionState() {
+                $('#q-action').disabled = S.selected.length === 0;
+            }
+
+            function submitAnswer() {
+                if (S.answered)
+                    return;
+                S.answered = true;
+                const q = S.questions[S.idx];
+                const card = $('#q-opts');
+                const dk = S.selected.includes('__dk__');
+                const chosen = S.selected.filter(v => v !== '__dk__');
+                const correct = !dk && eq(chosen, q.correct);
+                if (correct)
+                    S.score++;
+
+                // lock & color
+                card.querySelectorAll('.opt').forEach(o => {
+                    o.disabled = true;
+                    const v = o.dataset.val;
+                    const addTag = (cls, text) => {
+                        const t = document.createElement('span');
+                        t.className = 'opt-tag ' + cls;
+                        t.textContent = text;
+                        o.appendChild(t);
+                    }
+                    ;
+                    if (v === '__dk__') {
+                        if (dk) {
+                            o.classList.add('wrong');
+                            addTag('you', 'あなたの解答');
+                        }
+                        return;
+                    }
+                    const isCorrect = q.correct.includes(v);
+                    const isChosen = chosen.includes(v);
+                    if (isChosen && isCorrect) {
+                        o.classList.add('correct');
+                        addTag('right', 'あなたの解答 ◎');
+                    } else if (isChosen && !isCorrect) {
+                        o.classList.add('wrong');
+                        addTag('you', 'あなたの解答');
+                    } else if (!isChosen && isCorrect) {
+                        o.classList.add('missed');
+                        addTag('right-line', '正しい選択肢');
+                    }
+                }
+                );
+
+                // feedback
+                const fb = $('#q-feedback');
+                fb.classList.add('show', correct ? 'ok' : 'ng');
+                const noLabel = wordNo(q.word);
+                let html = '<div class="verdict-row">' + '<span class="verdict">' + (correct ? '正解' : '不正解') + '</span>' + '<span class="word-no"><span class="no-badge">No.' + noLabel + '</span>' + '<span class="word-name">' + esc(q.headword) + (q.kanji ? '（' + esc(q.kanji) + '）' : '') + '</span></span>' + '</div>';
+                html += '<div class="gloss-label">正しい意味</div>';
+                html += '<ul class="gloss-list">' + q.correct.map(g => '<li>' + esc(g) + '</li>').join('') + '</ul>';
+                if (q.mode === 'B' && q.ex.translation) {
+                    html += '<div class="trans">' + esc(q.ex.translation) + '</div>';
+                }
+                fb.innerHTML = html;
+
+                if (!correct) {
+                    S.wrong.push({
+                        q,
+                        chosen: dk ? ['わからない'] : chosen.slice()
+                    });
+                }
+
+                $('#q-bar').style.width = ((S.idx + 1) / S.questions.length * 100) + '%';
+                const act = $('#q-action');
+                act.textContent = (S.idx + 1 < S.questions.length) ? '次の問題へ →' : '結果を見る →';
+                act.onclick = nextQuestion;
+            }
+
+            function nextQuestion() {
+                if (S.idx + 1 < S.questions.length) {
+                    S.idx++;
+                    renderQuestion();
+                } else
+                    showResult();
+            }
+
+            /* ---------- result ---------- */
+            function showResult() {
+                $('#r-score').textContent = S.score;
+                $('#r-total').textContent = S.questions.length;
+                const rate = S.score / S.questions.length;
+                let msg;
+                if (rate === 1)
+                    msg = '全問正解です。よく仕上がっています。';
+                else if (rate >= 0.8)
+                    msg = '高い正答率です。取りこぼした語を確認しておきましょう。';
+                else if (rate >= 0.5)
+                    msg = '半分以上は正解です。誤った語を重点的に見直しましょう。';
+                else
+                    msg = 'まずは間違えた語から復習することをおすすめします。';
+                $('#r-msg').textContent = msg;
+
+                const rev = $('#r-review');
+                if (S.wrong.length === 0) {
+                    rev.innerHTML = '<div class="perfect"><span class="big">✓</span>間違えた問題はありません。</div>';
+                } else {
+                    let h = '<div class="review-h">間違えた問題 <span class="cnt">' + S.wrong.length + '</span></div>';
+                    S.wrong.forEach(w => {
+                        const q = w.q;
+                        let qline, meta;
+                        if (q.mode === 'A') {
+                            qline = '<span class="rev-no">No.' + wordNo(q.word) + '</span>' + esc(q.headword) + (q.kanji ? '　<span style="font-size:.85rem;color:var(--ink-soft)">' + esc(q.kanji) + '</span>' : '');
+                            meta = 'モードA ／ ' + q.pos;
+                        } else {
+                            qline = markHeadword(q.ex.text, q.ex.headword_form);
+                            meta = '<span class="rev-no inline">No.' + wordNo(q.word) + '</span>モードB ／ ' + q.pos + ' ／ ' + esc(q.headword) + (q.ex.source ? ' ／ 〔' + esc(q.ex.source) + '〕' : '');
+                        }
+                        const correctHtml = q.correct.length > 1 ? '<ul class="gloss-list" style="margin-top:2px">' + q.correct.map(g => '<li>' + esc(g) + '</li>').join('') + '</ul>' : '<span class="val">' + esc(q.correct[0]) + '</span>';
+                        h += '<div class="rev-item">' + '<div class="rev-q">' + qline + '</div>' + '<div class="rev-meta">' + meta + '</div>' + '<div class="rev-line your"><span class="lab">あなたの解答</span><span class="val">' + w.chosen.map(esc).join('・') + '</span></div>' + '<div class="rev-line true"><span class="lab">正しい意味</span>' + correctHtml + '</div>' + '</div>';
+                    }
+                    );
+                    rev.innerHTML = h;
+                }
+
+                const acts = $('#r-actions');
+                acts.innerHTML = '';
+                if (S.wrong.length > 0) {
+                    const b = document.createElement('button');
+                    b.className = 'btn btn-enji btn-block';
+                    b.textContent = '間違えた問題だけ解き直す（' + S.wrong.length + '問）';
+                    b.onclick = retryWrong;
+                    acts.appendChild(b);
+                }
+                const h = document.createElement('button');
+                h.className = 'btn btn-ghost btn-block';
+                h.textContent = 'モード選択へ戻る';
+                h.onclick = goHome;
+                acts.appendChild(h);
+                show('result');
+            }
+
+            function retryWrong() {
+                const qs = shuffle(S.wrong.map(w => w.q));
+                startSession(S.mode, qs);
+            }
+            function goHome() {
+                show('home');
+            }
+
+            /* ---------- helpers ---------- */
+            function esc(s) {
+                return String(s).replace(/[&<>"]/g, c => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;'
+                }[c]));
+            }
+            function wordNo(w) {
+                return w && w.no ? String(parseInt(w.no, 10)) : '';
+            }
+            function markHeadword(text, form) {
+                const i = text.indexOf(form);
+                if (i < 0)
+                    return esc(text);
+                return esc(text.slice(0, i)) + '<span class="uline">' + esc(form) + '</span>' + esc(text.slice(i + form.length));
+            }
+
+            /* ---------- modal / nav ---------- */
+            let pendingNav = null;
+            function openModal(dest) {
+                pendingNav = dest;
+                const acts = $('#modal-actions');
+                acts.innerHTML = '';
+                // destination-specific primary action
+                const go = document.createElement('button');
+                go.className = 'btn btn-enji';
+                if (dest === 'kobun') {
+                    go.textContent = '古文ホームへ移動';
+                } else {
+                    go.textContent = '単語トップへ移動';
+                }
+                go.onclick = () => {
+                    if (dest === 'kobun')
+                        location.href = 'https://swallow-base.com/kobun/';
+                    else
+                        location.href = 'https://swallow-base.com/kobun/tango/';
+                }
+                ;
+                // app-internal: back to mode select
+                const modeSel = document.createElement('button');
+                modeSel.className = 'btn btn-ghost';
+                modeSel.textContent = 'モード選択に戻る';
+                modeSel.onclick = () => {
+                    closeModal();
+                    show('home');
+                }
+                ;
+                // cancel
+                const cancel = document.createElement('button');
+                cancel.className = 'btn btn-ghost';
+                cancel.textContent = 'キャンセル';
+                cancel.onclick = closeModal;
+                acts.append(go, modeSel, cancel);
+                $('#modal').classList.add('show');
+            }
+            function closeModal() {
+                $('#modal').classList.remove('show');
+            }
+
+            // intercept nav links while in quiz
+            function bindNav(sel, dest) {
+                document.querySelector(sel).addEventListener('click', e => {
+                    if ($('#quiz').classList.contains('active')) {
+                        e.preventDefault();
+                        openModal(dest);
+                    }
+                }
+                );
+            }
+            bindNav('.nav-kobun', 'kobun');
+            bindNav('.nav-tango', 'tango');
+
+            /* ---------- sticky offset: measure header height ---------- */
+            function setHeadHeight() {
+                const h = document.querySelector('header');
+                if (h)
+                    document.documentElement.style.setProperty('--head-h', h.offsetHeight + 'px');
+            }
+            setHeadHeight();
+            window.addEventListener('resize', setHeadHeight);
+            window.addEventListener('orientationchange', setHeadHeight);
+        </script>
+    </body>
+</html>

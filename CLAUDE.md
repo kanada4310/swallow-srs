@@ -314,6 +314,19 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 - **ノートタイプ「識別演習」**: `data/multi-step-template.mjs`（共有定義）＋`data/create-multi-step-notetype.mjs`（`is_system:true`・**作成済み**）。フィールド=例文/識別対象/出典/現代語訳/傍線(JSON)/設問(JSON)/補足
 - **サンプルデッキ**: `data/import-kobun-shikibetsu.mjs` が `index.html` の `QUESTION_DATA` を抽出して投入。「識別演習（古文）」=46例文ノート（原典10語）**投入済み**
 
+## 古文単語演習（tango.html モードA/B）✅（要実機確認）
+
+`docs/tango.html`（つばめ古文 単語演習）のモードA/Bを **SRSカードに統合**。元データ `quiz_generator/data/古文/古文単語315.json`（全315語）。並行セッションの識別演習（多段階）と非干渉になるよう **独立した新カード種別**として実装（`src/lib/multi-step/*`・`MultiStepCard.tsx` には不干渉。共有ファイルは `StudySession.tsx` の分岐追加のみ）。
+
+- **設計核**: 1ノート＝1問（1カード）。**モードA**＝見出し語→該当する意味をすべて選ぶ（複数選択）／**モードB**＝例文の傍線部→意味を四択。正誤＋解答時間でスコア化し SRS 評価を**自動判定**＋タップ手直し（識別演習と同じUX）。`review_logs` の既存 score/step_results 列に乗せるので**新マイグレーション不要**
+- **ダミー選択肢**: インポート時に「同品詞・正解と非類似（`glossSim`）」の語義プールを生成してノートの `問題.distractors` に**焼き込み**、カードは毎レビューでプールから抽出（例文プール／画像マスクと同じ「毎回ランダム」）。モードA のダミー数 `max(正解数,4-正解数,2)`、モードB は四択
+- **ノートタイプは A/B 別**（フィールド構成が異なるため）。`問題`(JSON) には採点に必要な配列（`correct`/`distractors`）だけを入れ、表示用テキスト（例文・傍線形・出典・訳）は**フラットフィールド**に持つ＝標準エディタで編集可能
+- **純ロジック** `src/lib/kobun-tango/`（types/parse/grade/index＋テスト18件）: `parseKobunQuestion`（{mode,correct,distractors}）・`parseKobunMeta`・`parseKobunBDisplay`（例文/傍線形/出典/訳をフラットフィールドから）・`isKobunTangoNote`・`buildOptionsA/B`・`grade`（モードA は集合一致＋部分点 `(tp-fp)/正解数`、モードB は一致）・`computeKobunScore`・`deriveKobunEase`
+- **UI** `src/components/card/KobunTangoCard.tsx`: tango.html の世界観（paper/indigo/enji）。複数/単一選択・「わからない」・採点後の色付け（正解/誤答/取りこぼし）・フィードバック（正しい意味＋訳）→SRS評価パネル。**React直接描画**（`dangerouslySetInnerHTML` 不使用）。`StudySession` が `isKobunTangoNote` で分岐（timer/swipe 無効）
+- **ノートタイプ**: `data/kobun-tango-template.mjs`（A/B 定義の共有元）＋`data/create-kobun-tango-notetype.mjs`（両方を is_system で作成・**作成済み**）。「古文単語演習A（単語→意味）」=通し番号/品詞/見出し語/漢字/問題 ／「古文単語演習B（例文→傍線部）」=通し番号/品詞/見出し語/漢字/例文/傍線形/出典/現代語訳/問題
+- **デッキ「古文単語315」**（**投入済み** owner=gaimon.maam）: `data/import-kobun-tango.mjs`（`--reset` で旧デッキ/旧単一ノートタイプを削除して再投入）。**904ノート**（A=315／B=589。A はノートタイプA、B はノートタイプB）＋モード別フィルタサブデッキ「モードA（単語→意味）」「モードB（例文→意味）」（filter_tags でモード選択を再現）
+- **要実機確認**: Vercel デプロイ＋再ログイン後 `/study`「古文単語315」or モードサブデッキで出題・自動判定・スコア。`deriveKobunEase` のしきい値（`grade.ts` の TARGET_MS/SPEED_EASY_THRESHOLD/ACCURACY_HARD_THRESHOLD）は実データで要調整
+
 ## 現在の進捗
 
 詳細は @docs/progress.md を参照。

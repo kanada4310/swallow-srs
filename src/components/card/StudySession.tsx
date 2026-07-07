@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { StudyCard } from './StudyCard'
 import { MultiStepCard } from './MultiStepCard'
+import { KobunTangoCard } from './KobunTangoCard'
 import { isMultiStepNote, type EaseValue, type StepResult } from '@/lib/multi-step'
+import { isKobunTangoNote } from '@/lib/kobun-tango'
 import {
   Ease,
   getNextIntervalPreview,
@@ -840,6 +842,9 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
 
   const intervalPreviews = getNextIntervalPreview(currentCard.schedule, undefined, deckSettings)
   const isMultiStep = isMultiStepNote(currentCard.fieldValues)
+  const isKobunTango = isKobunTangoNote(currentCard.fieldValues)
+  // React で直接描画する自動採点カード（タイマー/スワイプを無効化する）
+  const isReactQuizCard = isMultiStep || isKobunTango
 
   return (
     <div className="py-6">
@@ -903,7 +908,7 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
       )}
 
       {/* Countdown Timer（多段階設問はフリップしないので無効） */}
-      {settings.answer_time_limit > 0 && !isMultiStep && (
+      {settings.answer_time_limit > 0 && !isReactQuizCard && (
         <CountdownTimer
           key={'timer-' + currentCard.id + '-' + stats.reviewed}
           totalSeconds={settings.answer_time_limit}
@@ -923,7 +928,19 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
       )}
 
       {/* Card */}
-      {isMultiStep ? (
+      {isKobunTango ? (
+        <KobunTangoCard
+          key={currentCard.id + '-' + stats.reviewed}
+          fieldValues={currentCard.fieldValues}
+          intervalPreviews={intervalPreviews as Record<EaseValue, string>}
+          onComplete={(ease, extra) =>
+            handleAnswer(ease as Ease, {
+              score: extra.score,
+              stepResults: extra.stepResults as unknown as StepResult[],
+            })
+          }
+        />
+      ) : isMultiStep ? (
         <MultiStepCard
           key={currentCard.id + '-' + stats.reviewed}
           fieldValues={currentCard.fieldValues}
