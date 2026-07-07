@@ -84,9 +84,9 @@ export function NoteCard({
 
   return (
     <div
-      className={`bg-white rounded-lg shadow-sm border p-4 transition-colors ${
+      className={`bg-white rounded-2xl border p-4 transition-colors ${
         isSelectMode && isSelected
-          ? 'border-blue-400 bg-blue-50'
+          ? 'border-sora bg-sora-soft'
           : 'border-gray-200'
       } ${isSelectMode ? 'cursor-pointer' : ''}`}
       onClick={isSelectMode ? onToggleSelect : undefined}
@@ -99,20 +99,20 @@ export function NoteCard({
               checked={isSelected}
               onChange={onToggleSelect}
               onClick={e => e.stopPropagation()}
-              className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+              className="w-4 h-4 text-sora rounded border-gray-300 focus:ring-sora"
             />
           </div>
         )}
         <div className="flex-1 min-w-0">
           {displayEntries.map(([key, value], idx) => (
-            <div key={key} className={idx === 0 ? 'font-medium text-gray-900 truncate' : 'text-sm text-gray-500 truncate mt-1'}>
+            <div key={key} className={idx === 0 ? 'font-medium text-ai truncate' : 'text-sm text-ink-2 truncate mt-1'}>
               {truncateText(value, 100)}
             </div>
           ))}
           {noteTags.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1.5">
               {noteTags.map(tag => (
-                <span key={tag} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-600">
+                <span key={tag} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-ink-2">
                   {tag}
                 </span>
               ))}
@@ -121,21 +121,21 @@ export function NoteCard({
         </div>
         <div className="ml-4 flex-shrink-0 text-right flex items-start gap-2">
           <div>
-            <span className="text-xs text-gray-400 block">{noteTypeName}</span>
+            <span className="text-xs text-ink-3 block">{noteTypeName}</span>
             {deckName && (
-              <span className="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded block mt-0.5 truncate max-w-[120px]">
+              <span className="text-xs font-bold px-2.5 py-0.5 bg-sora-soft text-sora rounded-full block mt-0.5 truncate max-w-[120px]">
                 {deckName}
               </span>
             )}
             <div className="flex items-center gap-2 mt-1">
               {hasGeneratedContent && (
-                <span className="text-xs text-purple-600 flex items-center gap-0.5" title="例文生成済み">
+                <span className="text-xs text-sora flex items-center gap-0.5" title="例文生成済み">
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </span>
               )}
-              <span className="text-xs text-gray-500">{cardCount}枚</span>
+              <span className="text-xs text-ink-3 tabular-nums">{cardCount}枚</span>
             </div>
           </div>
           {!isSelectMode && canEdit && (
@@ -144,11 +144,11 @@ export function NoteCard({
                 <button
                   onClick={handleGenerate}
                   disabled={isGenerating}
-                  className="p-1 text-gray-400 hover:text-purple-600 transition-colors disabled:opacity-50"
+                  className="p-1 text-ink-3 hover:text-sora transition-colors disabled:opacity-50"
                   title="AI生成（全ルール実行）"
                 >
                   {isGenerating ? (
-                    <div className="w-4 h-4 animate-spin rounded-full border-2 border-gray-300 border-t-purple-600" />
+                    <div className="w-4 h-4 animate-spin rounded-full border-2 border-gray-300 border-t-sora" />
                   ) : (
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -161,7 +161,7 @@ export function NoteCard({
                   e.stopPropagation()
                   onEdit()
                 }}
-                className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                className="p-1 text-ink-3 hover:text-sora transition-colors"
                 title="ノートを編集"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,11 +176,11 @@ export function NoteCard({
                   }
                 }}
                 disabled={isDeleting}
-                className="p-1 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
+                className="p-1 text-ink-3 hover:text-again transition-colors disabled:opacity-50"
                 title="ノートを削除"
               >
                 {isDeleting ? (
-                  <div className="w-4 h-4 animate-spin rounded-full border-2 border-gray-300 border-t-red-600" />
+                  <div className="w-4 h-4 animate-spin rounded-full border-2 border-gray-300 border-t-again" />
                 ) : (
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

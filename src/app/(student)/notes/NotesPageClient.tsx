@@ -173,7 +173,7 @@ export function NotesPageClient({
   if (!userProfile) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="text-center text-gray-500 py-12">
+        <div className="text-center text-ink-2 py-12">
           ログインが必要です
         </div>
       </div>
@@ -184,21 +184,21 @@ export function NotesPageClient({
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">ノート</h1>
-          <p className="text-sm text-gray-500 mt-1">全デッキのノートを検索・管理</p>
+          <h1 className="text-2xl font-extrabold text-ai">ノート</h1>
+          <p className="text-sm text-ink-3 mt-1">全デッキのノートを検索・管理</p>
         </div>
         {canEdit && !isAddingNote && (
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsAddingNote(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              className="px-4 py-2 bg-sora text-white rounded-2xl hover:bg-sora-dark transition-colors text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
             >
               + ノートを追加
             </button>
             <button
               onClick={handleExport}
               disabled={notes.length === 0 || isExporting}
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm font-medium flex items-center gap-1"
+              className="px-4 py-2 bg-white border border-gray-300 text-ink-2 rounded-2xl hover:border-sora hover:text-sora disabled:bg-gray-100 disabled:text-gray-300 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors text-sm font-bold flex items-center gap-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -210,12 +210,13 @@ export function NotesPageClient({
       </div>
 
       {isAddingNote && (
-        <div className="mb-6 bg-white border border-gray-200 rounded-lg p-4">
+        <div className="mb-6 bg-white border border-gray-200 rounded-card p-4">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">ノートを追加</h2>
+            <h2 className="text-lg font-bold text-ai">ノートを追加</h2>
             <button
               onClick={() => { setIsAddingNote(false); setSelectedDeckId('') }}
-              className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+              aria-label="閉じる"
+              className="text-ink-3 hover:text-ink-2 text-xl leading-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
             >
               &times;
             </button>
@@ -223,13 +224,13 @@ export function NotesPageClient({
 
           {/* Deck selector */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-bold text-ink-2 mb-2">
               追加先デッキ
             </label>
             <select
               value={selectedDeckId}
               onChange={(e) => setSelectedDeckId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none"
             >
               <option value="">デッキを選択...</option>
               {deckNameEntries

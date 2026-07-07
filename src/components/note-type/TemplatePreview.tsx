@@ -76,20 +76,20 @@ export function TemplatePreview({ frontTemplate, backTemplate, css, fields }: Te
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium text-gray-900">プレビュー</h3>
+      <h3 className="text-lg font-bold text-ai">プレビュー</h3>
 
       {/* Sample Data Input */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">サンプルデータ</h4>
+      <div className="bg-gray-50 rounded-2xl p-4">
+        <h4 className="text-sm font-medium text-ink-2 mb-3">サンプルデータ</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {fields.map((field) => (
             <div key={field.name}>
-              <label className="block text-xs text-gray-500 mb-1">{field.name}</label>
+              <label className="block text-xs text-ink-3 mb-1">{field.name}</label>
               <input
                 type="text"
                 value={sampleData[field.name] || ''}
                 onChange={(e) => updateSampleData(field.name, e.target.value)}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none"
                 placeholder={field.settings?.placeholder || `${field.name}を入力...`}
               />
             </div>
@@ -102,10 +102,10 @@ export function TemplatePreview({ frontTemplate, backTemplate, css, fields }: Te
         <button
           type="button"
           onClick={() => setSide('front')}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+          className={`flex-1 py-2 rounded-2xl text-sm font-bold transition-colors ${
             side === 'front'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ? 'bg-sora text-white'
+              : 'bg-gray-100 text-ink-2 hover:bg-gray-200'
           }`}
         >
           表面
@@ -113,10 +113,10 @@ export function TemplatePreview({ frontTemplate, backTemplate, css, fields }: Te
         <button
           type="button"
           onClick={() => setSide('back')}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+          className={`flex-1 py-2 rounded-2xl text-sm font-bold transition-colors ${
             side === 'back'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ? 'bg-sora text-white'
+              : 'bg-gray-100 text-ink-2 hover:bg-gray-200'
           }`}
         >
           裏面
@@ -124,8 +124,8 @@ export function TemplatePreview({ frontTemplate, backTemplate, css, fields }: Te
       </div>
 
       {/* Preview Card */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
-        <div className="bg-gray-100 px-3 py-2 text-xs text-gray-500 border-b border-gray-200">
+      <div className="border border-gray-200 rounded-2xl overflow-hidden">
+        <div className="bg-gray-100 px-3 py-2 text-xs text-ink-3 border-b border-gray-200">
           {side === 'front' ? '表面プレビュー' : '裏面プレビュー'}
         </div>
         <div className="bg-white min-h-[200px] p-6 flex items-center justify-center">
@@ -135,10 +135,10 @@ export function TemplatePreview({ frontTemplate, backTemplate, css, fields }: Te
 
       {/* Raw HTML (Collapsed) */}
       <details className="text-sm">
-        <summary className="cursor-pointer text-gray-500 hover:text-gray-700">
+        <summary className="cursor-pointer text-ink-3 hover:text-ink-2">
           生成されたHTML
         </summary>
-        <pre className="mt-2 p-3 bg-gray-100 rounded-lg overflow-x-auto text-xs">
+        <pre className="mt-2 p-3 bg-gray-100 rounded-xl overflow-x-auto text-xs">
           {renderedContent}
         </pre>
       </details>

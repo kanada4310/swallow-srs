@@ -178,7 +178,7 @@ export function ClassDetailClient({
   return (
     <div>
       {/* Class Info Card */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+      <div className="bg-white rounded-2xl border border-gray-200 p-4 mb-6">
         <div className="flex items-center justify-between">
           {editingName ? (
             <div className="flex items-center gap-2 flex-1">
@@ -186,13 +186,13 @@ export function ClassDetailClient({
                 type="text"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                className="flex-1 px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="flex-1 px-3 py-1 border border-gray-300 rounded-xl focus:border-sora focus:ring-2 focus:ring-sora"
                 autoFocus
               />
               <button
                 onClick={handleSaveName}
                 disabled={isSavingName}
-                className="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+                className="px-3 py-1 bg-sora text-white font-bold rounded-2xl text-sm hover:bg-sora-dark disabled:opacity-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
               >
                 保存
               </button>
@@ -201,7 +201,7 @@ export function ClassDetailClient({
                   setEditingName(false)
                   setNewName(className)
                 }}
-                className="px-3 py-1 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+                className="px-3 py-1 border border-gray-300 rounded-2xl text-sm font-bold text-ink-2 hover:bg-gray-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
               >
                 キャンセル
               </button>
@@ -209,18 +209,18 @@ export function ClassDetailClient({
           ) : (
             <>
               <div>
-                <p className="text-lg font-medium text-gray-900">{members.length}人の生徒</p>
+                <p className="text-lg font-bold text-ai tabular-nums">{members.length}人の生徒</p>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setEditingName(true)}
-                  className="px-3 py-1 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="px-3 py-1 text-sm font-bold text-ink-2 hover:text-ai border border-gray-300 rounded-2xl hover:bg-gray-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
                 >
                   名前を編集
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="px-3 py-1 text-sm text-red-600 hover:text-red-700 border border-red-300 rounded-lg hover:bg-red-50"
+                  className="px-3 py-1 text-sm font-bold bg-again-bg text-again rounded-2xl hover:opacity-80 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
                 >
                   クラスを削除
                 </button>
@@ -231,12 +231,12 @@ export function ClassDetailClient({
       </div>
 
       {/* Members Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-white rounded-card border border-gray-200">
         <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-lg font-medium text-gray-900">生徒一覧</h2>
+          <h2 className="text-lg font-bold text-ai">生徒一覧</h2>
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+            className="px-3 py-1.5 bg-sora text-white rounded-2xl hover:bg-sora-dark transition-colors text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             生徒を追加
           </button>
@@ -244,15 +244,15 @@ export function ClassDetailClient({
 
         {members.length === 0 ? (
           <div className="p-8 text-center">
-            <div className="text-gray-400 mb-2">
+            <div className="text-ink-3 mb-2">
               <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
-            <p className="text-gray-500">まだ生徒がいません</p>
+            <p className="text-ink-2">まだ生徒がいません</p>
             <button
               onClick={() => setShowAddModal(true)}
-              className="mt-2 text-blue-600 hover:text-blue-700 text-sm font-medium"
+              className="mt-2 text-sora hover:text-sora-dark text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
             >
               最初の生徒を追加
             </button>
@@ -262,13 +262,13 @@ export function ClassDetailClient({
             {members.map((member) => (
               <li key={member.id} className="p-4 flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-gray-900">{member.name}</p>
-                  <p className="text-sm text-gray-500">{member.email}</p>
+                  <p className="font-bold text-ai">{member.name}</p>
+                  <p className="text-sm text-ink-2">{member.email}</p>
                 </div>
                 <button
                   onClick={() => handleRemoveMember(member.id)}
                   disabled={isRemoving === member.id}
-                  className="px-3 py-1 text-sm text-red-600 hover:text-red-700 border border-red-300 rounded-lg hover:bg-red-50 disabled:opacity-50"
+                  className="px-3 py-1 text-sm font-bold bg-again-bg text-again rounded-2xl hover:opacity-80 disabled:opacity-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
                 >
                   {isRemoving === member.id ? '削除中...' : '削除'}
                 </button>
@@ -281,12 +281,12 @@ export function ClassDetailClient({
       {/* Add Member Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+          <div className="bg-white rounded-card shadow-card max-w-md w-full">
             <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">生徒を追加</h2>
+              <h2 className="text-xl font-extrabold text-ai mb-4">生徒を追加</h2>
 
               {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                <div className="mb-4 p-3 bg-again-bg border border-again/20 rounded-2xl text-again text-sm">
                   {error}
                 </div>
               )}
@@ -294,7 +294,7 @@ export function ClassDetailClient({
               <form onSubmit={handleAddMember}>
                 {availableStudents.length > 0 && (
                   <div className="mb-4">
-                    <label htmlFor="student" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="student" className="block text-sm font-medium text-ink-2 mb-1">
                       登録済みの生徒から選択
                     </label>
                     <select
@@ -304,7 +304,7 @@ export function ClassDetailClient({
                         setSelectedStudentId(e.target.value)
                         if (e.target.value) setEmailInput('')
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:border-sora focus:ring-2 focus:ring-sora"
                     >
                       <option value="">選択してください</option>
                       {availableStudents.map((student) => (
@@ -317,7 +317,7 @@ export function ClassDetailClient({
                 )}
 
                 <div className="mb-4">
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="email" className="block text-sm font-medium text-ink-2 mb-1">
                     {availableStudents.length > 0 ? 'または、メールアドレスで追加' : 'メールアドレス'}
                   </label>
                   <input
@@ -329,7 +329,7 @@ export function ClassDetailClient({
                       if (e.target.value) setSelectedStudentId('')
                     }}
                     placeholder="student@example.com"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:border-sora focus:ring-2 focus:ring-sora"
                     disabled={!!selectedStudentId}
                   />
                 </div>
@@ -343,14 +343,14 @@ export function ClassDetailClient({
                       setEmailInput('')
                       setError(null)
                     }}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-2xl text-ink-2 font-bold hover:bg-gray-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
                     disabled={isAdding}
                   >
                     キャンセル
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    className="flex-1 px-4 py-2 bg-sora text-white font-bold rounded-2xl hover:bg-sora-dark transition-colors disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
                     disabled={isAdding || (!selectedStudentId && !emailInput.trim())}
                   >
                     {isAdding ? '追加中...' : '追加'}
@@ -365,24 +365,24 @@ export function ClassDetailClient({
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+          <div className="bg-white rounded-card shadow-card max-w-md w-full">
             <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">クラスを削除</h2>
-              <p className="text-gray-600 mb-6">
+              <h2 className="text-xl font-extrabold text-ai mb-4">クラスを削除</h2>
+              <p className="text-ink-2 mb-6">
                 「{className}」を削除しますか？この操作は取り消せません。
               </p>
 
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-2xl text-ink-2 font-bold hover:bg-gray-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
                   disabled={isDeleting}
                 >
                   キャンセル
                 </button>
                 <button
                   onClick={handleDeleteClass}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-again text-white font-bold rounded-2xl hover:opacity-90 transition-colors disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
                   disabled={isDeleting}
                 >
                   {isDeleting ? '削除中...' : '削除'}

@@ -1001,7 +1001,15 @@ export async function getStudyCardsOffline(
   const dueCards: OfflineCardData[] = []
   const newCards: OfflineCardData[] = []
 
-  for (const card of deckCards) {
+  // 「順番どおり（sequential）」の新規出題を安定させるため、作成順（同時刻は id）で
+  // 並べてから分類する。IndexedDB の読み出し順は主キー（UUID）順で実質ランダムなため。
+  const orderedDeckCards = [...deckCards].sort((a, b) => {
+    const ta = new Date(a.created_at).getTime()
+    const tb = new Date(b.created_at).getTime()
+    return ta !== tb ? ta - tb : a.id.localeCompare(b.id)
+  })
+
+  for (const card of orderedDeckCards) {
     const note = noteMap.get(card.note_id)
     if (!note) continue
 

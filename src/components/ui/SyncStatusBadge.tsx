@@ -30,17 +30,17 @@ export function SyncStatusBadge({ className = '' }: SyncStatusBadgeProps) {
       <div
         className={`w-2 h-2 rounded-full ${
           !isOnline
-            ? 'bg-yellow-500'
+            ? 'bg-hard'
             : isSyncing
-            ? 'bg-blue-500 animate-pulse'
+            ? 'bg-sora animate-pulse'
             : pendingCount > 0
-            ? 'bg-orange-500'
-            : 'bg-green-500'
+            ? 'bg-hard'
+            : 'bg-good'
         }`}
       />
 
       {/* Status text */}
-      <span className="text-gray-600">
+      <span className="text-ink-2">
         {!isOnline ? (
           'オフライン'
         ) : isSyncing ? (

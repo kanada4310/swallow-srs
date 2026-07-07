@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Settings, Bell } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { SyncIndicator } from './SyncIndicator'
+import { SwallowMark } from './SwallowMark'
 
 export function Header() {
   const { profile, logout } = useAuth()
@@ -18,7 +19,8 @@ export function Header() {
         <div className="flex justify-between items-center h-14">
           {/* Logo / App Name */}
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-blue-600">つばめSRS</span>
+            <SwallowMark className="w-7 h-auto" fill="#1C2B4B" />
+            <span className="text-lg font-extrabold text-ai tracking-wide">つばめSRS</span>
           </Link>
 
           {/* User Info & Actions */}

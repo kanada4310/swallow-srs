@@ -40,9 +40,9 @@ export function CardDistributionChart({ data }: CardDistributionChartProps) {
 
   if (total === 0) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <h3 className="text-sm font-medium text-gray-700 mb-4">カード状態分布</h3>
-        <div className="h-48 flex items-center justify-center text-gray-400 text-sm">
+      <div className="bg-white rounded-card border border-gray-200 p-6">
+        <h3 className="text-sm font-bold text-ai mb-4">カード状態分布</h3>
+        <div className="h-48 flex items-center justify-center text-ink-3 text-sm">
           データがありません
         </div>
       </div>
@@ -50,8 +50,8 @@ export function CardDistributionChart({ data }: CardDistributionChartProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
-      <h3 className="text-sm font-medium text-gray-700 mb-4">カード状態分布</h3>
+    <div className="bg-white rounded-card border border-gray-200 p-6">
+      <h3 className="text-sm font-bold text-ai mb-4">カード状態分布</h3>
       <div className="h-48">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -78,9 +78,9 @@ export function CardDistributionChart({ data }: CardDistributionChartProps) {
                 const item = payload[0]
                 const percent = ((item.value as number) / total * 100).toFixed(1)
                 return (
-                  <div className="bg-white shadow-lg rounded-lg border border-gray-200 p-2">
-                    <p className="text-sm font-medium">{item.name}</p>
-                    <p className="text-xs text-gray-600">{item.value}枚 ({percent}%)</p>
+                  <div className="bg-white shadow-lg rounded-2xl border border-gray-200 p-2">
+                    <p className="text-sm font-bold text-ai">{item.name}</p>
+                    <p className="text-xs text-ink-2">{item.value}枚 ({percent}%)</p>
                   </div>
                 )
               }}
@@ -93,7 +93,7 @@ export function CardDistributionChart({ data }: CardDistributionChartProps) {
           </PieChart>
         </ResponsiveContainer>
       </div>
-      <div className="text-center text-sm text-gray-500 mt-2">
+      <div className="text-center text-sm text-ink-3 tabular-nums mt-2">
         合計 {total.toLocaleString()}枚
       </div>
     </div>

@@ -70,21 +70,21 @@ export function DeckSelectorModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-card shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-gray-900">{title}</h3>
+            <h3 className="text-lg font-bold text-ai">{title}</h3>
             <button
               onClick={onClose}
               disabled={isProcessing}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-ink-3 hover:text-ink-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
-          <p className="text-sm text-gray-600 mt-1">{description}</p>
+          <p className="text-sm text-ink-2 mt-1">{description}</p>
         </div>
 
         <div className="p-4 border-b border-gray-100">
@@ -93,17 +93,17 @@ export function DeckSelectorModal({
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder="デッキ名で絞り込み..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none text-sm"
           />
         </div>
 
         <div className="flex-1 overflow-y-auto p-2" style={{ maxHeight: '300px' }}>
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-sora" />
             </div>
           ) : filteredDecks.length === 0 ? (
-            <div className="text-center py-8 text-sm text-gray-500">
+            <div className="text-center py-8 text-sm text-ink-3">
               {filter ? '一致するデッキがありません' : '利用可能なデッキがありません'}
             </div>
           ) : (
@@ -113,14 +113,14 @@ export function DeckSelectorModal({
                   key={deck.id}
                   onClick={() => setSelectedDeckId(deck.id)}
                   disabled={isProcessing}
-                  className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                  className={`w-full text-left px-3 py-2.5 rounded-2xl text-sm transition-colors ${
                     selectedDeckId === deck.id
-                      ? 'bg-blue-50 border border-blue-300 text-blue-700 font-medium'
-                      : 'hover:bg-gray-50 border border-transparent text-gray-700'
+                      ? 'bg-sora-soft border border-sora text-sora font-bold'
+                      : 'hover:bg-gray-50 border border-transparent text-ink-2'
                   } disabled:opacity-50`}
                 >
                   {deck.parent_deck_id && (
-                    <span className="text-gray-400 mr-1">└</span>
+                    <span className="text-ink-3 mr-1">└</span>
                   )}
                   {deck.name}
                 </button>
@@ -130,7 +130,7 @@ export function DeckSelectorModal({
         </div>
 
         {error && (
-          <div className="px-4 py-2 bg-red-50 border-t border-red-200 text-red-700 text-sm">
+          <div className="px-4 py-2 bg-again-bg text-again text-sm">
             {error}
           </div>
         )}
@@ -139,14 +139,14 @@ export function DeckSelectorModal({
           <button
             onClick={onClose}
             disabled={isProcessing}
-            className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-sm text-ink-2 border border-gray-300 rounded-2xl hover:bg-gray-50 transition-colors font-bold"
           >
             キャンセル
           </button>
           <button
             onClick={handleConfirm}
             disabled={!selectedDeckId || isProcessing}
-            className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 text-sm text-white bg-sora rounded-2xl hover:bg-sora-dark disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-bold"
           >
             {isProcessing ? '処理中...' : confirmLabel}
           </button>

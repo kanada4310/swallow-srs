@@ -87,20 +87,20 @@ export function NoteEditor({ deckId, noteTypes, onNoteAdded, onCancel }: NoteEdi
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+        <div className="p-3 bg-again-bg border border-again/20 rounded-xl text-again text-sm">
           {error}
         </div>
       )}
 
       {/* Note Type Selector */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-ink-2 mb-2">
           ノートタイプ
         </label>
         <select
           value={selectedNoteType.id}
           onChange={(e) => handleNoteTypeChange(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none"
         >
           {noteTypes.map(nt => (
             <option key={nt.id} value={nt.id}>{nt.name}</option>
@@ -110,10 +110,10 @@ export function NoteEditor({ deckId, noteTypes, onNoteAdded, onCancel }: NoteEdi
 
       {/* Cloze Help */}
       {isCloze && (
-        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+        <div className="p-3 bg-sora-soft border border-sora/20 rounded-xl text-sm text-sora">
           <p className="font-medium mb-1">穴埋め記法:</p>
           <p className="font-mono">{'{{c1::答え}}'} または {'{{c1::答え::ヒント}}'}</p>
-          <p className="mt-1 text-blue-600">例: The {'{{c1::capital::首都}}'} of Japan is Tokyo.</p>
+          <p className="mt-1 text-sora/80">例: The {'{{c1::capital::首都}}'} of Japan is Tokyo.</p>
         </div>
       )}
 
@@ -125,16 +125,16 @@ export function NoteEditor({ deckId, noteTypes, onNoteAdded, onCancel }: NoteEdi
 
         return (
           <div key={field.name}>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-ink-2 mb-2">
               {field.name}
-              {isRequired && <span className="text-red-500 ml-1">*</span>}
+              {isRequired && <span className="text-again ml-1">*</span>}
             </label>
             <textarea
               value={fieldValues[field.name] || ''}
               onChange={(e) => handleFieldChange(field.name, e.target.value)}
               placeholder={placeholder}
               rows={isLargeField ? 4 : 2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none resize-none"
             />
           </div>
         )
@@ -145,14 +145,14 @@ export function NoteEditor({ deckId, noteTypes, onNoteAdded, onCancel }: NoteEdi
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+          className="flex-1 px-4 py-2 border border-gray-300 text-ink-2 rounded-2xl hover:bg-gray-50 transition-colors font-bold"
         >
           キャンセル
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors font-medium"
+          className="flex-1 px-4 py-2 bg-sora text-white rounded-2xl hover:bg-sora-dark disabled:bg-sora/50 disabled:cursor-not-allowed transition-colors font-bold"
         >
           {isSubmitting ? '追加中...' : 'ノートを追加'}
         </button>

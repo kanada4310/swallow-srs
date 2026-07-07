@@ -94,14 +94,14 @@ export function BottomNav({ role }: BottomNavProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center py-2 px-1.5 min-w-0 ${
+                className={`flex flex-col items-center py-2 px-1.5 min-w-0 transition-colors ${
                   isActive
-                    ? 'text-blue-600'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'text-sora font-bold'
+                    : 'text-ink-3 hover:text-ink-2'
                 }`}
               >
                 {item.icon}
-                <span className="text-xs mt-1 whitespace-nowrap">{item.label}</span>
+                <span className="text-[11px] mt-0.5 whitespace-nowrap font-semibold">{item.label}</span>
               </Link>
             )
           })}

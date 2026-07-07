@@ -12,6 +12,12 @@ const config: Config = {
         background: "var(--background)",
         foreground: "var(--foreground)",
         // ブランド（つばめの羽色）: 藍=見出し/濃い地、空=アクション、橙=CTA/ストリーク/祝い
+        paper: "#F7F8FA",
+        ink: {
+          DEFAULT: "#1A1D24",
+          2: "#5A6272",
+          3: "#9AA1B0",
+        },
         ai: {
           DEFAULT: "#1C2B4B",
           deep: "#131E36",

@@ -10,9 +10,9 @@ interface DeckProgressListProps {
 export function DeckProgressList({ data, onDeckClick }: DeckProgressListProps) {
   if (data.length === 0) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <h3 className="text-sm font-medium text-gray-700 mb-4">デッキ別進捗</h3>
-        <div className="text-center text-gray-400 text-sm py-8">
+      <div className="bg-white rounded-card border border-gray-200 p-6">
+        <h3 className="text-sm font-bold text-ai mb-4">デッキ別進捗</h3>
+        <div className="text-center text-ink-3 text-sm py-8">
           デッキがありません
         </div>
       </div>
@@ -20,8 +20,8 @@ export function DeckProgressList({ data, onDeckClick }: DeckProgressListProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
-      <h3 className="text-sm font-medium text-gray-700 mb-4">デッキ別進捗</h3>
+    <div className="bg-white rounded-card border border-gray-200 p-6">
+      <h3 className="text-sm font-bold text-ai mb-4">デッキ別進捗</h3>
       <div className="space-y-4">
         {data.map((deck) => (
           <DeckProgressItem key={deck.deckId} deck={deck} onClick={onDeckClick} />
@@ -39,8 +39,8 @@ function DeckProgressItem({ deck, onClick }: { deck: DeckProgressData; onClick?:
     return (
       <div className="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-800 truncate">{deckName}</span>
-          <span className="text-xs text-gray-400">0枚</span>
+          <span className="text-sm font-medium text-ink truncate">{deckName}</span>
+          <span className="text-xs text-ink-3 tabular-nums">0枚</span>
         </div>
         <div className="h-2 bg-gray-100 rounded-full overflow-hidden" />
       </div>
@@ -54,17 +54,17 @@ function DeckProgressItem({ deck, onClick }: { deck: DeckProgressData; onClick?:
 
   return (
     <div
-      className={`border-b border-gray-100 pb-3 last:border-0 last:pb-0 ${clickable ? 'cursor-pointer hover:bg-gray-50 -mx-2 px-2 py-1 rounded-lg transition-colors' : ''}`}
+      className={`border-b border-gray-100 pb-3 last:border-0 last:pb-0 ${clickable ? 'cursor-pointer hover:bg-gray-50 -mx-2 px-2 py-1 rounded-xl transition-colors' : ''}`}
       onClick={clickable ? () => onClick(deckId, deckName) : undefined}
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-gray-800 truncate max-w-[60%]">{deckName}</span>
+        <span className="text-sm font-medium text-ink truncate max-w-[60%]">{deckName}</span>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-ink-3 tabular-nums">
             {masteredCards}/{totalCards}枚 完了
           </span>
           {clickable && (
-            <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3.5 h-3.5 text-ink-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           )}
@@ -100,7 +100,7 @@ function DeckProgressItem({ deck, onClick }: { deck: DeckProgressData; onClick?:
           />
         )}
       </div>
-      <div className="flex justify-between text-xs text-gray-400 mt-1">
+      <div className="flex justify-between text-xs text-ink-3 mt-1">
         <span>{Math.round(masteredPercent)}% 完了</span>
         <div className="flex gap-3">
           <span className="flex items-center gap-1">

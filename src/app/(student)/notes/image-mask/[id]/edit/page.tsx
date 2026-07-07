@@ -11,12 +11,12 @@ export default function EditImageMaskNotePage() {
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">画像マスキングを編集</h1>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+        <h1 className="text-2xl font-extrabold text-ai mb-6">画像マスキングを編集</h1>
+        <div className="bg-white rounded-card border border-gray-200 p-4 sm:p-6">
           {noteId ? (
             <ImageMaskNoteEditor noteId={noteId} />
           ) : (
-            <div className="text-sm text-gray-500">ノートIDが不正です。</div>
+            <div className="text-sm text-ink-2">ノートIDが不正です。</div>
           )}
         </div>
       </div>

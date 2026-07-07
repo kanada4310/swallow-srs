@@ -36,26 +36,26 @@ export default function BulkImageMaskPage() {
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">画像マスキングを一括作成</h1>
-        <p className="text-sm text-gray-500 mb-6">
+        <h1 className="text-2xl font-extrabold text-ai mb-1">画像マスキングを一括作成</h1>
+        <p className="text-sm text-ink-2 mb-6">
           複数の画像をまとめてアップロードすると、各画像にAIがマスキング候補を付けます。確認・微調整して一度に作成できます。
         </p>
 
         {!deckId ? (
-          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
+          <div className="p-4 bg-hard-bg rounded-xl text-hard text-sm">
             デッキが指定されていません。
-            <Link href="/decks" className="underline ml-1">
+            <Link href="/decks" className="underline font-bold ml-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai">
               デッキ一覧へ
             </Link>
           </div>
         ) : !resolved || isLoading ? (
-          <div className="h-40 bg-gray-100 rounded-lg animate-pulse" />
+          <div className="h-40 bg-gray-100 rounded-2xl animate-pulse" />
         ) : !noteType ? (
-          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
+          <div className="p-4 bg-hard-bg rounded-xl text-hard text-sm">
             ノートタイプ「{IMAGE_OCCLUSION_NOTE_TYPE_NAME}」が見つかりません。
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="bg-white rounded-card border border-gray-200 p-4 sm:p-6">
             <BulkImageMaskCreator deckId={deckId} noteType={noteType} />
           </div>
         )}

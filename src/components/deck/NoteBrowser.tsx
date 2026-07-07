@@ -347,12 +347,12 @@ export function NoteBrowser({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={deckId ? 'ノートを検索...' : '全デッキからノートを検索...'}
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none text-sm"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -366,7 +366,7 @@ export function NoteBrowser({
             <select
               value={filterNoteTypeId}
               onChange={(e) => setFilterNoteTypeId(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+              className="px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none text-sm"
             >
               <option value="">全タイプ</option>
               {filterableNoteTypes.map(nt => (
@@ -380,7 +380,7 @@ export function NoteBrowser({
             <select
               value={filterTag}
               onChange={(e) => setFilterTag(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+              className="px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none text-sm"
             >
               <option value="">全タグ</option>
               {localDeckTags.map(tag => (
@@ -392,7 +392,7 @@ export function NoteBrowser({
           {/* Sort Toggle */}
           <button
             onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-            className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm text-gray-600 flex items-center gap-1"
+            className="px-3 py-2 border border-gray-300 rounded-2xl hover:bg-gray-50 transition-colors text-sm text-ink-2 flex items-center gap-1"
             title={sortOrder === 'desc' ? '新しい順' : '古い順'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -407,7 +407,7 @@ export function NoteBrowser({
         </div>
 
         {/* Count Display */}
-        <div className="flex items-center justify-between text-sm text-gray-500">
+        <div className="flex items-center justify-between text-sm text-ink-3">
           <span>
             {isSearchActive
               ? `検索結果: ${total}件中${Math.min(notes.length, total)}件表示`
@@ -420,7 +420,7 @@ export function NoteBrowser({
                 setIsSelectMode(true)
                 setSelectedNotes(new Set())
               }}
-              className="text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1"
+              className="text-sm font-bold text-sora hover:text-sora-dark transition-colors flex items-center gap-1"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
@@ -433,9 +433,9 @@ export function NoteBrowser({
 
       {/* Delete Error */}
       {deleteError && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center justify-between">
+        <div className="mb-4 p-3 bg-again-bg border border-again/20 rounded-xl text-again text-sm flex items-center justify-between">
           <span>{deleteError}</span>
-          <button onClick={() => setDeleteError(null)} className="text-red-500 hover:text-red-700 ml-2">
+          <button onClick={() => setDeleteError(null)} className="text-again/70 hover:text-again ml-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -445,15 +445,15 @@ export function NoteBrowser({
 
       {/* Select Mode Bar */}
       {isSelectMode && (
-        <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
+        <div className="mb-4 bg-sora-soft border border-sora/20 rounded-2xl p-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={toggleSelectAll}
-              className="text-sm text-blue-700 hover:text-blue-900 font-medium"
+              className="text-sm text-sora hover:text-sora-dark font-bold"
             >
               {selectedNotes.size === notes.length ? 'すべて解除' : 'すべて選択'}
             </button>
-            <span className="text-sm text-blue-600">
+            <span className="text-sm text-sora tabular-nums">
               {selectedNotes.size}件選択中
             </span>
           </div>
@@ -463,7 +463,7 @@ export function NoteBrowser({
                 setIsSelectMode(false)
                 setSelectedNotes(new Set())
               }}
-              className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="px-3 py-1.5 text-sm text-ink-2 hover:text-ai border border-gray-300 rounded-2xl hover:bg-gray-50 transition-colors"
             >
               キャンセル
             </button>
@@ -471,7 +471,7 @@ export function NoteBrowser({
               <button
                 onClick={() => setShowCopyModal(true)}
                 disabled={selectedNotes.size === 0}
-                className="px-3 py-1.5 text-sm text-green-600 border border-green-300 rounded-lg hover:bg-green-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors"
+                className="px-3 py-1.5 text-sm font-bold text-good border border-good/30 rounded-2xl hover:bg-good-bg disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors"
               >
                 コピー
               </button>
@@ -480,7 +480,7 @@ export function NoteBrowser({
               <button
                 onClick={() => setShowMoveModal(true)}
                 disabled={selectedNotes.size === 0}
-                className="px-3 py-1.5 text-sm text-indigo-600 border border-indigo-300 rounded-lg hover:bg-indigo-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors"
+                className="px-3 py-1.5 text-sm font-bold text-sora border border-sora/30 rounded-2xl hover:bg-sora-soft disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors"
               >
                 移動
               </button>
@@ -488,21 +488,21 @@ export function NoteBrowser({
             <button
               onClick={() => setShowBulkTagModal(true)}
               disabled={selectedNotes.size === 0}
-              className="px-3 py-1.5 text-sm text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 text-sm font-bold text-sora border border-sora/30 rounded-2xl hover:bg-sora-soft disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors"
             >
               タグ追加
             </button>
             <button
               onClick={() => setShowBulkTagRemoveModal(true)}
               disabled={selectedNotes.size === 0}
-              className="px-3 py-1.5 text-sm text-orange-600 border border-orange-300 rounded-lg hover:bg-orange-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 text-sm font-bold text-hard border border-hard/30 rounded-2xl hover:bg-hard-bg disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors"
             >
               タグ削除
             </button>
             <button
               onClick={() => setShowDeleteConfirm(true)}
               disabled={selectedNotes.size === 0}
-              className="px-3 py-1.5 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 text-sm font-bold text-again bg-again-bg rounded-2xl hover:bg-again hover:text-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
             >
               {selectedNotes.size}件を削除
             </button>
@@ -514,20 +514,20 @@ export function NoteBrowser({
       {isLoading ? (
         <div className="space-y-2">
           {[1, 2, 3].map(i => (
-            <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 animate-pulse">
+            <div key={i} className="bg-white rounded-2xl border border-gray-200 p-4 animate-pulse">
               <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
               <div className="h-3 bg-gray-100 rounded w-1/2" />
             </div>
           ))}
         </div>
       ) : notes.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-          <div className="text-gray-400 mb-4">
+        <div className="bg-white rounded-card border border-gray-200 p-8 text-center">
+          <div className="text-ink-3 mb-4">
             <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
-          <p className="text-gray-500">
+          <p className="text-ink-2">
             {isSearchActive
               ? '検索条件に一致するノートがありません。'
               : canEdit
@@ -561,7 +561,7 @@ export function NoteBrowser({
               <button
                 onClick={handleLoadMore}
                 disabled={isLoadingMore}
-                className="px-6 py-2 text-sm text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-6 py-2 text-sm font-bold bg-white text-sora border-2 border-sora rounded-2xl hover:bg-sora-soft disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isLoadingMore ? '読み込み中...' : `もっと読み込む（残り${total - notes.length}件）`}
               </button>
@@ -573,13 +573,13 @@ export function NoteBrowser({
       {/* Bulk Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">ノートを削除</h3>
-            <p className="text-sm text-gray-600 mb-4">
+          <div className="bg-white rounded-card shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-bold text-ai mb-2">ノートを削除</h3>
+            <p className="text-sm text-ink-2 mb-4">
               {selectedNotes.size}件のノートを削除しますか？関連するカード・学習記録もすべて削除されます。この操作は元に戻せません。
             </p>
             {deleteError && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <div className="mb-4 p-3 bg-again-bg border border-again/20 rounded-xl text-again text-sm">
                 {deleteError}
               </div>
             )}
@@ -590,14 +590,14 @@ export function NoteBrowser({
                   setDeleteError(null)
                 }}
                 disabled={isBulkDeleting}
-                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm text-ink-2 border border-gray-300 rounded-2xl hover:bg-gray-50 transition-colors"
               >
                 キャンセル
               </button>
               <button
                 onClick={handleBulkDeleteConfirm}
                 disabled={isBulkDeleting}
-                className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 text-sm font-bold text-white bg-again rounded-2xl hover:bg-again/90 disabled:opacity-50 transition-colors"
               >
                 {isBulkDeleting ? '削除中...' : `${selectedNotes.size}件を削除`}
               </button>
@@ -609,9 +609,9 @@ export function NoteBrowser({
       {/* Bulk Tag Modal */}
       {showBulkTagModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">タグを追加</h3>
-            <p className="text-sm text-gray-600 mb-4">
+          <div className="bg-white rounded-card shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-bold text-ai mb-2">タグを追加</h3>
+            <p className="text-sm text-ink-2 mb-4">
               {selectedNotes.size}件のノートにタグを追加します。
             </p>
             <div className="mb-4">
@@ -626,7 +626,7 @@ export function NoteBrowser({
                   }
                 }}
                 placeholder="タグ名を入力..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none text-sm"
                 autoFocus
               />
               {localDeckTags.length > 0 && (
@@ -637,7 +637,7 @@ export function NoteBrowser({
                       type="button"
                       onClick={() => handleBulkTag([tag])}
                       disabled={isBulkTagging}
-                      className="px-2 py-1 text-xs border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 text-gray-600 hover:text-blue-700 transition-colors disabled:opacity-50"
+                      className="px-2 py-1 text-xs border border-gray-200 rounded-full hover:bg-sora-soft hover:border-sora text-ink-2 hover:text-sora transition-colors disabled:opacity-50"
                     >
                       {tag}
                     </button>
@@ -652,14 +652,14 @@ export function NoteBrowser({
                   setBulkTagInput('')
                 }}
                 disabled={isBulkTagging}
-                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm text-ink-2 border border-gray-300 rounded-2xl hover:bg-gray-50 transition-colors"
               >
                 キャンセル
               </button>
               <button
                 onClick={() => bulkTagInput.trim() && handleBulkTag([bulkTagInput.trim()])}
                 disabled={isBulkTagging || !bulkTagInput.trim()}
-                className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 text-sm font-bold text-white bg-sora rounded-2xl hover:bg-sora-dark disabled:opacity-50 transition-colors"
               >
                 {isBulkTagging ? '追加中...' : 'タグを追加'}
               </button>
@@ -671,9 +671,9 @@ export function NoteBrowser({
       {/* Bulk Tag Remove Modal */}
       {showBulkTagRemoveModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">タグを削除</h3>
-            <p className="text-sm text-gray-600 mb-4">
+          <div className="bg-white rounded-card shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-bold text-ai mb-2">タグを削除</h3>
+            <p className="text-sm text-ink-2 mb-4">
               {selectedNotes.size}件のノートからタグを削除します。
             </p>
             <div className="mb-4">
@@ -688,7 +688,7 @@ export function NoteBrowser({
                   }
                 }}
                 placeholder="削除するタグ名を入力..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none text-sm"
                 autoFocus
               />
               {localDeckTags.length > 0 && (
@@ -699,7 +699,7 @@ export function NoteBrowser({
                       type="button"
                       onClick={() => handleBulkTagRemove([tag])}
                       disabled={isBulkTagging}
-                      className="px-2 py-1 text-xs border border-gray-200 rounded-lg hover:bg-orange-50 hover:border-orange-300 text-gray-600 hover:text-orange-700 transition-colors disabled:opacity-50"
+                      className="px-2 py-1 text-xs border border-gray-200 rounded-full hover:bg-hard-bg hover:border-hard text-ink-2 hover:text-hard transition-colors disabled:opacity-50"
                     >
                       {tag}
                     </button>
@@ -714,14 +714,14 @@ export function NoteBrowser({
                   setBulkTagInput('')
                 }}
                 disabled={isBulkTagging}
-                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm text-ink-2 border border-gray-300 rounded-2xl hover:bg-gray-50 transition-colors"
               >
                 キャンセル
               </button>
               <button
                 onClick={() => bulkTagInput.trim() && handleBulkTagRemove([bulkTagInput.trim()])}
                 disabled={isBulkTagging || !bulkTagInput.trim()}
-                className="px-4 py-2 text-sm text-white bg-orange-600 rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 text-sm font-bold text-white bg-hard rounded-2xl hover:bg-hard/90 disabled:opacity-50 transition-colors"
               >
                 {isBulkTagging ? '削除中...' : 'タグを削除'}
               </button>

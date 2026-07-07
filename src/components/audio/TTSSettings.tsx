@@ -133,26 +133,26 @@ export function TTSSettings() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-ink-3" />
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-card border border-gray-200 p-6">
       <div className="flex items-center gap-3 mb-6">
-        <Volume2 className="w-6 h-6 text-blue-600" />
-        <h2 className="text-lg font-semibold text-gray-900">音声読み上げ (TTS) 設定</h2>
+        <Volume2 className="w-6 h-6 text-sora" />
+        <h2 className="text-lg font-bold text-ai">音声読み上げ (TTS) 設定</h2>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+        <div className="mb-4 p-3 bg-again-bg text-again rounded-2xl text-sm">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+        <div className="mb-4 p-3 bg-good-bg text-good rounded-2xl text-sm">
           設定を保存しました
         </div>
       )}
@@ -160,7 +160,7 @@ export function TTSSettings() {
       <div className="space-y-6">
         {/* Enabled Fields */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-ink-2 mb-2">
             音声ボタンを表示するフィールド
           </label>
           <div className="flex flex-wrap gap-2">
@@ -169,24 +169,24 @@ export function TTSSettings() {
                 key={field}
                 type="button"
                 onClick={() => toggleField(field)}
-                className={`px-4 py-2 rounded-lg border transition-colors ${
+                className={`px-4 py-2 rounded-2xl border transition-colors ${
                   settings.enabled_fields.includes(field)
-                    ? 'bg-blue-100 border-blue-300 text-blue-700'
-                    : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                    ? 'bg-sora-soft border-sora text-sora font-bold'
+                    : 'bg-gray-50 border-gray-200 text-ink-2 hover:bg-gray-100'
                 }`}
               >
                 {field}
               </button>
             ))}
           </div>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-ink-3">
             選択したフィールドに音声再生ボタンが表示されます
           </p>
         </div>
 
         {/* Voice Selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-ink-2 mb-2">
             ボイス
           </label>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -195,14 +195,14 @@ export function TTSSettings() {
                 key={voice.value}
                 type="button"
                 onClick={() => setSettings(prev => ({ ...prev, voice: voice.value }))}
-                className={`p-3 rounded-lg border text-left transition-colors ${
+                className={`p-3 rounded-2xl border text-left transition-colors ${
                   settings.voice === voice.value
-                    ? 'bg-blue-100 border-blue-300'
+                    ? 'bg-sora-soft border-sora'
                     : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                 }`}
               >
-                <div className="font-medium text-gray-900">{voice.label}</div>
-                <div className="text-xs text-gray-500">{voice.description}</div>
+                <div className={`font-medium ${settings.voice === voice.value ? 'text-sora' : 'text-ai'}`}>{voice.label}</div>
+                <div className="text-xs text-ink-3">{voice.description}</div>
               </button>
             ))}
           </div>
@@ -210,7 +210,7 @@ export function TTSSettings() {
 
         {/* Speed Selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-ink-2 mb-2">
             再生速度
           </label>
           <div className="flex flex-wrap gap-2">
@@ -219,10 +219,10 @@ export function TTSSettings() {
                 key={option.value}
                 type="button"
                 onClick={() => setSettings(prev => ({ ...prev, speed: option.value }))}
-                className={`px-4 py-2 rounded-lg border transition-colors ${
+                className={`px-4 py-2 rounded-2xl border transition-colors ${
                   settings.speed === option.value
-                    ? 'bg-blue-100 border-blue-300 text-blue-700'
-                    : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                    ? 'bg-sora-soft border-sora text-sora font-bold'
+                    : 'bg-gray-50 border-gray-200 text-ink-2 hover:bg-gray-100'
                 }`}
               >
                 {option.label}
@@ -237,7 +237,7 @@ export function TTSSettings() {
             type="button"
             onClick={testVoice}
             disabled={isTestPlaying}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-sora text-sora font-bold rounded-2xl hover:bg-sora-soft disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isTestPlaying ? (
               <>
@@ -259,7 +259,7 @@ export function TTSSettings() {
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="w-full py-3 bg-sora text-white rounded-2xl hover:bg-sora-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold"
           >
             {isSaving ? '保存中...' : '設定を保存'}
           </button>

@@ -31,9 +31,9 @@ interface DeckData {
 function DeckDetailSkeleton() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-      <div className="h-4 bg-gray-200 rounded w-24 mb-2 animate-pulse" />
-      <div className="h-8 bg-gray-200 rounded w-48 mb-6 animate-pulse" />
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+      <div className="h-4 bg-gray-200 rounded-xl w-24 mb-2 animate-pulse" />
+      <div className="h-8 bg-gray-200 rounded-xl w-48 mb-6 animate-pulse" />
+      <div className="bg-white rounded-card border border-gray-200 p-4 mb-6">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <div className="h-8 bg-gray-200 rounded w-12 mx-auto mb-1 animate-pulse" />
@@ -49,10 +49,10 @@ function DeckDetailSkeleton() {
           </div>
         </div>
       </div>
-      <div className="h-12 bg-gray-200 rounded mb-6 animate-pulse" />
+      <div className="h-12 bg-gray-200 rounded-2xl mb-6 animate-pulse" />
       <div className="space-y-3">
         {[1, 2, 3].map(i => (
-          <div key={i} className="h-24 bg-gray-200 rounded animate-pulse" />
+          <div key={i} className="h-24 bg-gray-200 rounded-2xl animate-pulse" />
         ))}
       </div>
     </div>
@@ -221,11 +221,11 @@ export default function DeckDetailPage() {
     return (
       <AppLayout>
         <div className="max-w-4xl mx-auto px-4 py-6 text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">デッキが見つかりません</h1>
-          <p className="text-gray-600 mb-6">このデッキは存在しないか、アクセス権がありません。</p>
+          <h1 className="text-2xl font-extrabold text-ai mb-4">デッキが見つかりません</h1>
+          <p className="text-ink-2 mb-6">このデッキは存在しないか、アクセス権がありません。</p>
           <Link
             href="/decks"
-            className="text-blue-600 hover:text-blue-800 font-medium"
+            className="text-sora hover:text-sora-dark font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             デッキ一覧に戻る
           </Link>
@@ -244,31 +244,31 @@ export default function DeckDetailPage() {
           <div>
             <Link
               href="/decks"
-              className="text-sm text-gray-500 hover:text-gray-700 mb-2 inline-flex items-center gap-1"
+              className="text-sm text-ink-3 hover:text-ink-2 font-bold mb-2 inline-flex items-center gap-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               デッキ一覧
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">{deckData.deckName}</h1>
+            <h1 className="text-2xl font-extrabold text-ai">{deckData.deckName}</h1>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+        <div className="bg-white rounded-card border border-gray-200 p-4 mb-6">
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-2xl font-bold text-gray-900">{deckData.totalCards}</p>
-              <p className="text-sm text-gray-500">総カード数</p>
+              <p className="text-2xl font-extrabold text-ai tabular-nums">{deckData.totalCards}</p>
+              <p className="text-sm text-ink-3">総カード数</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-blue-600">{deckData.newCount}</p>
-              <p className="text-sm text-gray-500">新規</p>
+              <p className="text-2xl font-extrabold text-easy tabular-nums">{deckData.newCount}</p>
+              <p className="text-sm text-ink-3">新規</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-green-600">{deckData.dueCount}</p>
-              <p className="text-sm text-gray-500">復習待ち</p>
+              <p className="text-2xl font-extrabold text-good tabular-nums">{deckData.dueCount}</p>
+              <p className="text-sm text-ink-3">復習待ち</p>
             </div>
           </div>
         </div>
@@ -277,7 +277,7 @@ export default function DeckDetailPage() {
         {(deckData.totalCards > 0 || deckData.isFilterDeck) && (
           <Link
             href={`/study?deck=${deckId}`}
-            className="block w-full py-4 bg-blue-600 text-white text-center rounded-lg hover:bg-blue-700 transition-colors font-medium mb-6"
+            className="block w-full py-4 bg-nodo text-white text-center rounded-2xl hover:bg-nodo-dark shadow-[0_4px_14px_rgba(255,120,73,.35)] transition-all active:scale-95 font-extrabold mb-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             学習を開始
           </Link>
@@ -286,19 +286,19 @@ export default function DeckDetailPage() {
         {/* Child Decks */}
         {deckData.childDecks.length > 0 && (
           <div className="mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">サブデッキ</h2>
+            <h2 className="text-lg font-bold text-ai mb-3">サブデッキ</h2>
             <div className="space-y-2">
               {deckData.childDecks.map((child) => (
                 <Link
                   key={child.id}
                   href={`/decks/${child.id}`}
-                  className="block bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md hover:border-gray-300 transition-all"
+                  className="block bg-white rounded-2xl border border-gray-200 p-3 hover:border-gray-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
                 >
                   <div className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-ink-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                     </svg>
-                    <span className="text-sm font-medium text-gray-900">{child.name}</span>
+                    <span className="text-sm font-bold text-ai">{child.name}</span>
                   </div>
                 </Link>
               ))}
@@ -311,7 +311,7 @@ export default function DeckDetailPage() {
           <div className="mb-6">
             <Link
               href={`/decks/new?parent=${deckId}`}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-600 border border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-ink-2 border border-dashed border-gray-300 rounded-2xl hover:border-sora hover:text-sora transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

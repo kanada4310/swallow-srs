@@ -102,7 +102,7 @@ export default function StudentsPage() {
           </div>
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 h-16 animate-pulse" />
+              <div key={i} className="bg-white rounded-2xl border border-gray-200 p-4 h-16 animate-pulse" />
             ))}
           </div>
         </div>

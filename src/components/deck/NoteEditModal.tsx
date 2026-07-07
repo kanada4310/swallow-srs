@@ -206,16 +206,16 @@ export function NoteEditModal({ note, noteType, deckTags, onSave, onClose }: Not
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-card shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">ノートを編集</h2>
-              <p className="text-sm text-gray-500 mt-1">{noteType.name}</p>
+              <h2 className="text-xl font-extrabold text-ai">ノートを編集</h2>
+              <p className="text-sm text-ink-3 mt-1">{noteType.name}</p>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-ink-3 hover:text-ink-2"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -226,20 +226,20 @@ export function NoteEditModal({ note, noteType, deckTags, onSave, onClose }: Not
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="p-3 bg-again-bg border border-again/20 rounded-xl text-again text-sm">
               {error}
             </div>
           )}
 
           {clozeWarning && (
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700 text-sm">
+            <div className="p-3 bg-hard-bg border border-hard/20 rounded-xl text-hard text-sm">
               {clozeWarning}
             </div>
           )}
 
           {/* Cloze Help */}
           {isCloze && (
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+            <div className="p-3 bg-sora-soft border border-sora/20 rounded-xl text-sm text-sora">
               <p className="font-medium mb-1">穴埋め記法:</p>
               <p className="font-mono">{'{{c1::答え}}'} または {'{{c1::答え::ヒント}}'}</p>
             </div>
@@ -253,9 +253,9 @@ export function NoteEditModal({ note, noteType, deckTags, onSave, onClose }: Not
             return (
               <div key={field.name}>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-ink-2">
                     {field.name}
-                    {isRequired && <span className="text-red-500 ml-1">*</span>}
+                    {isRequired && <span className="text-again ml-1">*</span>}
                   </label>
                   <ImageUploadButton
                     label="画像"
@@ -271,7 +271,7 @@ export function NoteEditModal({ note, noteType, deckTags, onSave, onClose }: Not
                   value={fieldValues[field.name] || ''}
                   onChange={(e) => handleFieldChange(field.name, e.target.value)}
                   rows={isLargeField ? 4 : 2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none resize-none"
                 />
               </div>
             )
@@ -279,17 +279,17 @@ export function NoteEditModal({ note, noteType, deckTags, onSave, onClose }: Not
 
           {/* Tags Section */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-ink-2 mb-2">
               タグ
             </label>
-            <div className="flex flex-wrap gap-1.5 min-h-[36px] p-2 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
+            <div className="flex flex-wrap gap-1.5 min-h-[36px] p-2 border border-gray-300 rounded-xl focus-within:ring-2 focus-within:ring-sora focus-within:border-sora">
               {tags.map(tag => (
-                <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-xs">
+                <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sora-soft text-sora text-xs font-bold">
                   {tag}
                   <button
                     type="button"
                     onClick={() => handleRemoveTag(tag)}
-                    className="text-blue-400 hover:text-blue-700"
+                    className="text-sora/60 hover:text-sora"
                   >
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -312,14 +312,14 @@ export function NoteEditModal({ note, noteType, deckTags, onSave, onClose }: Not
                   className="w-full outline-none text-sm py-0.5"
                 />
                 {showTagSuggestions && tagSuggestions.length > 0 && (
-                  <div className="absolute left-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-32 overflow-y-auto">
+                  <div className="absolute left-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-10 max-h-32 overflow-y-auto">
                     {tagSuggestions.slice(0, 8).map(suggestion => (
                       <button
                         key={suggestion}
                         type="button"
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={() => handleAddTag(suggestion)}
-                        className="w-full text-left px-3 py-1.5 text-sm hover:bg-blue-50 text-gray-700"
+                        className="w-full text-left px-3 py-1.5 text-sm hover:bg-sora-soft text-ink-2"
                       >
                         {suggestion}
                       </button>
@@ -328,26 +328,26 @@ export function NoteEditModal({ note, noteType, deckTags, onSave, onClose }: Not
                 )}
               </div>
             </div>
-            <p className="mt-1 text-xs text-gray-400">Enterで追加、Backspaceで削除</p>
+            <p className="mt-1 text-xs text-ink-3">Enterで追加、Backspaceで削除</p>
           </div>
 
           {/* AI Generation Section */}
           {generationRules.length > 0 && (
-            <div className="border border-purple-200 rounded-lg overflow-hidden">
+            <div className="border border-sora/30 rounded-2xl overflow-hidden">
               <button
                 type="button"
                 onClick={() => setShowAiSection(!showAiSection)}
-                className="w-full flex items-center justify-between p-3 bg-purple-50 text-left hover:bg-purple-100 transition-colors"
+                className="w-full flex items-center justify-between p-3 bg-sora-soft text-left hover:bg-sora/15 transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-sora" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  <span className="text-sm font-medium text-purple-700">AI生成</span>
-                  <span className="text-xs text-purple-400">({generationRules.length}ルール)</span>
+                  <span className="text-sm font-bold text-sora">AI生成</span>
+                  <span className="text-xs text-sora/60">({generationRules.length}ルール)</span>
                 </div>
                 <svg
-                  className={`w-4 h-4 text-purple-400 transition-transform ${showAiSection ? 'rotate-180' : ''}`}
+                  className={`w-4 h-4 text-sora/60 transition-transform ${showAiSection ? 'rotate-180' : ''}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -357,9 +357,9 @@ export function NoteEditModal({ note, noteType, deckTags, onSave, onClose }: Not
               </button>
 
               {showAiSection && (
-                <div className="p-3 space-y-2 border-t border-purple-200">
+                <div className="p-3 space-y-2 border-t border-sora/20">
                   {genError && (
-                    <div className="p-2 bg-red-50 border border-red-200 rounded text-red-700 text-xs">
+                    <div className="p-2 bg-again-bg border border-again/20 rounded-xl text-again text-xs">
                       {genError}
                     </div>
                   )}
@@ -372,14 +372,14 @@ export function NoteEditModal({ note, noteType, deckTags, onSave, onClose }: Not
                     return (
                       <div key={rule.id} className="flex items-center justify-between py-1.5">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-sm text-gray-700 truncate">{rule.name}</span>
+                          <span className="text-sm text-ink-2 truncate">{rule.name}</span>
                           {rule.target_field && (
-                            <span className="text-xs text-gray-400 flex-shrink-0">
+                            <span className="text-xs text-ink-3 flex-shrink-0">
                               → {rule.target_field}
                             </span>
                           )}
                           {(isGenerated || hasExistingValue) && !isGenerating && (
-                            <svg className="w-3.5 h-3.5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-3.5 h-3.5 text-good flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                           )}
@@ -388,11 +388,11 @@ export function NoteEditModal({ note, noteType, deckTags, onSave, onClose }: Not
                           type="button"
                           onClick={() => handleGenerateRule(rule)}
                           disabled={isGenerating || generatingAll}
-                          className="px-3 py-1 text-xs text-purple-600 border border-purple-200 rounded hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+                          className="px-3 py-1 text-xs font-bold text-sora border border-sora/30 rounded-2xl hover:bg-sora-soft disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
                         >
                           {isGenerating ? (
                             <span className="flex items-center gap-1">
-                              <div className="w-3 h-3 animate-spin rounded-full border-2 border-purple-200 border-t-purple-600" />
+                              <div className="w-3 h-3 animate-spin rounded-full border-2 border-sora-soft border-t-sora" />
                               生成中
                             </span>
                           ) : hasExistingValue ? '再生成' : '生成'}
@@ -402,16 +402,16 @@ export function NoteEditModal({ note, noteType, deckTags, onSave, onClose }: Not
                   })}
 
                   {generationRules.length > 1 && (
-                    <div className="pt-2 border-t border-purple-100">
+                    <div className="pt-2 border-t border-sora/20">
                       <button
                         type="button"
                         onClick={handleGenerateAll}
                         disabled={generatingAll || generatingRuleId !== null}
-                        className="w-full px-3 py-1.5 text-xs text-white bg-purple-600 rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="w-full px-3 py-1.5 text-xs font-bold text-white bg-sora rounded-2xl hover:bg-sora-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
                         {generatingAll ? (
                           <span className="flex items-center justify-center gap-1">
-                            <div className="w-3 h-3 animate-spin rounded-full border-2 border-purple-200 border-t-white" />
+                            <div className="w-3 h-3 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                             すべて生成中...
                           </span>
                         ) : 'すべて生成'}
@@ -428,14 +428,14 @@ export function NoteEditModal({ note, noteType, deckTags, onSave, onClose }: Not
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              className="flex-1 px-4 py-2 border border-gray-300 text-ink-2 rounded-2xl hover:bg-gray-50 transition-colors font-bold"
             >
               キャンセル
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors font-medium"
+              className="flex-1 px-4 py-2 bg-sora text-white rounded-2xl hover:bg-sora-dark disabled:bg-sora/50 disabled:cursor-not-allowed transition-colors font-bold"
             >
               {isSubmitting ? '保存中...' : '保存'}
             </button>

@@ -178,13 +178,13 @@ export function AudioButton({
 
     switch (state) {
       case 'loading':
-        return `${base} bg-gray-100 text-gray-400 cursor-wait`
+        return `${base} bg-gray-100 text-ink-3 cursor-wait`
       case 'playing':
-        return `${base} bg-blue-100 text-blue-600 hover:bg-blue-200 focus:ring-blue-500`
+        return `${base} bg-sora-soft text-sora hover:opacity-80 focus:ring-sora`
       case 'error':
-        return `${base} bg-red-100 text-red-600 hover:bg-red-200 focus:ring-red-500`
+        return `${base} bg-again-bg text-again hover:opacity-80 focus:ring-again`
       default:
-        return `${base} bg-gray-100 text-gray-600 hover:bg-gray-200 focus:ring-gray-500`
+        return `${base} bg-gray-100 text-ink-2 hover:bg-gray-200 focus:ring-gray-500`
     }
   }
 
@@ -215,7 +215,7 @@ export function AudioButton({
         {getIcon()}
       </button>
       {state === 'error' && errorMessage && (
-        <span className="ml-2 text-xs text-red-600">{errorMessage}</span>
+        <span className="ml-2 text-xs text-again">{errorMessage}</span>
       )}
     </div>
   )

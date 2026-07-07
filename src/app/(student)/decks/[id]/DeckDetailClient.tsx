@@ -301,7 +301,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
         <div className="mb-6 flex flex-wrap gap-3">
           <button
             onClick={() => setShowImportModal(true)}
-            className="flex-1 min-w-[140px] py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2"
+            className="flex-1 min-w-[140px] py-3 bg-sora text-white rounded-2xl hover:bg-sora-dark transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -312,7 +312,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
           {userRole !== 'student' && (
             <button
               onClick={() => setShowDistributeModal(true)}
-              className="flex-1 min-w-[140px] py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2"
+              className="flex-1 min-w-[140px] py-3 bg-white border-2 border-sora text-sora rounded-2xl hover:bg-sora-soft transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
@@ -322,7 +322,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
           )}
           <button
             onClick={() => setShowOCRModal(true)}
-            className="flex-1 min-w-[140px] py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium flex items-center justify-center gap-2"
+            className="flex-1 min-w-[140px] py-3 bg-white border border-gray-300 text-ink-2 rounded-2xl hover:border-sora hover:text-sora transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -332,7 +332,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
           </button>
           <Link
             href={`/notes/image-mask/new?deck=${deckId}`}
-            className="flex-1 min-w-[140px] py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium flex items-center justify-center gap-2"
+            className="flex-1 min-w-[140px] py-3 bg-white border border-gray-300 text-ink-2 rounded-2xl hover:border-sora hover:text-sora transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5z" />
@@ -342,7 +342,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
           </Link>
           <Link
             href={`/notes/image-mask/bulk?deck=${deckId}`}
-            className="flex-1 min-w-[140px] py-3 bg-teal-700 text-white rounded-lg hover:bg-teal-800 transition-colors font-medium flex items-center justify-center gap-2"
+            className="flex-1 min-w-[140px] py-3 bg-white border border-gray-300 text-ink-2 rounded-2xl hover:border-sora hover:text-sora transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM13 13a1 1 0 011-1h5a1 1 0 011 1v6a1 1 0 01-1 1h-5a1 1 0 01-1-1v-6z" />
@@ -352,7 +352,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
           <button
             onClick={() => setShowBulkGenerateModal(true)}
             disabled={notes.length === 0}
-            className="flex-1 min-w-[140px] py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
+            className="flex-1 min-w-[140px] py-3 bg-white border border-gray-300 text-ink-2 rounded-2xl hover:border-sora hover:text-sora disabled:bg-gray-100 disabled:text-gray-300 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -362,7 +362,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
           <button
             onClick={handleExport}
             disabled={notes.length === 0 || isExporting}
-            className="flex-1 min-w-[140px] py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
+            className="flex-1 min-w-[140px] py-3 bg-white border border-gray-300 text-ink-2 rounded-2xl hover:border-sora hover:text-sora disabled:bg-gray-100 disabled:text-gray-300 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -376,7 +376,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
       <div className="mb-6">
         <button
           onClick={() => setShowSettingsModal(true)}
-          className="py-3 px-6 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors font-medium flex items-center justify-center gap-2"
+          className="py-3 px-6 bg-white border border-gray-300 text-ink-2 rounded-2xl hover:border-sora hover:text-sora transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -390,8 +390,8 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
       {canEdit && (
         <div className="mb-6">
           {isAddingNote ? (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">ノートを追加</h2>
+            <div className="bg-white rounded-card border border-gray-200 p-4">
+              <h2 className="text-lg font-bold text-ai mb-4">ノートを追加</h2>
               <NoteEditor
                 deckId={deckId}
                 noteTypes={noteTypes}
@@ -402,7 +402,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
           ) : (
             <button
               onClick={() => setIsAddingNote(true)}
-              className="w-full py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-colors font-medium flex items-center justify-center gap-2"
+              className="w-full py-3 border-2 border-dashed border-gray-300 text-ink-2 rounded-2xl hover:border-sora hover:text-sora transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -415,7 +415,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
 
       {/* Notes Browser (search, filter, sort, pagination, select/delete) */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">ノート一覧</h2>
+        <h2 className="text-lg font-bold text-ai mb-4">ノート一覧</h2>
         <NoteBrowser
           deckId={deckId}
           allDeckIds={allDeckIds}
@@ -463,13 +463,14 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
       {/* CSV Import Modal */}
       {showImportModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="bg-white rounded-card shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">CSVインポート</h2>
+                <h2 className="text-xl font-bold text-ai">CSVインポート</h2>
                 <button
                   onClick={() => setShowImportModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  aria-label="閉じる"
+                  className="text-ink-3 hover:text-ink-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -503,13 +504,14 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
       {/* OCR Import Modal */}
       {showOCRModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="bg-white rounded-card shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">写真から単語を読み取り</h2>
+                <h2 className="text-xl font-bold text-ai">写真から単語を読み取り</h2>
                 <button
                   onClick={() => setShowOCRModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  aria-label="閉じる"
+                  className="text-ink-3 hover:text-ink-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -534,7 +536,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
         <div className="mt-10 pt-6 border-t border-gray-200">
           <button
             onClick={() => setShowDeckDeleteConfirm(true)}
-            className="text-sm text-red-500 hover:text-red-700 transition-colors"
+            className="text-sm font-bold text-again hover:opacity-80 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             このデッキを削除
           </button>
@@ -544,16 +546,16 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
       {/* Deck Delete Confirmation Modal */}
       {showDeckDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">デッキを削除</h3>
-            <p className="text-sm text-gray-600 mb-1">
+          <div className="bg-white rounded-card shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-bold text-ai mb-2">デッキを削除</h3>
+            <p className="text-sm text-ink-2 mb-1">
               このデッキを削除しますか？
             </p>
-            <p className="text-sm text-red-600 mb-4">
+            <p className="text-sm text-again mb-4">
               デッキ内のすべてのノート・カード・学習記録が完全に削除されます。この操作は元に戻せません。
             </p>
             {deckDeleteError && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <div className="mb-4 p-3 bg-again-bg rounded-xl text-again text-sm">
                 {deckDeleteError}
               </div>
             )}
@@ -564,14 +566,14 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
                   setDeckDeleteError(null)
                 }}
                 disabled={isDeletingDeck}
-                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm font-bold text-ink-2 border border-gray-300 rounded-2xl hover:bg-gray-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
               >
                 キャンセル
               </button>
               <button
                 onClick={handleDeleteDeck}
                 disabled={isDeletingDeck}
-                className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 text-sm font-bold text-white bg-again rounded-2xl hover:opacity-90 disabled:opacity-50 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
               >
                 {isDeletingDeck ? '削除中...' : 'デッキを削除'}
               </button>
@@ -583,16 +585,17 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
       {/* Deck Settings Modal */}
       {showSettingsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="bg-white rounded-card shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">学習設定 - {deckName}</h2>
+                <h2 className="text-xl font-bold text-ai">学習設定 - {deckName}</h2>
                 <button
                   onClick={() => {
                     setShowSettingsModal(false)
                     setSettingsError(null)
                   }}
-                  className="text-gray-400 hover:text-gray-600"
+                  aria-label="閉じる"
+                  className="text-ink-3 hover:text-ink-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -600,7 +603,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
                 </button>
               </div>
               {!isOwner && (
-                <p className="text-sm text-blue-600 mt-2">
+                <p className="text-sm text-sora mt-2">
                   この設定はあなたの学習にのみ影響します。デッキ本体の設定は変更されません。
                 </p>
               )}
@@ -613,7 +616,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
               />
 
               {settingsError && (
-                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                <div className="mt-4 p-3 bg-again-bg rounded-xl text-again text-sm">
                   {settingsError}
                 </div>
               )}
@@ -627,7 +630,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
                   setDeckSettings(initialSettings)
                 }}
                 disabled={isSavingSettings}
-                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm font-bold text-ink-2 border border-gray-300 rounded-2xl hover:bg-gray-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
               >
                 キャンセル
               </button>
@@ -658,7 +661,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
                   }
                 }}
                 disabled={isSavingSettings}
-                className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 text-sm font-bold text-white bg-sora rounded-2xl hover:bg-sora-dark disabled:opacity-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
               >
                 {isSavingSettings ? '保存中...' : '保存'}
               </button>
@@ -771,13 +774,14 @@ function DistributeModal({ deckId, onClose }: { deckId: string; onClose: () => v
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-card shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900">デッキの配布設定</h2>
+            <h2 className="text-xl font-bold text-ai">デッキの配布設定</h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              aria-label="閉じる"
+              className="text-ink-3 hover:text-ink-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -789,39 +793,39 @@ function DistributeModal({ deckId, onClose }: { deckId: string; onClose: () => v
         <div className="flex-1 overflow-y-auto p-6">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sora"></div>
             </div>
           ) : (
             <>
               {/* Current Assignments */}
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-700 mb-3">現在の配布先</h3>
+                <h3 className="text-sm font-bold text-ink-2 mb-3">現在の配布先</h3>
                 {assignments.length === 0 ? (
-                  <p className="text-sm text-gray-500">まだ配布されていません</p>
+                  <p className="text-sm text-ink-3">まだ配布されていません</p>
                 ) : (
                   <ul className="space-y-2">
                     {assignments.map((assignment) => (
                       <li
                         key={assignment.id}
-                        className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2"
+                        className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2"
                       >
                         <div>
-                          <span className={`text-xs px-2 py-0.5 rounded-full mr-2 ${
+                          <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full mr-2 ${
                             assignment.type === 'class'
-                              ? 'bg-blue-100 text-blue-700'
-                              : 'bg-green-100 text-green-700'
+                              ? 'bg-sora-soft text-sora'
+                              : 'bg-good-bg text-good'
                           }`}>
                             {assignment.type === 'class' ? 'クラス' : '個人'}
                           </span>
-                          <span className="text-sm text-gray-900">{assignment.target.name}</span>
+                          <span className="text-sm text-ink">{assignment.target.name}</span>
                           {assignment.target.email && (
-                            <span className="text-xs text-gray-500 ml-1">({assignment.target.email})</span>
+                            <span className="text-xs text-ink-3 ml-1">({assignment.target.email})</span>
                           )}
                         </div>
                         <button
                           onClick={() => handleRemove(assignment.id)}
                           disabled={isRemoving === assignment.id}
-                          className="text-sm text-red-600 hover:text-red-700 disabled:opacity-50"
+                          className="text-sm font-bold text-again hover:opacity-80 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
                         >
                           {isRemoving === assignment.id ? '削除中...' : '削除'}
                         </button>
@@ -833,10 +837,10 @@ function DistributeModal({ deckId, onClose }: { deckId: string; onClose: () => v
 
               {/* Add New Assignment */}
               <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-3">新規配布先を追加</h3>
+                <h3 className="text-sm font-bold text-ink-2 mb-3">新規配布先を追加</h3>
 
                 {error && (
-                  <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  <div className="mb-3 p-3 bg-again-bg rounded-xl text-again text-sm">
                     {error}
                   </div>
                 )}
@@ -848,10 +852,10 @@ function DistributeModal({ deckId, onClose }: { deckId: string; onClose: () => v
                       setAssignType('class')
                       setSelectedId('')
                     }}
-                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex-1 py-2 rounded-2xl text-sm font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai ${
                       assignType === 'class'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-sora text-white'
+                        : 'bg-gray-100 text-ink-2 hover:bg-gray-200'
                     }`}
                   >
                     クラスに配布
@@ -861,10 +865,10 @@ function DistributeModal({ deckId, onClose }: { deckId: string; onClose: () => v
                       setAssignType('individual')
                       setSelectedId('')
                     }}
-                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex-1 py-2 rounded-2xl text-sm font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai ${
                       assignType === 'individual'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-sora text-white'
+                        : 'bg-gray-100 text-ink-2 hover:bg-gray-200'
                     }`}
                   >
                     個人に配布
@@ -874,12 +878,12 @@ function DistributeModal({ deckId, onClose }: { deckId: string; onClose: () => v
                 {/* Selection Dropdown */}
                 {assignType === 'class' ? (
                   availableClasses.length === 0 ? (
-                    <p className="text-sm text-gray-500 mb-3">配布可能なクラスがありません</p>
+                    <p className="text-sm text-ink-3 mb-3">配布可能なクラスがありません</p>
                   ) : (
                     <select
                       value={selectedId}
                       onChange={(e) => setSelectedId(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-3"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora mb-3"
                     >
                       <option value="">クラスを選択</option>
                       {availableClasses.map((c) => (
@@ -889,12 +893,12 @@ function DistributeModal({ deckId, onClose }: { deckId: string; onClose: () => v
                   )
                 ) : (
                   availableStudents.length === 0 ? (
-                    <p className="text-sm text-gray-500 mb-3">配布可能な生徒がいません</p>
+                    <p className="text-sm text-ink-3 mb-3">配布可能な生徒がいません</p>
                   ) : (
                     <select
                       value={selectedId}
                       onChange={(e) => setSelectedId(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-3"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora mb-3"
                     >
                       <option value="">生徒を選択</option>
                       {availableStudents.map((s) => (
@@ -907,7 +911,7 @@ function DistributeModal({ deckId, onClose }: { deckId: string; onClose: () => v
                 <button
                   onClick={handleAssign}
                   disabled={!selectedId || isAssigning}
-                  className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-2 bg-sora text-white rounded-2xl hover:bg-sora-dark transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
                 >
                   {isAssigning ? '配布中...' : '配布する'}
                 </button>
@@ -919,7 +923,7 @@ function DistributeModal({ deckId, onClose }: { deckId: string; onClose: () => v
         <div className="p-4 border-t border-gray-200">
           <button
             onClick={onClose}
-            className="w-full py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            className="w-full py-2 border border-gray-300 rounded-2xl text-ink-2 font-bold hover:bg-gray-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             閉じる
           </button>

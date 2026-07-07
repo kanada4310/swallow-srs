@@ -4,8 +4,8 @@
   "description": "つばめ学習舎のSRS学習アプリ - 効率的な暗記学習をサポート",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f9fafb",
-  "theme_color": "#2563eb",
+  "background_color": "#F7F8FA",
+  "theme_color": "#1C2B4B",
   "orientation": "portrait-primary",
   "scope": "/",
   "icons": [

@@ -55,17 +55,17 @@ export function StudentsClient({ initialClasses }: StudentsClientProps) {
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">クラス管理</h1>
+        <h1 className="text-2xl font-extrabold text-ai">クラス管理</h1>
         <div className="flex items-center gap-2">
           <Link
             href="/students/progress"
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+            className="px-4 py-2 bg-white border-2 border-sora text-sora rounded-2xl hover:bg-sora-soft transition-colors text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             取組状況
           </Link>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+            className="px-4 py-2 bg-sora text-white rounded-2xl hover:bg-sora-dark transition-colors text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             新規クラス作成
           </button>
@@ -74,19 +74,19 @@ export function StudentsClient({ initialClasses }: StudentsClientProps) {
 
       {/* Class List */}
       {classes.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-          <div className="text-gray-400 mb-4">
+        <div className="bg-white rounded-card border border-gray-200 p-8 text-center">
+          <div className="text-ink-3 mb-4">
             <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
             </svg>
           </div>
-          <h2 className="text-lg font-medium text-gray-900 mb-2">クラスがありません</h2>
-          <p className="text-gray-500 mb-4">
+          <h2 className="text-lg font-bold text-ai mb-2">クラスがありません</h2>
+          <p className="text-ink-2 mb-4">
             新規クラスを作成して、生徒を追加しましょう。
           </p>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+            className="px-4 py-2 bg-sora text-white rounded-2xl hover:bg-sora-dark transition-colors text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             最初のクラスを作成
           </button>
@@ -97,16 +97,16 @@ export function StudentsClient({ initialClasses }: StudentsClientProps) {
             <Link
               key={classData.id}
               href={`/students/class/${classData.id}`}
-              className="block bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:border-blue-300 hover:shadow transition-all"
+              className="block bg-white rounded-2xl border border-gray-200 p-4 hover:border-sora transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900">{classData.name}</h3>
-                  <p className="text-sm text-gray-500">
+                  <h3 className="text-lg font-bold text-ai">{classData.name}</h3>
+                  <p className="text-sm text-ink-2 tabular-nums">
                     {classData.memberCount}人の生徒
                   </p>
                 </div>
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-ink-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </div>
@@ -118,19 +118,19 @@ export function StudentsClient({ initialClasses }: StudentsClientProps) {
       {/* Create Class Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+          <div className="bg-white rounded-card shadow-card max-w-md w-full">
             <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">新規クラス作成</h2>
+              <h2 className="text-xl font-extrabold text-ai mb-4">新規クラス作成</h2>
 
               {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                <div className="mb-4 p-3 bg-again-bg border border-again/20 rounded-2xl text-again text-sm">
                   {error}
                 </div>
               )}
 
               <form onSubmit={handleCreateClass}>
                 <div className="mb-4">
-                  <label htmlFor="className" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="className" className="block text-sm font-medium text-ink-2 mb-1">
                     クラス名
                   </label>
                   <input
@@ -139,7 +139,7 @@ export function StudentsClient({ initialClasses }: StudentsClientProps) {
                     value={newClassName}
                     onChange={(e) => setNewClassName(e.target.value)}
                     placeholder="例: 高3理系A"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:border-sora focus:ring-2 focus:ring-sora"
                     autoFocus
                     required
                   />
@@ -153,14 +153,14 @@ export function StudentsClient({ initialClasses }: StudentsClientProps) {
                       setNewClassName('')
                       setError(null)
                     }}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-2xl text-ink-2 font-bold hover:bg-gray-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
                     disabled={isCreating}
                   >
                     キャンセル
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    className="flex-1 px-4 py-2 bg-sora text-white font-bold rounded-2xl hover:bg-sora-dark transition-colors disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
                     disabled={isCreating || !newClassName.trim()}
                   >
                     {isCreating ? '作成中...' : '作成'}

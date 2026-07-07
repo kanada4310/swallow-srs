@@ -102,11 +102,11 @@ export function TemplateEditor({ templates, fields, onChange }: TemplateEditorPr
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium text-gray-900">カードテンプレート</h3>
+        <h3 className="text-lg font-bold text-ai">カードテンプレート</h3>
         <button
           type="button"
           onClick={addTemplate}
-          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-white border-2 border-sora text-sora font-bold rounded-2xl hover:bg-sora-soft transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -122,10 +122,10 @@ export function TemplateEditor({ templates, fields, onChange }: TemplateEditorPr
             <button
               type="button"
               onClick={() => setSelectedTemplate(index)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+              className={`px-4 py-2 rounded-2xl text-sm font-bold transition-colors whitespace-nowrap ${
                 selectedTemplate === index
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-sora text-white'
+                  : 'bg-gray-100 text-ink-2 hover:bg-gray-200'
               }`}
             >
               {template.name}
@@ -134,7 +134,7 @@ export function TemplateEditor({ templates, fields, onChange }: TemplateEditorPr
               <button
                 type="button"
                 onClick={() => removeTemplate(index)}
-                className="p-1 text-gray-400 hover:text-red-500"
+                className="p-1 text-ink-3 hover:text-again"
                 title="削除"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,14 +150,14 @@ export function TemplateEditor({ templates, fields, onChange }: TemplateEditorPr
         <>
           {/* Template Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-ink-2 mb-1">
               テンプレート名
             </label>
             <input
               type="text"
               value={currentTemplate.name}
               onChange={(e) => updateTemplateName(selectedTemplate, e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none"
             />
           </div>
 
@@ -168,10 +168,10 @@ export function TemplateEditor({ templates, fields, onChange }: TemplateEditorPr
                 key={side}
                 type="button"
                 onClick={() => setSelectedSide(side)}
-                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                className={`px-4 py-2 text-sm font-bold border-b-2 transition-colors ${
                   selectedSide === side
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-sora text-sora'
+                    : 'border-transparent text-ink-3 hover:text-ink-2 hover:border-gray-300'
                 }`}
               >
                 {side === 'front' ? '表面' : side === 'back' ? '裏面' : 'CSS'}
@@ -182,13 +182,13 @@ export function TemplateEditor({ templates, fields, onChange }: TemplateEditorPr
           {/* Field Placeholders */}
           {selectedSide !== 'css' && (
             <div className="flex flex-wrap gap-2">
-              <span className="text-sm text-gray-500 py-1">挿入:</span>
+              <span className="text-sm text-ink-3 py-1">挿入:</span>
               {fields.map((field) => (
                 <button
                   key={field.name}
                   type="button"
                   onClick={() => insertPlaceholder(`{{${field.name}}}`)}
-                  className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors font-mono"
+                  className="px-2 py-1 text-xs bg-gray-100 text-ink-2 rounded-full hover:bg-gray-200 transition-colors font-mono"
                 >
                   {`{{${field.name}}}`}
                 </button>
@@ -196,18 +196,18 @@ export function TemplateEditor({ templates, fields, onChange }: TemplateEditorPr
               <button
                 type="button"
                 onClick={() => insertPlaceholder('{{FrontSide}}')}
-                className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors font-mono"
+                className="px-2 py-1 text-xs bg-sora-soft text-sora rounded-full hover:bg-gray-200 transition-colors font-mono"
               >
                 {'{{FrontSide}}'}
               </button>
               <div className="w-full flex flex-wrap gap-2 mt-1">
-                <span className="text-sm text-gray-500 py-1">条件:</span>
+                <span className="text-sm text-ink-3 py-1">条件:</span>
                 {fields.map((field) => (
                   <button
                     key={`cond-${field.name}`}
                     type="button"
                     onClick={() => insertPlaceholder(`{{#${field.name}}}...{{/${field.name}}}`)}
-                    className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors font-mono"
+                    className="px-2 py-1 text-xs bg-good-bg text-good rounded-full hover:bg-gray-200 transition-colors font-mono"
                   >
                     {`{{#${field.name}}}`}
                   </button>
@@ -217,20 +217,20 @@ export function TemplateEditor({ templates, fields, onChange }: TemplateEditorPr
                     key={`notcond-${field.name}`}
                     type="button"
                     onClick={() => insertPlaceholder(`{{^${field.name}}}...{{/${field.name}}}`)}
-                    className="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition-colors font-mono"
+                    className="px-2 py-1 text-xs bg-hard-bg text-hard rounded-full hover:bg-gray-200 transition-colors font-mono"
                   >
                     {`{{^${field.name}}}`}
                   </button>
                 ))}
               </div>
               <div className="w-full flex flex-wrap gap-2 mt-1">
-                <span className="text-sm text-gray-500 py-1">Cloze:</span>
+                <span className="text-sm text-ink-3 py-1">Cloze:</span>
                 {fields.map((field) => (
                   <button
                     key={`cloze-${field.name}`}
                     type="button"
                     onClick={() => insertPlaceholder(`{{cloze:${field.name}}}`)}
-                    className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors font-mono"
+                    className="px-2 py-1 text-xs bg-easy-bg text-easy rounded-full hover:bg-gray-200 transition-colors font-mono"
                   >
                     {`{{cloze:${field.name}}}`}
                   </button>
@@ -245,7 +245,7 @@ export function TemplateEditor({ templates, fields, onChange }: TemplateEditorPr
             value={getCurrentContent()}
             onChange={(e) => updateTemplateContent(e.target.value)}
             rows={10}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono text-sm resize-none"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sora focus:border-sora outline-none font-mono text-sm resize-none"
             placeholder={
               selectedSide === 'css'
                 ? '.card { font-size: 1.2rem; }'
@@ -258,7 +258,7 @@ export function TemplateEditor({ templates, fields, onChange }: TemplateEditorPr
       )}
 
       {templates.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-ink-3">
           テンプレートがありません。「テンプレート追加」をクリックしてください。
         </div>
       )}

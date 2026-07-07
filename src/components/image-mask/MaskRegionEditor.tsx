@@ -270,12 +270,12 @@ export function MaskRegionEditor({ imageUrl, regions, onChange, detecting }: Mas
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-ink-3">
         枠をタップで選択→ドラッグで移動・右下で拡大縮小。<b>選択中に画像をタップするとその位置へ移動</b>。何もない所をドラッグで新規マスク。下のボタン（PCは矢印キー）でも微調整できます。
       </p>
 
       {/* 画像＋オーバーレイ */}
-      <div className="select-none overflow-hidden rounded-lg border border-gray-200">
+      <div className="select-none overflow-hidden rounded-2xl border border-gray-200">
         <div
           ref={containerRef}
           className="relative inline-block w-full touch-none"
@@ -322,17 +322,17 @@ export function MaskRegionEditor({ imageUrl, regions, onChange, detecting }: Mas
       </div>
 
       {detecting && (
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <span className="w-4 h-4 animate-spin rounded-full border-2 border-gray-200 border-t-blue-500" />
+        <div className="flex items-center gap-2 text-sm text-ink-3">
+          <span className="w-4 h-4 animate-spin rounded-full border-2 border-gray-200 border-t-sora" />
           AIがマスキング候補を検出中...
         </div>
       )}
 
       {/* 選択中の枠の微調整パッド */}
       {selectedId && (
-        <div className="flex items-center justify-between gap-3 p-2 bg-gray-50 border border-gray-200 rounded-lg">
+        <div className="flex items-center justify-between gap-3 p-2 bg-gray-50 border border-gray-200 rounded-2xl">
           <div className="flex items-center gap-1">
-            <span className="text-xs text-gray-500 mr-1">位置</span>
+            <span className="text-xs text-ink-3 mr-1">位置</span>
             <NudgeBtn onClick={() => nudge(-1, 0)} label="←" />
             <div className="flex flex-col gap-1">
               <NudgeBtn onClick={() => nudge(0, -1)} label="↑" />
@@ -341,10 +341,10 @@ export function MaskRegionEditor({ imageUrl, regions, onChange, detecting }: Mas
             <NudgeBtn onClick={() => nudge(1, 0)} label="→" />
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-xs text-gray-500 mr-1">幅</span>
+            <span className="text-xs text-ink-3 mr-1">幅</span>
             <NudgeBtn onClick={() => resizeBy(-1, 0)} label="−" />
             <NudgeBtn onClick={() => resizeBy(1, 0)} label="＋" />
-            <span className="text-xs text-gray-500 mx-1">高</span>
+            <span className="text-xs text-ink-3 mx-1">高</span>
             <NudgeBtn onClick={() => resizeBy(0, -1)} label="−" />
             <NudgeBtn onClick={() => resizeBy(0, 1)} label="＋" />
           </div>
@@ -353,18 +353,18 @@ export function MaskRegionEditor({ imageUrl, regions, onChange, detecting }: Mas
 
       {/* 領域リスト */}
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-gray-700">
+        <h3 className="text-sm font-bold text-ai">
           マスク領域（{includedCount} / {regions.length}）
         </h3>
         {regions.length === 0 && !detecting && (
-          <p className="text-sm text-gray-400">候補がありません。画像をドラッグしてマスクを描いてください。</p>
+          <p className="text-sm text-ink-3">候補がありません。画像をドラッグしてマスクを描いてください。</p>
         )}
         {regions.map((r, i) => (
           <div
             key={r.id}
             onClick={() => setSelectedId(r.id)}
-            className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer ${
-              r.id === selectedId ? 'border-blue-400 bg-blue-50' : 'border-gray-200'
+            className={`flex items-center gap-2 p-2 rounded-2xl border cursor-pointer ${
+              r.id === selectedId ? 'border-sora bg-sora-soft' : 'border-gray-200 bg-white'
             }`}
           >
             <input
@@ -372,26 +372,30 @@ export function MaskRegionEditor({ imageUrl, regions, onChange, detecting }: Mas
               checked={r.included}
               onChange={(e) => updateRegion(r.id, { included: e.target.checked })}
               onClick={(e) => e.stopPropagation()}
-              className="w-4 h-4"
+              className="w-4 h-4 accent-sora"
               title="出題対象"
             />
-            <span className="text-xs text-gray-400 w-5 flex-shrink-0">{i + 1}</span>
+            <span className="text-xs text-ink-3 w-5 flex-shrink-0">{i + 1}</span>
             <input
               type="text"
               value={r.answer}
               onChange={(e) => updateRegion(r.id, { answer: e.target.value })}
               onClick={(e) => e.stopPropagation()}
               placeholder="正解テキスト"
-              className="flex-1 min-w-0 px-2 py-1 text-sm border border-gray-300 rounded outline-none focus:ring-1 focus:ring-blue-500"
+              className="flex-1 min-w-0 px-2 py-1 text-sm border border-gray-300 rounded-xl outline-none focus:border-sora focus:ring-sora focus:ring-1"
             />
-            {r.source === 'ai' && <span className="text-[10px] text-purple-500 flex-shrink-0">AI</span>}
+            {r.source === 'ai' && (
+              <span className="rounded-full px-1.5 py-0.5 text-[10px] font-bold bg-sora-soft text-sora flex-shrink-0">
+                AI
+              </span>
+            )}
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
                 deleteRegion(r.id)
               }}
-              className="text-gray-400 hover:text-red-500 flex-shrink-0"
+              className="text-ink-3 hover:text-again flex-shrink-0"
               title="削除"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -410,7 +414,7 @@ function NudgeBtn({ onClick, label }: { onClick: () => void; label: string }) {
     <button
       type="button"
       onClick={onClick}
-      className="w-8 h-7 flex items-center justify-center text-sm text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-100 active:bg-gray-200 select-none"
+      className="w-8 h-7 flex items-center justify-center text-sm text-ink-2 bg-white border border-gray-300 rounded-xl hover:bg-gray-100 active:bg-gray-200 select-none"
     >
       {label}
     </button>

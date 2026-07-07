@@ -92,10 +92,10 @@ export function ImageMaskNoteEditor({ noteId }: ImageMaskNoteEditorProps) {
     }
   }
 
-  if (!loaded) return <div className="h-40 bg-gray-100 rounded-lg animate-pulse" />
+  if (!loaded) return <div className="h-40 bg-gray-100 rounded-card animate-pulse" />
   if (notFound) {
     return (
-      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm">
+      <div className="p-4 bg-hard-bg rounded-2xl text-hard text-sm">
         画像マスキングノートが見つかりませんでした。
       </div>
     )
@@ -104,39 +104,39 @@ export function ImageMaskNoteEditor({ noteId }: ImageMaskNoteEditorProps) {
   return (
     <div className="space-y-4">
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>
+        <div className="p-3 bg-again-bg rounded-2xl text-again text-sm">{error}</div>
       )}
 
       <MaskRegionEditor imageUrl={imageUrl} regions={regions} onChange={setRegions} />
 
       <div className="grid grid-cols-1 gap-3 pt-2 border-t border-gray-100">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">見出し</label>
+          <label className="block text-sm font-medium text-ink-2 mb-1">見出し</label>
           <input
             type="text"
             value={heading}
             onChange={(e) => setHeading(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-xl outline-none focus:border-sora focus:ring-sora focus:ring-2"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">毎回隠す数（空欄=約3割）</label>
+          <label className="block text-sm font-medium text-ink-2 mb-1">毎回隠す数（空欄=約3割）</label>
           <input
             type="number"
             min={1}
             value={maskCount}
             onChange={(e) => setMaskCount(e.target.value)}
             placeholder="自動"
-            className="w-32 px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-32 px-3 py-2 border border-gray-300 rounded-xl outline-none focus:border-sora focus:ring-sora focus:ring-2"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">補足（裏面に表示・任意）</label>
+          <label className="block text-sm font-medium text-ink-2 mb-1">補足（裏面に表示・任意）</label>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={2}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full px-3 py-2 border border-gray-300 rounded-xl outline-none focus:border-sora focus:ring-sora focus:ring-2 resize-none"
           />
         </div>
       </div>
@@ -145,7 +145,7 @@ export function ImageMaskNoteEditor({ noteId }: ImageMaskNoteEditorProps) {
         <button
           type="button"
           onClick={() => router.push(deckId ? `/decks/${deckId}` : '/decks')}
-          className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+          className="flex-1 px-4 py-2 bg-white border-2 border-sora text-sora rounded-2xl hover:bg-sora-soft font-bold transition-colors"
         >
           キャンセル
         </button>
@@ -153,7 +153,7 @@ export function ImageMaskNoteEditor({ noteId }: ImageMaskNoteEditorProps) {
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 font-medium"
+          className="flex-1 px-4 py-2 bg-sora text-white rounded-2xl hover:bg-sora-dark disabled:opacity-50 font-bold transition-colors"
         >
           {saving ? '保存中...' : '保存'}
         </button>

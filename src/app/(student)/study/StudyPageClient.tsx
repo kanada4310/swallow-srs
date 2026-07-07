@@ -153,7 +153,7 @@ export function StudyPageClient({
   if (!hasServerData && !userId && offlineUserId === null) {
     return (
       <div className="py-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+        <div className="bg-again-bg rounded-card p-4 text-again">
           オフラインデータがありません。オンラインでログインしてください。
         </div>
       </div>
@@ -173,7 +173,7 @@ export function StudyPageClient({
     const decks = offlineDecks ?? []
     return (
       <div className="py-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">学習</h1>
+        <h1 className="text-2xl font-extrabold text-ai mb-6">学習</h1>
         <OfflineBadge />
 
         {decks.length > 0 ? (
@@ -182,26 +182,26 @@ export function StudyPageClient({
               <Link
                 key={deck.id}
                 href={`/study?deck=${deck.id}`}
-                className="block bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md hover:border-gray-300 transition-all"
+                className="block bg-white rounded-2xl border border-gray-200 p-4 hover:border-sora transition-all"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-medium text-gray-900">{deck.name}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{deck.total_cards} 枚のカード</p>
+                    <h3 className="font-bold text-ai">{deck.name}</h3>
+                    <p className="text-sm text-ink-3 mt-1">{deck.total_cards} 枚のカード</p>
                   </div>
-                  <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2">
                     {deck.new_count > 0 && (
-                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded font-medium">
+                      <span className="rounded-full px-2.5 py-0.5 text-xs font-bold bg-easy-bg text-easy tabular-nums">
                         新規 {deck.new_count}
                       </span>
                     )}
                     {deck.learning_count > 0 && (
-                      <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded font-medium">
+                      <span className="rounded-full px-2.5 py-0.5 text-xs font-bold bg-hard-bg text-hard tabular-nums">
                         学習中 {deck.learning_count}
                       </span>
                     )}
                     {deck.review_count > 0 && (
-                      <span className="px-2 py-1 bg-green-100 text-green-700 rounded font-medium">
+                      <span className="rounded-full px-2.5 py-0.5 text-xs font-bold bg-good-bg text-good tabular-nums">
                         復習 {deck.review_count}
                       </span>
                     )}
@@ -211,11 +211,11 @@ export function StudyPageClient({
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-            <h2 className="text-lg font-medium text-gray-900 mb-2">
+          <div className="bg-white rounded-card border border-gray-200 p-8 text-center">
+            <h2 className="text-lg font-bold text-ai mb-2">
               {isOnline ? '同期中…' : 'オフラインデータがありません'}
             </h2>
-            <p className="text-gray-500">
+            <p className="text-ink-3">
               {isOnline
                 ? 'デッキを取得しています。少々お待ちください。'
                 : 'オンライン時にデッキを開くと、データが自動的にキャッシュされます。'}
@@ -261,7 +261,7 @@ export function StudyPageClient({
 
 function OfflineBadge() {
   return (
-    <div className="mb-4 flex items-center gap-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-700">
+    <div className="mb-4 flex items-center gap-2 px-3 py-2 bg-hard-bg rounded-2xl text-sm font-bold text-hard">
       <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21" />
       </svg>
@@ -275,20 +275,20 @@ function StudyLoadingSkeleton() {
     <div className="py-6">
       <div className="max-w-2xl mx-auto mb-6">
         <div className="flex items-center justify-between mb-2">
-          <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
-          <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+          <div className="h-4 w-24 bg-gray-200 rounded-full animate-pulse" />
+          <div className="h-4 w-16 bg-gray-200 rounded-full animate-pulse" />
         </div>
         <div className="h-2 bg-gray-200 rounded-full" />
       </div>
       <div className="w-full max-w-2xl mx-auto">
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 min-h-[300px] flex flex-col">
+        <div className="bg-white rounded-card shadow-card border border-gray-200 min-h-[300px] flex flex-col">
           <div className="flex-1 p-8 flex flex-col items-center justify-center gap-4">
-            <div className="h-6 w-48 bg-gray-200 rounded animate-pulse" />
-            <div className="h-4 w-32 bg-gray-100 rounded animate-pulse" />
+            <div className="h-6 w-48 bg-gray-200 rounded-xl animate-pulse" />
+            <div className="h-4 w-32 bg-gray-100 rounded-xl animate-pulse" />
           </div>
         </div>
         <div className="mt-6 flex justify-center">
-          <div className="h-12 w-48 bg-gray-200 rounded-lg animate-pulse" />
+          <div className="h-12 w-48 bg-gray-200 rounded-2xl animate-pulse" />
         </div>
       </div>
     </div>

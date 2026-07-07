@@ -177,10 +177,25 @@ export function BulkImageMaskCreator({ deckId, noteType }: BulkImageMaskCreatorP
     }
   }
 
+  const statusBadgeClass = (status: ItemStatus) => {
+    switch (status) {
+      case 'done':
+        return 'bg-good-bg text-good'
+      case 'error':
+        return 'bg-again-bg text-again'
+      case 'processing':
+      case 'saving':
+      case 'ready':
+        return 'bg-sora-soft text-sora'
+      default:
+        return 'bg-gray-100 text-ink-3'
+    }
+  }
+
   return (
     <div className="space-y-4">
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>
+        <div className="p-3 bg-again-bg rounded-2xl text-again text-sm">{error}</div>
       )}
 
       <input
@@ -199,25 +214,25 @@ export function BulkImageMaskCreator({ deckId, noteType }: BulkImageMaskCreatorP
           type="button"
           disabled={busy || creating}
           onClick={() => fileInputRef.current?.click()}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 font-medium"
+          className="px-4 py-2 bg-sora text-white rounded-2xl hover:bg-sora-dark disabled:opacity-50 font-bold transition-colors"
         >
           {busy ? '取り込み中…' : '画像を追加（複数可）'}
         </button>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">毎回隠す数（全件共通・空欄=約3割）</label>
+          <label className="block text-xs text-ink-3 mb-1">毎回隠す数（全件共通・空欄=約3割）</label>
           <input
             type="number"
             min={1}
             value={maskCount}
             onChange={(e) => setMaskCount(e.target.value)}
             placeholder="自動"
-            className="w-28 px-3 py-1.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-28 px-3 py-1.5 border border-gray-300 rounded-xl outline-none focus:border-sora focus:ring-sora focus:ring-2"
           />
         </div>
       </div>
 
       {items.length > 0 && (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-ink-3">
           各画像が1ノート（1問）になります。枠を確認し、必要なら「編集」で微調整してください。見出しは庭・一覧で使われます。
         </p>
       )}
@@ -225,7 +240,7 @@ export function BulkImageMaskCreator({ deckId, noteType }: BulkImageMaskCreatorP
       {/* アイテム一覧 */}
       <div className="space-y-3">
         {items.map((it) => (
-          <div key={it.id} className="border border-gray-200 rounded-lg overflow-hidden">
+          <div key={it.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
             <div className="flex items-center gap-3 p-3">
               {/* サムネ */}
               <div className="w-16 h-16 flex-shrink-0 bg-gray-50 rounded overflow-hidden flex items-center justify-center">
@@ -250,9 +265,9 @@ export function BulkImageMaskCreator({ deckId, noteType }: BulkImageMaskCreatorP
                       ))}
                   </div>
                 ) : it.status === 'processing' ? (
-                  <span className="w-5 h-5 animate-spin rounded-full border-2 border-gray-200 border-t-blue-500" />
+                  <span className="w-5 h-5 animate-spin rounded-full border-2 border-gray-200 border-t-sora" />
                 ) : (
-                  <span className="text-gray-300 text-xs">画像</span>
+                  <span className="text-ink-3 text-xs">画像</span>
                 )}
               </div>
 
@@ -262,9 +277,15 @@ export function BulkImageMaskCreator({ deckId, noteType }: BulkImageMaskCreatorP
                   value={it.heading}
                   onChange={(e) => patchItem(it.id, { heading: e.target.value })}
                   placeholder="見出し"
-                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded-xl outline-none focus:border-sora focus:ring-sora focus:ring-1"
                 />
-                <div className="mt-1 text-xs text-gray-500">{statusLabel(it)}</div>
+                <div className="mt-1">
+                  <span
+                    className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${statusBadgeClass(it.status)}`}
+                  >
+                    {statusLabel(it)}
+                  </span>
+                </div>
               </div>
 
               <div className="flex flex-col gap-1 flex-shrink-0">
@@ -272,7 +293,7 @@ export function BulkImageMaskCreator({ deckId, noteType }: BulkImageMaskCreatorP
                   <button
                     type="button"
                     onClick={() => patchItem(it.id, { expanded: !it.expanded })}
-                    className="px-3 py-1 text-xs text-blue-600 border border-blue-200 rounded hover:bg-blue-50"
+                    className="px-3 py-1 text-xs font-bold text-sora border border-sora rounded-2xl hover:bg-sora-soft transition-colors"
                   >
                     {it.expanded ? '閉じる' : '編集'}
                   </button>
@@ -281,7 +302,7 @@ export function BulkImageMaskCreator({ deckId, noteType }: BulkImageMaskCreatorP
                   <button
                     type="button"
                     onClick={() => removeItem(it.id)}
-                    className="px-3 py-1 text-xs text-gray-500 border border-gray-200 rounded hover:bg-gray-50"
+                    className="px-3 py-1 text-xs font-bold text-ink-3 border border-gray-200 rounded-2xl hover:text-ink-2 hover:bg-gray-50 transition-colors"
                   >
                     除外
                   </button>
@@ -292,7 +313,7 @@ export function BulkImageMaskCreator({ deckId, noteType }: BulkImageMaskCreatorP
             {it.expanded && it.imageUrl && (
               <div className="border-t border-gray-100 p-3 bg-gray-50/50">
                 {it.source && (
-                  <p className="text-[11px] text-gray-400 mb-2">
+                  <p className="text-[11px] text-ink-3 mb-2">
                     検出: {it.source === 'google-vision' ? '高精度OCR（Google Vision）' : 'AI推定（要微調整）'}
                   </p>
                 )}
@@ -312,7 +333,7 @@ export function BulkImageMaskCreator({ deckId, noteType }: BulkImageMaskCreatorP
           <button
             type="button"
             onClick={() => router.push(`/decks/${deckId}`)}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+            className="px-4 py-2 bg-white border-2 border-sora text-sora rounded-2xl hover:bg-sora-soft font-bold transition-colors"
           >
             キャンセル
           </button>
@@ -320,7 +341,7 @@ export function BulkImageMaskCreator({ deckId, noteType }: BulkImageMaskCreatorP
             type="button"
             onClick={handleCreateAll}
             disabled={creating || busy || readyItems.length === 0}
-            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 font-medium"
+            className="flex-1 px-4 py-2 bg-sora text-white rounded-2xl hover:bg-sora-dark disabled:bg-gray-300 font-bold transition-colors"
           >
             {creating
               ? `作成中… ${progress?.done ?? 0}/${progress?.total ?? 0}`

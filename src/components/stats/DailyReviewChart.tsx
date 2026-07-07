@@ -24,8 +24,8 @@ export function DailyReviewChart({ data }: DailyReviewChartProps) {
   }))
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
-      <h3 className="text-sm font-medium text-gray-700 mb-4">日別復習数</h3>
+    <div className="bg-white rounded-card border border-gray-200 p-6">
+      <h3 className="text-sm font-bold text-ai mb-4">日別復習数</h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={formattedData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
@@ -49,8 +49,8 @@ export function DailyReviewChart({ data }: DailyReviewChartProps) {
                 const correct = payload.find(p => p.dataKey === 'correct')?.value || 0
                 const incorrect = payload.find(p => p.dataKey === 'incorrect')?.value || 0
                 return (
-                  <div className="bg-white shadow-lg rounded-lg border border-gray-200 p-3">
-                    <p className="text-sm font-medium text-gray-900 mb-1">{label}</p>
+                  <div className="bg-white shadow-lg rounded-2xl border border-gray-200 p-3">
+                    <p className="text-sm font-bold text-ai mb-1">{label}</p>
                     <p className="text-xs text-green-600">正解: {correct}</p>
                     <p className="text-xs text-red-500">不正解: {incorrect}</p>
                   </div>

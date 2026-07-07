@@ -40,11 +40,11 @@ export default function NewDeckPage() {
     return (
       <AppLayout>
         <div className="max-w-2xl mx-auto px-4 py-6">
-          <div className="h-8 bg-gray-200 rounded w-48 mb-6 animate-pulse" />
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="h-8 bg-gray-200 rounded-xl w-48 mb-6 animate-pulse" />
+          <div className="bg-white rounded-card border border-gray-200 p-6">
             <div className="space-y-4">
-              <div className="h-10 bg-gray-200 rounded animate-pulse" />
-              <div className="h-10 bg-gray-200 rounded animate-pulse" />
+              <div className="h-10 bg-gray-200 rounded-xl animate-pulse" />
+              <div className="h-10 bg-gray-200 rounded-xl animate-pulse" />
             </div>
           </div>
         </div>
@@ -55,8 +55,8 @@ export default function NewDeckPage() {
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">新しいデッキを作成</h1>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h1 className="text-2xl font-extrabold text-ai mb-6">新しいデッキを作成</h1>
+        <div className="bg-white rounded-card border border-gray-200 p-6">
           <DeckForm
             mode="create"
             parentDecks={parentDecks}

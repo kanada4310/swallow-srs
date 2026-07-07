@@ -28,6 +28,8 @@ import { derivePlantState, GROWTH_ORDER, type GrowthStage } from '@/lib/garden/p
 import { GARDEN_ENABLED } from '@/lib/garden/feature'
 import { useStreak } from '@/lib/stats/useStreak'
 import { SwallowMark } from '@/components/ui/SwallowMark'
+import { CoachTip } from '@/components/ui/CoachTip'
+import { hasSeenCoach, markCoachSeen } from '@/lib/tutorial/coach'
 import Link from 'next/link'
 import type { GeneratedContent, FieldDefinition, DeckSettings, CreatureImprint } from '@/types/database'
 
@@ -162,6 +164,11 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
   const settings = resolveDeckSettings(deckSettings)
   // 完了画面のストリーク表示用（Dexie 駆動・オフライン可）
   const streak = useStreak(userId)
+  // コーチマーク: 初回だけ評価ボタンの意味を説明（マウント後に判定＝SSR/水和ずれ回避）
+  const [showAnswerCoach, setShowAnswerCoach] = useState(false)
+  useEffect(() => {
+    if (!hasSeenCoach('answer-buttons')) setShowAnswerCoach(true)
+  }, [])
 
   // Pick next card from queues
   const pickNextCard = useCallback((
@@ -927,6 +934,25 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
       {undoSnapshot && (
         <div className="max-w-2xl mx-auto mb-2">
           <UndoBanner onUndo={handleUndo} />
+        </div>
+      )}
+
+      {/* コーチマーク: 初回フリップ時に評価ボタンの意味を1度だけ説明 */}
+      {showAnswerCoach && isCardFlipped && !isReactQuizCard && (
+        <div className="max-w-2xl mx-auto mb-4">
+          <CoachTip
+            title="4つのボタンで「次に出るタイミング」が決まります"
+            onDismiss={() => {
+              markCoachSeen('answer-buttons')
+              setShowAnswerCoach(false)
+            }}
+          >
+            思い出せたら<b className="text-good">「正解」</b>、余裕なら
+            <b className="text-easy">「簡単」</b>、ギリギリなら
+            <b className="text-hard">「難しい」</b>、出てこなかったら
+            <b className="text-again">「もう一度」</b>。
+            自分の記憶に正直に押すほど、ちょうど忘れかけた頃にカードが戻ってきます。
+          </CoachTip>
         </div>
       )}
 

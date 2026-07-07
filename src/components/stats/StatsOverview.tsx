@@ -73,31 +73,24 @@ interface StatCardProps {
 }
 
 function StatCard({ label, value, unit, icon, color }: StatCardProps) {
-  const colorClasses = {
-    orange: 'bg-orange-50 text-orange-600 border-orange-200',
-    blue: 'bg-blue-50 text-blue-600 border-blue-200',
-    green: 'bg-green-50 text-green-600 border-green-200',
-    purple: 'bg-purple-50 text-purple-600 border-purple-200',
-  }
-
-  const iconBgClasses = {
-    orange: 'bg-orange-100',
-    blue: 'bg-blue-100',
-    green: 'bg-green-100',
-    purple: 'bg-purple-100',
+  const iconClasses = {
+    orange: 'bg-nodo-soft text-nodo',
+    blue: 'bg-sora-soft text-sora',
+    green: 'bg-good-bg text-good',
+    purple: 'bg-purple-100 text-purple-600',
   }
 
   return (
-    <div className={`rounded-lg border p-3 ${colorClasses[color]}`}>
+    <div className="bg-white rounded-2xl border border-gray-200 p-3">
       <div className="flex items-center gap-2 mb-1">
-        <div className={`p-1.5 rounded-md ${iconBgClasses[color]}`}>
+        <div className={`p-1.5 rounded-lg ${iconClasses[color]}`}>
           {icon}
         </div>
-        <span className="text-xs font-medium opacity-80">{label}</span>
+        <span className="text-xs font-bold text-ink-3">{label}</span>
       </div>
-      <div className="text-2xl font-bold">
+      <div className="text-2xl font-extrabold text-ai tabular-nums">
         {value.toLocaleString()}
-        <span className="text-sm font-normal ml-1">{unit}</span>
+        <span className="text-sm font-normal text-ink-3 ml-1">{unit}</span>
       </div>
     </div>
   )

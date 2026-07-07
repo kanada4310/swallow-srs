@@ -84,26 +84,31 @@ export function InstallPrompt() {
     return null
   }
 
+  // 学習セッションの邪魔をしない: 学習ページではプロンプトを出さない
+  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/study')) {
+    return null
+  }
+
   return (
     <div className="fixed bottom-20 left-4 right-4 z-50 animate-slide-up">
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 max-w-md mx-auto">
+      <div className="bg-white rounded-card shadow-card border border-gray-200 p-4 max-w-md mx-auto">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <Download className="w-5 h-5 text-blue-600" />
+          <div className="w-10 h-10 bg-sora-soft rounded-2xl flex items-center justify-center flex-shrink-0">
+            <Download className="w-5 h-5 text-sora" />
           </div>
 
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 text-sm">
+            <h3 className="font-bold text-ai text-sm">
               アプリをインストール
             </h3>
-            <p className="text-xs text-gray-600 mt-0.5">
+            <p className="text-xs text-ink-2 mt-0.5">
               ホーム画面に追加して、より快適に利用できます
             </p>
           </div>
 
           <button
             onClick={handleDismiss}
-            className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-1 text-ink-3 hover:text-ink-2 transition-colors"
             aria-label="閉じる"
           >
             <X className="w-5 h-5" />
@@ -111,9 +116,9 @@ export function InstallPrompt() {
         </div>
 
         {isIOS ? (
-          <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-700 flex items-center gap-2">
-              <Share className="w-4 h-4 text-blue-600" />
+          <div className="mt-3 p-3 bg-sora-soft rounded-2xl">
+            <p className="text-xs text-ink-2 flex items-center gap-2">
+              <Share className="w-4 h-4 text-sora" />
               Safari下部の共有ボタンから「ホーム画面に追加」を選択
             </p>
           </div>
@@ -121,13 +126,13 @@ export function InstallPrompt() {
           <div className="mt-3 flex gap-2">
             <button
               onClick={handleDismiss}
-              className="flex-1 px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="flex-1 px-3 py-2 text-sm font-bold text-ink-3 hover:text-ink-2 hover:bg-gray-100 rounded-2xl transition-colors"
             >
               後で
             </button>
             <button
               onClick={handleInstall}
-              className="flex-1 px-3 py-2 text-sm bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex-1 px-3 py-2 text-sm bg-sora text-white font-bold rounded-2xl hover:bg-sora-dark transition-all active:scale-95"
             >
               インストール
             </button>

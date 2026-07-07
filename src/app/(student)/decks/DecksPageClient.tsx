@@ -321,11 +321,11 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">デッキ一覧</h1>
+        <h1 className="text-2xl font-extrabold text-ai">デッキ一覧</h1>
         {userProfile && (
           <Link
             href="/decks/new"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+            className="px-4 py-2 bg-sora text-white rounded-2xl hover:bg-sora-dark transition-colors text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             新規作成
           </Link>
@@ -335,7 +335,7 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
       {/* Search filter */}
       {hasDecks && (
         <div className="relative mb-6">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
@@ -343,12 +343,13 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="デッキ名で検索..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sora focus:border-sora"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              aria-label="検索をクリア"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -359,7 +360,7 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
       )}
 
       {!isOnline && (
-        <div className="mb-4 flex items-center gap-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-700">
+        <div className="mb-4 flex items-center gap-2 px-3 py-2 bg-hard-bg rounded-xl text-sm text-hard">
           <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21" />
           </svg>
@@ -370,7 +371,7 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
       {/* 自分のデッキ */}
       {flatOwnDecks.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">マイデッキ</h2>
+          <h2 className="text-lg font-bold text-ai mb-4">マイデッキ</h2>
           <div className="space-y-3">
             {visibleOwnDecks.map((deck) => (
               <DeckCard
@@ -399,7 +400,7 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
       {/* 配布／講師共有デッキ */}
       {flatAssignedDecks.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">{assignedSectionTitle}</h2>
+          <h2 className="text-lg font-bold text-ai mb-4">{assignedSectionTitle}</h2>
           <div className="space-y-3">
             {visibleAssignedDecks.map((node) => (
               <DeckCard
@@ -427,23 +428,23 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
 
       {/* 検索結果なし */}
       {searchQuery && !hasResults && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-          <p className="text-gray-500">「{searchQuery}」に一致するデッキが見つかりません</p>
+        <div className="bg-white rounded-card border border-gray-200 p-8 text-center">
+          <p className="text-ink-2">「{searchQuery}」に一致するデッキが見つかりません</p>
         </div>
       )}
 
       {/* デッキがない場合 */}
       {!searchQuery && !hasDecks && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-          <div className="text-gray-400 mb-4">
+        <div className="bg-white rounded-card border border-gray-200 p-8 text-center">
+          <div className="text-ink-3 mb-4">
             <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
           </div>
-          <h2 className="text-lg font-medium text-gray-900 mb-2">
+          <h2 className="text-lg font-bold text-ai mb-2">
             {!isOnline ? 'オフラインデータがありません' : 'デッキがありません'}
           </h2>
-          <p className="text-gray-500">
+          <p className="text-ink-2">
             {!isOnline
               ? 'オンライン時にデッキを開くと、データが自動的にキャッシュされます。'
               : userProfile?.role === 'student'
@@ -456,16 +457,16 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
       {/* Deck Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">デッキを削除</h3>
-            <p className="text-sm text-gray-600 mb-1">
+          <div className="bg-white rounded-card shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-bold text-ai mb-2">デッキを削除</h3>
+            <p className="text-sm text-ink-2 mb-1">
               「{deletingDeckName}」を削除しますか？
             </p>
-            <p className="text-sm text-red-600 mb-4">
+            <p className="text-sm text-again mb-4">
               デッキ内のすべてのノート・カード・学習記録が完全に削除されます。この操作は元に戻せません。
             </p>
             {deckDeleteError && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <div className="mb-4 p-3 bg-again-bg rounded-xl text-again text-sm">
                 {deckDeleteError}
               </div>
             )}
@@ -476,14 +477,14 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
                   setDeckDeleteError(null)
                 }}
                 disabled={isDeletingDeck}
-                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm font-bold text-ink-2 border border-gray-300 rounded-2xl hover:bg-gray-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
               >
                 キャンセル
               </button>
               <button
                 onClick={() => handleDeleteDeck(showDeleteConfirm)}
                 disabled={isDeletingDeck}
-                className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 text-sm font-bold text-white bg-again rounded-2xl hover:opacity-90 disabled:opacity-50 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
               >
                 {isDeletingDeck ? '削除中...' : 'デッキを削除'}
               </button>
@@ -495,20 +496,21 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
       {/* Settings Modal */}
       {settingsDeckId && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="bg-white rounded-card shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-bold text-gray-900">デッキ設定</h2>
-                <p className="text-sm text-gray-500 mt-1">{settingsDeckName}</p>
+                <h2 className="text-lg font-bold text-ai">デッキ設定</h2>
+                <p className="text-sm text-ink-3 mt-1">{settingsDeckName}</p>
                 {settingsDeckId && !isTeacher && decks?.find(d => d.id === settingsDeckId && !d.is_own) && (
-                  <p className="text-sm text-blue-600 mt-1">
+                  <p className="text-sm text-sora mt-1">
                     この設定はあなたの学習にのみ影響します。
                   </p>
                 )}
               </div>
               <button
                 onClick={() => setSettingsDeckId(null)}
-                className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="閉じる"
+                className="p-1 text-ink-3 hover:text-ink-2 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -521,7 +523,7 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
                 onChange={setSettingsValues}
               />
               {settingsError && (
-                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                <div className="mt-4 p-3 bg-again-bg rounded-xl text-again text-sm">
                   {settingsError}
                 </div>
               )}
@@ -530,14 +532,14 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
               <button
                 onClick={() => setSettingsDeckId(null)}
                 disabled={isSavingSettings}
-                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm font-bold text-ink-2 border border-gray-300 rounded-2xl hover:bg-gray-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
               >
                 キャンセル
               </button>
               <button
                 onClick={handleSaveSettings}
                 disabled={isSavingSettings}
-                className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 text-sm font-bold text-white bg-sora rounded-2xl hover:bg-sora-dark disabled:opacity-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
               >
                 {isSavingSettings ? '保存中...' : '保存'}
               </button>
@@ -566,7 +568,7 @@ function DeckCard({ deck, depth = 0, aggregatedStats, canDelete, onDelete, canSe
 
   return (
     <div
-      className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md hover:border-gray-300 transition-all"
+      className="bg-white rounded-2xl border border-gray-200 p-4 hover:border-gray-300 transition-colors"
       style={depth > 0 ? { marginLeft: depth * 24 } : undefined}
     >
       <div className="flex items-center justify-between gap-2">
@@ -578,7 +580,7 @@ function DeckCard({ deck, depth = 0, aggregatedStats, canDelete, onDelete, canSe
               e.stopPropagation()
               onToggleExpand?.()
             }}
-            className="p-1 -ml-1 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded flex-shrink-0"
+            className="p-1 -ml-1 text-ink-3 hover:text-ink hover:bg-gray-100 rounded-full flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
             title={isExpanded ? 'サブデッキを折りたたむ' : 'サブデッキを展開'}
             aria-label={isExpanded ? '折りたたむ' : '展開'}
           >
@@ -592,55 +594,58 @@ function DeckCard({ deck, depth = 0, aggregatedStats, canDelete, onDelete, canSe
         ) : (
           depth > 0 && <span className="w-4 flex-shrink-0" />
         )}
-        <Link href={`/decks/${deck.id}`} className="flex-1 min-w-0">
+        <Link
+          href={`/decks/${deck.id}`}
+          className="flex-1 min-w-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai rounded-lg"
+        >
           <div className="flex items-center gap-1.5">
             {depth > 0 && (
-              <svg className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 text-ink-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
               </svg>
             )}
-            <h3 className="font-medium text-gray-900">{deck.name}</h3>
+            <h3 className="font-bold text-ai">{deck.name}</h3>
           </div>
           {deck.filter_tags && deck.filter_tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1">
-              <span className="px-1.5 py-0.5 bg-purple-50 text-purple-600 rounded text-xs font-medium">
+              <span className="px-2 py-0.5 bg-sora-soft text-sora rounded-full text-xs font-bold">
                 フィルタ
               </span>
               {deck.filter_tags.map(tag => (
-                <span key={tag} className="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
+                <span key={tag} className="px-2 py-0.5 bg-gray-100 text-ink-2 rounded-full text-xs">
                   {tag}
                 </span>
               ))}
             </div>
           )}
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-ink-3 mt-1 tabular-nums">
             {aggregatedStats
               ? `${deck.total_cards} 枚 (計 ${aggregatedStats.total_cards} 枚)`
               : `${deck.total_cards} 枚のカード`}
-            {!deck.is_own && <span className="ml-2 text-blue-600">（配布）</span>}
+            {!deck.is_own && <span className="ml-2 text-sora">（配布）</span>}
           </p>
         </Link>
 
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Badge section - hidden on small screens */}
-          <div className="hidden sm:flex items-center gap-1.5 text-sm">
+          {/* Badge section - visible on mobile too */}
+          <div className="flex flex-wrap items-center justify-end gap-1">
             {stats.new_count > 0 && (
-              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded font-medium">
-                {stats.new_count}
+              <span className="rounded-full px-2.5 py-0.5 text-[11px] font-bold bg-easy-bg text-easy tabular-nums whitespace-nowrap">
+                新規 {stats.new_count}
               </span>
             )}
             {stats.learning_count > 0 && (
-              <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded font-medium">
-                {stats.learning_count}
+              <span className="rounded-full px-2.5 py-0.5 text-[11px] font-bold bg-hard-bg text-hard tabular-nums whitespace-nowrap">
+                学習中 {stats.learning_count}
               </span>
             )}
             {stats.review_count > 0 && (
-              <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded font-medium">
-                {stats.review_count}
+              <span className="rounded-full px-2.5 py-0.5 text-[11px] font-bold bg-good-bg text-good tabular-nums whitespace-nowrap">
+                復習 {stats.review_count}
               </span>
             )}
             {!hasDueCards && stats.total_cards > 0 && (
-              <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
+              <span className="rounded-full px-2.5 py-0.5 text-[11px] font-bold bg-gray-100 text-ink-3 whitespace-nowrap">
                 完了
               </span>
             )}
@@ -651,16 +656,20 @@ function DeckCard({ deck, depth = 0, aggregatedStats, canDelete, onDelete, canSe
             <Link
               href={`/study?deck=${deck.id}`}
               onClick={(e) => e.stopPropagation()}
-              className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors"
+              className="w-9 h-9 flex items-center justify-center bg-sora text-white rounded-full hover:bg-sora-dark active:scale-95 transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
               title="学習開始"
+              aria-label="学習開始"
             >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 translate-x-[1px]" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z" />
               </svg>
             </Link>
           ) : (
-            <span className="p-1.5 text-gray-300 cursor-default" title="学習するカードがありません">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <span
+              className="w-9 h-9 flex items-center justify-center bg-gray-100 text-gray-300 rounded-full cursor-default"
+              title="学習するカードがありません"
+            >
+              <svg className="w-5 h-5 translate-x-[1px]" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z" />
               </svg>
             </span>
@@ -673,8 +682,9 @@ function DeckCard({ deck, depth = 0, aggregatedStats, canDelete, onDelete, canSe
                 e.stopPropagation()
                 onSettings()
               }}
-              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded transition-colors"
+              className="p-1.5 text-ink-3 hover:text-ink-2 hover:bg-gray-50 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
               title="デッキ設定"
+              aria-label="デッキ設定"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -690,15 +700,16 @@ function DeckCard({ deck, depth = 0, aggregatedStats, canDelete, onDelete, canSe
                 e.stopPropagation()
                 onDelete()
               }}
-              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+              className="p-1.5 text-ink-3 hover:text-again hover:bg-again-bg rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
               title="デッキを削除"
+              aria-label="デッキを削除"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
           ) : !canSettings && (
-            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-ink-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           )}
@@ -712,22 +723,22 @@ function DecksLoadingSkeleton() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-4">
-        <div className="h-8 w-32 bg-gray-200 rounded animate-pulse" />
-        <div className="h-10 w-20 bg-gray-200 rounded-lg animate-pulse" />
+        <div className="h-8 w-32 bg-gray-200 rounded-xl animate-pulse" />
+        <div className="h-10 w-20 bg-gray-200 rounded-2xl animate-pulse" />
       </div>
-      <div className="h-10 w-full bg-gray-200 rounded-lg animate-pulse mb-6" />
-      <div className="h-5 w-24 bg-gray-200 rounded animate-pulse mb-4" />
+      <div className="h-10 w-full bg-gray-200 rounded-xl animate-pulse mb-6" />
+      <div className="h-5 w-24 bg-gray-200 rounded-xl animate-pulse mb-4" />
       <div className="space-y-3">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div key={i} className="bg-white rounded-2xl border border-gray-200 p-4">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <div className="h-5 w-40 bg-gray-200 rounded animate-pulse" />
-                <div className="h-4 w-24 bg-gray-100 rounded animate-pulse mt-2" />
+                <div className="h-5 w-40 bg-gray-200 rounded-xl animate-pulse" />
+                <div className="h-4 w-24 bg-gray-100 rounded-xl animate-pulse mt-2" />
               </div>
               <div className="flex items-center gap-2">
-                <div className="h-7 w-16 bg-gray-100 rounded animate-pulse" />
-                <div className="h-7 w-16 bg-gray-100 rounded animate-pulse" />
+                <div className="h-7 w-16 bg-gray-100 rounded-full animate-pulse" />
+                <div className="h-7 w-16 bg-gray-100 rounded-full animate-pulse" />
               </div>
             </div>
           </div>

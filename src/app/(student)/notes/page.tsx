@@ -19,11 +19,11 @@ interface NotesData {
 function NotesSkeleton() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-      <div className="h-8 bg-gray-200 rounded w-32 mb-6 animate-pulse" />
-      <div className="h-10 bg-gray-200 rounded mb-4 animate-pulse" />
+      <div className="h-8 bg-gray-200 rounded-xl w-32 mb-6 animate-pulse" />
+      <div className="h-10 bg-gray-200 rounded-xl mb-4 animate-pulse" />
       <div className="space-y-3">
         {[1, 2, 3, 4, 5].map(i => (
-          <div key={i} className="h-20 bg-gray-200 rounded animate-pulse" />
+          <div key={i} className="h-20 bg-gray-200 rounded-2xl animate-pulse" />
         ))}
       </div>
     </div>

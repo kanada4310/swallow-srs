@@ -69,7 +69,7 @@ export default function NoteTypesPage() {
           </div>
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 h-20 animate-pulse" />
+              <div key={i} className="bg-white rounded-2xl border border-gray-200 p-4 h-20 animate-pulse" />
             ))}
           </div>
         </div>
@@ -82,14 +82,14 @@ export default function NoteTypesPage() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">ノートタイプ管理</h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <h1 className="text-2xl font-extrabold text-ai">ノートタイプ管理</h1>
+            <p className="text-sm text-ink-2 mt-1">
               カード表示用のテンプレートを管理します
             </p>
           </div>
           <Link
             href="/note-types/new"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-sora text-white font-bold rounded-2xl hover:bg-sora-dark transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

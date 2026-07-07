@@ -77,11 +77,11 @@ export function ExampleGenerator({
         type="button"
         onClick={() => handleGenerate(false)}
         disabled={isGenerating || !word.trim()}
-        className="text-sm text-purple-600 hover:text-purple-700 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center gap-1"
+        className="text-sm font-bold text-sora hover:text-sora-dark disabled:text-ink-3 disabled:cursor-not-allowed flex items-center gap-1"
       >
         {isGenerating ? (
           <>
-            <span className="animate-spin inline-block w-3 h-3 border border-purple-600 border-t-transparent rounded-full"></span>
+            <span className="animate-spin inline-block w-3 h-3 border border-sora border-t-transparent rounded-full"></span>
             生成中...
           </>
         ) : (
@@ -99,7 +99,7 @@ export function ExampleGenerator({
   return (
     <div className="mt-4">
       {error && (
-        <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+        <div className="mb-3 p-3 bg-again-bg text-again rounded-2xl text-sm">
           {error}
         </div>
       )}
@@ -109,11 +109,11 @@ export function ExampleGenerator({
           type="button"
           onClick={() => handleGenerate(false)}
           disabled={isGenerating || !word.trim()}
-          className="w-full py-2 px-4 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg hover:bg-purple-100 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          className="w-full py-2 px-4 bg-white border-2 border-sora text-sora font-bold rounded-2xl hover:bg-sora-soft disabled:bg-gray-100 disabled:text-ink-3 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
         >
           {isGenerating ? (
             <>
-              <span className="animate-spin inline-block w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full"></span>
+              <span className="animate-spin inline-block w-4 h-4 border-2 border-sora border-t-transparent rounded-full"></span>
               例文を生成中...
             </>
           ) : (
@@ -126,9 +126,9 @@ export function ExampleGenerator({
           )}
         </button>
       ) : (
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+        <div className="bg-sora-soft rounded-2xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-sm font-medium text-purple-800 flex items-center gap-1">
+            <h4 className="text-sm font-bold text-sora flex items-center gap-1">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
@@ -138,11 +138,11 @@ export function ExampleGenerator({
               type="button"
               onClick={() => handleGenerate(true)}
               disabled={isGenerating}
-              className="text-xs text-purple-600 hover:text-purple-700 disabled:text-gray-400 flex items-center gap-1"
+              className="text-xs font-bold text-sora hover:text-sora-dark disabled:text-ink-3 flex items-center gap-1"
             >
               {isGenerating ? (
                 <>
-                  <span className="animate-spin inline-block w-3 h-3 border border-purple-600 border-t-transparent rounded-full"></span>
+                  <span className="animate-spin inline-block w-3 h-3 border border-sora border-t-transparent rounded-full"></span>
                   再生成中...
                 </>
               ) : (
@@ -158,10 +158,10 @@ export function ExampleGenerator({
 
           {/* Examples */}
           <div className="mb-3">
-            <p className="text-xs font-medium text-purple-700 mb-1">例文:</p>
+            <p className="text-xs font-bold text-sora mb-1">例文:</p>
             <ul className="space-y-1">
               {content.examples.map((example, idx) => (
-                <li key={idx} className="text-sm text-gray-700 pl-3 border-l-2 border-purple-300">
+                <li key={idx} className="text-sm text-ink pl-3 border-l-2 border-sora">
                   {example}
                 </li>
               ))}
@@ -171,12 +171,12 @@ export function ExampleGenerator({
           {/* Collocations */}
           {content.collocations && content.collocations.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-purple-700 mb-1">コロケーション:</p>
+              <p className="text-xs font-bold text-sora mb-1">コロケーション:</p>
               <div className="flex flex-wrap gap-1">
                 {content.collocations.map((collocation, idx) => (
                   <span
                     key={idx}
-                    className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded"
+                    className="text-xs font-bold bg-white text-sora px-2.5 py-0.5 rounded-full"
                   >
                     {collocation}
                   </span>
@@ -441,10 +441,10 @@ export function BulkExampleGenerator({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-card shadow-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <h2 className="text-lg font-bold text-ai flex items-center gap-2">
+            <svg className="w-5 h-5 text-sora" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
             AI一括生成
@@ -452,7 +452,7 @@ export function BulkExampleGenerator({
           {!isGenerating && (
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-ink-3 hover:text-ink-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -462,7 +462,7 @@ export function BulkExampleGenerator({
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          <div className="mb-4 p-3 bg-again-bg text-again rounded-2xl text-sm">
             {error}
           </div>
         )}
@@ -473,23 +473,23 @@ export function BulkExampleGenerator({
               /* Rule-based UI */
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-ink-2">
                     実行する生成ルールを選択してください
                   </p>
                   <button
                     type="button"
                     onClick={selectAllRules}
-                    className="text-xs text-purple-600 hover:text-purple-700"
+                    className="text-xs font-bold text-sora hover:text-sora-dark"
                   >
                     すべて選択
                   </button>
                 </div>
 
                 {rulesByNoteType.map((group) => (
-                  <div key={group.noteTypeId} className="border border-gray-200 rounded-lg overflow-hidden">
+                  <div key={group.noteTypeId} className="border border-gray-200 rounded-2xl overflow-hidden">
                     <div className="bg-gray-50 px-3 py-2">
-                      <span className="text-sm font-medium text-gray-700">{group.noteTypeName}</span>
-                      <span className="text-xs text-gray-500 ml-2">({group.noteCount}件のノート)</span>
+                      <span className="text-sm font-medium text-ink-2">{group.noteTypeName}</span>
+                      <span className="text-xs text-ink-3 ml-2">({group.noteCount}件のノート)</span>
                     </div>
                     <div className="p-3 space-y-2">
                       {group.rules.map((rule) => {
@@ -501,25 +501,25 @@ export function BulkExampleGenerator({
                         return (
                           <label
                             key={rule.id}
-                            className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
+                            className="flex items-start gap-3 p-2 rounded-2xl hover:bg-gray-50 cursor-pointer"
                           >
                             <input
                               type="checkbox"
                               checked={selectedRuleIds.has(rule.id)}
                               onChange={() => toggleRule(rule.id)}
-                              className="mt-0.5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                              className="mt-0.5 rounded border-gray-300 text-sora focus:ring-sora"
                             />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-gray-900">{rule.name}</span>
-                                <span className="text-xs text-gray-500">
+                                <span className="text-sm font-medium text-ai">{rule.name}</span>
+                                <span className="text-xs text-ink-3">
                                   ({affectedNotes.length}件対象)
                                 </span>
                               </div>
-                              <p className="text-xs text-gray-500 mt-0.5">
+                              <p className="text-xs text-ink-3 mt-0.5">
                                 {rule.source_fields.join(', ')} → {rule.target_field}
                               </p>
-                              <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">
+                              <p className="text-xs text-ink-3 mt-0.5 line-clamp-1">
                                 {rule.instruction}
                               </p>
                             </div>
@@ -530,51 +530,51 @@ export function BulkExampleGenerator({
                   </div>
                 ))}
 
-                <label className="flex items-center gap-2 text-sm text-gray-700">
+                <label className="flex items-center gap-2 text-sm text-ink-2">
                   <input
                     type="checkbox"
                     checked={regenerateExisting}
                     onChange={(e) => setRegenerateExisting(e.target.checked)}
-                    className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                    className="rounded border-gray-300 text-sora focus:ring-sora"
                   />
                   既に生成済みのフィールドも再生成する
                 </label>
 
-                <p className="text-sm text-gray-600">
-                  合計: <span className="font-medium text-gray-900">{totalApiCalls}件</span>のAPI呼び出し
+                <p className="text-sm text-ink-2">
+                  合計: <span className="font-bold text-ai tabular-nums">{totalApiCalls}件</span>のAPI呼び出し
                 </p>
               </div>
             ) : hasLegacyNotes ? (
               /* Legacy UI */
               <div className="mb-4">
-                <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <p className="text-sm text-amber-800">
+                <div className="mb-3 p-3 bg-hard-bg rounded-2xl">
+                  <p className="text-sm text-hard">
                     このデッキのノートタイプにはAI生成ルールが設定されていません。
                     レガシーモード（例文＋コロケーション自動生成）で実行します。
                   </p>
-                  <p className="text-xs text-amber-600 mt-1">
+                  <p className="text-xs text-hard mt-1">
                     ノートタイプ編集画面でAI生成ルールを設定すると、より柔軟な生成が可能になります。
                   </p>
                 </div>
-                <p className="text-sm text-gray-600 mb-2">
-                  対象: <span className="font-medium text-gray-900">{targetCount}件</span>
+                <p className="text-sm text-ink-2 mb-2">
+                  対象: <span className="font-bold text-ai tabular-nums">{targetCount}件</span>
                 </p>
-                <label className="flex items-center gap-2 text-sm text-gray-700">
+                <label className="flex items-center gap-2 text-sm text-ink-2">
                   <input
                     type="checkbox"
                     checked={regenerateExisting}
                     onChange={(e) => setRegenerateExisting(e.target.checked)}
-                    className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                    className="rounded border-gray-300 text-sora focus:ring-sora"
                   />
                   既に生成済みのものも再生成する
                 </label>
               </div>
             ) : (
-              <div className="mb-4 p-4 bg-gray-50 rounded-lg text-center">
-                <p className="text-sm text-gray-600">
+              <div className="mb-4 p-4 bg-gray-50 rounded-2xl text-center">
+                <p className="text-sm text-ink-2">
                   生成可能なノートがありません。
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-ink-3 mt-1">
                   ノートタイプ編集画面でAI生成ルールを設定してください。
                 </p>
               </div>
@@ -583,14 +583,14 @@ export function BulkExampleGenerator({
             <div className="flex gap-3 mt-4">
               <button
                 onClick={onClose}
-                className="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-1 py-2 border border-gray-300 text-ink-2 font-bold rounded-2xl hover:bg-gray-50 transition-colors"
               >
                 キャンセル
               </button>
               <button
                 onClick={handleBulkGenerate}
                 disabled={hasRules ? selectedRuleIds.size === 0 || totalApiCalls === 0 : targetCount === 0}
-                className="flex-1 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 py-2 bg-sora text-white font-bold rounded-2xl hover:bg-sora-dark disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
                 生成開始
               </button>
@@ -599,20 +599,20 @@ export function BulkExampleGenerator({
         ) : (
           <div>
             <div className="mb-4">
-              <div className="flex justify-between text-sm text-gray-600 mb-1">
+              <div className="flex justify-between text-sm text-ink-2 mb-1">
                 <span>進捗</span>
-                <span>{progress.current} / {progress.total}</span>
+                <span className="tabular-nums">{progress.current} / {progress.total}</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-3">
                 <div
-                  className="bg-purple-600 h-3 rounded-full transition-all duration-300"
+                  className="bg-sora h-3 rounded-full transition-all duration-300"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1 text-center">{progressPercent}%</p>
+              <p className="text-xs text-ink-3 mt-1 text-center tabular-nums">{progressPercent}%</p>
             </div>
 
-            <p className="text-sm text-gray-500 text-center">
+            <p className="text-sm text-ink-3 text-center">
               生成中です。このウィンドウを閉じないでください...
             </p>
           </div>

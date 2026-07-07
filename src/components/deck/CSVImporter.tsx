@@ -229,7 +229,7 @@ export function CSVImporter({
   return (
     <div className="space-y-4">
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm whitespace-pre-wrap">
+        <div className="p-3 bg-again-bg text-again rounded-2xl text-sm whitespace-pre-wrap">
           {error}
         </div>
       )}
@@ -239,13 +239,13 @@ export function CSVImporter({
         <>
           {/* Note Type Selector */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-ink-2 mb-2">
               ノートタイプ
             </label>
             <select
               value={selectedNoteType.id}
               onChange={e => handleNoteTypeChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none"
             >
               {noteTypes.map(nt => (
                 <option key={nt.id} value={nt.id}>
@@ -257,18 +257,18 @@ export function CSVImporter({
 
           {/* Cloze Help */}
           {isCloze && (
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-              <p className="font-medium mb-1">穴埋め記法（CSVデータ内で使用）:</p>
+            <div className="p-3 bg-sora-soft rounded-2xl text-sm text-sora">
+              <p className="font-bold mb-1">穴埋め記法（CSVデータ内で使用）:</p>
               <p className="font-mono">{'{{c1::答え}}'} または {'{{c1::答え::ヒント}}'}</p>
             </div>
           )}
 
           {/* File Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-ink-2 mb-2">
               CSVファイル
             </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+            <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:border-sora transition-colors">
               <input
                 type="file"
                 accept=".csv,.txt"
@@ -281,7 +281,7 @@ export function CSVImporter({
                 className="cursor-pointer flex flex-col items-center"
               >
                 <svg
-                  className="w-12 h-12 text-gray-400 mb-3"
+                  className="w-12 h-12 text-ink-3 mb-3"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -293,10 +293,10 @@ export function CSVImporter({
                     d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                   />
                 </svg>
-                <span className="text-gray-600 font-medium">
+                <span className="text-ink-2 font-medium">
                   クリックしてファイルを選択
                 </span>
-                <span className="text-sm text-gray-400 mt-1">
+                <span className="text-sm text-ink-3 mt-1">
                   CSV, TXT (最大5MB, 10,000行)
                 </span>
               </label>
@@ -304,9 +304,9 @@ export function CSVImporter({
           </div>
 
           {/* Format Guide */}
-          <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-            <p className="font-medium text-gray-700 mb-2">CSVフォーマット:</p>
-            <ul className="text-gray-600 space-y-1 text-xs">
+          <div className="p-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm">
+            <p className="font-bold text-ink-2 mb-2">CSVフォーマット:</p>
+            <ul className="text-ink-2 space-y-1 text-xs">
               <li>・1行目がヘッダー（列名）として扱われます</li>
               <li>・UTF-8またはShift-JISエンコーディングに対応</li>
               <li>・カンマ、タブ、セミコロン区切りを自動検出</li>
@@ -318,7 +318,7 @@ export function CSVImporter({
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              className="flex-1 px-4 py-2 border border-gray-300 text-ink-2 rounded-2xl hover:bg-gray-50 transition-colors font-bold"
             >
               キャンセル
             </button>
@@ -329,33 +329,33 @@ export function CSVImporter({
       {/* Step: Mapping */}
       {step === 'mapping' && csvData && (
         <>
-          <div className="text-sm text-gray-600 mb-2">
+          <div className="text-sm text-ink-2 mb-2">
             {csvData.rows.length}件のデータが見つかりました。CSVの列をノートのフィールドにマッピングしてください。
           </div>
 
           {/* Note Type (readonly) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-ink-2 mb-1">
               ノートタイプ
             </label>
-            <div className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+            <div className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-xl text-ink-2">
               {selectedNoteType.name}
             </div>
           </div>
 
           {/* Column Mapping */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-ink-2 mb-2">
               列のマッピング
             </label>
             <div className="space-y-2">
               {csvData.headers.map(header => (
                 <div key={header} className="flex items-center gap-3">
-                  <div className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm truncate">
+                  <div className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm truncate">
                     {header}
                   </div>
                   <svg
-                    className="w-5 h-5 text-gray-400 flex-shrink-0"
+                    className="w-5 h-5 text-ink-3 flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -370,7 +370,7 @@ export function CSVImporter({
                   <select
                     value={columnMapping[header] || ''}
                     onChange={e => handleMappingChange(header, e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none"
                   >
                     <option value="">（使用しない）</option>
                     {selectedNoteType.fields.map(field => (
@@ -383,16 +383,16 @@ export function CSVImporter({
                 </div>
               ))}
             </div>
-            <p className="text-xs text-gray-500 mt-2">* 必須フィールド</p>
+            <p className="text-xs text-ink-3 mt-2">* 必須フィールド</p>
           </div>
 
           {/* CSV Parse Errors */}
           {csvData.errors.length > 0 && (
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
-              <p className="font-medium text-yellow-800 mb-1">
+            <div className="p-3 bg-hard-bg rounded-2xl text-sm">
+              <p className="font-bold text-hard mb-1">
                 解析時の警告 ({csvData.errors.length}件)
               </p>
-              <ul className="text-yellow-700 text-xs space-y-1 max-h-24 overflow-y-auto">
+              <ul className="text-hard text-xs space-y-1 max-h-24 overflow-y-auto">
                 {csvData.errors.slice(0, 10).map((err, i) => (
                   <li key={i}>
                     行{err.row}: {err.message}
@@ -414,14 +414,14 @@ export function CSVImporter({
                 setCsvData(null)
                 setColumnMapping({})
               }}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              className="flex-1 px-4 py-2 border border-gray-300 text-ink-2 rounded-2xl hover:bg-gray-50 transition-colors font-bold"
             >
               戻る
             </button>
             <button
               type="button"
               onClick={handleProceedToPreview}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="flex-1 px-4 py-2 bg-sora text-white rounded-2xl hover:bg-sora-dark transition-colors font-bold"
             >
               プレビュー
             </button>
@@ -432,23 +432,23 @@ export function CSVImporter({
       {/* Step: Preview */}
       {step === 'preview' && csvData && (
         <>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-ink-2">
             以下の内容でインポートします（最初の5件を表示）
           </div>
 
           {/* Preview Table */}
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <div className="border border-gray-200 rounded-2xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-2 text-left text-xs font-medium text-ink-3 uppercase">
                       #
                     </th>
                     {selectedNoteType.fields.map(field => (
                       <th
                         key={field.name}
-                        className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase"
+                        className="px-4 py-2 text-left text-xs font-medium text-ink-3 uppercase"
                       >
                         {field.name}
                       </th>
@@ -458,14 +458,14 @@ export function CSVImporter({
                 <tbody className="bg-white divide-y divide-gray-200">
                   {getPreviewRows().map((row, i) => (
                     <tr key={i}>
-                      <td className="px-4 py-2 text-sm text-gray-500">{i + 1}</td>
+                      <td className="px-4 py-2 text-sm text-ink-3">{i + 1}</td>
                       {selectedNoteType.fields.map(field => (
                         <td
                           key={field.name}
-                          className="px-4 py-2 text-sm text-gray-900 max-w-xs truncate"
+                          className="px-4 py-2 text-sm text-ink max-w-xs truncate"
                         >
                           {row[field.name] || (
-                            <span className="text-gray-400">（空）</span>
+                            <span className="text-ink-3">（空）</span>
                           )}
                         </td>
                       ))}
@@ -476,7 +476,7 @@ export function CSVImporter({
             </div>
           </div>
 
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+          <div className="p-3 bg-sora-soft rounded-2xl text-sm text-sora">
             <p>
               <strong>{csvData.rows.length}件</strong>のノートをインポートします。
               {selectedNoteType.id === CLOZE_NOTE_TYPE_ID
@@ -490,14 +490,14 @@ export function CSVImporter({
             <button
               type="button"
               onClick={() => setStep('mapping')}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              className="flex-1 px-4 py-2 border border-gray-300 text-ink-2 rounded-2xl hover:bg-gray-50 transition-colors font-bold"
             >
               戻る
             </button>
             <button
               type="button"
               onClick={handleImport}
-              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+              className="flex-1 px-4 py-2 bg-sora text-white rounded-2xl hover:bg-sora-dark transition-colors font-bold"
             >
               インポート実行
             </button>
@@ -508,9 +508,9 @@ export function CSVImporter({
       {/* Step: Importing */}
       {step === 'importing' && (
         <div className="py-12 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">インポート中...</p>
-          <p className="text-sm text-gray-400 mt-2">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sora mx-auto mb-4"></div>
+          <p className="text-ink-2">インポート中...</p>
+          <p className="text-sm text-ink-3 mt-2">
             {csvData?.rows.length}件のデータを処理しています
           </p>
         </div>
@@ -520,16 +520,16 @@ export function CSVImporter({
       {step === 'result' && importResult && (
         <>
           <div
-            className={`p-4 rounded-lg ${
+            className={`p-4 rounded-2xl ${
               importResult.errors.length === 0
-                ? 'bg-green-50 border border-green-200'
-                : 'bg-yellow-50 border border-yellow-200'
+                ? 'bg-good-bg'
+                : 'bg-hard-bg'
             }`}
           >
             <div className="flex items-start gap-3">
               {importResult.errors.length === 0 ? (
                 <svg
-                  className="w-6 h-6 text-green-600 flex-shrink-0"
+                  className="w-6 h-6 text-good flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -543,7 +543,7 @@ export function CSVImporter({
                 </svg>
               ) : (
                 <svg
-                  className="w-6 h-6 text-yellow-600 flex-shrink-0"
+                  className="w-6 h-6 text-hard flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -558,10 +558,10 @@ export function CSVImporter({
               )}
               <div>
                 <h3
-                  className={`font-medium ${
+                  className={`font-bold ${
                     importResult.errors.length === 0
-                      ? 'text-green-800'
-                      : 'text-yellow-800'
+                      ? 'text-good'
+                      : 'text-hard'
                   }`}
                 >
                   {importResult.errors.length === 0
@@ -580,11 +580,11 @@ export function CSVImporter({
 
           {/* Errors */}
           {importResult.errors.length > 0 && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm">
-              <p className="font-medium text-red-800 mb-2">
+            <div className="p-3 bg-again-bg rounded-2xl text-sm">
+              <p className="font-bold text-again mb-2">
                 エラー ({importResult.errors.length}件)
               </p>
-              <ul className="text-red-700 text-xs space-y-1 max-h-32 overflow-y-auto">
+              <ul className="text-again text-xs space-y-1 max-h-32 overflow-y-auto">
                 {importResult.errors.slice(0, 20).map((err, i) => (
                   <li key={i}>
                     行{err.row}: {err.message}
@@ -602,7 +602,7 @@ export function CSVImporter({
             <button
               type="button"
               onClick={onImportComplete}
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="w-full px-4 py-2 bg-sora text-white rounded-2xl hover:bg-sora-dark transition-colors font-bold"
             >
               閉じる
             </button>

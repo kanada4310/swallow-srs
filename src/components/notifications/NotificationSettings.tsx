@@ -177,21 +177,21 @@ export function NotificationSettings() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-ink-3" />
       </div>
     )
   }
 
   if (!supported) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-card border border-gray-200 p-6">
         <div className="flex items-center gap-3 mb-4">
-          <Bell className="w-6 h-6 text-gray-400" />
-          <h2 className="text-lg font-semibold text-gray-900">通知設定</h2>
+          <Bell className="w-6 h-6 text-ink-3" />
+          <h2 className="text-lg font-bold text-ai">通知設定</h2>
         </div>
-        <div className="flex items-start gap-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-yellow-700">
+        <div className="flex items-start gap-3 p-3 bg-hard-bg rounded-2xl">
+          <AlertTriangle className="w-5 h-5 text-hard flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-hard">
             <p className="font-medium">お使いのブラウザはプッシュ通知に対応していません</p>
             <p className="mt-1">Chrome、Firefox、Edge、またはSafari（iOS 16.4+）をご利用ください。</p>
           </div>
@@ -201,20 +201,20 @@ export function NotificationSettings() {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-card border border-gray-200 p-6">
       <div className="flex items-center gap-3 mb-6">
-        <Bell className="w-6 h-6 text-blue-600" />
-        <h2 className="text-lg font-semibold text-gray-900">通知設定</h2>
+        <Bell className="w-6 h-6 text-sora" />
+        <h2 className="text-lg font-bold text-ai">通知設定</h2>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+        <div className="mb-4 p-3 bg-again-bg text-again rounded-2xl text-sm">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+        <div className="mb-4 p-3 bg-good-bg text-good rounded-2xl text-sm">
           {success}
         </div>
       )}
@@ -223,10 +223,10 @@ export function NotificationSettings() {
         {/* Enable/Disable Toggle */}
         <div className="flex items-center justify-between">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-ink-2">
               毎日の学習リマインダー
             </label>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-ink-3 mt-1">
               復習カードがある時に通知でお知らせします
             </p>
           </div>
@@ -234,7 +234,7 @@ export function NotificationSettings() {
             type="button"
             onClick={handleToggleEnabled}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              settings.enabled ? 'bg-blue-600' : 'bg-gray-300'
+              settings.enabled ? 'bg-sora' : 'bg-gray-300'
             }`}
           >
             <span
@@ -249,7 +249,7 @@ export function NotificationSettings() {
           <>
             {/* Reminder Time */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-ink-2 mb-2">
                 通知時刻
               </label>
               <select
@@ -260,7 +260,7 @@ export function NotificationSettings() {
                     reminder_hour: parseInt(e.target.value, 10),
                   }))
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora"
               >
                 {Array.from({ length: 24 }, (_, i) => (
                   <option key={i} value={i}>
@@ -268,7 +268,7 @@ export function NotificationSettings() {
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-ink-3">
                 現在は毎朝07:00 (JST) に一括送信されます。個別時刻指定は今後対応予定です。
               </p>
             </div>
@@ -279,7 +279,7 @@ export function NotificationSettings() {
                 type="button"
                 onClick={handleTestSend}
                 disabled={isTesting || !isSubscribed}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-sora text-sora font-bold rounded-2xl hover:bg-sora-soft disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isTesting ? (
                   <>
@@ -294,15 +294,15 @@ export function NotificationSettings() {
                 )}
               </button>
               {!isSubscribed && settings.enabled && (
-                <p className="mt-2 text-xs text-yellow-600">
+                <p className="mt-2 text-xs text-hard">
                   通知の購読が完了していません。トグルをオフにして再度オンにしてください。
                 </p>
               )}
             </div>
 
             {/* iOS Note */}
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-xs text-blue-700">
+            <div className="p-3 bg-sora-soft rounded-2xl">
+              <p className="text-xs text-sora">
                 <span className="font-medium">iOSをお使いの場合:</span>{' '}
                 Safari で「ホーム画面に追加」した後に通知を有効にしてください。
                 ホーム画面に追加していない場合、プッシュ通知は利用できません。
@@ -317,7 +317,7 @@ export function NotificationSettings() {
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="w-full py-3 bg-sora text-white rounded-2xl hover:bg-sora-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold"
           >
             {isSaving ? '保存中...' : '設定を保存'}
           </button>

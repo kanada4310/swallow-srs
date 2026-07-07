@@ -111,8 +111,8 @@ export default function ClassDetailPage() {
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="h-4 bg-gray-200 rounded w-24 mb-2 animate-pulse" />
           <div className="h-8 bg-gray-200 rounded w-48 mb-6 animate-pulse" />
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6 h-16 animate-pulse" />
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 h-48 animate-pulse" />
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 mb-6 h-16 animate-pulse" />
+          <div className="bg-white rounded-card border border-gray-200 p-4 h-48 animate-pulse" />
         </div>
       </AppLayout>
     )
@@ -122,7 +122,7 @@ export default function ClassDetailPage() {
     return (
       <AppLayout>
         <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          <div className="bg-again-bg border border-again/20 rounded-card p-4 text-again">
             クラスが見つかりませんでした。
           </div>
         </div>
@@ -137,14 +137,14 @@ export default function ClassDetailPage() {
         <div className="mb-6">
           <Link
             href="/students"
-            className="text-sm text-gray-500 hover:text-gray-700 mb-2 inline-flex items-center gap-1"
+            className="text-sm text-ink-3 hover:text-ink-2 font-bold mb-2 inline-flex items-center gap-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             クラス一覧
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">{classData.name}</h1>
+          <h1 className="text-2xl font-extrabold text-ai">{classData.name}</h1>
         </div>
 
         <ClassDetailClient

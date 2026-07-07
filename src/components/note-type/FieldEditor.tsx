@@ -69,11 +69,11 @@ export function FieldEditor({ fields, onChange }: FieldEditorProps) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium text-gray-900">フィールド</h3>
+        <h3 className="text-lg font-bold text-ai">フィールド</h3>
         <button
           type="button"
           onClick={addField}
-          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-white border-2 border-sora text-sora font-bold rounded-2xl hover:bg-sora-soft transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -86,7 +86,7 @@ export function FieldEditor({ fields, onChange }: FieldEditorProps) {
         {fields.map((field, index) => (
           <div
             key={index}
-            className="border border-gray-200 rounded-lg overflow-hidden"
+            className="border border-gray-200 rounded-2xl overflow-hidden"
           >
             {/* Field Header */}
             <div className="flex items-center gap-2 p-3 bg-gray-50">
@@ -96,7 +96,7 @@ export function FieldEditor({ fields, onChange }: FieldEditorProps) {
                   type="button"
                   onClick={() => moveField(index, 'up')}
                   disabled={index === 0}
-                  className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="p-1 text-ink-3 hover:text-ink-2 disabled:opacity-30 disabled:cursor-not-allowed"
                   title="上に移動"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,7 +107,7 @@ export function FieldEditor({ fields, onChange }: FieldEditorProps) {
                   type="button"
                   onClick={() => moveField(index, 'down')}
                   disabled={index === fields.length - 1}
-                  className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="p-1 text-ink-3 hover:text-ink-2 disabled:opacity-30 disabled:cursor-not-allowed"
                   title="下に移動"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -121,7 +121,7 @@ export function FieldEditor({ fields, onChange }: FieldEditorProps) {
                 type="text"
                 value={field.name}
                 onChange={(e) => updateFieldName(index, e.target.value)}
-                className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                className="flex-1 px-3 py-1.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none text-sm"
                 placeholder="フィールド名"
               />
 
@@ -129,10 +129,10 @@ export function FieldEditor({ fields, onChange }: FieldEditorProps) {
               <button
                 type="button"
                 onClick={() => setExpandedField(expandedField === index ? null : index)}
-                className={`p-2 rounded-lg transition-colors ${
+                className={`p-2 rounded-xl transition-colors ${
                   expandedField === index
-                    ? 'bg-blue-100 text-blue-600'
-                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                    ? 'bg-sora-soft text-sora'
+                    : 'text-ink-3 hover:text-ink-2 hover:bg-gray-100'
                 }`}
                 title="設定"
               >
@@ -147,7 +147,7 @@ export function FieldEditor({ fields, onChange }: FieldEditorProps) {
                 type="button"
                 onClick={() => removeField(index)}
                 disabled={fields.length <= 1}
-                className="p-2 text-red-400 hover:text-red-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-2 text-ink-3 hover:text-again disabled:opacity-30 disabled:cursor-not-allowed"
                 title="削除"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -161,14 +161,14 @@ export function FieldEditor({ fields, onChange }: FieldEditorProps) {
               <div className="p-4 border-t border-gray-200 space-y-4">
                 {/* Placeholder */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-ink-2 mb-1">
                     プレースホルダー
                   </label>
                   <input
                     type="text"
                     value={field.settings?.placeholder || ''}
                     onChange={(e) => updateFieldSettings(index, { placeholder: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none text-sm"
                     placeholder="例: 単語を入力..."
                   />
                 </div>
@@ -180,9 +180,9 @@ export function FieldEditor({ fields, onChange }: FieldEditorProps) {
                       type="checkbox"
                       checked={field.settings?.required !== false}
                       onChange={(e) => updateFieldSettings(index, { required: e.target.checked })}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-gray-300 text-sora focus:ring-sora"
                     />
-                    <span className="text-sm text-gray-700">必須フィールド</span>
+                    <span className="text-sm text-ink-2">必須フィールド</span>
                   </label>
 
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -190,9 +190,9 @@ export function FieldEditor({ fields, onChange }: FieldEditorProps) {
                       type="checkbox"
                       checked={field.settings?.tts_enabled || false}
                       onChange={(e) => updateFieldSettings(index, { tts_enabled: e.target.checked })}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-gray-300 text-sora focus:ring-sora"
                     />
-                    <span className="text-sm text-gray-700">TTS音声生成対象</span>
+                    <span className="text-sm text-ink-2">TTS音声生成対象</span>
                   </label>
 
                 </div>
@@ -203,7 +203,7 @@ export function FieldEditor({ fields, onChange }: FieldEditorProps) {
       </div>
 
       {fields.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-ink-3">
           フィールドがありません。「フィールド追加」をクリックしてください。
         </div>
       )}

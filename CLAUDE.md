@@ -327,12 +327,30 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 - **デッキ「古文単語315」**（**投入済み** owner=gaimon.maam）: `data/import-kobun-tango.mjs`（`--reset` で旧デッキ/旧単一ノートタイプを削除して再投入）。**904ノート**（A=315／B=589。A はノートタイプA、B はノートタイプB）＋モード別フィルタサブデッキ「モードA（単語→意味）」「モードB（例文→意味）」（filter_tags でモード選択を再現）
 - **要実機確認**: Vercel デプロイ＋再ログイン後 `/study`「古文単語315」or モードサブデッキで出題・自動判定・スコア。`deriveKobunEase` のしきい値（`grade.ts` の TARGET_MS/SPEED_EASY_THRESHOLD/ACCURACY_HARD_THRESHOLD）は実データで要調整
 
+## デザインシステム「藍・空・喉の橙」（2026-07-07）✅ 全画面適用済み
+
+一次仕様 @docs/design-system.md（トークン・慣用句・置換マップ・禁止事項）。つばめの羽色をブランド化。
+- **トークン**（tailwind.config.ts）: `ai`(藍・見出し/濃地)・`sora`(空・アクション)・`nodo`(橙・最重要CTA/ストリーク、**1画面1箇所**)・`paper`/`ink`系・評価4色 `again/hard/good/easy`(+`-bg`)・`rounded-card`(18px)・`shadow-card`
+- **適用範囲**: 全ページ＋全共有コンポーネント。学習画面=回答4ボタン「淡地×濃字・正解のみ塗り」＋Anki式3色残数／完了画面=つばめメダル＋統計3枚組＋0枚時文言分岐／生徒ホーム=「今日のミッション」カード（日次新規枠を反映した実枚数＋開始CTA）＋🔥ストリークチップ／デッキ一覧=ラベル付き意味色チップ（新規=easy・学習中=hard・復習=good、モバイルでも表示）
+- **カード内部の世界観は独立**: ノートタイプのテンプレートCSS・KobunTangoCard(paper/indigo/enji)・MultiStepCard(古文様式)・庭アートにはブランドを持ち込まない（カード様式ごとに自由）
+- **PWA**: theme_color=#1C2B4B。`SwallowMark`（`src/components/ui/SwallowMark.tsx`）はヘッダー/完了/空状態のみ。InstallPrompt は `/study` では出さない
+- **残**: public/icons のPNGアイコン再生成（旧ブルーのまま）／ダークモード（トークン化済みなので差し替えのみ）
+
+## チュートリアル（2026-07-07）✅ 第1弾
+
+「ドキュメントではなく触りながら覚える」3層設計。
+- **① チュートリアルデッキ「つばめSRSのつかいかた」**: 15枚（Basic・template_index 0 のみ=逆カードなし・created_at 1秒刻み=台本順出題）。`data/create-tutorial-deck.mjs`（`--reset` で再投入）。**投入済み**（owner gaimon.maam・**未配布**=講師がUIから配布）。評価ボタン/SRSの仕組み/3色残数/バッジ/取り消し/練習モード/スワイプ/通知/統計を実演形式で学ぶ
+- **② コーチマーク**: `src/lib/tutorial/coach.ts`（localStorage 既読管理）＋`src/components/ui/CoachTip.tsx`。第1弾=学習画面の初回フリップ時に評価4ボタンの意味を1度だけ表示
+- **出題順の土台修正**: `getStudyCardsOffline` が deckCards を created_at→id で安定ソート（「順番どおり」設定が本当に作成順になった。従来はIndexedDBのUUID順=実質ランダム。全デッキに効く）
+
 ## 現在の進捗
 
 詳細は @docs/progress.md を参照。
 
-- **最終更新**: 2026-06-19
-- **直近の修正（最新）**: **講師デッキの自動共有・共同編集＋デッキ一覧のサブデッキ折りたたみ（✅実機確認済み）**。講師同士で他講師のデッキ・ノートを閲覧/編集/削除/配布可（生徒は不可）。RLS `021_teacher_shared_decks.sql` は**Supabase 適用済み**。詳細は上の専用節。lint クリーン・テスト379件・build 成功
+- **最終更新**: 2026-07-07
+- **直近の修正（最新）**: **デザイン全面刷新＋チュートリアル第1弾**（上の2節）。lint クリーン・テスト397件・build 成功・主要画面ブラウザ確認済み。**要 Vercel デプロイ＋再ログイン**
+- **直近の修正**: 古文単語演習（tango.html モードA/B）コミット済み・DB投入確認済み（904ノート）
+- **直近の修正**: **講師デッキの自動共有・共同編集＋デッキ一覧のサブデッキ折りたたみ（✅実機確認済み）**。講師同士で他講師のデッキ・ノートを閲覧/編集/削除/配布可（生徒は不可）。RLS `021_teacher_shared_decks.sql` は**Supabase 適用済み**。詳細は上の専用節。lint クリーン・テスト379件・build 成功
 - **直近の修正**: **学習体験の小改善4点（要実機確認）**。①講師アカウント作成スクリプト `data/create-teacher-account.mjs`（荒井先生 naobees70@gmail.com を role=teacher で作成済み）②学習画面に**カード種別バッジ**（🆕新規/🔁復習/📖学習中）③**サブデッキの復習もタグで絞る**（`getStudyCardsOffline`・親の無関係な復習が混ざらない／全件復習は親デッキで）④**繰り上げ学習（練習モード）**＝完了後も「➕ もっと練習する」で続行、`getPracticeCardsOffline`（期限近い順の未来復習＋枠外新規）を `StudySession` の `practiceMode`（**card_states/review_logs 非更新**）で出題。lint クリーン・テスト379件・build 成功。**直前**: 多段階設問・識別演習（古文）実装（要実機確認・庭は `GARDEN_ENABLED=false` で停止中）
 - **次にやること**:
   1. **今回の4点を実機確認**: 荒井ログイン（メール+パスワード）／種別バッジ／サブデッキ復習がタグ範囲のみ／「もっと練習する」で未来カードが出て記録が変わらないこと

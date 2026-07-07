@@ -101,8 +101,8 @@ export function GenerationRuleEditor({ rules, fields, onChange }: GenerationRule
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-medium text-gray-900">AI生成ルール</h3>
-          <p className="text-sm text-gray-500 mt-1">
+          <h3 className="text-lg font-bold text-ai">AI生成ルール</h3>
+          <p className="text-sm text-ink-3 mt-1">
             フィールドの内容を参照してAIで自動生成するルールを定義します
           </p>
         </div>
@@ -110,7 +110,7 @@ export function GenerationRuleEditor({ rules, fields, onChange }: GenerationRule
           <button
             type="button"
             onClick={() => setShowPresetMenu(!showPresetMenu)}
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-purple-600 hover:text-purple-700 border border-purple-200 rounded-lg hover:bg-purple-50 transition-colors"
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-white border-2 border-sora text-sora font-bold rounded-2xl hover:bg-sora-soft transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -122,29 +122,29 @@ export function GenerationRuleEditor({ rules, fields, onChange }: GenerationRule
           </button>
 
           {showPresetMenu && (
-            <div className="absolute right-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+            <div className="absolute right-0 mt-1 w-64 bg-white border border-gray-200 rounded-2xl shadow-lg z-10">
               <div className="py-1">
                 <button
                   type="button"
                   onClick={addEmptyRule}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="w-full text-left px-4 py-2 text-sm text-ink-2 hover:bg-gray-50 transition-colors"
                 >
                   <span className="font-medium">空のルール</span>
-                  <p className="text-xs text-gray-400 mt-0.5">ゼロからルールを作成</p>
+                  <p className="text-xs text-ink-3 mt-0.5">ゼロからルールを作成</p>
                 </button>
                 <div className="border-t border-gray-100 my-1" />
                 <div className="px-4 py-1.5">
-                  <span className="text-xs font-medium text-gray-400 uppercase">プリセット</span>
+                  <span className="text-xs font-medium text-ink-3 uppercase">プリセット</span>
                 </div>
                 {TAGGING_PRESETS.map(preset => (
                   <button
                     key={preset.id}
                     type="button"
                     onClick={() => addPresetRule(preset.id)}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 transition-colors"
+                    className="w-full text-left px-4 py-2 text-sm text-ink-2 hover:bg-sora-soft transition-colors"
                   >
-                    <span className="font-medium text-purple-700">{preset.name}</span>
-                    <p className="text-xs text-gray-400 mt-0.5">{preset.description}</p>
+                    <span className="font-medium text-sora">{preset.name}</span>
+                    <p className="text-xs text-ink-3 mt-0.5">{preset.description}</p>
                   </button>
                 ))}
               </div>
@@ -154,12 +154,12 @@ export function GenerationRuleEditor({ rules, fields, onChange }: GenerationRule
       </div>
 
       {rules.length === 0 ? (
-        <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
-          <svg className="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="text-center py-8 text-ink-3 border-2 border-dashed border-gray-200 rounded-2xl">
+          <svg className="w-8 h-8 mx-auto mb-2 text-ink-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
           <p className="text-sm">AI生成ルールがありません</p>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-ink-3 mt-1">
             「ルール追加」をクリックして例文やコロケーションの生成ルールを作成できます
           </p>
         </div>
@@ -168,11 +168,11 @@ export function GenerationRuleEditor({ rules, fields, onChange }: GenerationRule
           {rules.map((rule, index) => (
             <div
               key={rule.id}
-              className="border border-purple-200 rounded-lg overflow-hidden"
+              className="border border-gray-200 rounded-2xl overflow-hidden"
             >
               {/* Rule Header */}
-              <div className="flex items-center gap-2 p-3 bg-purple-50">
-                <svg className="w-4 h-4 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center gap-2 p-3 bg-sora-soft">
+                <svg className="w-4 h-4 text-sora flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
 
@@ -180,17 +180,17 @@ export function GenerationRuleEditor({ rules, fields, onChange }: GenerationRule
                   type="text"
                   value={rule.name}
                   onChange={(e) => updateRule(index, { name: e.target.value })}
-                  className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-sm"
+                  className="flex-1 px-3 py-1.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none text-sm"
                   placeholder="ルール名"
                 />
 
                 <button
                   type="button"
                   onClick={() => setExpandedRule(expandedRule === index ? null : index)}
-                  className={`p-2 rounded-lg transition-colors ${
+                  className={`p-2 rounded-xl transition-colors ${
                     expandedRule === index
-                      ? 'bg-purple-200 text-purple-700'
-                      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                      ? 'bg-sora text-white'
+                      : 'text-ink-3 hover:text-ink-2 hover:bg-gray-100'
                   }`}
                   title="設定"
                 >
@@ -203,7 +203,7 @@ export function GenerationRuleEditor({ rules, fields, onChange }: GenerationRule
                 <button
                   type="button"
                   onClick={() => removeRule(index)}
-                  className="p-2 text-red-400 hover:text-red-600"
+                  className="p-2 text-ink-3 hover:text-again"
                   title="削除"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,13 +214,13 @@ export function GenerationRuleEditor({ rules, fields, onChange }: GenerationRule
 
               {/* Rule Details (Expanded) */}
               {expandedRule === index && (
-                <div className="p-4 border-t border-purple-200 space-y-4">
+                <div className="p-4 border-t border-gray-200 space-y-4">
                   {/* Source Fields */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-ink-2 mb-2">
                       参照フィールド（複数選択可）
                     </label>
-                    <p className="text-xs text-gray-500 mb-2">
+                    <p className="text-xs text-ink-3 mb-2">
                       AIが参照するフィールドを選択してください。選択したフィールドの内容がプロンプトに含まれます。
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -229,10 +229,10 @@ export function GenerationRuleEditor({ rules, fields, onChange }: GenerationRule
                           key={name}
                           type="button"
                           onClick={() => toggleSourceField(index, name)}
-                          className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                          className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
                             rule.source_fields.includes(name)
-                              ? 'bg-purple-100 border-purple-400 text-purple-700'
-                              : 'bg-white border-gray-300 text-gray-600 hover:border-purple-300'
+                              ? 'bg-sora-soft border-sora text-sora font-bold'
+                              : 'bg-white border-gray-300 text-ink-2 hover:border-sora'
                           }`}
                         >
                           {name}
@@ -240,43 +240,43 @@ export function GenerationRuleEditor({ rules, fields, onChange }: GenerationRule
                       ))}
                     </div>
                     {rule.source_fields.length === 0 && (
-                      <p className="text-xs text-red-500 mt-1">少なくとも1つのフィールドを選択してください</p>
+                      <p className="text-xs text-again mt-1">少なくとも1つのフィールドを選択してください</p>
                     )}
                   </div>
 
                   {/* Instruction */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-ink-2 mb-2">
                       生成指示
                     </label>
-                    <p className="text-xs text-gray-500 mb-2">
+                    <p className="text-xs text-ink-3 mb-2">
                       AIへの指示を記述してください。どのような内容を生成するかを具体的に書くと精度が上がります。
                     </p>
                     <textarea
                       value={rule.instruction}
                       onChange={(e) => updateRule(index, { instruction: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none text-sm"
                       rows={3}
                       placeholder="例: この英単語を使った自然な例文を2つ生成してください。中級レベルの英語で、実用的な文脈を含めてください。"
                     />
                     {!rule.instruction.trim() && (
-                      <p className="text-xs text-red-500 mt-1">生成指示を入力してください</p>
+                      <p className="text-xs text-again mt-1">生成指示を入力してください</p>
                     )}
                   </div>
 
                   {/* Target Field */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-ink-2 mb-2">
                       出力先フィールド
                     </label>
-                    <p className="text-xs text-gray-500 mb-2">
+                    <p className="text-xs text-ink-3 mb-2">
                       生成結果を保存するフィールドを選択してください。フィールドが存在しない場合は新しく作成できます。
                     </p>
                     <div className="flex gap-2">
                       <select
                         value={rule.target_field}
                         onChange={(e) => updateRule(index, { target_field: e.target.value })}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-sm"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none text-sm"
                       >
                         <option value="">フィールドを選択...</option>
                         {fieldNames.map((name) => (
@@ -285,10 +285,10 @@ export function GenerationRuleEditor({ rules, fields, onChange }: GenerationRule
                       </select>
                     </div>
                     {!rule.target_field && (
-                      <p className="text-xs text-red-500 mt-1">出力先フィールドを選択してください</p>
+                      <p className="text-xs text-again mt-1">出力先フィールドを選択してください</p>
                     )}
                     {rule.target_field && rule.source_fields.includes(rule.target_field) && (
-                      <p className="text-xs text-amber-600 mt-1">
+                      <p className="text-xs text-hard mt-1">
                         参照フィールドと出力先が同じです。生成結果で上書きされます。
                       </p>
                     )}
@@ -296,9 +296,9 @@ export function GenerationRuleEditor({ rules, fields, onChange }: GenerationRule
 
                   {/* Summary */}
                   {rule.source_fields.length > 0 && rule.target_field && rule.instruction.trim() && (
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <p className="text-xs font-medium text-gray-500 mb-1">ルールのまとめ:</p>
-                      <p className="text-sm text-gray-700">
+                    <div className="bg-gray-50 rounded-xl p-3">
+                      <p className="text-xs font-medium text-ink-3 mb-1">ルールのまとめ:</p>
+                      <p className="text-sm text-ink-2">
                         <span className="font-medium">{rule.source_fields.join(', ')}</span>
                         {' '}を参照して → {' '}
                         <span className="font-medium">{rule.target_field}</span>

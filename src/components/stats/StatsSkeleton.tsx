@@ -6,30 +6,30 @@ export function StatsSkeleton() {
       {/* Overview cards skeleton */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="bg-gray-100 rounded-lg h-24" />
+          <div key={i} className="bg-gray-100 rounded-2xl h-24" />
         ))}
       </div>
 
       {/* Daily review chart skeleton */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="bg-white rounded-card border border-gray-200 p-6">
         <div className="h-4 w-24 bg-gray-200 rounded mb-4" />
         <div className="h-64 bg-gray-100 rounded" />
       </div>
 
       {/* Two column charts skeleton */}
       <div className="grid md:grid-cols-2 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-white rounded-card border border-gray-200 p-6">
           <div className="h-4 w-24 bg-gray-200 rounded mb-4" />
           <div className="h-48 bg-gray-100 rounded" />
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-white rounded-card border border-gray-200 p-6">
           <div className="h-4 w-24 bg-gray-200 rounded mb-4" />
           <div className="h-48 bg-gray-100 rounded" />
         </div>
       </div>
 
       {/* Deck progress skeleton */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="bg-white rounded-card border border-gray-200 p-6">
         <div className="h-4 w-24 bg-gray-200 rounded mb-4" />
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (

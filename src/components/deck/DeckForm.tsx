@@ -136,14 +136,14 @@ export function DeckForm({ mode, initialData, parentDecks, defaultParentId }: De
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-again-bg text-again rounded-2xl">
           {error}
         </div>
       )}
 
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-          デッキ名 <span className="text-red-500">*</span>
+        <label htmlFor="name" className="block text-sm font-medium text-ink-2 mb-2">
+          デッキ名 <span className="text-again">*</span>
         </label>
         <input
           type="text"
@@ -151,7 +151,7 @@ export function DeckForm({ mode, initialData, parentDecks, defaultParentId }: De
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="例: 英単語ターゲット1900"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none transition-colors"
           required
           autoFocus
         />
@@ -160,21 +160,21 @@ export function DeckForm({ mode, initialData, parentDecks, defaultParentId }: De
       {/* Parent Deck Selector */}
       {parentDecks && parentDecks.length > 0 && (
         <div>
-          <label htmlFor="parentDeckId" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="parentDeckId" className="block text-sm font-medium text-ink-2 mb-2">
             親デッキ
           </label>
           <select
             id="parentDeckId"
             value={parentDeckId}
             onChange={(e) => setParentDeckId(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none transition-colors"
           >
             <option value="">なし（トップレベル）</option>
             {parentDecks.map(d => (
               <option key={d.id} value={d.id}>{d.name}</option>
             ))}
           </select>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-ink-3">
             サブデッキとして作成する場合は親デッキを選択（最大3段）
           </p>
         </div>
@@ -183,10 +183,10 @@ export function DeckForm({ mode, initialData, parentDecks, defaultParentId }: De
       {/* Filter Tags (only for subdecks) */}
       {parentDeckId && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-ink-2 mb-2">
             フィルタータグ
           </label>
-          <p className="text-sm text-gray-500 mb-3">
+          <p className="text-sm text-ink-3 mb-3">
             新規カードをタグで絞り込みます。空の場合はすべての新規カードが対象です。復習カードはフィルタに関係なく表示されます。
           </p>
 
@@ -196,13 +196,13 @@ export function DeckForm({ mode, initialData, parentDecks, defaultParentId }: De
               {filterTags.map(tag => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full text-sm"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-sora-soft text-sora rounded-full text-sm font-bold"
                 >
                   {tag}
                   <button
                     type="button"
                     onClick={() => removeFilterTag(tag)}
-                    className="text-purple-500 hover:text-purple-800"
+                    className="text-sora hover:text-sora-dark"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -226,14 +226,14 @@ export function DeckForm({ mode, initialData, parentDecks, defaultParentId }: De
                 }
               }}
               placeholder="タグを入力してEnter"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-colors text-sm"
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none transition-colors text-sm"
             />
           </div>
 
           {/* Available tags from parent deck */}
           {availableTags.length > 0 && (
             <div className="mt-2">
-              <p className="text-xs text-gray-400 mb-1">利用可能なタグ:</p>
+              <p className="text-xs text-ink-3 mb-1">利用可能なタグ:</p>
               <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
                 {availableTags
                   .filter(t => !filterTags.includes(t))
@@ -243,7 +243,7 @@ export function DeckForm({ mode, initialData, parentDecks, defaultParentId }: De
                       key={tag}
                       type="button"
                       onClick={() => addFilterTag(tag)}
-                      className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs hover:bg-purple-100 hover:text-purple-700 transition-colors"
+                      className="px-2 py-0.5 bg-gray-100 text-ink-2 rounded-full text-xs hover:bg-sora-soft hover:text-sora transition-colors"
                     >
                       + {tag}
                     </button>
@@ -264,14 +264,14 @@ export function DeckForm({ mode, initialData, parentDecks, defaultParentId }: De
         <button
           type="button"
           onClick={() => router.back()}
-          className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+          className="flex-1 px-4 py-3 border border-gray-300 text-ink-2 rounded-2xl hover:bg-gray-50 transition-colors font-bold"
         >
           キャンセル
         </button>
         <button
           type="submit"
           disabled={isSubmitting || !name.trim()}
-          className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors font-medium"
+          className="flex-1 px-4 py-3 bg-sora text-white rounded-2xl hover:bg-sora-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold"
         >
           {isSubmitting ? '作成中...' : mode === 'create' ? 'デッキを作成' : '保存'}
         </button>

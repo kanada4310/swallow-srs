@@ -34,10 +34,10 @@ export function AccuracyTrendChart({ data }: AccuracyTrendChartProps) {
     : 0
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
+    <div className="bg-white rounded-card border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-gray-700">正答率推移</h3>
-        <span className="text-xs text-gray-500">平均: {avgAccuracy}%</span>
+        <h3 className="text-sm font-bold text-ai">正答率推移</h3>
+        <span className="text-xs text-ink-3 tabular-nums">平均: {avgAccuracy}%</span>
       </div>
       <div className="h-48">
         <ResponsiveContainer width="100%" height="100%">
@@ -68,8 +68,8 @@ export function AccuracyTrendChart({ data }: AccuracyTrendChartProps) {
                 const accuracy = payload[0].value
                 if (accuracy === null) return null
                 return (
-                  <div className="bg-white shadow-lg rounded-lg border border-gray-200 p-2">
-                    <p className="text-sm font-medium">{label}</p>
+                  <div className="bg-white shadow-lg rounded-2xl border border-gray-200 p-2">
+                    <p className="text-sm font-bold text-ai">{label}</p>
                     <p className="text-xs text-purple-600">正答率: {accuracy}%</p>
                   </div>
                 )

@@ -263,11 +263,11 @@ export function OCRImporter({
   const getConfidenceColor = (confidence: 'high' | 'medium' | 'low') => {
     switch (confidence) {
       case 'high':
-        return 'bg-green-100 text-green-800'
+        return 'bg-good-bg text-good'
       case 'medium':
-        return 'bg-yellow-100 text-yellow-800'
+        return 'bg-hard-bg text-hard'
       case 'low':
-        return 'bg-red-100 text-red-800'
+        return 'bg-again-bg text-again'
     }
   }
 
@@ -285,7 +285,7 @@ export function OCRImporter({
   return (
     <div className="space-y-4">
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+        <div className="p-3 bg-again-bg text-again rounded-2xl text-sm">
           {error}
         </div>
       )}
@@ -295,13 +295,13 @@ export function OCRImporter({
         <>
           {/* Note Type Selector */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-ink-2 mb-2">
               ノートタイプ
             </label>
             <select
               value={selectedNoteTypeId}
               onChange={e => setSelectedNoteTypeId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none"
             >
               {noteTypes.map(nt => (
                 <option key={nt.id} value={nt.id}>
@@ -309,20 +309,20 @@ export function OCRImporter({
                 </option>
               ))}
             </select>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-ink-3 mt-1">
               フィールド: {sortedFields.map(f => f.name).join('、')}
             </p>
           </div>
 
           {/* Format Hint Selector */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-ink-2 mb-2">
               単語帳の種類（任意）
             </label>
             <select
               value={formatHint}
               onChange={e => setFormatHint(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none"
             >
               {FORMAT_HINTS.map(hint => (
                 <option key={hint.value} value={hint.value}>
@@ -330,14 +330,14 @@ export function OCRImporter({
                 </option>
               ))}
             </select>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-ink-3 mt-1">
               単語帳の種類を指定すると、より正確に読み取れる場合があります
             </p>
           </div>
 
           {/* Image Upload Area */}
           <div
-            className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors cursor-pointer"
+            className="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:border-sora transition-colors cursor-pointer"
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onClick={() => fileInputRef.current?.click()}
@@ -350,7 +350,7 @@ export function OCRImporter({
               className="hidden"
             />
             <svg
-              className="w-12 h-12 text-gray-400 mx-auto mb-3"
+              className="w-12 h-12 text-ink-3 mx-auto mb-3"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -368,10 +368,10 @@ export function OCRImporter({
                 d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
               />
             </svg>
-            <span className="text-gray-600 font-medium block">
+            <span className="text-ink-2 font-medium block">
               クリックまたはドラッグ＆ドロップで画像を選択
             </span>
-            <span className="text-sm text-gray-400 mt-1 block">
+            <span className="text-sm text-ink-3 mt-1 block">
               JPEG, PNG, WebP, GIF（最大10MB）
             </span>
           </div>
@@ -383,14 +383,14 @@ export function OCRImporter({
               <img
                 src={imagePreview}
                 alt="プレビュー"
-                className="max-h-48 mx-auto rounded-lg border border-gray-200"
+                className="max-h-48 mx-auto rounded-2xl border border-gray-200"
               />
               <button
                 onClick={(e) => {
                   e.stopPropagation()
                   resetToUpload()
                 }}
-                className="absolute top-2 right-2 p-1 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
+                className="absolute top-2 right-2 p-1 bg-again-bg text-again rounded-full hover:opacity-80"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -400,7 +400,7 @@ export function OCRImporter({
           )}
 
           {/* Tips */}
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+          <div className="p-3 bg-sora-soft rounded-2xl text-sm text-sora">
             <p className="font-medium mb-1">きれいに読み取るコツ:</p>
             <ul className="text-xs space-y-1">
               <li>・明るい場所で撮影する</li>
@@ -414,7 +414,7 @@ export function OCRImporter({
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              className="flex-1 px-4 py-2 border border-gray-300 text-ink-2 rounded-2xl hover:bg-gray-50 transition-colors font-bold"
             >
               キャンセル
             </button>
@@ -425,9 +425,9 @@ export function OCRImporter({
       {/* Step: Processing */}
       {step === 'processing' && (
         <div className="py-12 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">画像を解析中...</p>
-          <p className="text-sm text-gray-400 mt-2">
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-200 border-t-sora mx-auto mb-4"></div>
+          <p className="text-ink-2 font-medium">画像を解析中...</p>
+          <p className="text-sm text-ink-3 mt-2">
             {selectedNoteType?.name || 'Basic'}のフィールドに合わせて抽出しています
           </p>
           {imagePreview && (
@@ -435,7 +435,7 @@ export function OCRImporter({
             <img
               src={imagePreview}
               alt="解析中"
-              className="max-h-32 mx-auto mt-4 rounded-lg border border-gray-200 opacity-50"
+              className="max-h-32 mx-auto mt-4 rounded-2xl border border-gray-200 opacity-50"
             />
           )}
         </div>
@@ -445,22 +445,22 @@ export function OCRImporter({
       {step === 'review' && (
         <>
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-ink-2">
               {entries.length}件のデータを検出しました（{selectedCount}件選択中）
-              <span className="text-xs text-gray-400 ml-2">ノートタイプ: {selectedNoteType?.name}</span>
+              <span className="text-xs text-ink-3 ml-2">ノートタイプ: {selectedNoteType?.name}</span>
             </div>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => toggleAll(true)}
-                className="text-xs px-2 py-1 text-blue-600 hover:bg-blue-50 rounded"
+                className="text-xs font-bold px-2 py-1 text-sora hover:bg-sora-soft rounded-full"
               >
                 すべて選択
               </button>
               <button
                 type="button"
                 onClick={() => toggleAll(false)}
-                className="text-xs px-2 py-1 text-gray-600 hover:bg-gray-50 rounded"
+                className="text-xs font-bold px-2 py-1 text-ink-2 hover:bg-gray-50 rounded-full"
               >
                 選択解除
               </button>
@@ -469,9 +469,9 @@ export function OCRImporter({
 
           {/* Warnings */}
           {warnings.length > 0 && (
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
-              <p className="font-medium text-yellow-800 mb-1">注意事項</p>
-              <ul className="text-yellow-700 text-xs space-y-1">
+            <div className="p-3 bg-hard-bg rounded-2xl text-sm">
+              <p className="font-medium text-hard mb-1">注意事項</p>
+              <ul className="text-hard text-xs space-y-1">
                 {warnings.map((warning, i) => (
                   <li key={i}>{warning}</li>
                 ))}
@@ -480,19 +480,19 @@ export function OCRImporter({
           )}
 
           {/* Entries Table */}
-          <div className="border border-gray-200 rounded-lg overflow-hidden max-h-96 overflow-y-auto">
+          <div className="border border-gray-200 rounded-2xl overflow-hidden max-h-96 overflow-y-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50 sticky top-0">
                 <tr>
-                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 w-10">
+                  <th className="px-2 py-2 text-left text-xs font-medium text-ink-3 w-10">
                     <span className="sr-only">選択</span>
                   </th>
                   {sortedFields.map(field => (
-                    <th key={field.name} className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th key={field.name} className="px-3 py-2 text-left text-xs font-medium text-ink-3 uppercase">
                       {field.name}
                     </th>
                   ))}
-                  <th className="px-2 py-2 text-center text-xs font-medium text-gray-500 w-16">
+                  <th className="px-2 py-2 text-center text-xs font-medium text-ink-3 w-16">
                     確度
                   </th>
                   <th className="px-2 py-2 w-10">
@@ -511,7 +511,7 @@ export function OCRImporter({
                         type="checkbox"
                         checked={entry.selected}
                         onChange={() => toggleEntry(index)}
-                        className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        className="h-4 w-4 text-sora rounded border-gray-300 focus:ring-sora"
                       />
                     </td>
                     {sortedFields.map(field => (
@@ -521,7 +521,7 @@ export function OCRImporter({
                             type="text"
                             value={entry.fields[field.name] || ''}
                             onChange={e => updateEntryField(index, field.name, e.target.value)}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded-xl focus:ring-1 focus:ring-sora focus:border-sora"
                             autoFocus={field.ord === 0}
                           />
                         ) : (
@@ -529,20 +529,20 @@ export function OCRImporter({
                             className="text-sm cursor-pointer hover:bg-gray-100 px-1 rounded"
                             onClick={() => setEditingIndex(index)}
                           >
-                            {entry.fields[field.name] || <span className="text-gray-400">（空）</span>}
+                            {entry.fields[field.name] || <span className="text-ink-3">（空）</span>}
                           </span>
                         )}
                       </td>
                     ))}
                     <td className="px-2 py-2 text-center">
-                      <span className={`text-xs px-1.5 py-0.5 rounded ${getConfidenceColor(entry.confidence)}`}>
+                      <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${getConfidenceColor(entry.confidence)}`}>
                         {entry.confidence === 'high' ? '高' : entry.confidence === 'medium' ? '中' : '低'}
                       </span>
                     </td>
                     <td className="px-2 py-2">
                       <button
                         onClick={() => deleteEntry(index)}
-                        className="text-red-500 hover:text-red-700 p-1"
+                        className="text-again hover:opacity-70 p-1"
                         title="削除"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -560,18 +560,18 @@ export function OCRImporter({
           <button
             type="button"
             onClick={addEntry}
-            className="w-full px-4 py-2 border border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-colors text-sm"
+            className="w-full px-4 py-2 border border-dashed border-gray-300 text-ink-2 rounded-2xl hover:border-sora hover:text-sora transition-colors text-sm"
           >
             + 手動で追加
           </button>
 
           {/* Editing note */}
           {editingIndex !== null && (
-            <div className="text-xs text-gray-500 text-center">
+            <div className="text-xs text-ink-3 text-center">
               編集中... 他の場所をクリックして終了
               <button
                 onClick={() => setEditingIndex(null)}
-                className="ml-2 text-blue-600 hover:underline"
+                className="ml-2 text-sora hover:underline"
               >
                 完了
               </button>
@@ -583,7 +583,7 @@ export function OCRImporter({
             <button
               type="button"
               onClick={resetToUpload}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              className="flex-1 px-4 py-2 border border-gray-300 text-ink-2 rounded-2xl hover:bg-gray-50 transition-colors font-bold"
             >
               別の画像を選ぶ
             </button>
@@ -591,7 +591,7 @@ export function OCRImporter({
               type="button"
               onClick={handleImport}
               disabled={selectedCount === 0}
-              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 bg-sora text-white rounded-2xl hover:bg-sora-dark transition-colors font-bold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {selectedCount}件をインポート
             </button>
@@ -602,9 +602,9 @@ export function OCRImporter({
       {/* Step: Importing */}
       {step === 'importing' && (
         <div className="py-12 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">インポート中...</p>
-          <p className="text-sm text-gray-400 mt-2">
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-200 border-t-sora mx-auto mb-4"></div>
+          <p className="text-ink-2">インポート中...</p>
+          <p className="text-sm text-ink-3 mt-2">
             {selectedCount}件のデータを登録しています
           </p>
         </div>
@@ -614,16 +614,16 @@ export function OCRImporter({
       {step === 'result' && importResult && (
         <>
           <div
-            className={`p-4 rounded-lg ${
+            className={`p-4 rounded-2xl ${
               importResult.errors.length === 0
-                ? 'bg-green-50 border border-green-200'
-                : 'bg-yellow-50 border border-yellow-200'
+                ? 'bg-good-bg'
+                : 'bg-hard-bg'
             }`}
           >
             <div className="flex items-start gap-3">
               {importResult.errors.length === 0 ? (
                 <svg
-                  className="w-6 h-6 text-green-600 flex-shrink-0"
+                  className="w-6 h-6 text-good flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -637,7 +637,7 @@ export function OCRImporter({
                 </svg>
               ) : (
                 <svg
-                  className="w-6 h-6 text-yellow-600 flex-shrink-0"
+                  className="w-6 h-6 text-hard flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -652,10 +652,10 @@ export function OCRImporter({
               )}
               <div>
                 <h3
-                  className={`font-medium ${
+                  className={`font-bold ${
                     importResult.errors.length === 0
-                      ? 'text-green-800'
-                      : 'text-yellow-800'
+                      ? 'text-good'
+                      : 'text-hard'
                   }`}
                 >
                   {importResult.errors.length === 0
@@ -674,11 +674,11 @@ export function OCRImporter({
 
           {/* Errors */}
           {importResult.errors.length > 0 && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm">
-              <p className="font-medium text-red-800 mb-2">
+            <div className="p-3 bg-again-bg rounded-2xl text-sm">
+              <p className="font-medium text-again mb-2">
                 エラー ({importResult.errors.length}件)
               </p>
-              <ul className="text-red-700 text-xs space-y-1 max-h-32 overflow-y-auto">
+              <ul className="text-again text-xs space-y-1 max-h-32 overflow-y-auto">
                 {importResult.errors.slice(0, 20).map((err, i) => (
                   <li key={i}>
                     行{err.row}: {err.message}
@@ -696,14 +696,14 @@ export function OCRImporter({
             <button
               type="button"
               onClick={resetToUpload}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              className="flex-1 px-4 py-2 border border-gray-300 text-ink-2 rounded-2xl hover:bg-gray-50 transition-colors font-bold"
             >
               別の画像を追加
             </button>
             <button
               type="button"
               onClick={onImportComplete}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="flex-1 px-4 py-2 bg-sora text-white rounded-2xl hover:bg-sora-dark transition-colors font-bold"
             >
               閉じる
             </button>

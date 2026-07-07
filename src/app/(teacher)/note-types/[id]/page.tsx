@@ -66,7 +66,7 @@ export default function EditNoteTypePage() {
     return (
       <AppLayout>
         <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          <div className="bg-again-bg border border-again/20 rounded-card p-4 text-again">
             ノートタイプが見つかりませんでした。
           </div>
         </div>

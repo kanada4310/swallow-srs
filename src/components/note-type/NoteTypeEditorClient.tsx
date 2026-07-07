@@ -172,18 +172,18 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
         <div className="flex items-center gap-4">
           <Link
             href="/note-types"
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 text-ink-3 hover:text-ink-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-extrabold text-ai">
               {isReadOnly ? noteType?.name : mode === 'create' ? '新規ノートタイプ' : 'ノートタイプを編集'}
             </h1>
             {isReadOnly && (
-              <p className="text-sm text-amber-600 mt-1">
+              <p className="text-sm text-hard mt-1">
                 システムノートタイプは編集できません（閲覧のみ）
               </p>
             )}
@@ -194,7 +194,7 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
           <button
             type="button"
             onClick={() => setShowDeleteConfirm(true)}
-            className="px-4 py-2 text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+            className="px-4 py-2 bg-again-bg text-again font-bold rounded-2xl transition-colors"
           >
             削除
           </button>
@@ -204,13 +204,13 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">ノートタイプを削除</h3>
-            <p className="text-gray-600 mb-4">
+          <div className="bg-white rounded-card p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-bold text-ai mb-2">ノートタイプを削除</h3>
+            <p className="text-ink-2 mb-4">
               「{noteType?.name}」を削除しますか？この操作は取り消せません。
             </p>
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <div className="mb-4 p-3 bg-again-bg rounded-xl text-again text-sm">
                 {error}
               </div>
             )}
@@ -219,7 +219,7 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
                 type="button"
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={isDeleting}
-                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-ink-2 font-bold border border-gray-300 rounded-2xl hover:bg-gray-50 transition-colors"
               >
                 キャンセル
               </button>
@@ -227,7 +227,7 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
                 type="button"
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-red-300 transition-colors"
+                className="px-4 py-2 bg-again text-white font-bold rounded-2xl hover:opacity-90 disabled:opacity-50 transition-colors"
               >
                 {isDeleting ? '削除中...' : '削除'}
               </button>
@@ -246,18 +246,18 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
               disabled={isReadOnly}
               className={`flex items-center gap-2 ${
                 currentStep === step
-                  ? 'text-blue-600'
+                  ? 'text-sora'
                   : index < currentStepIndex
-                  ? 'text-green-600'
-                  : 'text-gray-400'
+                  ? 'text-sora'
+                  : 'text-ink-3'
               } ${isReadOnly ? 'cursor-not-allowed' : ''}`}
             >
-              <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+              <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                 currentStep === step
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-sora text-white'
                   : index < currentStepIndex
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-200 text-gray-500'
+                  ? 'bg-sora text-white'
+                  : 'bg-gray-200 text-ink-3'
               }`}>
                 {index < currentStepIndex ? (
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -267,11 +267,11 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
                   index + 1
                 )}
               </span>
-              <span className="hidden sm:inline text-sm font-medium">{STEP_LABELS[step]}</span>
+              <span className="hidden sm:inline text-sm font-bold">{STEP_LABELS[step]}</span>
             </button>
             {index < STEPS.length - 1 && (
-              <div className={`w-12 sm:w-24 h-1 mx-2 rounded ${
-                index < currentStepIndex ? 'bg-green-600' : 'bg-gray-200'
+              <div className={`w-12 sm:w-24 h-1 mx-2 rounded-full ${
+                index < currentStepIndex ? 'bg-sora' : 'bg-gray-200'
               }`} />
             )}
           </div>
@@ -280,29 +280,29 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
 
       {/* Error */}
       {error && !showDeleteConfirm && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-again-bg rounded-xl text-again">
           {error}
         </div>
       )}
 
       {/* Step Content */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-white rounded-card border border-gray-200 p-6">
         {currentStep === 'basic' && (
           <div className="space-y-4">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">基本情報</h2>
+            <h2 className="text-lg font-bold text-ai mb-4">基本情報</h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                ノートタイプ名 <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-ink-2 mb-2">
+                ノートタイプ名 <span className="text-again">*</span>
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={isReadOnly}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-sora focus:border-sora outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="例: Basic (英→日)"
               />
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-ink-3">
                 ノートタイプを識別するための名前を入力してください
               </p>
             </div>
@@ -313,15 +313,15 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
           <div className="pointer-events-auto">
             {isReadOnly ? (
               <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-4">フィールド</h2>
+                <h2 className="text-lg font-bold text-ai mb-4">フィールド</h2>
                 <div className="space-y-2">
                   {fields.map((field, index) => (
-                    <div key={index} className="p-3 bg-gray-50 rounded-lg">
+                    <div key={index} className="p-3 bg-gray-50 rounded-xl">
                       <span className="font-medium">{field.name}</span>
                       {field.settings && (
                         <div className="mt-1 flex flex-wrap gap-2">
                           {field.settings.tts_enabled && (
-                            <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded">TTS</span>
+                            <span className="px-2.5 py-0.5 text-xs font-bold bg-sora-soft text-sora rounded-full">TTS</span>
                           )}
                         </div>
                       )}
@@ -339,20 +339,20 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
           <div>
             {isReadOnly ? (
               <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-4">AI生成ルール</h2>
+                <h2 className="text-lg font-bold text-ai mb-4">AI生成ルール</h2>
                 {generationRules.length === 0 ? (
-                  <p className="text-sm text-gray-500">AI生成ルールはありません</p>
+                  <p className="text-sm text-ink-3">AI生成ルールはありません</p>
                 ) : (
                   <div className="space-y-2">
                     {generationRules.map((rule) => (
-                      <div key={rule.id} className="p-3 bg-purple-50 rounded-lg">
-                        <span className="font-medium text-purple-800">{rule.name}</span>
-                        <div className="mt-1 text-sm text-gray-600">
-                          <span className="text-purple-600">{rule.source_fields.join(', ')}</span>
+                      <div key={rule.id} className="p-3 bg-sora-soft rounded-xl">
+                        <span className="font-medium text-ai">{rule.name}</span>
+                        <div className="mt-1 text-sm text-ink-2">
+                          <span className="text-sora">{rule.source_fields.join(', ')}</span>
                           {' → '}
-                          <span className="text-purple-600">{rule.target_field}</span>
+                          <span className="text-sora">{rule.target_field}</span>
                         </div>
-                        <p className="mt-1 text-xs text-gray-500 line-clamp-2">{rule.instruction}</p>
+                        <p className="mt-1 text-xs text-ink-3 line-clamp-2">{rule.instruction}</p>
                       </div>
                     ))}
                   </div>
@@ -372,19 +372,19 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
           <div className="space-y-8">
             {isReadOnly ? (
               <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-4">テンプレート</h2>
+                <h2 className="text-lg font-bold text-ai mb-4">テンプレート</h2>
                 {templates.map((template, index) => (
-                  <div key={index} className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <div key={index} className="mb-6 p-4 bg-gray-50 rounded-xl">
                     <h3 className="font-medium mb-2">{template.name}</h3>
                     <div className="grid md:grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-gray-500">表面:</span>
+                        <span className="text-ink-3">表面:</span>
                         <pre className="mt-1 p-2 bg-white rounded border text-xs overflow-x-auto">
                           {template.front_template}
                         </pre>
                       </div>
                       <div>
-                        <span className="text-gray-500">裏面:</span>
+                        <span className="text-ink-3">裏面:</span>
                         <pre className="mt-1 p-2 bg-white rounded border text-xs overflow-x-auto">
                           {template.back_template}
                         </pre>
@@ -415,16 +415,16 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
 
         {currentStep === 'confirm' && (
           <div className="space-y-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">確認</h2>
+            <h2 className="text-lg font-bold text-ai mb-4">確認</h2>
 
             <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="text-sm font-medium text-gray-500 mb-1">ノートタイプ名</h3>
+              <div className="p-4 bg-gray-50 rounded-xl">
+                <h3 className="text-sm font-medium text-ink-3 mb-1">ノートタイプ名</h3>
                 <p className="text-lg font-medium">{name}</p>
               </div>
 
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">フィールド</h3>
+              <div className="p-4 bg-gray-50 rounded-xl">
+                <h3 className="text-sm font-medium text-ink-3 mb-2">フィールド</h3>
                 <div className="flex flex-wrap gap-2">
                   {fields.map((field, index) => (
                     <span
@@ -438,17 +438,17 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
               </div>
 
               {generationRules.length > 0 && (
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">AI生成ルール</h3>
+                <div className="p-4 bg-gray-50 rounded-xl">
+                  <h3 className="text-sm font-medium text-ink-3 mb-2">AI生成ルール</h3>
                   <div className="space-y-2">
                     {generationRules.map((rule) => (
                       <div key={rule.id} className="flex items-center gap-2 text-sm">
-                        <svg className="w-4 h-4 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 text-sora flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
                         <span>
                           <span className="font-medium">{rule.name}</span>
-                          <span className="text-gray-500">
+                          <span className="text-ink-3">
                             {' '}({rule.source_fields.join(', ')} → {rule.target_field})
                           </span>
                         </span>
@@ -458,8 +458,8 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
                 </div>
               )}
 
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">テンプレート</h3>
+              <div className="p-4 bg-gray-50 rounded-xl">
+                <h3 className="text-sm font-medium text-ink-3 mb-2">テンプレート</h3>
                 <div className="flex flex-wrap gap-2">
                   {templates.map((template, index) => (
                     <span
@@ -474,8 +474,8 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
             </div>
 
             {!isReadOnly && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-blue-800">
+              <div className="bg-sora-soft rounded-xl p-4">
+                <p className="text-sm text-sora">
                   上記の内容で{mode === 'create' ? 'ノートタイプを作成' : '変更を保存'}します。
                   よろしければ「{mode === 'create' ? '作成' : '保存'}」ボタンをクリックしてください。
                 </p>
@@ -491,7 +491,7 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
           type="button"
           onClick={goToPrevious}
           disabled={currentStepIndex === 0}
-          className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-4 py-2 text-ink-2 font-bold border border-gray-300 rounded-2xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           前へ
         </button>
@@ -499,7 +499,7 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
         <div className="flex gap-3">
           <Link
             href="/note-types"
-            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-ink-2 font-bold border border-gray-300 rounded-2xl hover:bg-gray-50 transition-colors"
           >
             キャンセル
           </Link>
@@ -510,7 +510,7 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors"
+                className="px-6 py-2 bg-sora text-white font-bold rounded-2xl hover:bg-sora-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isSubmitting ? '保存中...' : mode === 'create' ? '作成' : '保存'}
               </button>
@@ -520,7 +520,7 @@ export function NoteTypeEditorClient({ mode, noteType }: NoteTypeEditorClientPro
               type="button"
               onClick={goToNext}
               disabled={!canProceed()}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors"
+              className="px-6 py-2 bg-sora text-white font-bold rounded-2xl hover:bg-sora-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               次へ
             </button>
