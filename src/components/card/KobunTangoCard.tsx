@@ -134,10 +134,25 @@ export function KobunTangoCard({ fieldValues, intervalPreviews, onComplete }: Ko
     const correct = question.mode === 'A' ? question.correct : [question.correct]
     const isCorrect = correct.includes(val)
     const isChosen = result?.chosen.includes(val)
-    if (isChosen && isCorrect) return <span className="kt-tag right">あなたの解答 ◎</span>
-    if (isChosen && !isCorrect) return <span className="kt-tag you">あなたの解答</span>
-    if (!isChosen && isCorrect) return <span className="kt-tag right-line">正しい選択肢</span>
-    return null
+    // 「あなたの解答」かつ「正しい選択肢」の場合は両方のタグを出す（片方の正解だけ選んだ時に
+    // 選んだ正解が誤答だと勘違いされないように）。
+    const tags: React.ReactNode[] = []
+    if (isChosen) {
+      tags.push(
+        <span key="you" className={'kt-tag ' + (isCorrect ? 'you-ok' : 'you')}>
+          あなたの解答
+        </span>
+      )
+    }
+    if (isCorrect) {
+      tags.push(
+        <span key="right" className={'kt-tag ' + (isChosen ? 'right' : 'right-line')}>
+          正しい選択肢
+        </span>
+      )
+    }
+    if (tags.length === 0) return null
+    return <span className="kt-tags">{tags}</span>
   }
 
   const correctList = question.mode === 'A' ? question.correct : [question.correct]
@@ -153,8 +168,8 @@ export function KobunTangoCard({ fieldValues, intervalPreviews, onComplete }: Ko
         <span className="kt-pos">{meta.pos}</span>
         {question.mode === 'A' ? (
           <>
+            {/* 漢字（読み仮名）は答えの推測につながるため出題中は隠す。採点後のフィードバックでのみ表示する。 */}
             <div className="kt-headword">{meta.headword}</div>
-            {meta.kanji && <div className="kt-kanji">{meta.kanji}</div>}
             <p className="kt-ask multi">
               該当する意味を<b>すべて</b>選んでください
             </p>
@@ -299,8 +314,10 @@ const styles = `
   .kt-opt.missed .kt-box { border-color:#3f7d57; }
   .kt-opt:disabled { cursor:default; }
   .kt-lab { flex:1; }
+  .kt-tags { flex-shrink:0; display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
   .kt-tag { flex-shrink:0; font-family:system-ui,sans-serif; font-size:.68rem; font-weight:600; letter-spacing:.04em; padding:2px 8px; border-radius:99px; white-space:nowrap; }
   .kt-tag.you { background:#a8434f; color:#fff; }
+  .kt-tag.you-ok { background:#eef2f5; color:#2b4257; border:1px solid #b9c6d1; }
   .kt-tag.right { background:#3f7d57; color:#fff; }
   .kt-tag.right-line { background:transparent; color:#3f7d57; border:1px solid #3f7d57; }
 

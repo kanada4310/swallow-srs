@@ -6,11 +6,13 @@ import Link from 'next/link'
 import { NoteEditor } from '@/components/deck/NoteEditor'
 import { NoteBrowser } from '@/components/deck/NoteBrowser'
 import { NoteEditModal } from '@/components/deck/NoteEditModal'
+import { WordbookView } from '@/components/deck/WordbookView'
 import { CSVImporter } from '@/components/deck/CSVImporter'
 import { BulkExampleGenerator } from '@/components/ai/ExampleGenerator'
 import { OCRImporter } from '@/components/ai/OCRImporter'
 import { DeckAdvancedSettings } from '@/components/deck/DeckAdvancedSettings'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/contexts/AuthContext'
 import { db } from '@/lib/db/schema'
 import type { NoteType, DeckSettings } from '@/types/database'
 import type { BrowsableNote } from '@/components/deck/NoteCard'
@@ -55,6 +57,8 @@ interface DeckDetailClientProps {
 export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettings, allDeckIds, notes: initialNotes, totalNoteCount: initialTotal, noteTypes, deckTags, canEdit, isOwner, userRole }: DeckDetailClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { userId } = useAuth()
+  const [noteView, setNoteView] = useState<'manage' | 'wordbook'>('manage')
   const [notes, setNotes] = useState<BrowsableNote[]>(initialNotes)
   const [totalNoteCount, setTotalNoteCount] = useState(initialTotal)
   const [isAddingNote, setIsAddingNote] = useState(false)
@@ -413,32 +417,54 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
         </div>
       )}
 
-      {/* Notes Browser (search, filter, sort, pagination, select/delete) */}
+      {/* Notes Browser / 単語帳（定着度）— タブで切替 */}
       <div>
-        <h2 className="text-lg font-bold text-ai mb-4">ノート一覧</h2>
-        <NoteBrowser
-          deckId={deckId}
-          allDeckIds={allDeckIds}
-          initialNotes={notes}
-          initialTotal={totalNoteCount}
-          noteTypes={noteTypes}
-          deckTags={deckTags}
-          canEdit={canEdit}
-          onEditNote={(note) => {
-            // 画像マスキングノートはビジュアルエディタで開く（生フィールド編集ではなく）
-            const fv = note.field_values || {}
-            if (fv['画像'] && fv['マスク領域'] !== undefined) {
-              router.push(`/notes/image-mask/${note.id}/edit`)
-            } else {
-              setEditingNote(note)
-            }
-          }}
-          onDeleteNote={handleDeleteNote}
-          onBulkDelete={handleBulkDelete}
-          onCopyNotes={canEdit ? handleCopyNotes : undefined}
-          onMoveNotes={canEdit ? handleMoveNotes : undefined}
-          deletingNoteId={deletingNoteId}
-        />
+        <div className="flex items-center gap-2 mb-4">
+          <button
+            onClick={() => setNoteView('manage')}
+            className={`px-4 py-2 rounded-2xl text-sm font-bold transition-colors ${
+              noteView === 'manage' ? 'bg-ai text-white' : 'bg-gray-100 text-ink-2 hover:bg-gray-200'
+            }`}
+          >
+            ノート一覧
+          </button>
+          <button
+            onClick={() => setNoteView('wordbook')}
+            className={`px-4 py-2 rounded-2xl text-sm font-bold transition-colors ${
+              noteView === 'wordbook' ? 'bg-ai text-white' : 'bg-gray-100 text-ink-2 hover:bg-gray-200'
+            }`}
+          >
+            単語帳（定着度）
+          </button>
+        </div>
+
+        {noteView === 'manage' ? (
+          <NoteBrowser
+            deckId={deckId}
+            allDeckIds={allDeckIds}
+            initialNotes={notes}
+            initialTotal={totalNoteCount}
+            noteTypes={noteTypes}
+            deckTags={deckTags}
+            canEdit={canEdit}
+            onEditNote={(note) => {
+              // 画像マスキングノートはビジュアルエディタで開く（生フィールド編集ではなく）
+              const fv = note.field_values || {}
+              if (fv['画像'] && fv['マスク領域'] !== undefined) {
+                router.push(`/notes/image-mask/${note.id}/edit`)
+              } else {
+                setEditingNote(note)
+              }
+            }}
+            onDeleteNote={handleDeleteNote}
+            onBulkDelete={handleBulkDelete}
+            onCopyNotes={canEdit ? handleCopyNotes : undefined}
+            onMoveNotes={canEdit ? handleMoveNotes : undefined}
+            deletingNoteId={deletingNoteId}
+          />
+        ) : (
+          <WordbookView deckId={deckId} userId={userId} />
+        )}
       </div>
 
       {/* Note Edit Modal */}
