@@ -22,6 +22,8 @@ interface NoteBrowserProps {
   onCopyNotes?: (noteIds: string[], targetDeckId: string) => Promise<void>
   onMoveNotes?: (noteIds: string[], targetDeckId: string) => Promise<void>
   deletingNoteId: string | null
+  /** フィルタサブデッキの固定絞り込みタグ（サーバー検索にも適用。実体は親デッキ側にある） */
+  lockedFilterTags?: string[]
 }
 
 const PAGE_SIZE = 50
@@ -42,6 +44,7 @@ export function NoteBrowser({
   onCopyNotes,
   onMoveNotes,
   deletingNoteId,
+  lockedFilterTags,
 }: NoteBrowserProps) {
   const [notes, setNotes] = useState<BrowsableNote[]>(initialNotes)
   const [total, setTotal] = useState(initialTotal)
@@ -89,8 +92,10 @@ export function NoteBrowser({
     if (deckId) {
       params.set('deckId', deckId)
     }
-    if (tag) {
-      params.set('tag', tag)
+    // フィルタサブデッキ: ユーザーがタグ未指定でも固定タグで絞る（タグ1つならサーバー側で）
+    const effectiveTag = tag || (lockedFilterTags && lockedFilterTags.length === 1 ? lockedFilterTags[0] : '')
+    if (effectiveTag) {
+      params.set('tag', effectiveTag)
     }
     // Include subdeck IDs for search
     if (allDeckIds && allDeckIds.length > 1) {
@@ -101,8 +106,14 @@ export function NoteBrowser({
     if (!response.ok) {
       throw new Error('検索に失敗しました')
     }
-    return response.json() as Promise<{ notes: BrowsableNote[]; total: number }>
-  }, [deckId, allDeckIds])
+    const result = (await response.json()) as { notes: BrowsableNote[]; total: number }
+    // 固定タグが複数の場合はサーバーで絞れないためクライアント側で絞る
+    // （total はサーバー値のまま＝「もっと読み込む」の継続判定用。表示件数と多少ずれても許容）
+    if (!tag && lockedFilterTags && lockedFilterTags.length > 1) {
+      result.notes = result.notes.filter(n => (n.tags || []).some(t => lockedFilterTags.includes(t)))
+    }
+    return result
+  }, [deckId, allDeckIds, lockedFilterTags])
 
   // Search with debounce
   const triggerSearch = useCallback((query: string, noteTypeId: string, order: string, tag?: string) => {

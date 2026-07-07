@@ -52,9 +52,11 @@ interface DeckDetailClientProps {
   canEdit: boolean
   isOwner?: boolean
   userRole?: string
+  /** フィルタサブデッキの固定絞り込みタグ（ノート実体は親デッキにある）。通常デッキは null/undefined */
+  lockedFilterTags?: string[] | null
 }
 
-export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettings, allDeckIds, notes: initialNotes, totalNoteCount: initialTotal, noteTypes, deckTags, canEdit, isOwner, userRole }: DeckDetailClientProps) {
+export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettings, allDeckIds, notes: initialNotes, totalNoteCount: initialTotal, noteTypes, deckTags, canEdit, isOwner, userRole, lockedFilterTags }: DeckDetailClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { userId } = useAuth()
@@ -301,10 +303,13 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
     }
   }
 
+  // フィルタサブデッキ: ノート実体は親デッキにあるため、このデッキへの実体作成系ボタンは出さない
+  const isFilterSubdeck = !!(lockedFilterTags && lockedFilterTags.length > 0)
+
   return (
     <div>
       {/* Action Buttons for deck owner */}
-      {canEdit && (
+      {canEdit && !isFilterSubdeck && (
         <div className="mb-6 flex flex-wrap gap-3">
           <button
             onClick={() => setShowImportModal(true)}
@@ -394,7 +399,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
       </div>
 
       {/* Add Note Section */}
-      {canEdit && (
+      {canEdit && !isFilterSubdeck && (
         <div className="mb-6">
           {isAddingNote ? (
             <div className="bg-white rounded-card border border-gray-200 p-4">
@@ -422,6 +427,11 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
 
       {/* Notes Browser / 単語帳（定着度）— タブで切替 */}
       <div>
+        {isFilterSubdeck && (
+          <p className="mb-3 text-sm text-ink-3">
+            このデッキは親デッキから「{lockedFilterTags!.join('、')}」で絞り込んだ表示です（カードの実体は親デッキにあります）
+          </p>
+        )}
         <div className="flex items-center gap-2 mb-4">
           <button
             onClick={() => setNoteView('wordbook')}
@@ -464,6 +474,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
             onCopyNotes={canEdit ? handleCopyNotes : undefined}
             onMoveNotes={canEdit ? handleMoveNotes : undefined}
             deletingNoteId={deletingNoteId}
+            lockedFilterTags={lockedFilterTags || undefined}
           />
         ) : (
           <WordbookView deckId={deckId} userId={userId} />

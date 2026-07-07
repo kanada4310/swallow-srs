@@ -5,7 +5,8 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { db, getDescendantDeckIds } from '@/lib/db/schema'
+import { db } from '@/lib/db/schema'
+import { resolveDeckScope, noteMatchesFilterTags } from '@/lib/db/deck-scope'
 import type { NoteType, DeckSettings } from '@/types/database'
 import type { BrowsableNote } from '@/components/deck/NoteCard'
 import { DeckDetailClient } from './DeckDetailClient'
@@ -26,6 +27,8 @@ interface DeckData {
   canEdit: boolean
   userRole: string
   isFilterDeck: boolean
+  /** フィルタサブデッキのタグ（ノート一覧・単語帳をこのタグで固定絞り込み）。通常デッキは null */
+  lockedFilterTags: string[] | null
 }
 
 function DeckDetailSkeleton() {
@@ -79,13 +82,18 @@ export default function DeckDetailPage() {
         const deck = await db.decks.get(deckId)
         if (!deck) return { kind: 'not_found' }
 
-        const descendantIds = await getDescendantDeckIds(deckId)
-        const allDeckIds = [deckId, ...descendantIds]
+        // フィルタサブデッキはノート実体が親（ルート）ツリーにある
+        // → ルートツリー全体から filter_tags で絞った結果を「このデッキの中身」として表示する
+        const scope = await resolveDeckScope(deckId)
+        const allDeckIds = scope.allDeckIds
 
-        const allNotes = await db.notes
+        const rawNotes = await db.notes
           .where('deck_id')
           .anyOf(allDeckIds)
           .toArray()
+        const allNotes = scope.isFilterDeck
+          ? rawNotes.filter(n => noteMatchesFilterTags(n.tags, scope.filterTags))
+          : rawNotes
 
         allNotes.sort((a, b) => {
           const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
@@ -117,7 +125,15 @@ export default function DeckDetailPage() {
           cards: cardsMap.get(n.id) || [],
         }))
 
-        const deckCards = await db.cards.where('deck_id').equals(deckId).toArray()
+        // 統計: フィルタデッキは「絞ったノートに属するカード」を母集団にする（デッキ一覧チップと一致）
+        let deckCards
+        if (scope.isFilterDeck) {
+          const matchedNoteIds = new Set(allNotes.map(n => n.id))
+          const treeCards = await db.cards.where('deck_id').anyOf(allDeckIds).toArray()
+          deckCards = treeCards.filter(c => matchedNoteIds.has(c.note_id))
+        } else {
+          deckCards = await db.cards.where('deck_id').equals(deckId).toArray()
+        }
         const totalCards = deckCards.length
 
         const cardIds = deckCards.map(c => c.id)
@@ -197,6 +213,7 @@ export default function DeckDetailPage() {
             canEdit,
             userRole: profile.role,
             isFilterDeck,
+            lockedFilterTags: scope.isFilterDeck ? scope.filterTags : null,
           },
         }
       } catch (error) {
@@ -334,6 +351,7 @@ export default function DeckDetailPage() {
           canEdit={deckData.canEdit}
           isOwner={deckData.isOwner}
           userRole={deckData.userRole}
+          lockedFilterTags={deckData.lockedFilterTags}
         />
       </div>
     </AppLayout>

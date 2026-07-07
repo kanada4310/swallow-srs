@@ -6,7 +6,8 @@
  * 複数カードを持つ場合は、一番弱いカードの定着度を採用する（aggregateMastery）。
  */
 
-import { db, getDescendantDeckIds } from '@/lib/db/schema'
+import { db } from '@/lib/db/schema'
+import { resolveDeckScope, noteMatchesFilterTags } from '@/lib/db/deck-scope'
 import { pickLabel } from '@/lib/garden/garden-data'
 import {
   deriveMastery,
@@ -63,14 +64,20 @@ export async function getWordbookForDeck(
   deckId: string,
   userId: string
 ): Promise<WordbookEntry[]> {
-  const deckIds = [deckId, ...(await getDescendantDeckIds(deckId))]
+  // フィルタサブデッキはノート実体が親（ルート）ツリーにある → タグで絞った結果を単語帳にする
+  const scope = await resolveDeckScope(deckId)
 
-  const cards = await db.cards.where('deck_id').anyOf(deckIds).toArray()
+  let cards = await db.cards.where('deck_id').anyOf(scope.allDeckIds).toArray()
   if (cards.length === 0) return []
 
   const noteIds = Array.from(new Set(cards.map((c) => c.note_id)))
   const notes = await db.notes.where('id').anyOf(noteIds).toArray()
   const noteMap = new Map(notes.map((n) => [n.id, n]))
+
+  if (scope.isFilterDeck) {
+    cards = cards.filter((c) => noteMatchesFilterTags(noteMap.get(c.note_id)?.tags, scope.filterTags))
+    if (cards.length === 0) return []
+  }
 
   const states = await db.cardStates.where('user_id').equals(userId).toArray()
   const stateByCard = new Map(states.map((s) => [s.card_id, s]))
