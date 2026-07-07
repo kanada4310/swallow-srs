@@ -32,6 +32,8 @@ interface Assignment {
   id: string
   deckId: string
   assignedAt: string
+  /** 親デッキの配布から継承された行（解除は配布元デッキで行う） */
+  inherited?: boolean
   type: 'class' | 'individual'
   target: {
     id: string
@@ -861,14 +863,23 @@ function DistributeModal({ deckId, onClose }: { deckId: string; onClose: () => v
                           {assignment.target.email && (
                             <span className="text-xs text-ink-3 ml-1">({assignment.target.email})</span>
                           )}
+                          {assignment.inherited && (
+                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-200 text-ink-3 ml-2">
+                              親デッキから配布
+                            </span>
+                          )}
                         </div>
-                        <button
-                          onClick={() => handleRemove(assignment.id)}
-                          disabled={isRemoving === assignment.id}
-                          className="text-sm font-bold text-again hover:opacity-80 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
-                        >
-                          {isRemoving === assignment.id ? '削除中...' : '削除'}
-                        </button>
+                        {assignment.inherited ? (
+                          <span className="text-xs text-ink-3">親デッキで解除</span>
+                        ) : (
+                          <button
+                            onClick={() => handleRemove(assignment.id)}
+                            disabled={isRemoving === assignment.id}
+                            className="text-sm font-bold text-again hover:opacity-80 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+                          >
+                            {isRemoving === assignment.id ? '削除中...' : '削除'}
+                          </button>
+                        )}
                       </li>
                     ))}
                   </ul>

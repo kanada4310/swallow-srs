@@ -84,14 +84,34 @@ export async function GET(request: NextRequest) {
       }
 
       if (!(await canManageDeck(supabase, user.id, deck.owner_id))) {
-        const { data: assignment } = await supabase
-          .from('deck_assignments')
-          .select('id')
-          .eq('deck_id', primaryDeckId)
-          .eq('user_id', user.id)
-          .maybeSingle()
+        // 直接配布 or クラス経由配布のどちらかがあればアクセス可
+        // （従来は user_id 直接配布しか見ておらず、クラス配布の生徒が 403 になっていた）
+        const [{ data: assignment }, { data: classMembers }] = await Promise.all([
+          supabase
+            .from('deck_assignments')
+            .select('id')
+            .eq('deck_id', primaryDeckId)
+            .eq('user_id', user.id)
+            .maybeSingle(),
+          supabase.from('class_members').select('class_id').eq('user_id', user.id),
+        ])
 
-        if (!assignment) {
+        let hasAccess = !!assignment
+        if (!hasAccess) {
+          const classIds = (classMembers || []).map(cm => cm.class_id)
+          if (classIds.length > 0) {
+            const { data: classAssignment } = await supabase
+              .from('deck_assignments')
+              .select('id')
+              .eq('deck_id', primaryDeckId)
+              .in('class_id', classIds)
+              .limit(1)
+              .maybeSingle()
+            hasAccess = !!classAssignment
+          }
+        }
+
+        if (!hasAccess) {
           return NextResponse.json({ error: 'Access denied' }, { status: 403 })
         }
       }

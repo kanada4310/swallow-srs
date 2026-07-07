@@ -144,10 +144,13 @@ export async function DELETE(
     }
 
     // Check for active assignments
+    // 直接配布のみブロック。継承行（source_deck_id 非NULL＝親の配布から自動作成）は
+    // デッキ削除時に FK CASCADE で一緒に消えるためブロックしない
     const { count: assignmentCount } = await supabase
       .from('deck_assignments')
       .select('id', { count: 'exact', head: true })
       .eq('deck_id', deckId)
+      .is('source_deck_id', null)
 
     if (assignmentCount && assignmentCount > 0) {
       return NextResponse.json({

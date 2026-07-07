@@ -141,6 +141,8 @@ export interface DeckAssignment {
   class_id: string | null
   user_id: string | null
   assigned_at: string
+  /** NULL=直接配布。非NULL=この祖先デッキの配布から継承された行（022） */
+  source_deck_id?: string | null
 }
 
 // 記憶のいきもの育成（Phase 10.4）— 品種インプリント

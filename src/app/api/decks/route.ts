@@ -99,6 +99,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create deck' }, { status: 500 })
     }
 
+    // 配布済み親の下に作ったサブデッキは親の配布を継承する（022_subdeck_assignments）
+    // 失敗しても非致命（次回の配布操作 or バックフィル再実行で自己修復）
+    if (parentDeckId) {
+      try {
+        const { data: parentAssignments } = await supabase
+          .from('deck_assignments')
+          .select('class_id, user_id, source_deck_id')
+          .eq('deck_id', parentDeckId)
+        if (parentAssignments && parentAssignments.length > 0) {
+          const rows = parentAssignments.map(a => ({
+            deck_id: deck.id,
+            class_id: a.class_id,
+            user_id: a.user_id,
+            // 親自身が継承している場合は元の配布元を引き継ぐ
+            source_deck_id: a.source_deck_id ?? parentDeckId,
+          }))
+          const { error: inheritError } = await supabase.from('deck_assignments').insert(rows)
+          if (inheritError && inheritError.code !== '23505') {
+            console.error('Error inheriting parent assignments:', inheritError)
+          } else {
+            await supabase.from('decks').update({ is_distributed: true }).eq('id', deck.id)
+          }
+        }
+      } catch (e) {
+        console.error('Error inheriting parent assignments:', e)
+      }
+    }
+
     return NextResponse.json({ success: true, deck })
   } catch (error) {
     console.error('Error in deck creation API:', error)
