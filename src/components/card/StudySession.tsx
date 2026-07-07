@@ -26,6 +26,8 @@ import { pickLabel } from '@/lib/garden/garden-data'
 import { pickVarietyByHash, getVariety, type Variety } from '@/lib/garden/varieties'
 import { derivePlantState, GROWTH_ORDER, type GrowthStage } from '@/lib/garden/plant-state'
 import { GARDEN_ENABLED } from '@/lib/garden/feature'
+import { useStreak } from '@/lib/stats/useStreak'
+import { SwallowMark } from '@/components/ui/SwallowMark'
 import Link from 'next/link'
 import type { GeneratedContent, FieldDefinition, DeckSettings, CreatureImprint } from '@/types/database'
 
@@ -158,6 +160,8 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
   const handleAnswerRef = useRef<(ease: Ease) => void>(() => {})
 
   const settings = resolveDeckSettings(deckSettings)
+  // 完了画面のストリーク表示用（Dexie 駆動・オフライン可）
+  const streak = useStreak(userId)
 
   // Pick next card from queues
   const pickNextCard = useCallback((
@@ -710,33 +714,46 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
   const isSessionComplete = !currentCard && !isWaiting && mainIndex >= mainQueue.length && learningQueue.length === 0
 
   if (isSessionComplete) {
+    const nothingStudied = stats.reviewed === 0
     return (
-      <div className="max-w-lg mx-auto text-center py-12">
-        <div className="text-green-500 mb-4">
-          <svg className="w-20 h-20 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+      <div className="max-w-lg mx-auto text-center py-12 px-4">
+        <div className="w-24 h-24 mx-auto rounded-full bg-nodo-soft flex items-center justify-center mb-5">
+          <SwallowMark className="w-14 h-auto" fill="#FF7849" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">{practiceMode ? '練習完了!' : '学習完了!'}</h2>
-        <p className="text-gray-600 mb-6">
-          {practiceMode
-            ? `${deckName}の練習が終わりました。`
-            : `${deckName}の今日の学習が終わりました。`}
+        <h2 className="text-2xl font-extrabold text-ai mb-1">
+          {nothingStudied
+            ? '今日のノルマはありません'
+            : practiceMode
+              ? '練習おつかれさま！'
+              : '今日のノルマ完了！'}
+        </h2>
+        <p className="text-gray-500 text-sm mb-6">
+          {nothingStudied
+            ? `${deckName}は今日やるカードがない状態です。`
+            : practiceMode
+              ? `${deckName}の練習が終わりました。`
+              : `${deckName}を${stats.reviewed}枚やりきりました。おつかれさま。`}
         </p>
-        <div className="bg-gray-100 rounded-lg p-4 mb-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <div className="text-3xl font-bold text-gray-900">{stats.reviewed}</div>
-              <div className="text-sm text-gray-500">学習したカード</div>
+        {!nothingStudied && (
+          <div className="grid grid-cols-3 gap-2 mb-6">
+            <div className="bg-white border border-gray-200 rounded-2xl p-3">
+              <div className="text-2xl font-extrabold text-ai tabular-nums">{stats.reviewed}</div>
+              <div className="text-[11px] font-bold text-gray-400">学習カード</div>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-green-600">
-                {stats.reviewed > 0 ? Math.round((stats.correct / stats.reviewed) * 100) : 0}%
+            <div className="bg-white border border-gray-200 rounded-2xl p-3">
+              <div className="text-2xl font-extrabold text-good tabular-nums">
+                {Math.round((stats.correct / stats.reviewed) * 100)}%
               </div>
-              <div className="text-sm text-gray-500">正答率</div>
+              <div className="text-[11px] font-bold text-gray-400">正答率</div>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-2xl p-3">
+              <div className="text-2xl font-extrabold text-nodo tabular-nums">
+                {streak.loading ? '–' : `${streak.current}日`}
+              </div>
+              <div className="text-[11px] font-bold text-gray-400">連続記録</div>
             </div>
           </div>
-        </div>
+        )}
         {grownEvents.length > 0 && (
           <GrowthCelebration events={grownEvents} imprintMap={imprintMap} deckId={deckId} />
         )}
@@ -749,7 +766,7 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
           />
           <Link
             href="/decks"
-            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors py-2"
           >
             デッキ一覧に戻る
           </Link>
@@ -762,15 +779,13 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
   // No cards to study (empty initial cards)
   if (totalCards === 0) {
     return (
-      <div className="max-w-lg mx-auto text-center py-12">
-        <div className="text-gray-400 mb-4">
-          <svg className="w-20 h-20 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+      <div className="max-w-lg mx-auto text-center py-12 px-4">
+        <div className="w-24 h-24 mx-auto rounded-full bg-sora-soft flex items-center justify-center mb-5">
+          <SwallowMark className="w-14 h-auto" fill="#3E8EF7" />
         </div>
-        <h2 className="text-xl font-bold text-gray-900 mb-2">学習するカードがありません</h2>
-        <p className="text-gray-600 mb-6">
-          今日の学習は完了しています。また明日来てください!
+        <h2 className="text-xl font-extrabold text-ai mb-1">今日のカードはありません</h2>
+        <p className="text-gray-500 text-sm mb-6">
+          このデッキの今日の学習は完了しています。また明日！
         </p>
         <div className="flex flex-col items-center gap-3">
           <MorePracticeSection
@@ -780,7 +795,7 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
           />
           <Link
             href="/decks"
-            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors py-2"
           >
             デッキ一覧に戻る
           </Link>
@@ -812,7 +827,7 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
             <div
-              className="h-full bg-blue-600 transition-all duration-300"
+              className="h-full bg-sora transition-all duration-300"
               style={{ width: `${(graduatedCount / totalCards) * 100}%` }}
             />
           </div>
@@ -846,6 +861,15 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
   // React で直接描画する自動採点カード（タイマー/スワイプを無効化する）
   const isReactQuizCard = isMultiStep || isKobunTango
 
+  // 残数の内訳（Anki式の3色カウント: 新規/学習中/復習）。現在表示中のカードも残数に含む
+  const remainingMain = mainQueue.slice(mainIndex)
+  const newLeft = remainingMain.filter(c => c.schedule.state === 'new').length
+  const learnLeftMain = remainingMain.filter(
+    c => c.schedule.state === 'learning' || c.schedule.state === 'relearning'
+  ).length
+  const learnLeft = learnLeftMain + learningQueue.length
+  const reviewLeft = remainingMain.length - newLeft - learnLeftMain
+
   return (
     <div className="py-6">
       {/* Leech notification */}
@@ -876,11 +900,10 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
             <span className="truncate">{deckName}</span>
           </span>
           <div className="flex items-center gap-4">
-            <span>
-              {graduatedCount} / {totalCards}
-              {learningQueue.length > 0 && (
-                <span className="text-orange-500 ml-1">(+{learningQueue.length})</span>
-              )}
+            <span className="flex items-center gap-2 font-bold tabular-nums" title="新規 / 学習中 / 復習">
+              <span className="text-easy">{newLeft}</span>
+              <span className="text-hard">{learnLeft}</span>
+              <span className="text-good">{reviewLeft}</span>
             </span>
             {!isOnline && (
               <span className="flex items-center gap-1 text-yellow-600">
@@ -1065,16 +1088,16 @@ function MorePracticeSection({
     )
   }
   return (
-    <div className="flex flex-col items-center gap-1">
-      <button
-        onClick={onRequestPractice}
-        disabled={loading}
-        className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-60"
-      >
-        {loading ? '読み込み中…' : '➕ もっと練習する'}
-      </button>
-      <span className="text-xs text-gray-400">※練習の結果はスケジュールに記録されません</span>
-    </div>
+    <button
+      onClick={onRequestPractice}
+      disabled={loading}
+      className="w-full max-w-xs bg-white border-2 border-sora text-sora rounded-2xl px-8 py-3 font-extrabold hover:bg-sora-soft transition-colors disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+    >
+      {loading ? '読み込み中…' : 'もう少しだけ練習する'}
+      <span className="block text-[11px] font-semibold text-gray-400 mt-0.5">
+        スケジュールには記録されません
+      </span>
+    </button>
   )
 }
 

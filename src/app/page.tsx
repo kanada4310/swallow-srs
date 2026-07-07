@@ -4,13 +4,19 @@ import Link from 'next/link'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { SwallowMark } from '@/components/ui/SwallowMark'
+import { useStreak } from '@/lib/stats/useStreak'
+import { resolveDeckSettings } from '@/lib/srs/scheduler'
 import { db } from '@/lib/db/schema'
 
-interface StudentStats {
-  dueCards: number
-  newCards: number
-  learningCards: number
+/** 今日のミッション＝いま期限が来ている復習＋今日の新規枠（ルートデッキ毎の上限を反映） */
+interface TodayMission {
+  reviewDue: number
+  newToday: number
+  total: number
   reviewsToday: number
+  /** 残数が最も多いルートデッキ（開始ボタンの遷移先） */
+  primaryDeckId: string | null
 }
 
 interface RecentDeck {
@@ -27,7 +33,7 @@ interface TeacherStats {
   cardCount: number
 }
 
-async function getStudentStatsLocal(userId: string): Promise<StudentStats> {
+async function getTodayMissionLocal(userId: string): Promise<TodayMission> {
   const now = new Date()
   const todayStart = new Date()
   todayStart.setHours(4, 0, 0, 0)
@@ -35,32 +41,98 @@ async function getStudentStatsLocal(userId: string): Promise<StudentStats> {
     todayStart.setDate(todayStart.getDate() - 1)
   }
 
-  const allCardStates = await db.cardStates
-    .where('user_id')
-    .equals(userId)
-    .toArray()
+  const [allDecks, allCards, allCardStates, todayLogs, userSettings] = await Promise.all([
+    db.decks.toArray(),
+    db.cards.toArray(),
+    db.cardStates.where('user_id').equals(userId).toArray(),
+    db.reviewLogs
+      .where('user_id')
+      .equals(userId)
+      .filter(log => log.reviewed_at >= todayStart)
+      .toArray(),
+    db.userDeckSettings.toArray().catch(() => []),
+  ])
 
-  let dueCards = 0
-  let learningCards = 0
-  const studiedCardIds = new Set(allCardStates.map(cs => cs.card_id))
+  // カード→ルートデッキの対応表
+  const deckMap = new Map(allDecks.map(d => [d.id, d]))
+  const rootOf = (deckId: string): string => {
+    let id = deckId
+    for (let depth = 0; depth < 10; depth++) {
+      const d = deckMap.get(id)
+      if (!d?.parent_deck_id) return id
+      id = d.parent_deck_id
+    }
+    return id
+  }
+  const cardRoot = new Map<string, string>()
+  for (const c of allCards) cardRoot.set(c.id, rootOf(c.deck_id))
 
-  for (const cs of allCardStates) {
-    if (cs.state === 'review' && cs.due <= now) dueCards++
-    if (cs.state === 'learning' || cs.state === 'relearning') learningCards++
+  const stateByCard = new Map(allCardStates.map(cs => [cs.card_id, cs]))
+  const userSettingByRoot = new Map(
+    userSettings.filter(s => s.user_id === userId).map(s => [s.deck_id, s.settings])
+  )
+
+  // ルートデッキ毎に集計: 期限が来ている復習/学習中 ＋ 今日の新規枠
+  const perRoot = new Map<string, { due: number; newAvailable: number; newIntroduced: number }>()
+  const ensure = (rootId: string) => {
+    let v = perRoot.get(rootId)
+    if (!v) {
+      v = { due: 0, newAvailable: 0, newIntroduced: 0 }
+      perRoot.set(rootId, v)
+    }
+    return v
   }
 
-  // Count new cards
-  const allCards = await db.cards.toArray()
-  const newCards = allCards.filter(c => !studiedCardIds.has(c.id)).length
+  for (const c of allCards) {
+    const rootId = cardRoot.get(c.id)!
+    const cs = stateByCard.get(c.id)
+    if (!cs) {
+      ensure(rootId).newAvailable++
+    } else if (cs.state === 'suspended') {
+      continue
+    } else if (cs.state === 'new') {
+      ensure(rootId).newAvailable++
+    } else if (cs.due <= now) {
+      ensure(rootId).due++
+    }
+  }
+  for (const log of todayLogs) {
+    if (log.last_interval === 0) {
+      const rootId = cardRoot.get(log.card_id)
+      if (rootId) ensure(rootId).newIntroduced++
+    }
+  }
 
-  // Reviews today
-  const reviewsToday = await db.reviewLogs
-    .where('user_id')
-    .equals(userId)
-    .filter(log => log.reviewed_at >= todayStart)
-    .count()
+  let reviewDue = 0
+  let newToday = 0
+  let best: { deckId: string; count: number } | null = null
+  for (const [rootId, v] of Array.from(perRoot.entries())) {
+    const settings = resolveDeckSettings({
+      ...(deckMap.get(rootId)?.settings || {}),
+      ...(userSettingByRoot.get(rootId) || {}),
+    })
+    const rootNewToday = Math.min(
+      Math.max(0, settings.new_cards_per_day - v.newIntroduced),
+      v.newAvailable
+    )
+    reviewDue += v.due
+    newToday += rootNewToday
+    const count = v.due + rootNewToday
+    if (count > 0 && (!best || count > best.count)) {
+      best = { deckId: rootId, count }
+    }
+  }
 
-  return { dueCards, newCards, learningCards, reviewsToday }
+  // 今日レビューした枚数（distinct card）
+  const reviewsToday = new Set(todayLogs.map(l => l.card_id)).size
+
+  return {
+    reviewDue,
+    newToday,
+    total: reviewDue + newToday,
+    reviewsToday,
+    primaryDeckId: best?.deckId ?? null,
+  }
 }
 
 async function getRecentDecksLocal(userId: string): Promise<RecentDeck[]> {
@@ -176,13 +248,16 @@ export default function DashboardPage() {
   return (
     <AppLayout>
       <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">
-            こんにちは、{profile.name}さん
-          </h1>
-          <p className="text-gray-600 mt-1">
-            {profile.role === 'teacher' ? '講師ダッシュボード' : '今日も頑張りましょう！'}
-          </p>
+        <div className="mb-6 flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-extrabold text-ai">
+              こんにちは、{profile.name}さん
+            </h1>
+            <p className="text-gray-500 mt-1">
+              {profile.role === 'teacher' ? '講師ダッシュボード' : '今日も頑張りましょう！'}
+            </p>
+          </div>
+          {profile.role === 'student' && <StreakChip userId={profile.id} />}
         </div>
 
         {profile.role === 'student' ? (
@@ -195,45 +270,74 @@ export default function DashboardPage() {
   )
 }
 
+function StreakChip({ userId }: { userId: string }) {
+  const { current, loading } = useStreak(userId)
+  if (loading || current === 0) return null
+  return (
+    <span className="flex-shrink-0 flex items-center gap-1.5 bg-nodo-soft text-[#C2410C] font-extrabold text-sm rounded-full px-3.5 py-2">
+      <svg width="13" height="15" viewBox="0 0 14 16" aria-hidden>
+        <path
+          d="M7 0C8 3 12 5 12 9.5A5 5 0 0 1 2 9.5C2 7 3.5 5.5 4.5 4 5 6 6.5 6.5 7 8 8.5 6 7 2 7 0Z"
+          fill="#FF7849"
+        />
+      </svg>
+      {current}日連続
+    </span>
+  )
+}
+
 function StudentDashboard({ userId }: { userId: string }) {
   // liveQuery re-runs whenever cardStates / cards / reviewLogs / decks change in IndexedDB.
   // This is what makes the dashboard auto-refresh when the first sync after LINE login completes.
-  const stats = useLiveQuery(() => getStudentStatsLocal(userId), [userId])
+  const mission = useLiveQuery(() => getTodayMissionLocal(userId), [userId])
   const recentDecks = useLiveQuery(() => getRecentDecksLocal(userId), [userId]) ?? []
 
   return (
     <div className="space-y-6">
-      {/* Today's Study Summary */}
-      <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">今日の学習</h2>
-        {stats ? (
-          <>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <div className="text-3xl font-bold text-blue-600">{stats.dueCards}</div>
-                <div className="text-sm text-gray-600 mt-1">復習カード</div>
+      {/* 今日のミッション */}
+      <section className="relative overflow-hidden rounded-card bg-gradient-to-br from-ai to-ai-soft p-6 text-white shadow-card">
+        <SwallowMark className="pointer-events-none absolute -right-2 top-3 w-32 opacity-15" fill="#fff" />
+        {mission ? (
+          mission.total > 0 ? (
+            <>
+              <div className="text-[11px] font-bold tracking-widest text-[#AEC4F5]">
+                今日のミッション
               </div>
-              <div className="p-4 bg-green-50 rounded-lg">
-                <div className="text-3xl font-bold text-green-600">{stats.newCards}</div>
-                <div className="text-sm text-gray-600 mt-1">新規カード</div>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-5xl font-extrabold tabular-nums leading-none">
+                  {mission.total}
+                </span>
+                <span className="text-sm text-[#C9D6F3]">枚 / 約{estimateMinutes(mission.total)}分</span>
               </div>
-              <div className="p-4 bg-purple-50 rounded-lg">
-                <div className="text-3xl font-bold text-purple-600">{stats.learningCards}</div>
-                <div className="text-sm text-gray-600 mt-1">学習中</div>
+              <div className="mt-1 mb-4 text-[13px] text-[#AEC4F5]">
+                新規 <b className="text-white">{mission.newToday}</b> ・ 復習{' '}
+                <b className="text-white">{mission.reviewDue}</b>
+                {mission.reviewsToday > 0 && <>（今日すでに {mission.reviewsToday} 枚学習）</>}
               </div>
-            </div>
-            {stats.reviewsToday > 0 && (
-              <p className="text-center text-sm text-gray-500 mt-4">
-                今日は {stats.reviewsToday} 枚のカードを復習しました
+              <Link
+                href={mission.primaryDeckId ? `/study?deck=${mission.primaryDeckId}` : '/decks'}
+                className="block w-full rounded-2xl bg-nodo py-3.5 text-center text-base font-extrabold text-white shadow-[0_4px_14px_rgba(255,120,73,.35)] transition-colors hover:bg-nodo-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                学習をはじめる
+              </Link>
+            </>
+          ) : (
+            <>
+              <div className="text-[11px] font-bold tracking-widest text-[#AEC4F5]">
+                今日のミッション
+              </div>
+              <div className="mt-1 text-2xl font-extrabold">
+                {mission.reviewsToday > 0 ? '今日のノルマ完了！' : '今日やるカードはありません'}
+              </div>
+              <p className="mt-1 text-[13px] text-[#C9D6F3]">
+                {mission.reviewsToday > 0
+                  ? `${mission.reviewsToday}枚やりきりました。おつかれさま。`
+                  : 'デッキが配布されるとここに今日の枚数が出ます。'}
               </p>
-            )}
-          </>
+            </>
+          )
         ) : (
-          <div className="grid grid-cols-3 gap-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="p-4 bg-gray-100 rounded-lg animate-pulse h-20" />
-            ))}
-          </div>
+          <div className="h-28 animate-pulse rounded-xl bg-white/10" />
         )}
       </section>
 
@@ -294,32 +398,23 @@ function StudentDashboard({ userId }: { userId: string }) {
         </section>
       )}
 
-      {/* Quick Actions */}
-      <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">クイックアクション</h2>
-        <div className="space-y-3">
-          <Link
-            href="/study"
-            className="flex items-center justify-between w-full p-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <span className="font-medium">学習を始める</span>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-          <Link
-            href="/decks"
-            className="flex items-center justify-between w-full p-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            <span className="font-medium">デッキ一覧を見る</span>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-        </div>
-      </section>
+      {/* デッキ一覧への導線 */}
+      <Link
+        href="/decks"
+        className="flex items-center justify-between w-full p-4 bg-white border border-gray-200 text-gray-700 rounded-2xl hover:bg-gray-50 transition-colors"
+      >
+        <span className="font-bold">デッキ一覧を見る</span>
+        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </Link>
     </div>
   )
+}
+
+/** 1枚≒25秒 として見積もり（切り上げ・最低1分） */
+function estimateMinutes(cards: number): number {
+  return Math.max(1, Math.ceil((cards * 25) / 60))
 }
 
 function TeacherDashboard({ userId }: { userId: string }) {

@@ -604,12 +604,12 @@ export function StudyCard({
         {!isFlipped ? (
           <button
             onClick={handleFlip}
-            className="w-full py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-lg font-medium"
+            className="w-full py-4 bg-sora text-white rounded-2xl hover:bg-sora-dark transition-colors text-lg font-bold shadow-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             答えを見る
           </button>
         ) : (
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-[1fr_1fr_1.35fr_1fr] gap-2">
             <AnswerButton
               label={autoAgainCountdown != null ? `もう一度 (${autoAgainCountdown})` : "もう一度"}
               interval={intervalPreviews[Ease.Again]}
@@ -651,20 +651,21 @@ interface AnswerButtonProps {
 }
 
 function AnswerButton({ label, interval, color, onClick, highlight }: AnswerButtonProps) {
+  // 淡い地色×濃い文字で彩度を抑え、いちばん押す「正解」だけ塗りで強調する
   const colorClasses = {
-    red: 'bg-red-500 hover:bg-red-600',
-    orange: 'bg-orange-500 hover:bg-orange-600',
-    green: 'bg-green-500 hover:bg-green-600',
-    blue: 'bg-blue-500 hover:bg-blue-600',
+    red: 'bg-again-bg text-again hover:brightness-95',
+    orange: 'bg-hard-bg text-hard hover:brightness-95',
+    green: 'bg-good text-white hover:bg-good-dark shadow-[0_4px_12px_rgba(23,146,95,.3)]',
+    blue: 'bg-easy-bg text-easy hover:brightness-95',
   }
 
   return (
     <button
       onClick={onClick}
-      className={`py-3 px-2 ${colorClasses[color]} text-white rounded-lg transition-colors flex flex-col items-center ${highlight ? 'ring-2 ring-red-300 ring-offset-1 animate-pulse' : ''}`}
+      className={`py-4 px-1 ${colorClasses[color]} rounded-2xl transition-all active:scale-95 flex flex-col items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai ${highlight ? 'ring-2 ring-again ring-offset-1 animate-pulse' : ''}`}
     >
-      <span className="text-sm font-medium">{label}</span>
-      <span className="text-xs opacity-80">{interval}</span>
+      <span className="text-[15px] font-bold leading-tight">{label}</span>
+      <span className="text-[11px] font-semibold opacity-70 mt-0.5">{interval}</span>
     </button>
   )
 }
