@@ -21,9 +21,10 @@
 - **チュートリアル第1弾**: デッキ「つばめSRSのつかいかた」15枚投入済み（id `12347515-3c06-4c44-872b-e20e160328ea`・**未配布**・`data/create-tutorial-deck.mjs --reset` で再投入可）＋コーチマーク（初回フリップ時に評価ボタン説明・localStorage 既読）
 - **エンジン修正**: `getStudyCardsOffline` の deckCards を created_at→id で安定ソート（「順番どおり」が本当に作成順に。従来はUUID順=実質ランダム）
 - **検証**: tsc/lint クリーン・テスト397件・build 成功。Chrome実機でデッキ一覧/学習/完了/チュートリアル出題順/コーチマークを確認
+- **追記（同日後半）**: ①**生徒スマホ環境の再現ツール** `scripts/device-preview.mjs`（Playwright devDep＋chromium。`SRS_AUTH_SECRET` で JWT 署名→本物の `/auth/line` 経路で「テスト生徒（確認用）」に自動ログイン・iPhone/iPad エミュレーション・`.device-preview/shots/` にスクショ・永続プロファイルで IndexedDB 保持。**Git Bash からは `MSYS_NO_PATHCONV=1` 必須**。`--teacher` は偽講師が teacher-shared 同期に載るので通常使わない）。テスト生徒 `dd608ec4…` にはチュートリアルデッキを個人配布済み＝ホームのミッションカード「5枚/約3分」実機確認OK ②**PWAアイコン新調** `data/generate-pwa-icons.mjs`（sharp・藍グラデ×白つばめ×橙点・8サイズ上書き）③BottomNav「生徒」を lucide Users に ④デッキ詳細のツールボタンを sora-soft チップに（無色で視認性が悪かった）
 - **次セッション注意**:
-  - **要 Vercel デプロイ＋再ログイン**。生徒実機（LINE経由）でホームのミッションカードと学習画面を要確認
-  - **public/icons のPNGは旧ブルーのまま**（PWAアイコン再生成が残作業）。ダークモードはトークン差し替えで対応可能
+  - **要 Vercel デプロイ＋再ログイン**。スマホ確認は `scripts/device-preview.mjs` でいつでも可能
+  - ダークモードはトークン差し替えで対応可能
   - チュートリアルデッキは**旧id `dc7dcb60…` を一度削除して再投入**済み。金田のブラウザの IndexedDB に旧デッキのゴーストが残る可能性（再ログインで消える）
   - 総合評価レポート（同日前半）の未着手項目: **learn-ahead（待ち時間解消・最優先）**、練習モードの記録方式、速度→簡単判定の重み、同期の差分化、送信キューのデータ消失対策、StudySession/schema.ts の分割リファクタ
   - 荒井先生など他講師の端末も再同期でデザイン反映（データ変更はチュートリアルデッキのみ）

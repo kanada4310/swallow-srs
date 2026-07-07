@@ -322,7 +322,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
           )}
           <button
             onClick={() => setShowOCRModal(true)}
-            className="flex-1 min-w-[140px] py-3 bg-white border border-gray-300 text-ink-2 rounded-2xl hover:border-sora hover:text-sora transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+            className="flex-1 min-w-[140px] py-3 bg-sora-soft text-sora rounded-2xl hover:brightness-95 transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -332,7 +332,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
           </button>
           <Link
             href={`/notes/image-mask/new?deck=${deckId}`}
-            className="flex-1 min-w-[140px] py-3 bg-white border border-gray-300 text-ink-2 rounded-2xl hover:border-sora hover:text-sora transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+            className="flex-1 min-w-[140px] py-3 bg-sora-soft text-sora rounded-2xl hover:brightness-95 transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5z" />
@@ -342,7 +342,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
           </Link>
           <Link
             href={`/notes/image-mask/bulk?deck=${deckId}`}
-            className="flex-1 min-w-[140px] py-3 bg-white border border-gray-300 text-ink-2 rounded-2xl hover:border-sora hover:text-sora transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+            className="flex-1 min-w-[140px] py-3 bg-sora-soft text-sora rounded-2xl hover:brightness-95 transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM13 13a1 1 0 011-1h5a1 1 0 011 1v6a1 1 0 01-1 1h-5a1 1 0 01-1-1v-6z" />
@@ -352,7 +352,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
           <button
             onClick={() => setShowBulkGenerateModal(true)}
             disabled={notes.length === 0}
-            className="flex-1 min-w-[140px] py-3 bg-white border border-gray-300 text-ink-2 rounded-2xl hover:border-sora hover:text-sora disabled:bg-gray-100 disabled:text-gray-300 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+            className="flex-1 min-w-[140px] py-3 bg-sora-soft text-sora rounded-2xl hover:brightness-95 disabled:bg-gray-100 disabled:text-gray-300 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -362,7 +362,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
           <button
             onClick={handleExport}
             disabled={notes.length === 0 || isExporting}
-            className="flex-1 min-w-[140px] py-3 bg-white border border-gray-300 text-ink-2 rounded-2xl hover:border-sora hover:text-sora disabled:bg-gray-100 disabled:text-gray-300 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+            className="flex-1 min-w-[140px] py-3 bg-sora-soft text-sora rounded-2xl hover:brightness-95 disabled:bg-gray-100 disabled:text-gray-300 disabled:border-gray-200 disabled:cursor-not-allowed transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -376,7 +376,7 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
       <div className="mb-6">
         <button
           onClick={() => setShowSettingsModal(true)}
-          className="py-3 px-6 bg-white border border-gray-300 text-ink-2 rounded-2xl hover:border-sora hover:text-sora transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+          className="py-3 px-6 bg-sora-soft text-sora rounded-2xl hover:brightness-95 transition-colors font-bold flex items-center justify-center gap-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
