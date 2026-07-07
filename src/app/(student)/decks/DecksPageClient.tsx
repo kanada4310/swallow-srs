@@ -322,7 +322,8 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-extrabold text-ai">デッキ一覧</h1>
-        {userProfile && (
+        {/* 生徒には目立たせない（ページ最下部の控えめリンクに移動）。講師は従来どおり */}
+        {userProfile && isTeacher && (
           <Link
             href="/decks/new"
             className="px-4 py-2 bg-sora text-white rounded-2xl hover:bg-sora-dark transition-colors text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
@@ -426,6 +427,21 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
         </section>
       )}
 
+      {/* 生徒用: 控えめなデッキ作成リンク（作る機能は残すが前に出さない） */}
+      {!isTeacher && !searchQuery && hasDecks && (
+        <div className="text-center mb-8">
+          <Link
+            href="/decks/new"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-ink-3 hover:text-sora border border-dashed border-gray-300 hover:border-sora rounded-2xl transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            自分のデッキを作る
+          </Link>
+        </div>
+      )}
+
       {/* 検索結果なし */}
       {searchQuery && !hasResults && (
         <div className="bg-white rounded-card border border-gray-200 p-8 text-center">
@@ -448,9 +464,20 @@ export function DecksPageClient({ userProfile: userProfileProp }: DecksPageClien
             {!isOnline
               ? 'オンライン時にデッキを開くと、データが自動的にキャッシュされます。'
               : userProfile?.role === 'student'
-                ? '新しいデッキを作成して学習を始めましょう！'
+                ? '先生からデッキが配布されるとここに表示されます。自分でデッキを作ることもできます。'
                 : 'デッキを作成して、生徒に配布しましょう。'}
           </p>
+          {isOnline && (
+            <Link
+              href="/decks/new"
+              className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 text-sm font-bold text-sora border border-sora rounded-2xl hover:bg-sora-soft transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              デッキを作成
+            </Link>
+          )}
         </div>
       )}
 

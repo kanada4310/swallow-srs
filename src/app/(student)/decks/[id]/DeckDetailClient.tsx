@@ -58,7 +58,10 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
   const router = useRouter()
   const searchParams = useSearchParams()
   const { userId } = useAuth()
-  const [noteView, setNoteView] = useState<'manage' | 'wordbook'>('manage')
+  // 生徒は「単語帳（定着度）」を主役に（既定タブ）。講師は管理作業が多いのでノート一覧のまま
+  const [noteView, setNoteView] = useState<'manage' | 'wordbook'>(
+    userRole === 'student' ? 'wordbook' : 'manage'
+  )
   const [notes, setNotes] = useState<BrowsableNote[]>(initialNotes)
   const [totalNoteCount, setTotalNoteCount] = useState(initialTotal)
   const [isAddingNote, setIsAddingNote] = useState(false)
@@ -421,20 +424,20 @@ export function DeckDetailClient({ deckId, deckName, deckSettings: initialSettin
       <div>
         <div className="flex items-center gap-2 mb-4">
           <button
-            onClick={() => setNoteView('manage')}
-            className={`px-4 py-2 rounded-2xl text-sm font-bold transition-colors ${
-              noteView === 'manage' ? 'bg-ai text-white' : 'bg-gray-100 text-ink-2 hover:bg-gray-200'
-            }`}
-          >
-            ノート一覧
-          </button>
-          <button
             onClick={() => setNoteView('wordbook')}
             className={`px-4 py-2 rounded-2xl text-sm font-bold transition-colors ${
               noteView === 'wordbook' ? 'bg-ai text-white' : 'bg-gray-100 text-ink-2 hover:bg-gray-200'
             }`}
           >
             単語帳（定着度）
+          </button>
+          <button
+            onClick={() => setNoteView('manage')}
+            className={`px-4 py-2 rounded-2xl text-sm font-bold transition-colors ${
+              noteView === 'manage' ? 'bg-ai text-white' : 'bg-gray-100 text-ink-2 hover:bg-gray-200'
+            }`}
+          >
+            ノート一覧
           </button>
         </div>
 
