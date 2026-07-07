@@ -1,17 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { Settings, Bell } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { SyncIndicator } from './SyncIndicator'
 import { SwallowMark } from './SwallowMark'
 
+// 通知設定・設定・ログアウトへの導線は「もっと」（/more）に集約（ADR 20260707-student-first-navigation）
 export function Header() {
-  const { profile, logout } = useAuth()
-
-  const handleLogout = async () => {
-    await logout()
-  }
+  const { profile } = useAuth()
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -34,26 +30,6 @@ export function Header() {
               </div>
             )}
             <SyncIndicator />
-            <Link
-              href="/settings/notifications"
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-              title="通知設定"
-            >
-              <Bell className="w-5 h-5" />
-            </Link>
-            <Link
-              href="/settings"
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-              title="設定"
-            >
-              <Settings className="w-5 h-5" />
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors"
-            >
-              ログアウト
-            </button>
           </div>
         </div>
       </div>

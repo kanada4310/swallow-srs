@@ -11,6 +11,7 @@ import NewDeckPage from '@/app/(student)/decks/new/page'
 import StudyPage from '@/app/(student)/study/page'
 import StatsPage from '@/app/(student)/stats/page'
 import NotesPage from '@/app/(student)/notes/page'
+import MorePage from '@/app/(student)/more/page'
 import SettingsPage from '@/app/(student)/settings/page'
 import NotificationsSettingsPage from '@/app/(student)/settings/notifications/page'
 import NoteTypesPage from '@/app/(teacher)/note-types/page'
@@ -27,6 +28,7 @@ const pageMap: Record<string, ComponentType> = {
   '/study': StudyPage,
   '/stats': StatsPage,
   '/notes': NotesPage,
+  '/more': MorePage,
   '/settings': SettingsPage,
   '/settings/notifications': NotificationsSettingsPage,
   '/note-types': NoteTypesPage,

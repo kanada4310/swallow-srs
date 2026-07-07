@@ -18,6 +18,7 @@
 
 ### 2026-07-07
 - [20260707-sync-queue-durability](decisions/20260707-sync-queue-durability.md) `#sync` `#offline` `#srs` _(Phase SRS総合評価レポート)_ — 送信キューは「失敗を静かに埋もれさせない」設計にする
+- [20260707-student-first-navigation](decisions/20260707-student-first-navigation.md) `#ui-ux` `#convention` — 生徒ファーストのナビゲーション（下メニューは毎日使う4つ＋「もっと」に格納）
 - [20260707-practice-mode-local-logging](decisions/20260707-practice-mode-local-logging.md) `#srs` `#offline` `#ui-ux` `#garden` _(Phase SRS総合評価レポート)_ — 練習モードの回答は「端末内ローカルログのみ」で実績に数える
 - [20260707-ops-rules-cms](decisions/20260707-ops-rules-cms.md) `#convention` — 開発運用ルールを CMS 方式に揃える
 - [20260707-learn-ahead](decisions/20260707-learn-ahead.md) `#srs` `#scheduling` `#ui-ux` — 学習ステップの待ち時間を learn-ahead（前倒し出題）で解消する
