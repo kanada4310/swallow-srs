@@ -1,0 +1,520 @@
+# 過去ハンドオフ・アーカイブ（2026-02〜2026-06）
+
+> 古い順の履歴を退避したもの。最新のハンドオフは docs/progress.md の「最新ハンドオフ」リンク先を参照。
+
+### 2026-06-22（古文単語演習＝tango.html モードA/B を SRSカードに統合・全315語）✅要実機確認
+- **依頼**: `docs/tango.html` と同様のモードを SRS 上で再現。データは `quiz_generator/data/古文/古文単語315.json`。並行セッションとの重複に注意
+- **合意（AskUserQuestion）**: ①SRSカードに統合 ②全315語 ③モードA＋B両方
+- **非干渉方針**: 並行セッションが触る `src/lib/multi-step/*`・`MultiStepCard.tsx` には**不干渉**。独立した新カード種別として実装。共有ファイルは `StudySession.tsx` の分岐追加のみ（`isKobunTango` 判定→`KobunTangoCard`／timer・swipe 無効化を `isReactQuizCard` に集約）
+- **実装**:
+  - 純ロジック `src/lib/kobun-tango/`（types/parse/grade/index＋テスト18件）。`grade`＝モードA は集合一致＋部分点 `(tp-fp)/正解数`、モードB は一致。`computeKobunScore`(正誤85%＋速さ15%)＋`deriveKobunEase`（識別演習の score.ts と同しきい値）
+  - `KobunTangoCard.tsx`（tango.html の paper/indigo/enji 世界観・複数/単一選択・わからない・採点色付け・フィードバック→SRS評価パネル自動判定＋手直し）。React 直接描画
+  - ダミーは**インポート時に同品詞・非類似プールを焼き込み**（`問題.distractors`）、カードが毎レビュー抽出（例文プール思想）。`glossSim` は tango.html から移植
+  - **ノートタイプは A/B 別**（ユーザー指摘で見直し）。`問題`(JSON) は `{mode,correct,distractors}` のみ、モードBの表示テキスト（例文/傍線形/出典/現代語訳）はフラットフィールドに出して標準エディタ編集可。`data/kobun-tango-template.mjs`（A/B 定義）＋`data/create-kobun-tango-notetype.mjs`（両方 is_system・**作成済み**）。「古文単語演習A（単語→意味）」「古文単語演習B（例文→傍線部）」
+  - デッキ「古文単語315」**投入済み**（owner=gaimon.maam）: `data/import-kobun-tango.mjs`（`--reset` で旧デッキ＋旧単一ノートタイプ削除→再投入）。**904ノート**（A=315／B=589）＋モード別フィルタサブデッキ2つ。`review_logs` の既存 score/step_results 列に乗せる＝**新マイグレーション不要**
+- **検証**: lint クリーン（既存 TemplatePreview 警告のみ）／テスト**397件**（+18）／build 成功（`/study` 3.66kB 不変）
+- **次セッション注意**:
+  - **要 Vercel デプロイ＋再ログイン**（新コンポーネント・Dexie はフィールドのみで据え置き）。デプロイ後 `/study`「古文単語315」or モードサブデッキで実機確認
+  - 自動判定しきい値（`src/lib/kobun-tango/grade.ts` の `TARGET_MS=20000`/`SPEED_EASY_THRESHOLD=0.8`/`ACCURACY_HARD_THRESHOLD=0.5`）は実データで要調整
+  - モードA はダミーを毎回プールから抽出するので**レビュー毎に選択肢が変わる**（位置も）。固定にしたい場合は `KobunTangoCard` の `buildOptions` を noteId シードに
+  - インポート再実行は親デッキ名「古文単語315」で再利用（重複投入に注意）。やり直す場合は先にデッキ/ノート削除
+  - ~~未コミット~~ → **2026-07-07 にコミット・プッシュ済み**（テスト397件・build 成功を再確認の上）
+
+### 2026-06-22（コロケーション本番デッキ作成・投入＝パイロット50語→974語）
+- **依頼**: パイロット版を確認できたので拡張して本番運用デッキを作成・インポート
+- **合意（AskUserQuestion）**: 対象=**動詞＋形容詞＋副詞＋機能語（約955語）**（名詞・代名詞・冠詞・間投詞は除外＝暗誦デッキに任せる）／語彙統制=**標準生成＋後で要修正のみ手直し**
+- **対象語**: `build_prod_words.py`（words.tsv から POS={動詞343,形容詞361,副詞148,前置詞42,接続詞42,助動詞19}=955語抽出 ∪ パイロット50語）→ `prod_words_new.json`（新規生成924語）＋`prod_words_all.json`（最終974語・POSタグ用）
+- **生成パイプライン（既存スクリプト流用＋本番版）**:
+  1. `build_colloc_workflow.py prod_words_new.json gen-colloc-prod.js` → Workflow → `colloc_result_prod.json`（924語→**2743コロケーション**, 失敗0, ~8Mトークン）
+  2. `build_exemplar_workflow.py colloc_result_prod.json gen-exemplar-prod.js` → Workflow → `exemplar_result_prod.json`（2743×5本=例文プール, 失敗0, ~20Mトークン, ~23分）。**corpus_attest.py は省略**（Google Ngrams が遅く補助のみ＝`build_prod_deck.py` が freq=null/rare=false を補完）
+  3. `build_prod_deck.py colloc_result_prod.json exemplar_result_prod.json prod_deck.json`（例文を結合した deck スケルトン, pilot2_deck.json と同形）
+  4. **文脈アシスト**: `build_context_workflow.py prod_deck.json gen-context-prod.js` だが**1.7MB>512KB上限**→ deck を5分割して `gen-context-prod-1..5.js`。**5並列実行はレート制限を誘発**（5×16=80同時で大量失敗）→**順次実行**に変更。さらに途中で **API月次上限（monthly spend limit）に到達**し残りが生成不可に
+  5. `merge_ctx_outputs.mjs context_result_prod.json <各.output...>`（ctx を key 単位で union・蓄積）→ **1911/2742コロケーションに文脈付与（約70%）**。残825は未生成
+  6. `merge_context.py context_result_prod.json prod_deck.json`（ctx 書き戻し）→ `combine_decks.py full_deck.json prod_deck.json pilot2_deck.json`（974語）→ `build_colloc_notes.py full_deck.json prod_colloc_notes.json prod_words_all.json`（**2916ノート**, 穴埋め失敗0）
+  7. `import-colloc-deck.mjs --notes=prod_colloc_notes.json --deck="中学英単語 コロケーション"` → デッキ `95cffa07…` に2916ノート＋カード投入（既存ノートタイプ「コロケーション構文」`0cfab65b…` を再利用＝説明文削除・左揃えの最新テンプレ）
+- **★残作業（文脈アシスト残り825コロケーション）— API月次上限リセット/引き上げ後に**:
+  1. 上限回復後、`merge_ctx_outputs.mjs` が出力した `ctx_missing_keys.json`（825キー）から未生成分の deck を作る → 分割 → `build_context_workflow.py` → Workflow（**順次・並列禁止**）→ `merge_ctx_outputs.mjs` で `context_result_prod.json` に追記
+  2. `merge_context.py context_result_prod.json prod_deck.json` → `combine_decks.py` → `build_colloc_notes.py ... prod_words_all.json`
+  3. **再インポート不要**: `update-colloc-context.mjs --deck="中学英単語 コロケーション" --notes=prod_colloc_notes.json` で例文プールを**in-place 更新**（note ID 不変＝SRS進捗保持）。文脈テンプレは既存で対応済み（空 ctx は `.context:empty{display:none}` で非表示）
+- **次セッション注意**:
+  - デッキは**未配布**（is_distributed=false）。実機確認後にクラス/個人へ配布する。**要 Vercel デプロイは不要**（アプリ改修なし＝StudyCard は既に ctx 対応済み）。**再同期（再ログイン）で表示**。講師は teacher-shared で見える
+  - 文脈が**ないカードは表面が「英文穴埋め＋和訳ヒント」のみ**（lead-in 非表示）＝機能上は問題なし。825件は上限回復後に top-up
+  - レート制限の教訓: **context ワークフローは順次実行**（並列だと 80同時でサーバ側 throttle）。月次 spend limit は claude.ai/settings/usage で確認
+  - 大規模（2916ノート）なので各講師の pull 同期が重い（既知の共有同期コスト）
+
+### 2026-06-19（講師デッキの自動共有・共同編集 ＋ サブデッキ折りたたみ）✅実機確認済み
+- **依頼**: ①講師が作ったデッキを講師同士で自動共有 ②デッキ一覧でサブデッキを既定でアコーディオン折りたたみ
+- **合意（AskUserQuestion）**: 共有デッキは**全講師が編集可能（共同編集）**
+- **Supabase 適用済み**: `supabase/migrations/021_teacher_shared_decks.sql`（SQL Editor で実行済み・実機で共有/共同編集を確認）
+- **実装**:
+  - **RLS 021**: 既存 `is_teacher_or_admin()` を再利用。decks/notes/cards/deck_assignments に「講師は講師所有を全操作」、note_types/card_templates に「講師は講師所有を閲覧」の permissive ポリシー追加（編集はオーナーのみ＝構造破壊回避）
+  - **`canManageDeck(supabase, userId, deckOwnerId)`**（`src/lib/api/auth.ts`）= 自分 or（自分が講師 かつ 所有者も講師）。profiles を読んで role 判定（teachers は 003 で全 profiles 可読／生徒は owner 行が取れず false）。各 API の `owner_id !== user.id` 403判定を一括置換: decks/[id](PUT/DELETE)・notes(POST)・notes/[id](PUT/DELETE)・bulk-delete・bulk-tags・copy-move・import・search・decks(親)・deck-assignments(3)・export
+  - **pull API**（`/api/sync/pull`）: `isTeacher` なら admin client で teacherIds を取得 → 他講師の全デッキ＋ノートタイプ＋テンプレを配信。共有デッキのノート/カードも `readClient = isTeacher ? adminClient : supabase` で読む（RLS 適用前でも表示は可）。adminClient はルート先頭で1つ作り再利用（旧サブデッキ用の重複宣言を削除）
+  - **クライアント**: デッキ詳細 `page.tsx` `canEdit = isOwner || isTeacher`（設定の個人オーバーライドも `!canEdit` の時のみ＝講師は実デッキ設定を編集）。`DecksPageClient` は非自分デッキを講師なら「講師共有デッキ」節に出し、削除＋設定（実デッキ）許可。「この設定はあなたの学習にのみ」注記は `!isTeacher` で抑止。`/notes` は既存 `isTeacherOrAdmin` で対応済み
+- **サブデッキ折りたたみ**: `DecksPageClient` に `expandedDecks`（Set・既定空＝折りたたみ）＋`getVisibleNodes`（祖先が全展開のノードのみ）。`DeckCard` に行頭シェブロン（hasChildren 時）。検索中は `expandAll` で全展開
+- **検証**: lint クリーン（既存 TemplatePreview 警告のみ）／テスト**379件**／build 成功
+- **次セッション注意**:
+  - **①021 を Supabase に適用**しないと共有デッキの編集が404（閲覧は可）。**②Vercel デプロイ＋再ログイン**（pull 改修・Dexie 再取得）
+  - 実機確認: 荒井先生（teacher）でログイン → gaimon.maam のデッキが「講師共有デッキ」に出るか、開いて編集/ノート追加/削除できるか。逆向き（gaimon が荒井のデッキ編集）も。生徒には共有されないこと
+  - 共有は**全講師の全デッキを各講師が pull**＝同期重め（中学英単語6858 等）。将来重ければ「共有対象フラグ」や遅延ロードを検討
+  - note_types の**編集**は共同編集対象外（オーナーのみ）。共有デッキが他講師のカスタムノートタイプを使っていてもカードは描画/学習可だが、その構造変更はオーナーのみ
+  - 折りたたみ状態はページ内 state（再訪/リロードで初期化＝全折りたたみ）。永続化は将来 localStorage で可能
+
+### 2026-06-19（学習体験の小改善4点 — 講師アカウント／種別バッジ／サブデッキ復習フィルタ／繰り上げ学習）
+- **依頼**: ①荒井先生用の講師ログインを作る ②学習開始時に新規/復習が分からずストレス ③サブデッキ学習で親デッキの復習が全部出て無関係なものまでやらされる ④やりきった後も続けたい・新規をやりきったら優先度の高いものを繰り上げるのはSRS的にOKか
+- **合意（AskUserQuestion）**: ④=**練習モード（card_states 非更新）**／①=この場でメール・パスワード受領（naobees70@gmail.com / swallow-srs）
+- **実装**:
+  - **① 講師アカウント**: `data/create-teacher-account.mjs` 新規（Supabase admin で createUser + profiles upsert role=teacher。`--email/--password/--name/--reset-password/--dry-run`）。**荒井先生は既存アカウント**（2026-04-22 作成・name=荒井尚緒・card_states 2/review_logs 8・class_members 0）だったので role=teacher に更新＋`--reset-password` で `swallow-srs` を設定
+  - **② 種別バッジ**: `StudySession` に `CardStateBadge`（`currentCard.schedule.state` → 🆕新規/🔁復習/📖学習中・learning/relearning と fromLearningQueue は学習中扱い）。進捗バー左に表示
+  - **③ サブデッキ復習フィルタ**: `getStudyCardsOffline`（`src/lib/db/schema.ts`）で**復習(due)もタグで絞る**よう変更（従来は新規のみ）。`matchesFilterTags` を新規・復習の両方に適用。デッキ一覧 `getDecksWithStatsOffline` の「復習 N」（元々タグ絞り）と一致。**設計逆転**＝CLAUDE.md フィルタデッキ節を更新。全件復習はフィルタ無し親デッキで。`filter-deck.test.ts` の純ロジックヘルパを `filterCardsByTags` に改名＋復習フィルタのテスト追加（13件）
+  - **④ 繰り上げ学習（練習モード）**: `getPracticeCardsOffline(userId, deckId, limit=20)`（`schema.ts`）＝スコープ解決は通常学習と同じ。**未来の復習（due>now）を期限近い順＋枠外の新規**を返す（すでに due のものは通常学習で消化済みなので除外）。`StudySession` に props `practiceMode/onRequestPractice/practiceLoading/practiceUnavailable`。`practiceMode` 時は handleAnswer が schedule をローカル計算してキュー再提示だけに使い、**永続化ブロック（getCardState/saveAnswerLocally/answer API/undo snapshot）を return でスキップ**＋インプリント effect も practiceMode で抑止。完了画面・「カードがありません」画面に `MorePracticeSection`（➕もっと練習する＋「記録されません」注記、繰り上げ無しなら案内文）。親 `StudyPageClient` が practice state を持ち `key=session-${round}` で再マウント
+- **検証**: lint クリーン（既存 TemplatePreview 警告のみ）／テスト**379件**（filter-deck +1）／build 成功（`/study` 3.66kB）
+- **次セッション注意**:
+  - **要 Vercel デプロイ＋再ログイン**（新ロジック・StudySession 改修）。荒井ログインは即時可（DB 反映済み）
+  - ③は「サブデッキは自分のタグ範囲だけ復習」に**一律変更**。「サブデッキでも全部復習したい」要望が出たらデッキ設定で切替式にできる
+  - ④の練習は **card_states を一切触らない**＝早期復習でスケジュールを汚さない。練習対象は「未来の復習＋枠外新規」。max_reviews_per_day で打ち切られた当日 due は含めていない（必要なら due<=now も含める拡張可）
+  - `getPracticeCardsOffline` は `getStudyCardsOffline` とデータ取得部が重複（リファクタ余地・現状は明快さ優先）
+
+### 2026-06-19（多段階設問・識別演習（古文）— 例文単位SRS＋スコア自動判定）
+- **依頼**: 古典文法の識別演習（`swallow-base.com/kobun/shikibetsu`／手元 `SRS/index.html`）と同等の体験を SRS に組み込む。1例文に複数設問を順番に／選択式は自動判定＋記述式は自己採点／例文単位で間隔管理。追加で「**正誤＋解答時間でスコア化し、そのスコアから 正解/簡単 等を自動判定**」「生徒が手直しもできる」
+- **元データ整合**: `index.html` の `QUESTION_DATA` を確認。傍線部ハイライト・**follow_up（根拠問題）**・question_type バッジ・「わからない」選択肢・`correct_answer` は文字列一致。元プロトタイプのSRSはセッション内再出題だが、要件どおり**つばめSRSの本物のエンジン（例文単位・日付ベース）に置換**
+- **実装**:
+  - 純ロジック `src/lib/multi-step/`（types/parse/grade/score/index＋テスト24件）。パーサは snake_case/camelCase 両対応で元教材を無変換取り込み
+  - **スコア** = 正誤85%＋解答時間15%（目標=設問数×20秒）。**`deriveEase(score)` がスコアから ease を自動判定**（全問正解＆速→簡単／全問正解→正解／一部正解≥50%→難しい／<50%→もう一度）。しきい値は定数で調整可
+  - `MultiStepCard.tsx`（傍線/バッジ/follow_up/ステップドット/古文CSS、React直接描画＝iframe不使用）。完了画面は**自動判定をハイライト＋4択常時表示でタップ手直し可**（変更すると「手動：◯◯」＋「自動判定に戻す」）
+  - `StudySession`: `isMultiStepNote()` で `MultiStepCard` に分岐、timer/swipe 無効化、`handleAnswer(ease,{score,stepResults})`
+  - 永続化: `020_multi_step_scores.sql`（`review_logs` に score/step_results）**Supabase 適用済み**（Management API ではなくユーザーが SQL Editor で実行）。`LocalReviewLog`・`saveAnswerLocally`・push route・answer API にスレッド。**通常カードは新列に触れない後方互換**（識別演習時のみ含める）
+  - `/stats`: `useIdentificationScores`（Dexie/オフライン）＋`IdentificationScoreCard`（平均スコア/例文数/平均解答時間/直近推移、データ無ければ非表示）
+  - ノートタイプ「識別演習」: `data/multi-step-template.mjs`＋`data/create-multi-step-notetype.mjs`（is_system・**作成済み** id=2475cb3d…）。サンプル `data/import-kobun-shikibetsu.mjs`（**投入済み** デッキ「識別演習（古文）」id=52fe36f3… 46ノート）
+- **検証**: lint クリーン／テスト374件（+22）／build 成功（`/study` 3.66kB 不変）
+- **次セッション注意**:
+  - **要 Vercel デプロイ＋再ログイン**（新コンポーネント・Dexie の score 列は field-only でバージョン据え置き）。デプロイ後 `/study` で「識別演習（古文）」を実機確認
+  - 自動判定しきい値（`TARGET_MS_PER_QUESTION=20000`/`SPEED_EASY_THRESHOLD=0.8`/`ACCURACY_HARD_THRESHOLD=0.5`、いずれも `src/lib/multi-step/score.ts`）は実データで要調整
+  - スコアは Dexie のみ表示（review_logs は pull 同期対象外＝push専用のため端末ローカル。サーバーにも score 列はあるが pull しない）。手直しオーバーライドは常時表示（不要なら隠す調整可）
+  - 識別演習は new カードで品種インプリント（ImprintPicker）が出る（既存仕様・無害）。気になるなら将来このノートタイプで抑止可
+- **追記（同日・ユーザー指摘2件）**:
+  1. **記述式（現代語訳）の自己採点「△もう一度／◯正解だった」を削除**（修了ページの判定と重複していた）。記述式は模範解答＋「次へ」のみ。`StepResult.graded` を追加し、**記述式はスコアの正答率に算入しない**（最終判定に委ねる）。`gradeText`→`completeText`、`computeScore` は graded のみで正答率、`deriveEase` は `accuracyPct` 基準に変更。テスト26件
+  2. **庭（記憶のいきもの育成）を一括停止**：`src/lib/garden/feature.ts` の `GARDEN_ENABLED=false` フラグで、ナビの「庭」タブ非表示／`/garden` は `/decks` へリダイレクト／学習中の成長・水やりアニメ・品種インプリント・完了時の成長演出を停止。**機能は残置・true で再開可**。`/stats` の 🔥ストリーク/ヒートマップ（StreakHeatmap）は学習統計として残置（庭の生き物ではないため）
+
+### 旧セッション引継ぎメモ
+
+### 2026-06-16（画像マスキング 一括作成＋ビジュアル再編集＋共通化／退役モデル修正／裏面重なり／テンプレ同期）
+- **退役モデルで全AIが500**: `claude-sonnet-4-20250514`（6/15退役）＝候補検出/OCRの500原因。`claude-3-haiku-20240307`（4月退役）＝例文生成。→ `claude-sonnet-4-6` / `claude-haiku-4-5` に更新（`f8d296b`）。**今後モデルIDは退役に注意**（migration: Sonnet4→4.6, Haiku3→4.5）
+- **裏面の文字重なり解消**（`e1c8759`）: 裏面はマスク領域に枠＋番号バッジのみ、答えは画像下に番号付きリスト（`buildMaskHtml` 改修・上→下/左→右採番）
+- **Google Vision 検出エンジン表示**（`f4c886f`）: 編集UIに `source`（google-vision/claude-vision）を表示。Vision キーは課金プロジェクト上限エラーが出たら**既存の課金済みプロジェクトでキー作成**（キーはどのGCPプロジェクトでも可）
+- **★表面が空白だった真因＝カードテンプレ未同期**（`601ec4b`）: pull が note_types を `updated_at` 増分で絞るため「ノートタイプはあるが card_template がクライアントに無い」状態が起き、study が `{{Front}}/{{Back}}` フォールバックに落ち、Front/Back を持たない画像マスキングは表面が空白に。**アクセス可能な全ノートタイプ＋全 card_templates を毎回同期**して self-heal するよう修正（`src/app/api/sync/pull/route.ts`）。調査用 `data/debug-image-mask.mjs`
+- **一括作成＋ビジュアル再編集＋共通化（このセッション後半）**:
+  - 編集キャンバスを controlled な `MaskRegionEditor`（`src/components/image-mask/MaskRegionEditor.tsx`）に抽出。`EditRegion`/`candidateToRegion`/`maskJsonToRegions`/`regionsToMaskPayload`/`MIN_SIZE` を export。共有API `api.ts`（`uploadImage`/`detectCandidates`/`readAsDataUrl`）
+  - `ImageMaskEditor`（単一）を共通化に載せ替え
+  - **一括作成** `BulkImageMaskCreator` ＋ `/notes/image-mask/bulk?deck=X`：複数画像→**並列(同時3)でアップ＋AI検出**→各画像をカード表示（サムネ＋見出し＋状態）、「編集」で `MaskRegionEditor` 展開→「全て作成」で順次 POST→`fullSync`→デッキ。毎回隠す数は全件共通入力。各画像=1ノート
+  - **ビジュアル再編集** `ImageMaskNoteEditor` ＋ `/notes/image-mask/[id]/edit`：Dexie からノート読込→`MaskRegionEditor`＋設定→PUT `/api/notes/[id]`→`updateNoteLocally`＋`fullSync`。ノート一覧/デッキ詳細の編集は `画像`＋`マスク領域` を持つノートを自動でこのページへ（生フィールド編集の `NoteEditModal` を回避）
+  - デッキ詳細に「一括マスキング」ボタン追加。単一作成ページ下部にも一括への導線
+- **検証**: lint クリーン（既存 TemplatePreview 警告のみ）／テスト**352件**通過／build 成功（`/notes/image-mask/bulk` 4.13kB・`[id]/edit` 1.93kB）
+- **次セッション注意**: 一括は画像ごとに upload＋detect を並列3で投げる（大量だとVision/Claude APIコストとレート注意）。再編集は画像差し替え不可（マスク・設定のみ）。実機確認＝デプロイ後、デッキ詳細「一括マスキング」で複数枚→レビュー→全作成、`/study` で出題、ノート一覧の鉛筆で再編集
+
+### 2026-06-15（画像マスキング bboxズレ対策 — プロンプト＋手直しUX＋OCR幾何）
+- **背景**: 実機で植物細胞図のAI候補枠が5〜15%ズレた。調査結果＝**座標系のバグではなく Claude Vision の位置推定精度の限界**（枠は正しい象限に落ちる＝表示マッピングは正常／ズレ方が枠ごとにバラバラ＝VLMの空間回帰の弱点）。用語の読みは当たるが位置だけ外す典型
+- **対応3点（ユーザーが全選択）**:
+  1. **検出プロンプト強化**（`/api/image-mask-candidates`）: 引き出し線/構造を含めず「ラベル文字をタイトに囲む」を厳守させる
+  2. **手直しUX高速化**（`ImageMaskEditor`）: 枠タップ選択→ドラッグ移動／右下リサイズ拡大／**選択中に画像タップでその位置へ移動**（モバイル）／オンスクリーン微調整パッド／PC矢印キー（Shift大）／ドラッグ閾値`MOVE_THRESHOLD`でタップ誤作動防止（描画は閾値超で初めて生成）
+  3. **OCR幾何で正確検出**: `GOOGLE_CLOUD_VISION_API_KEY` があれば **Google Cloud Vision（DOCUMENT_TEXT_DETECTION）でparagraph単位の正確bbox**を取得→%正規化→Claude テキストパスで暗記対象を選別（`recommended`）。**キーが無い/失敗時は Claude Vision の%bbox推定に自動フォールバック**（`source: google-vision|claude-vision`）。レスポンスの候補に `recommended` を追加し、編集UIの初期チェックに反映
+- **★要設定（OCR幾何を有効化するなら）**: GCPで **Cloud Vision API を有効化**＋**APIキー作成**＋課金有効（1000枚/月無料・以降~$1.5/1000）→ `.env.local` と **Vercel環境変数**に `GOOGLE_CLOUD_VISION_API_KEY` を追加。未設定でも従来通り動く（Claude Vision 推定）
+- **検証**: lint クリーン／テスト351件通過／build 成功（`/notes/image-mask/new` 5.53kB）。プロンプト＋UXは main にデプロイ済み（`b553023`）。OCR幾何コミットは別途
+
+### 2026-06-15（Phase 13.4 画像アップロード＋画像マスキング — 要実機確認）
+- **依頼**: 画像はアップロードだけでなく、画像内の用語を自由にマスキングしたい。AIがマスキング候補を提示→ユーザー選択→マスク付きノート作成。コロケーション例文プールのように、同じ画像から毎回ランダムに数か所を答える出題に。
+- **合意（AskUserQuestion）**: 出題=**視覚リコール＋めくり**／隠す数=**ノート毎設定＋デフォルト約3割**／検出対象=**テキスト用語＋自由描画**
+- **増分A（コミット済み `feat/image-masking`）画像アップロード＋オフラインキャッシュ**:
+  - `POST /api/images/upload`（TTS の `audio` バケット処理を流用、`images` バケット、`{userId}/{uuid}.{ext}`、公開URL返却、`requireAuth`）
+  - Dexie **v13** `imageCache`（**URLキー**）＋`getCachedImage`/`saveImageCache`/`cleanupOldImageCache`、`clearAllData` 追加
+  - `src/lib/template/images.ts`：`extractImageUrls`/`rewriteImageSrcs`/`hasRemoteImages`/`blobToDataUrl`（純関数＋テスト10件）
+  - **StudyCard**：カード内 `<img>` http(s) URL を キャッシュ→無ければfetch＋キャッシュ→**data: URL に書換え**て iframe へ。**重要**: iframe は `sandbox`（allow-same-origin なし＝opaque origin）で親の `blob:` を参照できないため **data: URL を srcdoc に直接埋め込む**のが肝。これで任意カードの `<img>` がオフライン表示可（汎用の効果）
+  - `ImageUploadButton`＋`NoteEditModal` の各フィールドに画像挿入導線（`<img src>` を追記）
+- **増分B（このセッションで実装）画像マスキング本体**:
+  - `src/lib/image-mask/mask.ts`（純ロジック・テスト12件）：`MaskRegion{id,x,y,w,h,answer,hint}`（座標は**0-100の%**＝表示サイズ非依存）、`resolveMaskCount`（既定30%・最低1）、`pickMaskIndices`（部分シャッフル・rng差替可）、`buildMaskHtml`（表=不透明グレー「?」／裏=枠線＋answer）
+  - `POST /api/image-mask-candidates`：Claude Vision（OCRルートのauth/client流用）で用語を**%bbox付き**検出。座標は**近似**なのでUIで微調整前提
+  - **StudyCard**：`マスク領域`(JSON)＋`画像` を持つノートで、`maskPickRef` で**毎回ランダムにN領域**を選び、表示専用フィールド `画像表`/`画像裏` を合成（例文プールと同じ思想・保存フィールド非追加）。合成HTML内の `<img>` は増分Aの仕組みで自動オフライン化
+  - `ImageMaskEditor`（`src/components/image-mask/`）＋ページ `/notes/image-mask/new?deck=X`：画像アップ→候補検出（並行）→画像上にオーバーレイ表示→**タップ選択/ドラッグ移動/右下リサイズ/余白ドラッグで新規描画/削除/答え編集**＋「毎回隠す数」「見出し」「補足」。保存=`POST /api/notes`→`fullSync`→デッキへ
+  - デッキ詳細に「画像マスキング」ボタン（teal、`/notes/image-mask/new?deck=`）
+  - ノートタイプ「**画像マスキング**」: `data/create-image-occlusion-notetype.mjs`＋`data/image-occlusion-template.mjs`（共有定義）。フィールド=画像/マスク領域/毎回隠す数/見出し/補足。`is_system:true`（全ユーザー利用可）。**※未実行**
+- **検証**: lint クリーン（既存 TemplatePreview 警告のみ）／**テスト351件全通過**（329→+22）／build 成功（`/study` 3.66kB 不変・`/notes/image-mask/new` 4.86kB）
+- **次セッションでやること（実機確認の順序・重要）**:
+  1. **ノートタイプ作成**: `node data/create-image-occlusion-notetype.mjs`（先に `--dry-run`）。これを実行しないと編集ページが「ノートタイプが見つかりません」になる
+  2. **Vercel デプロイ＋再ログイン**（Dexie v13 マイグレーション・新ルート）
+  3. デッキ詳細「画像マスキング」→画像アップ→AI候補が枠で出る→選択/手描き調整→作成→`/study` で**毎回違う箇所が隠れる**＋めくりで answer 表示。オフライン（再読込/機内）でも画像が出ること
+  4. 良ければ `feat/image-masking` を main へマージ
+- **次セッション注意/未対応**:
+  - 候補bboxは**近似**（Claude Vision）。ズレ前提でUI微調整。精度が要るなら検出プロンプト調整やモデル変更
+  - 編集UIの移動/リサイズは**右下ハンドル1点のみ**（最小限）。他辺ハンドルや回転は未対応
+  - 画像キャッシュは**URLキー**でノート削除時の個別purgeは未配線（30日TTL `cleanupOldImageCache` 任せ）。気になれば note 削除時に field の画像URLを引いて purge する配線を追加
+  - `TemplatePreview` は `画像表`/`画像裏` を合成しないのでプレビューは空（コロケーションと同じ仕様。実カードは `/study` で確認）
+  - is_system ノートタイプが生徒へ pull 同期されるかは要実機確認（Basic/Cloze 同様に出る想定）
+
+### 2026-06-15（数式の実機修正＋庭の見た目改善 — すべて実機確認済み）
+
+### 2026-06-15（数式の実機修正＋庭の見た目改善 — すべて実機確認済み）
+- **このセッション後半の流れ**: 13.4 数式実装 → 実機で「二重表示／積分カード空欄」発覚 → 原因究明・修正 → 名札・地面色の改善。**最終的に実機確認OK（ユーザー承認）**
+- **数式の不具合と最終解（重要）**:
+  - 二重表示の原因＝`/katex/*` がミドルウェアで未認証307リダイレクト→iframe が KaTeX CSS を読めず「ネイティブMathML＋未CSSのkatex-html」が二重表示。積分カード空欄＝iframe 高さ計測がフォント読込前で固定
+  - **最終的に KaTeX 出力を `output:'mathml'` に変更**（ブラウザネイティブ描画＝CSS/Webフォント不要）。これで外部アセット依存が消え、二重表示も空欄も根本解消。`CardIframe` から KaTeX CSS link 撤去・最小 MathML CSS のみ。`public/katex/`＋`/katex` publicPath/CORS は**現在未使用（残置・撤去可）**
+- **庭の名札改善**: 数式除去の残骸が不格好 → `pickLabel` が `見出し/ラベル/タイトル` フィールドを最優先表示。数式テストデッキに `見出し` フィールド＋短い見出しを付与（`data/update-math-test-labels.mjs` で本番反映済み）。**英単語デッキは `見出し語` がそのまま使われるので変更不要**
+- **庭タイルの天面色**: 緑の芝→ベージュの土（葉と被らない）。要水やり=乾いたベージュ／水やり済み=湿った濃い土色（`plant.needsWater` で出し分け、`IsoTile`）。PixiJS も tileKey に needsWater 含むため自動反映
+- **検証**: 329テスト全通過／lint クリーン／build 成功。全コミット push 済み（main: 8c0edbd）
+- **次セッション注意**:
+  - 数式は **MathML ネイティブ描画**。新たな数式デッキを作る時は CSS/フォント不要・`\(…\)`/`\[…\)`/`$$…$$` をフィールドに直書きでOK。庭の名札用に**短い `見出し` フィールドを1つ用意**すると綺麗
+  - 画像は URL（`<img>`）表示のみ。**アップロード＋オフラインキャッシュは未実装＝次の増分**（TTS の `saveAudioCache` 同様の仕組み）
+
+### 2026-06-15（Phase 13.4 数式 KaTeX ＋ クラスランキング見送り）
+- **依頼**: 「③Phase 13.4（数式・画像）に進んで。クラスランキングは逆にモチベーションを削ぐ場合もあるので一旦なしで」
+- **クラスランキングは見送り**（ROADMAP 10.5 を `[~]` 見送り表記に・CLAUDE.md に方針明記）
+- **設計の肝（判明）**: カードは **iframe(srcdoc, sandbox, allow-same-origin なし)** で隔離描画＝サニタイズせず（`renderer.ts` コメント通り）。よって **KaTeX 出力をそのまま iframe に渡せる**（サニタイザと衝突しない）。`<img>` も既に表示可
+- **実装（数式）**:
+  - `pixi.js` とは別に `katex` 0.17＋`@types/katex` 追加。`public/katex/` に `katex.min.css`＋woff2 20本を**自己ホスト**（オフライン可。CSS の font 相対URLが `/katex/fonts/` に解決）
+  - `src/lib/template/math.ts`: `containsMath`（安価な正規表現 `\( \[ $$`）／`renderMath`（KaTeX `renderToString`・display=$$,\[\]／inline=\(\)・`throwOnError:false`）。単一 `$…$` は誤検出回避で対象外。テスト7件
+  - **KaTeX は重い(~270KB)ので数式カードのみ動的 import**。`StudyCard`：`MATH_DELIMITER` で前判定→`import('@/lib/template/math')`→`displayedFront/Back` に差し替え＋`CardIframe math={…}`。`TemplatePreview` も同様（プレビューで数式確認可）
+  - `CardIframe`：`math` prop で `<link rel="stylesheet" href="/katex/katex.min.css">` を出し分け
+- **検証**: 329テスト全通過（322→+7）／lint クリーン／build 成功。`/study` 3.14kB（KaTeX は別チャンク＝初期バンドル不変）
+- **【重要・方針転換】KaTeX 出力を MathML のみに変更（最も壊れにくい）**: iframe(sandbox=opaque origin) 内で KaTeX-HTML を使うと CSS/Webフォントの読込・CORS・高さ計測が次々壊れた（二重表示／積分カード空欄）。**`output:'mathml'` に変更**＝ブラウザがネイティブ描画するので **CSS もフォントも不要**。`CardIframe` から KaTeX CSS `<link>` を撤去し、代わりに最小 CSS（`math[display=block]` 中央寄せ・1.15em）だけ注入。これで二重表示・空欄の根本原因（外部アセット依存）が消える。モダンブラウザは MathML Core 対応（実機スクショでネイティブ MathML が綺麗に出ていた）
+- **付随修正**: ①庭の名札は数式を描画しないので `pickLabel` で `\(…\)`/`\[…\]`/`$$…$$` を除去（生TeXが出ないように）②`CardIframe` 高さ計測の堅牢化（fonts.ready/link load/複数指標の最大値/数式カードは最低160px）— MathML 化で不要寄りだが安全網として残す
+- **（過去対応・現在は不要だが無害なので残置）** `/katex` の publicPath 追加＋next.config CORS＋SW フォントキャッシュ＝KaTeX-HTML 用だった。MathML 化で未使用（`public/katex/` も未使用）。気になれば後で撤去可
+- **要 Vercel 再デプロイ**で反映
+- **検証用デッキ投入済み**: `data/create-math-test-deck.mjs` で「数式テスト（KaTeX 確認用）」(deck `376dc155…`, owner gaimon.maam, 8問＋画像)
+- **次セッション注意**:
+  - 再デプロイ後に `/study` で数式が**1つだけ**整形表示されることを確認（二重表示が消えていれば成功）。`curl -I https://srs.swallow-base.com/katex/katex.min.css` が **200＋ACAO** になるか／フォント woff2 も 200 を確認
+  - 画像は URL 表示のみ。**アップロード（Storage）＋オフラインキャッシュ未実装**＝次の増分（TTS の `saveAudioCache` 同様の仕組みを `<img>`/フィールドに）。iframe 越しの画像 blob 差し替えが要点
+  - 数式が入ったので**数学・理科デッキ**を作れば科目拡張＋その科目の「いきもの」飼育に繋がる
+
+### 2026-06-15（Phase 10.2 残 — PixiJS 大規模描画）
+- **依頼**: 「PixiJS化」。方針合意＝**PixiJS(WebGL)／>150株のみ・小規模は従来SVG／ドラッグ移動＋ズーム／既存SVGアートをテクスチャ再利用**
+- **導入**: `pixi.js` v8.19（dependency）
+- **実装**:
+  - `src/components/garden/tileTexture.ts`: `getTileCanvas(plant, variety)` が **IsoTile を `renderToStaticMarkup` で SVG文字列化 → data URL → Image → canvas** にラスタライズしキャッシュ（キー＝growth|care|needsWater|varietyId）。論理88×100・テクスチャ2x(176×200)・アンカー(44/88,64/100)・ISO 半幅40/半高20
+  - `src/components/garden/GardenFieldPixi.tsx`: 動的 `import('pixi.js')`。Application 初期化→world Container にスプライト配置（同アイソメ式・背面→前面）。テクスチャは同キー1枚を共有。**パン**(stage pointerdown/move/up)＋**ホイールズーム**(canvas wheel)＋**ピンチ**(2ポインタ距離)。`pointertap`＋移動量<8px でタップ選択。初期は全体フィット。型は `import type` で取り込み（バンドルは動的importのみ）。アンマウントで `app.destroy`。**WebGL初期化失敗時は `GardenField`(先頭150)に縮退**
+  - `/garden`: items を全件化（slice 廃止）。`items.length > 150` で `GardenFieldPixi`（`next/dynamic`, ssr:false, loading表示）／以下は従来 `GardenField`
+- **検証**: 322テスト全通過（変化なし）／lint クリーン／build 成功（`/garden` 9.69kB＝Pixi は別チャンクで遅延ロード）
+- **次セッション注意（重要）**: **当環境ではブラウザ実行できないため WebGL 描画は未検証**（ビルド・型のみ通過）。要実機確認＝中学英単語6858株デッキの `/garden`。確認ポイント＝①タイルが正しい絵で出るか（Texture.from(canvas) の挙動）②ドラッグ/ホイール/ピンチ/タップ選択③メモリ/FPS。崩れる場合の調整候補＝Texture生成方法（CanvasSource明示）、resolution、アンカー/スケール。MAX_TILES=150 がしきい値
+- **依頼**: 実機確認できた→「続けてください」。10.5 残のうち**プッシュ連携なしで自己完結する軽量版デイリーミッション**を実装（既存データ導出・10.x の方針踏襲）
+- **実装**:
+  - `getDailyMission(userId, now)`（`garden-data.ts`）: 今日（4時区切り `studyDayKey`）に水やりした distinct card 数（reviewLogs）＋ いま要水やりの株数（全 card_states の `needsWater`）から `{ wateredToday, dueNow, goal=watered+due, done=(due0 && goal>0) }` を導出。Dexie のみ・オフライン。テスト3件（mock に reviewLogs テーブル追加）
+  - `src/components/garden/DailyMissionCard.tsx`: `/garden` 上部のバナー。`goal===0` は非表示。未完了＝青「あと N株に水やり」＋進捗＋「水やりする」(`/decks`)、完了＝緑「✅ 今日のお世話、完了！」
+- **検証**: 322テスト全通過（319→+3）／lint クリーン／build 成功（`/garden` 8.61kB）
+- **次セッション注意**: 要 Vercel デプロイ。ミッションの「目標」は固定値ではなく「今日やった＋まだ要水やり」の動的合計（株が増えると goal も動く）。プッシュ通知でのリマインドは Phase 12.3 のインフラ（VAPID/SW/cron）に乗せる将来分。10.5 残はクラスランキング（成長率・オプトアウト・講師ビュー＋RLS）のみ
+
+### 2026-06-15（Phase 10.2 残 — 回答ごとのリアルタイム成長アニメ）
+- **依頼**: 「続けてください」→ 選択は 10.2 残のリアルタイム成長アニメ（回答ごとにカード上で「水やり→ちょっと育つ」）
+- **実装**（`StudySession`）: handleAnswer で `preStage`(回答前)と`postStage`(回答後)を `growthOf` で比較。`grewThisAnswer = post>pre`。**非ブロッキングの一時オーバーレイ** `waterFx` を set し 1.1s 後に自動クリア（fxTimerRef）。表示は fixed・`pointer-events-none`・z-40 で**学習フローを一切止めない**
+  - 正答（ease>=Good）= 💧しずく（`studyWaterDrop`）／その回答で段階アップ = 品種別 `PlantSprite` のポップ（`studyGrowPop`）。Again/HD は出さない（うるさくしない）
+  - styled-jsx global keyframes、`prefers-reduced-motion` で実質無効化。アンマウント時 fxTimer クリーンアップ
+- **検証**: 319テスト全通過（変化なし）／lint クリーン／build 成功（`/study` 3.07kB）
+- **次セッション注意**: 演出は「その回答で段階が上がったか」を pre/post で判定（セッション完了演出は baseline 比較＝別物）。要 Vercel デプロイ。これで **10.2 のコスメ系は一通り完了**（残は大規模デッキの PixiJS 化のみ）
+
+### 2026-06-15（Phase 10.5 アチーブメントバッジ）
+- **依頼**: 「続けてください」→ 10.5 残のうち**アチーブメントバッジ**を実装（既存データから導出＝新DB不要・オフライン・10.x の方針踏襲）
+- **実装**:
+  - `src/lib/garden/achievements.ts`（純ロジック）: `ACHIEVEMENTS`（9種＝結実1/10・ストリーク3/7/30・累計レビュー100/1000・品種5・株数100）＋`evaluateAchievements`（metric を target と比較、value は target で頭打ち）＋`countEarned`。テスト7件
+  - `getAchievementInput(userId)`（`garden-data.ts`）: reviewLogs 件数＋`computeStreak` の longest、card_states から blooming 数（※card単位カウント・複数カードノートは軽微に過大、target 1/10 なので実害なし）、notes 件数＝株数、userCreatureState の distinct 品種数。Dexie のみ・オフライン
+  - `src/components/garden/AchievementsModal.tsx`: 達成=色付き/未達成=グレー＋進捗バー。`useLiveQuery` で `getAchievementInput`
+  - `/garden` ヘッダーに「🏅 実績」ボタン→モーダル
+- **検証**: 319テスト全通過（312→+7）／lint クリーン／build 成功（`/garden` 8.24kB）
+- **次セッション注意**: 要 Vercel デプロイ＋再ログイン（既存だが同期で reviewLogs/card_states が揃っていれば即反映）。バッジは「現在の状態から導出」＝獲得トースト等は無し（"今達成した!"の検知には履歴保存が要るので将来）。10.5 残はデイリーミッション（プッシュ連携 Phase 12.3）とクラスランキング（成長率・オプトアウト・講師ビュー＋RLS）
+
+### 2026-06-15（019 マイグレーション適用 ＋ Phase 10.2 学習完了→成長演出）
+- **019 を Supabase に適用（CLI 導入）**: ユーザー依頼「sql実行してpush」。手段が無かったため Supabase CLI を devDependency で導入＋`supabase init`（`config.toml`/`supabase/.gitignore`、secrets除外）。ユーザーからアクセストークン（`sbp_...`）＋DBパスワードを受領し env 経由で実行
+  - `supabase link --project-ref ntmuhlvamuniqnrxamry` → `migration list` で**リモート履歴が空**（001〜018 は手動適用済みで未記録）と判明 → `supabase migration repair --status applied 001..018`（履歴だけ記録・SQL再実行なし）→ `supabase db push` で**019 のみ適用**。REST(service-role)で `user_creature_state` 存在確認（rows=0）
+  - **重要**: 今後の新規マイグレーションは `npx supabase db push` 一発でOK（履歴が 001〜019 まで整った）。**ユーザーにアクセストークンの revoke を依頼済み**（チャット履歴に残るため）
+- **Phase 10.2 学習完了→成長演出**: `StudySession` にセッション中の段階アップ集計を追加
+  - `plant-state.ts` に `GROWTH_ORDER`（種<芽<苗<成株<開花）export。`growthOf(schedule)` で CardSchedule→段階
+  - handleAnswer で「基準（そのノートをセッションで最初に見た時の段階、`growthBaselineRef`）」と回答後段階を比較し、上がったら `grownEvents` に upsert／戻ったら除外。undo でも当該ノートを除外
+  - 完了画面に `GrowthCelebration`（段階アップ株を品種別 `IsoTile` スプライト＋`from→to`＋「庭で見る」`/garden?deck=`）。`imprintMap` は mount 時に `getCreatureStatesMap` で読み込み＋インプリント確定時に更新
+  - `/garden` を `?deck=` 対応（client で window.location 読み）
+  - テスト+1（`GROWTH_ORDER` 昇順、計312）／lint クリーン／build 成功（`/garden` 7.28kB・`/study` 223kB）
+- **次セッション注意**: 要 Vercel デプロイ＋再ログイン（Dexie v12）。成長演出は「セッション開始→終了で段階が上がった株」のみ表示（毎回出るわけではない＝新規や復習だけだと出ないこともある）。リアルタイム（回答ごと）のカード上アニメは未実装＝10.2残
+
+### 2026-06-15（Phase 10.5 一部 — 学習ストリーク＆ヒートマップ）
+- **依頼**: 「今のが終わったら次のステップも進めておいて」→ ロードマップ順で 10.5 の最も自己完結なスライス（ストリーク/ヒートマップ）を実装。review_logs から導出＝新DB不要・オフライン可・実データ調整不要で 10.x の実績パターンに沿う
+- **実装**:
+  - `src/lib/stats/streak.ts`（純ロジック）: `studyDayKey`（4時区切り）/`levelFor`/`countByStudyDay`/`computeStreak`（current＝当日未学習でも継続、longest＝独立に最長連続）/`buildHeatmap`（週×7日・日曜整列・未来は future フラグ）。テスト13件（4時境界・連続/中断・同日複数）
+  - `src/lib/stats/useStreak.ts`: Dexie reviewLogs を `useLiveQuery`（同期で自動再描画・オフライン可）→ `{current,longest,heatmap,empty,loading}`。`useMemo` で再計算
+  - `src/components/stats/StreakHeatmap.tsx`: 🔥連続日数＋最長＋GitHub風ヒートマップ（emerald 5段階、曜日ラベル、凡例）。barrel に追加
+  - 表示: `/stats` 上部（Dexie駆動なのでサーバー統計のロード/エラーとは独立）＋`/garden` ヘッダーに🔥連続日数チップ（`useStreak` 再利用）
+- **ハマり/学び**: `[...map.keys()]` は本プロジェクトの tsconfig target で `--downlevelIteration` エラー → **`Array.from(...)` を使う**（next build で発覚、vitest は通る）
+- **検証**: 311テスト全通過（298→+13）／lint クリーン（既存 TemplatePreview 警告のみ）／本番ビルド成功（`/garden` 10.4kB・`/stats` 1.77kB・52ページ）
+- **次セッション注意**: 要 Vercel デプロイ（新コンポーネント）。実機は同期後に `/stats`・`/garden`。ヒートマップは直近12週・4時区切り。ストリークの定義は「当日未学習でも切らさない／翌日になって未学習だと切れる」。10.5 残はデイリーミッション（プッシュ連携 Phase 12.3）・クラスランキング（成長率/オプトアウト・講師ビュー＋RLS要）・バッジ（保存先の検討要）
+
+### 2026-06-15（Phase 10.4 品種インプリント）
+- **依頼**: 10.3 完了に続き「品種選択に進んで」。**学習の初回出題時に選択／ベース形状＋品種色／AI初期提案は見送り**で合意
+- **データモデル（唯一の新規）**: `user_creature_state(user_id, note_id, imprint JSONB, nickname)`。card_states には一切触れない純コスメ層
+  - SQL `supabase/migrations/019_user_creature_state.sql`（RLS=自分のみ・updated_at トリガ）**※要 Supabase 実行**
+  - 型 `UserCreatureState`/`CreatureImprint`（`types/database.ts`）
+  - Dexie **v12** `userCreatureState: 'id, user_id, note_id, [user_id+note_id]'`＋ヘルパー `createCreatureStateId`/`getCreatureState`/`saveCreatureState`/`getCreatureStatesMap`（`schema.ts`）。`clearAllData` にも追加
+  - 同期: pull API（`/api/sync/pull`）＋`savePulledData`（`sync.ts`）に `userCreatureState` を追加。保存は `POST /api/garden/imprint`（upsert・VARIETY_MAP で検証）。クライアントは Dexie 即時＋オンライン時に fire-and-forget POST
+- **品種カタログ**: `src/lib/garden/varieties.ts`（果樹6: りんご/みかん/さくらんぼ/ぶどう/レモン/いちじく＋花き5: ひまわり/チューリップ/ばら/コスモス/あさがお）。各 {id,name,kind,accent,accentDark,accentLight,emoji}。`pickVarietyByHash`（おまかせ＝noteId から決定的・FNV風）
+- **スプライト**: `PlantSprite` に `variety?` 追加。**ベース形状＋品種色**＝果樹は果実色、花き(kind='flower')は mature=つぼみ/blooming=花（花びら7枚＋中心）。早い段階（種/芽/苗）は品種差なし。しおれ以降は実/花が出ない（既存の lush 判定流用）。※5段階フル描き下ろしは将来
+- **初回インプリントUI**: `ImprintPicker`（3列グリッド＋おまかせ＋あとで）。`StudySession` に統合＝currentCard が `state==='new'` かつ Dexie に未刻印のノートのみ1度プロンプト。`resolvedNotesRef`（Set）でセッション内の再プロンプト/再クエリ抑止。「あとで」はスキップ（保存せず汎用の姿）。プロンプト中はタイマー一時停止
+- **描画反映**: `IsoTile`/`GardenField`/`WitheredList`/`/garden`(個別モーダル) に variety を伝播。`getGardenForDeck`/`getWitheredPlants` が `getCreatureStatesMap` で note→品種を解決（未刻印は汎用）。`pickLabel` を garden-data から export して StudySession のラベル抽出に再利用
+- **検証**: 298テスト全通過（291→+7、varieties 7件＋garden-data モックに `getCreatureStatesMap` 追加）／lint クリーン（既存 TemplatePreview 警告のみ）／本番ビルド成功（`/garden` 9.7kB・`/api/garden/imprint` 登録・52ページ）
+- **次セッション注意**:
+  - **★最重要: `019_...sql` を Supabase で実行**しないと品種保存が 500（Dexie 側は動くがサーバー upsert 失敗）
+  - **要 Vercel デプロイ＋再ログイン**（Dexie v12 マイグレーション＝既存ユーザーは初回 sync で userCreatureState 取得）
+  - 大規模デッキ（中学英単語6858）では new カードのたびにプロンプト → 「おまかせ/あとで」で流せる設計だが、頻度が気になるなら「デッキ設定でインプリントOFF」等を将来検討
+  - 品種別スプライトは色＋形状の差のみ（ぶどうも丸い実）。フィデリティを上げるなら品種ごとの専用パスを追加
+
+### 2026-06-15（Phase 10.3 枯れ株一覧・復活導線）
+- **依頼**: /start-session → 10.1/10.2 実機確認済み・文脈アシストのデプロイ確認済みを確認 → 今回の主軸は **Phase 10.3 枯れ株一覧（復活導線）**
+- **設計決定（ユーザー合意）**: ①一覧は **`/garden` 内・全デッキ横断**（枯れ株は複数デッキに散るため）②「水やり（復活）」は **その株を最優先で出す**（`/study?deck=X&card=cardId`、既存 `priorityCardId` を活用）
+- **実装（このセッション）**:
+  - `src/lib/garden/garden-data.ts`: `getWitheredPlants(userId, now?)` 追加。全 `card_states` を走査 → `derivePlantState` で `isDead` のみ抽出 → cards/notes/decks をまとめ引きして `deckId`/`deckName`/`label`/`plant(PlantState)` を付与、放置日数（`plant.overdueDays`）降順。Dexie のみ・オフライン可。card 本体が未同期なら除外
+  - `src/components/garden/WitheredList.tsx`（新規）: 枯れ株モーダル一覧（小グリフ＝`IsoTile animate={false}`／名札／所属デッキ／放置日数／行ごとに「水やり」リンク）。コピーは「もう一度育てましょう」の再生トーン
+  - `src/app/(student)/garden/page.tsx`: 全デッキ横断の `getWitheredPlants` を liveQuery。サマリーの「枯れ N」をクリック可能な「🍂 枯れ株 N（全デッキ）」ボタンに変更 → `WitheredList` モーダル表示
+  - テスト: `src/lib/garden/garden-data.test.ts`（新規5件、`@/lib/db/schema` をモック）
+- **設計の肝（再掲）**: 枯れは見た目のみ。`card_states` は不変。水やり（=復習）で FSRS が自然に芽吹き直す（永久ロストなし＝安全弁）
+- **検証**: 291テスト全通過（286→+5）／lint クリーン（既存の TemplatePreview 警告のみ）／本番ビルド成功（`/garden` 8.5kB）
+- **次セッション注意**:
+  - **要 Vercel デプロイ**（新コンポーネント・新ロジック）。実機は再ログイン/同期後に `/garden`、枯れ株は長期放置アカウントで
+  - 枯れ判定は `CARE_THRESHOLDS.dryingOut`（interval の4倍超過）。実データで枯れが出にくい/出すぎる場合は `plant-state.ts` のしきい値調整
+  - 次は 10.4 品種選択（`user_creature_state` 新テーブル）or 10.2 残（PixiJS・成長演出）
+
+### 2026-06-15（Phase 10 記憶のいきもの育成 — 設計確定＋10.1/10.2 実装）
+- **このセッションの流れ**: 機能拡張ディスカッション → 育成ゲームの世界観を植物に確定 → アイソメ・タイル方式に決定 → 10.1/10.2 を実装
+- **世界観の確定**: アート＝**植物（果樹・花き）**。水やり＝復習／枯れ＝死／品種選択＝インプリント。タッチ＝**自然で素朴な手描き風**（最初の植物アイコンの質感、高校生も対象＝幼すぎ回避）。動物/モンスター系は一度検討したが不採用
+- **描画方針の確定**: **アイソメ（斜め45°）タイル**。1ノート＝ひし形ブロック1枚。個別=1枚拡大／全体=自動レイアウト合成。「ブロック／株グリフ/配置」を分離し絵柄は後から差し替え可能。**当面は自前の手続き生成SVG（素朴トーン）**で世界観を統制。**CC0素材（Kenney/OpenGameArt の Free isometric plants-pack 等）は絵柄が素朴トーンとずれるため一旦見送り**（差し替えは株グリフのみで可）。将来 PixiJS（大規模）/Rive（状態アニメ）へ段階移行
+- **実装（コミット済み）**:
+  - `1e5ddcf` 10.1: `src/lib/garden/plant-state.ts` — `derivePlantState`/`summarizeGarden`。card_states(FSRS) から成長段階(種→芽→苗→成株→開花/結実)・世話状態(健やか→乾き気味→しおれ→枯れかけ→枯れ)を導出。SM-2は interval フォールバック。しきい値は `GROWTH_THRESHOLDS`/`CARE_THRESHOLDS` で調整可。テスト17件
+  - `1c1efe3` 10.2: `src/components/garden/{PlantSprite,IsoTile,GardenField}.tsx` ＋ `src/lib/garden/garden-data.ts`(`getGardenForDeck`) ＋ `/garden` ページ ＋ BottomNav「庭」タブ。揺れ/しずくの軽いCSSアニメ（styled-jsx global、prefers-reduced-motion対応）
+- **実機確認で出た不具合2件を修正（push 済み）**:
+  - `4d1ed85` ナビ「庭」が一瞬表示→消える: 生徒ナビにしか入れておらず、ロール確定(teacher/admin)で消えていた → `teacherNavItems` にも追加＋7項目が収まるようナビの最小幅/余白調整
+  - `b1f30c5` 庭画面で下ナビ（＆ヘッダー）が消え他画面へ移動できない: `(student)` グループに共有レイアウトが無く各ページが自前で `<AppLayout>` を巻く方式なのに garden ページが未ラップだった → 読み込み中/本体の両方を `<AppLayout>` で包む
+- **検証**: 286テスト全通過 / lint クリーン / 本番ビルド成功（`/garden` 7.64kB 静的、51ページ生成）。**全コミット push 済み（main: b1f30c5）**
+- **設計の肝（再掲）**: FSRS の card_states だけで育成が成立。学習エンジンには一切触れていない（純コスメティック層）
+- **学び（次回ハマり回避）**: `(student)`/`(teacher)` グループには共有 layout.tsx が無い。**新規ページは必ず自前で `<AppLayout>` でラップする**こと（でないとヘッダー/下ナビが出ない）。ナビ項目はロール別配列（`studentNavItems`/`teacherNavItems`）の**両方**に入れる
+- **次セッション注意**:
+  - **要デプロイ**（新ページ・新コンポーネント）。実機は再ログイン/同期後に `/garden`
+  - 株グリフは現状**汎用の木1種**。品種別（りんご/花 等）は 10.4（`user_creature_state` 追加）で。配置は自動レイアウト（合意）。自由配置は将来
+  - 大規模デッキは MAX_TILES=150 で打ち切り表示（page.tsx に注記表示済み）。本格対応は PixiJS
+  - 既存の軽微な型エラー `src/lib/db/sync.test.ts(125,48)` は本セッションと無関係（next build は通る）
+  - モック（チャット内 show_widget）は世界観確認用。実物は `/garden`
+
+### 2026-06-14（コロケーションパイロット 文脈アシスト追加）
+- **依頼**: コロケーションパイロット（50語/ノートタイプ「コロケーション構文」）で、カードの一番はじめに目にする位置に**日本語の場面リード文（文脈アシスト）**を追加してイメージを強化したい。例:「私は荷物が多くて困っています。そのとき、」→ `She gave me a hand.`。既存の和訳ヒントは残す（＝加えて）
+- **方針（合意）**: **enrich-only**＝既存の検証済み英文/和訳/穴埋めは保持し、各例文に `ctx`（1文・接続句で終える）だけをAIで追記。表示は**表面の最上部のみ**
+- **データモデル**: 例文プール1件を `{en, blank, ja}` → `{en, blank, ja, ctx}` に拡張。`文脈` は note 保存フィールドにせず、`StudyCard` が例文プールから合成する表示専用フィールド（`英文穴埋め`/`和文`/`英文` と同じ扱い）。ノートタイプの FIELDS 変更なし
+- **やったこと**:
+  - 新規 `gen-context.js`（`build_context_workflow.py` が pilot2_deck.json から生成）→ `Workflow` 実行（Sonnet・15バッチ・174コロケーション・失敗0）→ `context_result.json`
+  - `merge_context.py` で ctx を `pilot2_deck.json` の各 exemplar に書き戻し（870例文すべて付与）→ `build_colloc_notes.py`（`ctx` を pool に含めるよう変更）で `colloc_notes.json` 再生成
+  - `src/components/card/StudyCard.tsx`: `effectiveFieldValues` に `'文脈': ex.ctx` を追加
+  - カードテンプレ定義を `data/中学英単語/colloc-template.mjs` に集約（import/update 両スクリプトで共有）。表面最上部に `<div class="context">{{文脈}}</div>`＋CSS（`.context:empty{display:none}`）
+  - DB反映: `update-colloc-context.mjs`（既存174ノートの例文プールを (見出し語,コア) 照合で in-place 更新＝note ID不変→SRS進捗保持）＋ `update-colloc-template.mjs`（card_templates の front/css をパッチ）。両方 --dry-run 確認後に本実行・DB読戻し検証OK
+  - 検証: lint クリーン / 269テスト全通過 / 本番ビルド成功
+- **次セッション注意**:
+  - **要 Vercel デプロイ**（StudyCard 改修）。テンプレ/プールはDB更新済みなので**再同期（再ログイン or バックグラウンド同期）で反映**。デプロイ後に実機確認
+  - 再生成手順: `python build_context_workflow.py pilot2_deck.json gen-context.js` → Workflow → 出力の `result` を `context_result.json` に保存 → `merge_context.py` → `build_colloc_notes.py` → `update-colloc-context.mjs`
+  - ctx の質は概ね良好だが一部やや一般的。手直しは `pilot2_deck.json` の ctx を直接編集 → build → update でも可（AI再生成不要）
+  - 全語（2286）展開時は同パイプラインを full データで回す（コスト要見積もり）
+
+### 2026-06-14（機能拡張ディスカッション → 育成ゲーム設計＋ロードマップ再構成）
+- **依頼**: 「単語学習だけでなく機能拡張したい」— 題材単位の順序付き出題／数式・画像／階層アンロック／育成・ランキング等のアイデア出しディスカッション
+- **ユーザーの選択**: ②数式・画像のリッチ表示 ＋ ④ゲーミフィケーション。ゴール＝全体ロードマップ再構成。着手順は **育成ゲームを先に**
+- **★育成ゲームの核心哲学（ユーザー発）**: 「全体進捗で1キャラ育成」ではなく **1ノート＝1匹、無数の小さな生き物を飼育**。互いに関係しつつ個々に大切
+- **追加で合意した2メカニクス**:
+  - **死＆復活**: 復習しないと生き物が死ぬ→ゼロから育て直し。**ただしSRSを壊さない設計**＝死は見た目だけ（card_states 不変）、「ゼロから育て直し」はFSRSの自然リセット（長期放置→Again→stability低下→卵に戻る）で実現。墓石→お墓参り（復習）で**復活可能**（永久ロスト禁止＝安全弁）。ユーザーは墓石→復活案を高評価
+  - **初回インプリント**: 生き物に初めて触れた時に生徒がイメージを刻む→個別の絵。実装は「手続き生成スプライト（単語IDシードで自動ユニーク）＋生徒のインプリント入力」の2層。視覚化記憶術としても機能。生徒×ノートの新テーブル `user_creature_state` が唯一の新規データモデル
+- **成果物（このセッションで作成・コード変更なし）**:
+  - `docs/memory-creatures-design.md` 新規（Phase 10 の一次仕様）
+  - `docs/ROADMAP.md` Phase 10 を「記憶のいきもの育成」に再定義（10.1〜10.5）、Phase 13.4 リッチ表示を新設、優先度順を再構成
+  - `docs/progress.md` 更新（本メモ）
+- **据え置き（中長期・計画のみ）**: ①レッスン/教材モード、③学習パス/アンロック（データモデル新規が重い）
+- **次セッション注意**: FSRS の `card_states`（stability/difficulty/lapses/due）だけで育成ゲームが作れるのが設計の肝。学習エンジンには手を入れない。成長段階のしきい値は実データ検証後に確定
+
+### 2026-06-14（コロケーション中心デッキ パイロット + イディオムタグ + 同期/認証バグ修正）
+- **依頼の流れ**: 中学英単語デッキ（6858）の確認 → ①イディオム判定タグ ②表示バグ調査 ③L2語彙論に基づくコロケーション中心デッキ設計＆パイロット ④空欄ヒント改善
+- **同期/認証バグ2件を修正（要デプロイ済み push）**:
+  - `fix 7f3af70`: **同期ページング** — `/api/sync/pull` と `/api/decks/[id]/offline-data` が notes/cards/card_states を取得する際 **PostgREST のデフォルト1000行上限**でページングしておらず、6858ノートの先頭1000件(=名詞のみ)しか同期されず「名詞サブデッキしか出ない」真因だった。1000件ずつ `.range()` ループで全件取得に修正
+  - `fix 3de0e83`: **未認証 /api/* の405** — ミドルウェアが未認証リクエストを `/login` へ307リダイレクト → POST が `/login`(GET専用)に転送され **405**。`/api/*` はリダイレクトせず各ルートの requireAuth に401を返させる。再現・検証済み（POST /api/sync/pull が401に）
+  - **教訓**: インポートスクリプトが講師一覧先頭(荒井尚緒)を既定オーナーにしてデッキ非表示 → 既定を `gaimon.maam@gmail.com` 優先に修正済み
+- **イディオムタグ（`feat e2673a2`）**: 全6858コロケーションをAI(Sonnet)で「推測可能/推測困難イディオム」分類 → 1059ノートにタグ「イディオム」付与＋フィルタサブデッキ「★ イディオム（推測困難）」作成。`tag-idioms.mjs` はノートID安定の in-place 更新
+- **中学英単語デッキ穴埋め化（`feat 2c53f0f`）**: 旧「単語が表面に出て暗誦にならない」設計 → **表=英文(暗誦対象を空所)+和訳ヒント / 裏=完成英文(答え強調)+和訳** に再設計。`build_deck_tsv.py` の穴埋め/強調ロジック（語幹・不規則動詞・重子音・ss・e脱落・A/Bプレースホルダ対応のアンカー一致、空所最大4語）を整備
+- **★コロケーション中心デッキ パイロット（`feat 762cdba`,`01ae9ef`,`d80995f`）**:
+  - **設計の核**: 「意味×コロケーション」は積ではなく、コロケーションが語義を担う（run=走る/経営する等）→ 語義軸はコロケーションに畳む。学習単位=構文(コア+スロット)、SRSは構文単位、表示例文は毎回回す（token頻度=定着, type頻度=生産性）
+  - **3層統制**: ①語義レベルA1/A2（LLM+EVP/GSE基準。run は走る義のみ、経営する義B2は除外）②共起語統制（`words.tsv`照合バリデータ `vocab_validate.py`、範囲内90%）③コーパス裏取り（Google Books Ngrams JSON。ただし `put on` 等まで近ゼロを返し**弱い**→補助シグナルに留め足切りしない）
+  - **パイプライン**: 50語選定 → `gen-colloc.js`(語義A1/A2コロケーション選定) → `corpus_attest.py`(頻度注釈) → `gen-exemplar.js`(語彙統制例文プール5本) → `build_colloc_notes.py`(実現コロケーション全体を空所化, filler対応)
+  - **アプリ実装**: ノートタイプ「コロケーション構文」(見出し語/語義/コア/スロット型/例文プールJSON)。`StudyCard.tsx` に**例文プールからレビューごとに1本ランダム表示**する処理を追加（SRSはノート単位）。デッキ「中学英単語 コロケーション（パイロット50語）」174ノート投入
+  - **空欄ヒント**（`d80995f`）: 当初「語数分の下線」→「頭文字」→ **最終「最初の音節の頭子音クラスタ＋語長下線」**（take the bus→`t___ th_ b__`、think→`th___`、school→`sch___`、母音始まりは先頭1文字）。`_blank_for` を変更、パイロットDBの例文プールも in-place 更新済み
+- **次のセッションで注意すべきこと**:
+  - **要デプロイ**: `01ae9ef`(StudyCardローテーション) と バグ修正(pull/middleware) はアプリ改修なので Vercel デプロイが必要。空欄ヒント等データ側変更は再同期のみで反映
+  - `build_deck_tsv.py` は `main()` ガード化済み。穴埋めロジック(`emphasize`,`realize_blank`用の `_match`/`_blank_for` 等)は `build_colloc_notes.py` から import 再利用
+  - StudyCard のプール選択は「カードマウントごとにランダム」。1セッション内では各カード1回出題なのでローテーションは復習をまたいで現れる。`例文プール` フィールドが無い通常ノートは素通り（effectiveFieldValues=fieldValues）
+  - コーパスは Google Ngrams で**弱い**と判明。本格化するなら SkELL/Sketch Engine/COCA か EVP/GSE の段階別コロケーションリスト（要アクセス/コスト）
+  - データ生成物: `pilot2_deck.json`(コロケーション+例文+freq), `colloc_notes.json`(投入用), `full_result.json`/`idioms.json` は版管理。`gen-*.js`(データ埋め込みワークフロー)と `raw/` は .gitignore
+  - パイロットデッキ id `10765cf3…` / ノートタイプ「コロケーション構文」`0cfab65b…` / 中学英単語2286デッキ `c5dcc810…`。すべてオーナー=金田(`04f87dee…`)
+
+### 2026-06-13（中学英単語 暗誦例文デッキ + 同期ページングバグ修正）
+- **依頼**: 公立中学で覚えるべき英単語（CEFR等準拠）を全リスト化し、例文暗誦デッキを作成
+- **単語リスト**: 学習指導要領 全2286語（青森県教委ベース、全国6社教科書分析 / CEFR A1〜A2相当）。english-club.jp の品詞別xlsx 10本をDLして抽出 → `data/中学英単語/words.tsv`（id付き、名詞1254/動詞343/形容詞361/副詞148/代名詞60/前置詞42/接続詞42/助動詞19/間投詞14/冠詞3）
+- **例文生成**: 1語×3つの異なるコロケーション例文（英文＋和訳）を AI(Sonnet) のワークフロー並列生成（115バッチ, 約567万トークン）。`data/中学英単語/build_workflow.py` で単語データ埋め込みのワークフロー .js を生成し `Workflow` で実行 → `full_result.json`
+- **後処理** `build_deck_tsv.py`: コロケーション部を `<strong>` 強調＋空所化。語幹・不規則動詞・重子音・ss・e脱落・A/Bプレースホルダ対応のアンカー一致。空所は最大4語（超過は見出し語のみ）。検証: 重複0/3文揃い100%/強調付与ほぼ100%（未一致2/6858）
+- **カード構成（穴埋め型）**: 表=英文（暗誦対象を空所 `<span class="blank">`）＋和訳ヒント / 裏=完成英文（答え緑下線）＋和訳＋単語・意味・表現。ノートタイプ「中学英単語（暗誦）」7フィールド
+- **投入**: `import-chu-eitango.mjs` で 6858ノート＋カード。`create-pos-subdecks.mjs` で品詞別フィルタサブデッキ10個（filter_tags=[品詞:◯◯]）。デッキ `c5dcc810…`、オーナー=金田啓之
+- **重要バグ修正（同期ページング）**: `/api/sync/pull` と `/api/decks/[id]/offline-data` が notes/cards を取得する際 **PostgREST のデフォルト1000行上限**でページングしておらず、6858ノートの先頭1000件(=名詞のみ)しか同期されず「名詞サブデッキしか出ない」症状の真因だった。両ルートを1000件ずつ `.range()` ループで全件取得に修正（commit `7f3af70`）
+- **オーナー付け替えの教訓**: インポートスクリプトが講師一覧の先頭（荒井尚緒）を既定オーナーにしてしまい「デッキが表示されない」発生 → 既定を `gaimon.maam@gmail.com` 優先に修正済み
+- **未デプロイ注意**: コード修正(pull/offline-data)は push 済みだが**Vercelデプロイ後にログアウト→再ログインしないと反映されない**（旧デッキの ghost も IndexedDB に残るため要フル同期）
+- **コミット**: `7f3af70`(fix 同期ページング) / `2c53f0f`(feat 中学英単語デッキ一式) push 済み
+- **次セッション注意**: 端末で動作確認後、例文・空所の手直し要望が来たら `build_deck_tsv.py` 調整 → 旧デッキ削除（cleanup は inline node、`data/中学英単語/` の手順参照）→ 再import → サブデッキ再作成の順。`full_result.json` があれば AI 再生成なしで TSV 再構築可能
+
+### 2026-04-28（デッキ表示バグ修正 — Dexie liveQuery 化）
+- **背景**: 林奏太さん（LINE 経由ログイン）が「デッキ一覧が空」と報告
+- **調査結果**:
+  - 林奏太のサーバーデータは完全に正常（クラス所属 2、配布デッキ 1=動詞の語法 + 13サブデッキ、review_logs 398件、最終学習 4/23）
+  - アカウント重複なし、ban されていない、配布忘れでもない
+  - **真因**: `DecksPageClient.tsx` 等が `useEffect + useState` で Dexie を一度しか読まず、バックグラウンド sync が IndexedDB を更新しても画面が再描画されない設計
+  - 特に LIFF in-app browser は通常ブラウザと別 storage で IndexedDB が空、初回アクセスで「デッキがありません」が固定表示される
+- **やったこと**:
+  - **`dexie-react-hooks` 導入** で `useLiveQuery` パターンに移行
+  - **5 ページを liveQuery 化**:
+    - `DecksPageClient.tsx`（デッキ一覧）
+    - `StudyPageClient.tsx`（学習画面 — LINE Flex 着地で最重要）
+    - `src/app/page.tsx`（ダッシュボード — `/auth/line?next=/` のデフォルト着地点）
+    - `decks/[id]/page.tsx`（デッキ詳細）
+    - `decks/page.tsx`（薄ラッパー、Server-data 経由を廃止）
+  - **`SyncErrorBanner.tsx` 新規作成**: `fullSync` エラーを画面上部に赤バナーで表示（再試行ボタン付き）
+  - **`FirstSyncOverlay.tsx` 新規作成**: IndexedDB 空 + オンライン + 初回 sync 未完了の時、全画面オーバーレイで「データを取得しています…」を表示。8 秒以上で「再読み込み」ボタン出現
+  - **AppLayout.tsx に組み込み**
+  - **調査スクリプト 3 本** を `data/debug-{student-decks,deck-tree,student-activity}.mjs` として残置（今後の同類調査でも使える）
+  - 269 / 269 テスト通過、typecheck クリーン、ESLint クリーン、dev server 起動 OK
+  - **コミット b8722d9 / プッシュ済み**
+- **未着手の Audit 結果（中優先度、次セッション以降）**:
+  - `src/app/(student)/notes/page.tsx` — liveQuery 化候補（中優先度）
+  - `src/app/(teacher)/students/page.tsx` — billing 同期反映に liveQuery が望ましい
+  - `src/app/(teacher)/note-types/page.tsx` + `[id]/page.tsx` — 編集後の反映タイムラグあり
+  - `src/app/(student)/decks/new/page.tsx` — 親デッキドロップダウン（低優先度）
+- **次のセッションで注意すべきこと**:
+  - **林奏太さんの動作確認待ち**。LINE 経由で `/decks` を開いて自動表示されることを本人に確認してもらう必要あり
+  - `dexie-react-hooks` の `useLiveQuery` 内ではトランザクションを開始できない（同期的な read のみ）。書き込みは外側で `db.xxx.put()` を直接呼ぶ
+  - `useLiveQuery` の戻り値は `T | undefined`（loading）。`null` を返したい場合は明示的に return null
+  - StudySession の内部 state は `useState(() => initialCards)` で lazy 初期化なので、liveQuery で props が変わっても学習中のセッションはリセットされない（確認済み）
+  - 残った orphan 変更（`docs/billing-line-notification-spec.md`、`data/create-teacher-account.mjs`、`data/update-teacher-email.mjs`、`docs/srs-due-cards-summary-history-filter.md`、`.claude/settings.local.json`）は今回スコープ外で未コミット
+
+### 2026-04-16 夜2（SRS側 LINE通知準備 + billing実装スペック）
+- **やったこと**:
+  - **due-cards-summary API 改善** (`src/app/api/admin/due-cards-summary/route.ts`)
+    - レスポンスに `deckId` を追加（Flex ボタンから `/study?deckId=xxx` に深いリンク用）
+    - `dueCount` を `count: 'exact'` で実枚数取得（旧: `.limit(10)` で上限10）
+    - サンプル抽出は別クエリで最大10枚に制限（プレビュー用1枚を選ぶため）
+  - **`/auth/line` の `next` パラメータ対応**
+    - `?next=/study?deckId=xxx` で SRS 内任意パスへ遷移可能
+    - `safeNext` ヘルパー (`src/lib/auth/safe-next.ts`) で open redirect 防止
+    - 5件のテスト追加（null/相対/protocol-relative/絶対URL/javascript: スキーム）
+  - **billing 側実装スペック書き下ろし** (`docs/billing-line-notification-spec.md`)
+    - 全体フロー図、API 仕様、環境変数、Flex メッセージ JSON、サービスコード雛形
+    - Cron 設定（Vercel Cron 22:00 UTC = 07:00 JST）
+    - LIFF 経由の SRS 自動ログインフロー
+    - 運用注意（レート制限、重複防止、オプトアウト、JST/UTC）
+- **次のセッションで注意すべきこと**:
+  - billing 側コードは `kanada4310/swallow-billing` リポジトリで実装（このセッションからは触れない）
+  - billing 側で必要な環境変数: `SRS_BASE_URL`, `SRS_AUTH_SECRET`（既存）, `LINE_CHANNEL_ACCESS_TOKEN`, `LIFF_NOTIFICATION_URL`
+  - Flex メッセージのボタン URI は LIFF URL（直接 `/auth/line` には飛ばせない、JWT 必要）
+  - billing 側にすでに LIFF 自動ログイン用 JWT 発行 API があれば再利用可
+
+### 2026-04-16 夜（生徒取組状況UI + LINE通知データAPI + 掃除）
+- **やったこと**:
+  - **生徒取組状況UI**:
+    - 一覧ページ `/students/progress`（今日の復習数、累計、期限切れ、最終活動、全体正答率を表示）
+    - 詳細ページ `/students/progress/[userId]`（StatsOverview + 各種グラフ + デッキ別進捗）
+    - ノート別ドリルダウン（デッキクリックで各ノートの状態/正答率/最終レビューを表示）
+    - API `/api/teacher/student-progress`（バッチクエリでN+1回避、?deckId=xxx でノート一覧モード）
+    - 共通統計モジュール `src/lib/stats/calculations.ts`（生徒/講師で共有）
+    - DBマイグレーション `017_teacher_student_progress.sql`（card_states に講師閲覧RLS追加）
+    - クラス管理ページに「取組状況」ボタン追加
+  - **LINE通知データAPI**:
+    - `GET /api/admin/due-cards-summary`（Bearer認証、期限切れカードを持つ全生徒のサマリー返却）
+    - レスポンス: `{ students: [{ lineUserId, name, dueCount, frontText, deckName }] }`
+    - `middleware.ts` の publicPaths に追加
+    - extract-text ユーティリティで frontText を生成
+  - **掃除**:
+    - 未使用の Google OAuth コールバック `/callback/route.ts` 削除 + publicPaths から除去
+    - progress.md の既知の課題から解消済み項目を削除
+- **次のセッションで注意すべきこと**:
+  - `017_teacher_student_progress.sql` 実行済み
+  - 生徒取組状況UIは講師ロールのみアクセス可（card_states RLSで制御）
+  - LINE通知送信本体（Flexメッセージ生成 + Messaging API呼び出し）は**billing側に未実装**
+  - billing側は SRS_AUTH_SECRET + `GET /api/admin/due-cards-summary` で呼び出す
+  - FSRS card_states の `lapses` カラムはノート別進捗で正答率計算に使用
+
+### 2026-04-16 後半（billing-SRS同期 + フィルタデッキ修正 + 設定継承）
+- **やったこと**:
+  - **billing-SRSミラーリング同期の完全実装**
+    - SRS側: Admin billing-sync API (`POST /api/admin/billing-sync`)
+    - SRS側: LINE認証ロジックの共通ユーティリティ抽出 (`src/lib/auth/line-user.ts`)
+    - SRS側: DBマイグレーション `016_billing_sync.sql`（billing_template_id + teacher_id nullable + RLSポリシー）
+    - SRS側: Dexie v10（billing_template_id インデックス追加）
+    - billing側: `srs-sync.service.ts`（データ収集 + SRS API呼び出し）
+    - billing側: Daily Cronに同期ジョブ追加（#7）
+    - billing側: 手動同期API (`POST /api/admin/srs-sync`) + ダッシュボードにSRSSyncButton
+    - 同期結果: 21クラス、48生徒アカウント、60メンバー登録を確認
+  - **billing連携クラスの講師UI対応**
+    - GET /api/classes でbilling連携クラスも返す
+    - 生徒管理ページ・クラス詳細ページでbilling連携クラス表示
+    - billing連携クラスの編集/削除/メンバー変更をブロック（読み取り専用）
+    - RLSポリシー追加（Teachers can view billing-synced classes）
+    - `is_class_teacher` / `is_student_of_teacher` 関数をbilling連携クラス対応に更新
+    - Pull sync APIでbilling連携クラスも同期
+  - **フィルタデッキの不具合修正**
+    - `getStudyCardsOffline`: フィルタサブデッキでルートデッキツリーからカード取得するように修正
+    - `getDecksWithStatsOffline`: フィルタサブデッキのカード数を親デッキからタグマッチで計算
+  - **デッキ設定の不具合修正**
+    - `OfflineDeckWithStats`に`settings`フィールド追加（設定モーダルがデフォルトに戻る問題修正）
+    - 学習ページでルートデッキ設定をロードしStudySessionに渡す（フィルタサブデッキの設定継承）
+  - **配布デッキのサブデッキ同期修正**
+    - Pull APIでサブデッキ取得にadmin clientを使用（RLSバイパス）
+  - **その他**
+    - LINE auth routeを共通ユーティリティ使用にリファクタ
+    - billing-sync APIのミドルウェア除外（publicPaths追加）
+    - エラーハンドリング強化（billing側: text→JSON パース、SRS側: グローバルtry-catch）
+- **途中で止まっていること**:
+  - Pull APIにデバッグログが残っている（次セッションで削除推奨）
+- **次のセッションで注意すべきこと**:
+  - `016_billing_sync.sql` は実行済み（RLSポリシー含む）
+  - billing連携クラスは `teacher_id = null`, `billing_template_id IS NOT NULL` で識別
+  - 退塾処理は `ban_duration: '876000h'` でアカウント無効化（データ保持）
+  - SRS_AUTH_SECRETは両システムで共有済み
+  - billing側のコードはswallow-billingリポジトリ（`/c/Users/gaimo/AppData/Local/Programs/swallow-billing`）
+  - フィルタデッキの動作: 新規カードのみフィルタ、復習カードはルートデッキ全体から
+  - サブデッキ同期はPull APIでadmin clientを使用（RLSバイパス）
+
+### 2026-04-16（フィルタデッキ実装 + サブデッキ一括作成 + 配布デッキ同期改善）
+- **やったこと**:
+  - フィルタデッキ機能の完全実装（設計→コーディング→テスト→ビルド→プッシュ）
+    - DBマイグレーション `015_filter_decks.sql`（filter_tags列 + get_root_deck_id RPC）実行済み
+    - Deck型にfilter_tags追加、Dexie v9、getRootDeckId()ヘルパー
+    - getStudyCardsOffline(): ルートデッキベースの新規カード枠共有 + タグフィルタ
+    - デッキ作成/編集API: filterTagsパラメータ対応
+    - DeckForm UI: フィルタータグ入力（オートコンプリート付き）
+    - デッキ一覧: フィルタタグの紫バッジ表示
+    - 12テスト追加（getRootDeckId、タグフィルタリングロジック）
+  - 動詞の語法デッキに13セクション別フィルタサブデッキを一括作成（スクリプト: `data/create-filter-subdecks.mjs`）
+  - 配布デッキのサブデッキ自動同期（pull API修正: 子・孫デッキも自動取得）
+  - 配布デッキのツリー構造表示（フラットリストからツリーに変更）
+  - 既存のSVCサブデッキ（filter_tagsなし）を削除
+
+### 2026-04-10（動詞の語法デッキ + 講師ログイン + LINE認証修正 + フィルタデッキ設計）
+- **やったこと**:
+  - LINE自動ログインE2Eテスト完了確認
+  - 動詞の語法デッキ作成（582ノート、5カテゴリタグ体系、インポート完了）
+  - 講師用メール+パスワードログイン追加（`gaimon.maam@gmail.com`）
+  - LINE認証ルート大幅修正（3段階フォールバック + magic link方式）
+  - 同期403エラー修正（pull APIのuserIdチェック削除）
+  - デッキ設定保存後のDexie未更新バグ修正
+  - フィルタデッキ機能の設計・計画書作成
+
+### 2026-04-10（前半セッション — billing側設計）
+- billing側の総合メニューに「学習支援」セクション追加設計 → ユーザーが実装済み
+- LINE自動ログインの環境変数設定手順ドキュメント化 → ユーザーが設定済み
+
+### 2026-04-09（LINE自動ログイン実装）
+- LINE自動ログイン統合（Phase 17a）のコード実装完了
+- Supabaseプロジェクト復旧、Google OAuth修正
+
+### 2026-02-19
+- TTS設定デッキ移動 + 通知UI整理 完了
+- テンプレートTTSプレースホルダー実装
+- TTSプリフェッチ実装
+
