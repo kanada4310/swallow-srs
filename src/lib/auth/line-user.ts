@@ -63,27 +63,33 @@ async function findByLineEmail(
 }
 
 /**
- * metadata.line_user_id で LINE に紐付く既存ユーザーを探す（メール変更済みの講師等）
+ * metadata.line_user_id で LINE に紐付く既存ユーザーを探す（メール変更済みの講師等）。
+ * allowedRoles を指定すると、その role のプロフィールだけを対象にする。
+ * 同一 LINE に講師アカウントと（自動作成された）生徒アカウントが併存しても、
+ * 講師ログインが生徒アカウントを拾わないようにするための絞り込み。
  */
 async function findByLineMetadata(
   adminClient: SupabaseClient,
   lineUserId: string,
   name: string,
+  allowedRoles: ValidRole[],
 ): Promise<FindOrCreateResult | null> {
   try {
     const { data: { users: allUsers } } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
-    const existingUser = allUsers.find((u) => u.user_metadata?.line_user_id === lineUserId)
-    if (!existingUser) return null
-
-    const { data: profile } = await adminClient
-      .from('profiles')
-      .select('id, name')
-      .eq('id', existingUser.id)
-      .single()
-    if (profile && profile.name !== name) {
-      await adminClient.from('profiles').update({ name }).eq('id', profile.id)
+    const matches = allUsers.filter((u) => u.user_metadata?.line_user_id === lineUserId)
+    for (const user of matches) {
+      const { data: profile } = await adminClient
+        .from('profiles')
+        .select('id, name, role')
+        .eq('id', user.id)
+        .single()
+      if (!profile || !allowedRoles.includes(profile.role as ValidRole)) continue
+      if (profile.name !== name) {
+        await adminClient.from('profiles').update({ name }).eq('id', profile.id)
+      }
+      return { userId: user.id, isNew: false }
     }
-    return { userId: existingUser.id, isNew: false }
+    return null
   } catch (err) {
     console.error('[findOrCreateSRSUser] Metadata search failed:', err)
     return null
@@ -114,7 +120,8 @@ export async function findOrCreateSRSUser(
   const password = await deriveLinePassword(lineUserId, authSecret)
 
   if (role === 'teacher' || role === 'admin') {
-    const byMeta = await findByLineMetadata(adminClient, lineUserId, name)
+    // 講師・管理者は「講師/管理者ロールの」metadata 紐付けアカウントを最優先
+    const byMeta = await findByLineMetadata(adminClient, lineUserId, name, ['teacher', 'admin'])
     if (byMeta) return byMeta
     const byEmail = await findByLineEmail(adminClient, lineEmail, name)
     if (byEmail) return byEmail
