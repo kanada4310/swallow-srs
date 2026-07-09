@@ -13,7 +13,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
-import { deriveLineEmail } from '@/lib/auth/line-user'
+import { findOrCreateSRSUser } from '@/lib/auth/line-user'
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,28 +29,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    let body: { lineUserId?: unknown; deckId?: unknown }
+    let body: { lineUserId?: unknown; deckId?: unknown; name?: unknown }
     try {
       body = await request.json()
     } catch {
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
     }
     const { lineUserId, deckId } = body
+    const name = typeof body.name === 'string' && body.name.trim() ? body.name.trim() : '生徒'
     if (typeof lineUserId !== 'string' || typeof deckId !== 'string') {
       return NextResponse.json({ error: 'lineUserId and deckId are required' }, { status: 400 })
     }
 
     const supabase = createSupabaseClient(supabaseUrl, serviceRoleKey)
 
-    // line_user_id -> profiles.id（メール導出で高速解決）。未登録なら CMS 側で再送されるよう 404
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', deriveLineEmail(lineUserId))
-      .maybeSingle()
-    if (!profile) {
-      return NextResponse.json({ error: 'Student not found in SRS' }, { status: 404 })
+    // line_user_id -> 生徒アカウント（無ければ作成）。role='student' なので講師アカウントには吸われない。
+    // 解禁は初回復習の起点なので、生徒が SRS を一度も開いていなくても配布できるよう find-or-create にする
+    const resolved = await findOrCreateSRSUser(supabase, lineUserId, name, 'student', authSecret)
+    if (resolved.error || !resolved.userId) {
+      return NextResponse.json({ error: 'Failed to resolve student' }, { status: 500 })
     }
+    const userId = resolved.userId
 
     // 存在しないデッキは FK エラーより先に明示的に弾く
     const { data: deck } = await supabase
@@ -67,7 +66,7 @@ export async function POST(request: NextRequest) {
       .from('deck_assignments')
       .select('id')
       .eq('deck_id', deckId)
-      .eq('user_id', profile.id)
+      .eq('user_id', userId)
       .maybeSingle()
     if (existing) {
       return NextResponse.json({ data: { assigned: true } })
@@ -75,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     const { error: insertError } = await supabase
       .from('deck_assignments')
-      .insert({ deck_id: deckId, user_id: profile.id })
+      .insert({ deck_id: deckId, user_id: userId })
     if (insertError) {
       // 競合（同時配布）は一意制約違反 = 既に配布済みとみなす
       if (insertError.code === '23505') {

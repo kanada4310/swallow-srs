@@ -42,7 +42,64 @@ export async function deriveLinePassword(lineUserId: string, authSecret: string)
 }
 
 /**
- * LINE user ID で既存ユーザーを検索し、見つからなければ新規作成する
+ * LINE 由来メールのプロフィールを探す（見つかれば名前を更新して返す）
+ */
+async function findByLineEmail(
+  adminClient: SupabaseClient,
+  lineEmail: string,
+  name: string,
+): Promise<FindOrCreateResult | null> {
+  const { data: existingProfile } = await adminClient
+    .from('profiles')
+    .select('id, name')
+    .eq('email', lineEmail)
+    .single()
+
+  if (!existingProfile) return null
+  if (existingProfile.name !== name) {
+    await adminClient.from('profiles').update({ name }).eq('id', existingProfile.id)
+  }
+  return { userId: existingProfile.id, isNew: false }
+}
+
+/**
+ * metadata.line_user_id で LINE に紐付く既存ユーザーを探す（メール変更済みの講師等）
+ */
+async function findByLineMetadata(
+  adminClient: SupabaseClient,
+  lineUserId: string,
+  name: string,
+): Promise<FindOrCreateResult | null> {
+  try {
+    const { data: { users: allUsers } } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
+    const existingUser = allUsers.find((u) => u.user_metadata?.line_user_id === lineUserId)
+    if (!existingUser) return null
+
+    const { data: profile } = await adminClient
+      .from('profiles')
+      .select('id, name')
+      .eq('id', existingUser.id)
+      .single()
+    if (profile && profile.name !== name) {
+      await adminClient.from('profiles').update({ name }).eq('id', profile.id)
+    }
+    return { userId: existingUser.id, isNew: false }
+  } catch (err) {
+    console.error('[findOrCreateSRSUser] Metadata search failed:', err)
+    return null
+  }
+}
+
+/**
+ * LINE user ID で既存ユーザーを検索し、見つからなければ新規作成する。
+ *
+ * role による解決順の違い（重要）:
+ * - teacher / admin: metadata（LINE に紐付く実アカウント）を最優先し、次に LINE 由来メール。
+ *   同一 LINE に生徒アカウントが併存しても、講師ログインは講師アカウントに入れる。
+ * - student: LINE 由来メールのアカウントのみを見る。metadata フォールバックはしない。
+ *   これにより「講師 LINE を生徒として起動」しても講師アカウントに吸われず、
+ *   専用の生徒アカウントが作られる（＝講師本人が生徒としても学べる。CMS 復習連携用）。
+ * 実生徒は従来どおり LINE 由来メールで即解決するため挙動は変わらない。
  *
  * @returns userId（Supabase Auth の UUID）と isNew フラグ
  */
@@ -56,51 +113,17 @@ export async function findOrCreateSRSUser(
   const lineEmail = deriveLineEmail(lineUserId)
   const password = await deriveLinePassword(lineUserId, authSecret)
 
-  // 1. メールでプロフィール検索（高速パス）
-  const { data: existingProfile } = await adminClient
-    .from('profiles')
-    .select('id, name')
-    .eq('email', lineEmail)
-    .single()
-
-  if (existingProfile) {
-    // 名前が変わっていたら更新
-    if (existingProfile.name !== name) {
-      await adminClient
-        .from('profiles')
-        .update({ name })
-        .eq('id', existingProfile.id)
-    }
-    return { userId: existingProfile.id, isNew: false }
+  if (role === 'teacher' || role === 'admin') {
+    const byMeta = await findByLineMetadata(adminClient, lineUserId, name)
+    if (byMeta) return byMeta
+    const byEmail = await findByLineEmail(adminClient, lineEmail, name)
+    if (byEmail) return byEmail
+  } else {
+    const byEmail = await findByLineEmail(adminClient, lineEmail, name)
+    if (byEmail) return byEmail
   }
 
-  // 2. metadata で検索（メールが変更された講師等のフォールバック）
-  try {
-    const { data: { users: allUsers } } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
-    const existingUser = allUsers.find(
-      (u) => u.user_metadata?.line_user_id === lineUserId
-    )
-
-    if (existingUser) {
-      // 名前更新
-      const { data: profile } = await adminClient
-        .from('profiles')
-        .select('id, name')
-        .eq('id', existingUser.id)
-        .single()
-      if (profile && profile.name !== name) {
-        await adminClient
-          .from('profiles')
-          .update({ name })
-          .eq('id', profile.id)
-      }
-      return { userId: existingUser.id, isNew: false }
-    }
-  } catch (err) {
-    console.error('[findOrCreateSRSUser] Metadata search failed:', err)
-  }
-
-  // 3. 新規ユーザー作成
+  // 該当なし → 新規ユーザー作成
   const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
     email: lineEmail,
     password,
