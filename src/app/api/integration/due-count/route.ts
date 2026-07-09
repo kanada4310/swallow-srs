@@ -32,10 +32,13 @@ function srsDayStartIso(now: Date): string {
   return new Date(boundary).toISOString()
 }
 
-// 復習（card_state が期限到来）+ 割当デッキの「まだ残っている今日の新規カード」。
+// 復習（card_state が期限到来）+ 割当デッキの「まだ残っている今日の新規カード」を別々に返す。
 // 新規は「未学習枚数」を日次上限で頭打ちし、さらに「今日すでに導入した枚数」を差し引く。
 // これで復習を終えると件数が減る（＝実際の実施と連動する）。厳密な組成は SRS 本体が行う目安値。
-async function computeStudyCount(supabase: SupabaseClient, userId: string): Promise<number> {
+async function computeStudyCount(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<{ newCount: number; reviewCount: number }> {
   const now = new Date()
   const nowIso = now.toISOString()
   const dayStart = srsDayStartIso(now)
@@ -98,7 +101,7 @@ async function computeStudyCount(supabase: SupabaseClient, userId: string): Prom
     newTotal += Math.min(newInDeck, remainingToday)
   }
 
-  return (dueReviews ?? 0) + newTotal
+  return { newCount: newTotal, reviewCount: dueReviews ?? 0 }
 }
 
 export async function GET(request: NextRequest) {
@@ -129,11 +132,12 @@ export async function GET(request: NextRequest) {
       .eq('email', deriveLineEmail(lineUserId))
       .maybeSingle()
     if (!profile) {
-      return NextResponse.json({ data: { dueCount: 0 } })
+      return NextResponse.json({ data: { newCount: 0, reviewCount: 0, dueCount: 0 } })
     }
 
-    const dueCount = await computeStudyCount(supabase, profile.id)
-    return NextResponse.json({ data: { dueCount } })
+    const { newCount, reviewCount } = await computeStudyCount(supabase, profile.id)
+    // dueCount は合計（移行中の後方互換。CMS 側が新旧どちらでも動く）
+    return NextResponse.json({ data: { newCount, reviewCount, dueCount: newCount + reviewCount } })
   } catch (error) {
     console.error('Error in due-count:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
