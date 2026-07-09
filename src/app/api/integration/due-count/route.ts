@@ -21,20 +21,35 @@ import { deriveLineEmail } from '@/lib/auth/line-user'
 const DEFAULT_NEW_CARDS_PER_DAY = 20
 
 // 生徒の「今日やるべき件数」を概算する。
-// 復習（card_state が期限到来）+ 割当デッキの新規カード（デッキ日次上限で頭打ち）。
-// 厳密なセッション組成は SRS 本体が行う。ここは CMS ホーム表示用の目安。
-async function computeStudyCount(supabase: SupabaseClient, userId: string): Promise<number> {
-  const now = new Date().toISOString()
+// SRS の「1日」の開始（4:00 JST）を UTC ISO で返す。今日すでに導入した新規枚数の集計に使う
+// （SRS 本体のオフライン集計と境界を合わせる）。
+function srsDayStartIso(now: Date): string {
+  const JST_MS = 9 * 60 * 60 * 1000
+  const jst = new Date(now.getTime() + JST_MS)
+  const jst4amAsUtc = Date.UTC(jst.getUTCFullYear(), jst.getUTCMonth(), jst.getUTCDate(), 4, 0, 0)
+  let boundary = jst4amAsUtc - JST_MS
+  if (now.getTime() < boundary) boundary -= 24 * 60 * 60 * 1000
+  return new Date(boundary).toISOString()
+}
 
-  // 1. 期限到来の復習（全デッキ横断。suspended は除外）
+// 復習（card_state が期限到来）+ 割当デッキの「まだ残っている今日の新規カード」。
+// 新規は「未学習枚数」を日次上限で頭打ちし、さらに「今日すでに導入した枚数」を差し引く。
+// これで復習を終えると件数が減る（＝実際の実施と連動する）。厳密な組成は SRS 本体が行う目安値。
+async function computeStudyCount(supabase: SupabaseClient, userId: string): Promise<number> {
+  const now = new Date()
+  const nowIso = now.toISOString()
+  const dayStart = srsDayStartIso(now)
+
+  // 1. 期限到来の復習（学習中/復習/再学習のみ。未学習 new と suspended は別扱い）
   const { count: dueReviews } = await supabase
     .from('card_states')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', userId)
-    .neq('state', 'suspended')
-    .lte('due', now)
+    .in('state', ['learning', 'review', 'relearning'])
+    .lte('due', nowIso)
 
-  // 2. 個別割当デッキの新規カード（= card_state が無いカード）を日次上限で頭打ちして合算
+  // 2. 個別割当デッキの新規カード（= card_state が無いカード）。
+  //    上限 = new_cards_per_day − 今日この root で導入済みの新規枚数（distinct card）
   const { data: assignments } = await supabase
     .from('deck_assignments')
     .select('deck_id')
@@ -49,6 +64,7 @@ async function computeStudyCount(supabase: SupabaseClient, userId: string): Prom
       .maybeSingle()
     const settings = (deck?.settings ?? null) as { new_cards_per_day?: number } | null
     const perDay = Number(settings?.new_cards_per_day ?? DEFAULT_NEW_CARDS_PER_DAY)
+    if (perDay <= 0) continue
 
     // 子孫デッキも含めて数える（new_cards_per_day はルートで共有）
     const { data: descendants } = await supabase.rpc('get_descendant_deck_ids', {
@@ -67,8 +83,19 @@ async function computeStudyCount(supabase: SupabaseClient, userId: string): Prom
       .eq('user_id', userId)
       .in('cards.deck_id', deckIds)
 
+    // 今日この root で導入した新規（last_interval=0 のログの distinct card 数）
+    const { data: newLogs } = await supabase
+      .from('review_logs')
+      .select('card_id, cards!inner(deck_id)')
+      .eq('user_id', userId)
+      .eq('last_interval', 0)
+      .gte('reviewed_at', dayStart)
+      .in('cards.deck_id', deckIds)
+    const introducedToday = new Set((newLogs ?? []).map((l) => l.card_id as string)).size
+
     const newInDeck = Math.max(0, (totalCards ?? 0) - (withState ?? 0))
-    newTotal += Math.min(newInDeck, Math.max(0, perDay))
+    const remainingToday = Math.max(0, perDay - introducedToday)
+    newTotal += Math.min(newInDeck, remainingToday)
   }
 
   return (dueReviews ?? 0) + newTotal
