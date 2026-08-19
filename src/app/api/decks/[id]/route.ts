@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { requireAuth, canManageDeck } from '@/lib/api/auth'
 import { validateDeckSettings } from '@/lib/srs/settings-validation'
+import { mergePreservingPause, type JsonSettings } from '@/lib/review-pause/logic'
 
 // PUT /api/decks/[id] - Update a deck (name, settings, etc.)
 export async function PUT(
@@ -56,12 +57,19 @@ export async function PUT(
           rootDeckId = parent.id
           parentId = parent.parent_deck_id
         }
+        // 復習通知の停止フラグ（reviewPaused）は学習設定の上書きで消さない
+        const { data: existingRow } = await supabase
+          .from('user_deck_settings')
+          .select('settings')
+          .eq('user_id', user.id)
+          .eq('deck_id', rootDeckId)
+          .maybeSingle()
         const { error: upsertError } = await supabase
           .from('user_deck_settings')
           .upsert({
             user_id: user.id,
             deck_id: rootDeckId,
-            settings,
+            settings: mergePreservingPause(settings, (existingRow?.settings ?? null) as JsonSettings | null),
           })
         if (upsertError) {
           console.error('Error saving user deck settings:', upsertError)

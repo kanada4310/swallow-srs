@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { requireTeacher } from '@/lib/api/auth'
 import { validateDeckSettings } from '@/lib/srs/settings-validation'
+import { mergePreservingPause, extractPauseOnly, type JsonSettings } from '@/lib/review-pause/logic'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 /**
@@ -124,12 +125,20 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
     }
 
+    // 復習通知の停止フラグ（reviewPaused）は学習設定の上書きで消さない
+    const { data: existingRow } = await supabase
+      .from('user_deck_settings')
+      .select('settings')
+      .eq('user_id', userId)
+      .eq('deck_id', rootDeck.id)
+      .maybeSingle()
+
     const { error: upsertError } = await supabase
       .from('user_deck_settings')
       .upsert({
         user_id: userId,
         deck_id: rootDeck.id,
-        settings,
+        settings: mergePreservingPause(settings, (existingRow?.settings ?? null) as JsonSettings | null),
       })
 
     if (upsertError) {
@@ -167,11 +176,26 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
     }
 
-    const { error: deleteError } = await supabase
+    // 復習通知の停止中なら、学習設定だけ既定に戻して停止フラグは残す
+    const { data: existingRow } = await supabase
       .from('user_deck_settings')
-      .delete()
+      .select('settings')
       .eq('user_id', userId)
       .eq('deck_id', rootDeck.id)
+      .maybeSingle()
+    const pauseOnly = extractPauseOnly((existingRow?.settings ?? null) as JsonSettings | null)
+
+    const { error: deleteError } = pauseOnly
+      ? (await supabase
+          .from('user_deck_settings')
+          .update({ settings: pauseOnly })
+          .eq('user_id', userId)
+          .eq('deck_id', rootDeck.id))
+      : (await supabase
+          .from('user_deck_settings')
+          .delete()
+          .eq('user_id', userId)
+          .eq('deck_id', rootDeck.id))
 
     if (deleteError) {
       console.error('Error deleting student deck settings:', deleteError)
