@@ -292,6 +292,17 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
   - `safeNext` ヘルパーで open redirect を防止（`/path` のみ許可）
   - LIFF 経由で Flex メッセージから `/study?deckId=xxx` に直接遷移できる
 
+## デッキ単位の復習通知停止（2026-08-19）✅ SRS側完了
+
+学習を止めたデッキの復習通知（LINE・送信役はbilling）をデッキ単位で停止。ADR `20260819-deck-review-pause`。
+- **停止フラグ**: `user_deck_settings.settings` の `reviewPaused`/`reviewPausedAt`（**ルートデッキ×生徒**・新テーブルなし）。停止＝通知集計から外すだけで **card_states 不変**（リーチ用 suspended とは別概念）
+- **自動解除**: 停止時刻より後にそのデッキ（配下含む）の review_logs があれば**集計時に**フラグを消して通知対象へ戻す（`src/lib/review-pause/server.ts` `checkAndAutoRelease`）
+- **due-cards-summary 拡張（後方互換）**: 既存フィールド維持＋`decks`（ルートデッキ別内訳）/`pausedDecks` 追加。dueCount・代表カードは停止中デッキ除外。全停止の生徒は通知対象外
+- **停止/再開API**: billing用 `POST /api/admin/deck-review-pause`（Bearer=SRS_AUTH_SECRET・lineUserId/userId・サブデッキIDはルート解決）＋講師用 `GET/POST /api/teacher/deck-review-pause`（実体は共通 `setReviewPause`）
+- **講師画面**: `/students/review-pause`「復習通知の管理」（生徒×デッキ一覧・停止/再開ボタン。/students/progress から導線）
+- **停止キー保全**: settings 丸ごと上書きの既存経路（講師の生徒別設定 PUT/DELETE・生徒本人の設定 upsert）は `mergePreservingPause` で停止フラグを消さない
+- **純ロジック**: `src/lib/review-pause/logic.ts`（テスト17件）。billing側のFlex停止ボタン（チップ②）は未実装
+
 ## 記憶のいきもの育成（Phase 10・実装中）
 
 一次仕様 @docs/memory-creatures-design.md。**1ノート＝1株の植物（果樹・花き）**を育てる育成ゲーム。

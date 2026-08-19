@@ -602,6 +602,8 @@ Web Push API で学習リマインダーを送信。
 billing側のLINE Bot経由で復習カード通知を送信する。
 
 - [x] SRS側データAPI `GET /api/admin/due-cards-summary`（Bearer認証、line_user_id + dueCount + 代表カードfrontText + deckId）
+- [x] デッキ単位の復習通知停止（2026-08-19）: due-cards-summary をデッキ別内訳＋停止除外に拡張（後方互換）、停止/再開API（admin Bearer＋講師）、講師画面 `/students/review-pause`、自動解除（ADR `20260819-deck-review-pause`）
+- [ ] billing側: Flex のデッキ別内訳＋「このデッキの復習通知を停止」postback ボタン（チップ②・秘書が発行）
 - [x] `/auth/line?next=<path>` 深いリンク対応（`safeNext` で open redirect 防止）
 - [x] billing側実装スペック書き下ろし（`docs/billing-line-notification-spec.md`）
 - [ ] billing側の送信ジョブ実装（Flexメッセージ生成 + LINE Messaging API 呼び出し）

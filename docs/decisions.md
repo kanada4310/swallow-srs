@@ -16,6 +16,9 @@
 
 ## ADR 一覧 (新しい順)
 
+### 2026-08-19
+- [20260819-deck-review-pause](decisions/20260819-deck-review-pause.md) `#notifications` `#line` `#user_deck_settings` `#billing連携` `#teacher` _(Phase 12.4)_ — デッキ単位の復習通知停止（reviewPaused）と集計時の自動解除
+
 ### 2026-07-08
 - [20260708-teacher-student-deck-settings](decisions/20260708-teacher-student-deck-settings.md) `#rls` `#srs` `#ui-ux` `#scheduling` — 配布デッキの学習設定は講師が生徒ごとに上書きできる（user_deck_settings 共有）
 - [20260708-subdeck-assignments](decisions/20260708-subdeck-assignments.md) `#rls` `#schema` `#sync` `#ui-ux` — サブデッキの配布は「継承配布行」を明示的に作る（source_deck_id）
