@@ -87,12 +87,20 @@ export default function StudentProgressPage() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-extrabold text-ai">生徒取組状況</h1>
-          <Link
-            href="/students"
-            className="text-sm text-sora hover:text-sora-dark font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
-          >
-            クラス管理
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/students/review-pause"
+              className="text-sm text-sora hover:text-sora-dark font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+            >
+              復習通知の管理
+            </Link>
+            <Link
+              href="/students"
+              className="text-sm text-sora hover:text-sora-dark font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+            >
+              クラス管理
+            </Link>
+          </div>
         </div>
 
         {error && (
