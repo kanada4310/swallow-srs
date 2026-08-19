@@ -6,17 +6,29 @@
  *
  * 認証: SRS_AUTH_SECRET を Bearer トークンとして検証
  *
+ * 2026-08-19 拡張（後方互換）:
+ * - decks: ルートデッキ別の期限切れ内訳（停止中デッキは含まない）
+ * - pausedDecks: 通知停止中でかつ期限切れがあるルートデッキの一覧
+ * - dueCount / 代表カードは停止中デッキを除外して算出（停止＝通知集計から外す）
+ * - 停止の自動解除（停止時刻より後に学習があれば解除）もここで実施
+ *
  * レスポンス:
  * {
  *   students: [
  *     {
  *       lineUserId: "U...",
  *       name: "田中太郎",
- *       dueCount: 42,           // 実際の期限切れ枚数（上限なし）
+ *       dueCount: 42,           // 実際の期限切れ枚数（停止中デッキを除く・上限なし）
  *       frontText: "apple",
  *       deckName: "英単語ターゲット1900",
- *       deckId: "uuid"          // 代表カードが属するデッキの ID（深いリンク用）
- *       cardId: "uuid"          // 代表カードの ID（学習開始時に優先表示用）
+ *       deckId: "uuid",         // 代表カードが属するデッキの ID（深いリンク用）
+ *       cardId: "uuid",         // 代表カードの ID（学習開始時に優先表示用）
+ *       decks: [                // ルートデッキ別内訳（dueCount 降順）
+ *         { deckId: "uuid", deckName: "英単語ターゲット1900", dueCount: 30 }
+ *       ],
+ *       pausedDecks: [          // 通知停止中（期限切れあり）のデッキ
+ *         { deckId: "uuid", deckName: "古文単語315", dueCount: 12 }
+ *       ]
  *     }
  *   ]
  * }
@@ -24,6 +36,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { renderCardFrontText } from '@/lib/push/extract-text'
+import {
+  fetchDeckMaps,
+  fetchDueGroupsForUser,
+  resolveActivePauses,
+} from '@/lib/review-pause/server'
+
+interface DeckDueSummary {
+  deckId: string
+  deckName: string
+  dueCount: number
+}
 
 interface DueCardStudent {
   lineUserId: string
@@ -33,6 +56,8 @@ interface DueCardStudent {
   deckName: string
   deckId: string | null
   cardId: string | null
+  decks: DeckDueSummary[]
+  pausedDecks: DeckDueSummary[]
 }
 
 export async function GET(request: NextRequest) {
@@ -63,6 +88,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ students: [] })
     }
 
+    // デッキ階層マップ（ルート解決・名前）と、有効な停止デッキ（自動解除込み）
+    const deckMaps = await fetchDeckMaps(supabase)
+    const pausedByUser = await resolveActivePauses(
+      supabase,
+      lineUsers.map(u => u.id),
+      deckMaps.subtreeOf
+    )
+
     const now = new Date().toISOString()
     const result: DueCardStudent[] = []
 
@@ -83,34 +116,46 @@ export async function GET(request: NextRequest) {
 
       if (!historyRow) continue
 
-      // Exact count of due cards
-      const { count: totalDue } = await supabase
-        .from('card_states')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .neq('state', 'suspended')
-        .lte('due', now)
+      // 期限切れカードをルートデッキ別に集計
+      const dueGroups = await fetchDueGroupsForUser(supabase, userId, now, deckMaps.rootOf)
+      if (dueGroups.size === 0) continue
 
-      if (!totalDue || totalDue === 0) continue
+      const pausedRoots = pausedByUser.get(userId) || new Set<string>()
 
-      // Sample up to 10 due cards for picking a preview
-      const { data: sampleCards } = await supabase
-        .from('card_states')
-        .select('card_id')
-        .eq('user_id', userId)
-        .neq('state', 'suspended')
-        .lte('due', now)
-        .limit(10)
+      const activeDecks: DeckDueSummary[] = []
+      const pausedDecks: DeckDueSummary[] = []
+      const sampleCardIds: string[] = []
+      let totalDue = 0
 
-      if (!sampleCards || sampleCards.length === 0) continue
+      for (const [rootId, group] of Array.from(dueGroups.entries())) {
+        const summary: DeckDueSummary = {
+          deckId: rootId,
+          deckName: deckMaps.nameOf.get(rootId) || '',
+          dueCount: group.dueCount,
+        }
+        if (pausedRoots.has(rootId)) {
+          pausedDecks.push(summary)
+        } else {
+          activeDecks.push(summary)
+          totalDue += group.dueCount
+          sampleCardIds.push(...group.sampleCardIds)
+        }
+      }
 
-      const randomCard = sampleCards[Math.floor(Math.random() * sampleCards.length)]
+      // 全デッキ停止中（または停止外の期限切れなし）→ 通知しない
+      if (totalDue === 0) continue
+
+      activeDecks.sort((a, b) => b.dueCount - a.dueCount)
+      pausedDecks.sort((a, b) => b.dueCount - a.dueCount)
+
+      // 代表カードは停止中でないデッキから抽選
+      const randomCardId = sampleCardIds[Math.floor(Math.random() * sampleCardIds.length)]
 
       // Get card -> note -> field_values and deck info
       const { data: cardData } = await supabase
         .from('cards')
         .select('id, deck_id, note_id, template_index')
-        .eq('id', randomCard.card_id)
+        .eq('id', randomCardId)
         .single()
 
       let frontText = '復習カードがあります'
@@ -126,7 +171,7 @@ export async function GET(request: NextRequest) {
           .from('review_logs')
           .select('deck_id')
           .eq('user_id', userId)
-          .eq('card_id', randomCard.card_id)
+          .eq('card_id', randomCardId)
           .not('deck_id', 'is', null)
           .order('reviewed_at', { ascending: false })
           .limit(1)
@@ -157,13 +202,15 @@ export async function GET(request: NextRequest) {
 
         frontText = renderCardFrontText(frontTemplate, fieldValues, cardData.template_index ?? 0)
 
-        const { data: deckData } = await supabase
-          .from('decks')
-          .select('name')
-          .eq('id', deckId)
-          .single()
-
-        deckName = deckData?.name || ''
+        deckName = (deckId && deckMaps.nameOf.get(deckId)) || ''
+        if (!deckName && deckId) {
+          const { data: deckData } = await supabase
+            .from('decks')
+            .select('name')
+            .eq('id', deckId)
+            .single()
+          deckName = deckData?.name || ''
+        }
       }
 
       // Get profile name
@@ -180,7 +227,9 @@ export async function GET(request: NextRequest) {
         frontText,
         deckName,
         deckId,
-        cardId: randomCard.card_id,
+        cardId: randomCardId ?? null,
+        decks: activeDecks,
+        pausedDecks,
       })
     }
 
