@@ -24,27 +24,11 @@ interface StudentRow {
 export async function GET() {
   try {
     const supabase = await createClient()
-    const { user, error: authError } = await requireTeacher(supabase)
+    const { error: authError } = await requireTeacher(supabase)
     if (authError) return authError
 
-    // 担当生徒（自分のクラス＋billing連携クラス。既存の講師APIと同じ判定）
-    const { data: classes } = await supabase
-      .from('classes')
-      .select('id, class_members(user_id)')
-      .or(`teacher_id.eq.${user.id},billing_template_id.not.is.null`)
-
-    interface ClassWithMembers {
-      id: string
-      class_members: { user_id: string }[]
-    }
-    const studentIds = Array.from(
-      new Set(
-        ((classes as ClassWithMembers[]) || []).flatMap((c) =>
-          (c.class_members || []).map((m) => m.user_id)
-        )
-      )
-    )
-
+    // 誰の行が見えるかは RLS（024 のポリシー = is_student_of_teacher）に任せる。
+    // ここで別途クラスを引いて絞ると、判定の基準が2つに分かれてズレるため。
     const { data: rows, error } = await supabase
       .from('reading_progress')
       .select('user_id, lesson_id, state, updated_at')
@@ -61,7 +45,7 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    const visible = (rows ?? []).filter((r) => studentIds.includes(r.user_id as string))
+    const visible = rows ?? []
     const userIds = Array.from(new Set(visible.map((r) => r.user_id as string)))
 
     const nameById = new Map<string, string>()
