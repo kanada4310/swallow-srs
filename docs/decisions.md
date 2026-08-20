@@ -16,6 +16,9 @@
 
 ## ADR 一覧 (新しい順)
 
+### 2026-08-20
+- [20260820-reading-page](decisions/20260820-reading-page.md) `#reading` `#工房連携` `#C22` `#途中保存` `#teacher` `#pwa` `#ui` _(Phase 読解 第1弾)_ — 読解ページ（工房の2アプリを1本の流れに統合して演習室へ移す・第1弾）
+
 ### 2026-08-19
 - [20260819-deck-review-pause](decisions/20260819-deck-review-pause.md) `#notifications` `#line` `#user_deck_settings` `#billing連携` `#teacher` _(Phase 12.4)_ — デッキ単位の復習通知停止（reviewPaused）と集計時の自動解除
 
