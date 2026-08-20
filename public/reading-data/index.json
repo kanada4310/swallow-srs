@@ -1,0 +1,72 @@
+{
+ "generatedBy": "quiz_generator/subjects/英語/deliver_reading_data.py",
+ "contract": "C22",
+ "lessons": [
+  {
+   "id": "英語長文最前線_第2講",
+   "file": "英語長文最前線_第2講_seg.json",
+   "textbook": "英語長文最前線",
+   "lesson": "第2講",
+   "source": "Introduction to Women, Gender, Sexuality Studies (Miliann Kang, Donovan Lessard, Laura Heston, Sonny Nordmarken, 2017, University of Massachusetts Amherst Libraries, CC BY 4.0)",
+   "paragraphs": 8,
+   "requiredCuts": 84,
+   "anchorStatus": "draft（講師検収待ち・v2）",
+   "anchorApproved": false
+  },
+  {
+   "id": "英語長文最前線_第3講",
+   "file": "英語長文最前線_第3講_seg.json",
+   "textbook": "英語長文最前線",
+   "lesson": "第3講",
+   "source": "北海道大学 2019年度前期日程 入試問題大問1（本文は大学オリジナル）",
+   "paragraphs": 9,
+   "requiredCuts": 48,
+   "anchorStatus": "draft（講師検収待ち・v2）",
+   "anchorApproved": false
+  },
+  {
+   "id": "英語長文最前線_第4講",
+   "file": "英語長文最前線_第4講_seg.json",
+   "textbook": "英語長文最前線",
+   "lesson": "第4講",
+   "source": "\"With attention on the coronavirus, Amazon deforestation surges\" May 10, 2020. The Japan Times. [AFP-JIJI]",
+   "paragraphs": 9,
+   "requiredCuts": 61,
+   "anchorStatus": null,
+   "anchorApproved": false
+  },
+  {
+   "id": "英語長文最前線_第5講",
+   "file": "英語長文最前線_第5講_seg.json",
+   "textbook": "英語長文最前線",
+   "lesson": "第5講",
+   "source": "Yuval Noah Harari, Sapiens (2014) を素材とした出題文",
+   "paragraphs": 6,
+   "requiredCuts": 29,
+   "anchorStatus": "draft（パス1: 開きのみ。logic_tree 新基準化後にパス2で rel を付ける）",
+   "anchorApproved": false
+  },
+  {
+   "id": "英語長文最前線_第6講",
+   "file": "英語長文最前線_第6講_seg.json",
+   "textbook": "英語長文最前線",
+   "lesson": "第6講",
+   "source": "Alexandra Rosati, \"Food for Thought: Was Cooking a Pivotal Step in Human Evolution?\", Scientific American, 2018 を素材とした出題文",
+   "paragraphs": 8,
+   "requiredCuts": 27,
+   "anchorStatus": null,
+   "anchorApproved": false
+  },
+  {
+   "id": "英語長文最前線_第7講",
+   "file": "英語長文最前線_第7講_seg.json",
+   "textbook": "英語長文最前線",
+   "lesson": "第7講",
+   "source": "Alexandra Sifferlin, \"The Weight Loss Trap: Why Your Diet Isn't Working\", TIME, 25 May 2017 を素材とした出題文",
+   "paragraphs": 10,
+   "requiredCuts": 30,
+   "anchorStatus": null,
+   "anchorApproved": false
+  }
+ ]
+}

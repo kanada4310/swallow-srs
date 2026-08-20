@@ -1,0 +1,2883 @@
+{
+ "meta": {
+  "subject": "英語",
+  "textbook": "英語長文最前線",
+  "lesson": "第3講",
+  "source": "北海道大学 2019年度前期日程 入試問題大問1（本文は大学オリジナル）",
+  "university": "北海道大学",
+  "target_time_min": 25,
+  "generated_by": "subjects/英語/build_seg_data.py",
+  "anchorStatus": "draft（講師検収待ち・v2）"
+ },
+ "paragraphs": [
+  {
+   "no": 1,
+   "sentences": [
+    {
+     "id": "P1-S1",
+     "text": "Climate change! Climate change! Climate change!",
+     "tokens": [
+      "Climate",
+      "change!",
+      "Climate",
+      "change!",
+      "Climate",
+      "change!"
+     ]
+    },
+    {
+     "id": "P1-S2",
+     "text": "This has increasingly become a buzzword in the last five years or so.",
+     "tokens": [
+      "This",
+      "has",
+      "increasingly",
+      "become",
+      "a",
+      "buzzword",
+      "in",
+      "the",
+      "last",
+      "five",
+      "years",
+      "or",
+      "so."
+     ]
+    },
+    {
+     "id": "P1-S3",
+     "text": "It is always on the news.",
+     "tokens": [
+      "It",
+      "is",
+      "always",
+      "on",
+      "the",
+      "news."
+     ]
+    },
+    {
+     "id": "P1-S4",
+     "text": "People are constantly talking about it.",
+     "tokens": [
+      "People",
+      "are",
+      "constantly",
+      "talking",
+      "about",
+      "it."
+     ]
+    },
+    {
+     "id": "P1-S5",
+     "text": "Across academia, government, and the private sector, climate change is one of the most ( 1 ) topics.",
+     "tokens": [
+      "Across",
+      "academia,",
+      "government,",
+      "and",
+      "the",
+      "private",
+      "sector,",
+      "climate",
+      "change",
+      "is",
+      "one",
+      "of",
+      "the",
+      "most",
+      "(",
+      "1",
+      ")",
+      "topics."
+     ]
+    },
+    {
+     "id": "P1-S6",
+     "text": "The attention it is getting has been immense.",
+     "tokens": [
+      "The",
+      "attention",
+      "it",
+      "is",
+      "getting",
+      "has",
+      "been",
+      "immense."
+     ]
+    },
+    {
+     "id": "P1-S7",
+     "text": "This is most likely because of its unquestionable impact on our environment.",
+     "tokens": [
+      "This",
+      "is",
+      "most",
+      "likely",
+      "because",
+      "of",
+      "its",
+      "unquestionable",
+      "impact",
+      "on",
+      "our",
+      "environment."
+     ]
+    }
+   ],
+   "kotos": [
+    {
+     "no": 1,
+     "s": "S1",
+     "en": "Climate change! Climate change! Climate change!",
+     "sym": "＋",
+     "lv": 2,
+     "role": "minor",
+     "parent": 2,
+     "relParent": 2,
+     "relSym": "ex.",
+     "relAlts": [],
+     "t": "「気候変動！」の連呼で注目を演出",
+     "cue": "",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 2,
+     "s": "S2",
+     "en": "This has increasingly become a buzzword in the last five years or so.",
+     "sym": "TS",
+     "lv": 0,
+     "role": "claim",
+     "parent": null,
+     "relParent": null,
+     "relSym": "TS",
+     "relAlts": [],
+     "t": "ここ5年で「気候変動」は流行語になった",
+     "cue": "buzzword",
+     "packed": "",
+     "expand": "",
+     "sentence": 1
+    },
+    {
+     "no": 3,
+     "s": "S3",
+     "en": "It is always on the news.",
+     "sym": "＋",
+     "lv": 2,
+     "role": "minor",
+     "parent": 2,
+     "relParent": 1,
+     "relSym": "＋",
+     "relAlts": [
+      1
+     ],
+     "t": "常にニュースに出る",
+     "cue": "always",
+     "packed": "",
+     "expand": "",
+     "sentence": 2
+    },
+    {
+     "no": 4,
+     "s": "S4",
+     "en": "People are constantly talking about it.",
+     "sym": "＋",
+     "lv": 2,
+     "role": "minor",
+     "parent": 2,
+     "relParent": 3,
+     "relSym": "＋",
+     "relAlts": [
+      1,
+      3
+     ],
+     "t": "人々が絶えず話題にする",
+     "cue": "constantly",
+     "packed": "",
+     "expand": "",
+     "sentence": 3
+    },
+    {
+     "no": 5,
+     "s": "S5",
+     "en": "Across academia, government, and the private sector, climate change is one of the most ( 1 ) topics.",
+     "sym": "＋",
+     "lv": 2,
+     "role": "minor",
+     "parent": 2,
+     "relParent": 4,
+     "relSym": "＋",
+     "relAlts": [
+      1,
+      3,
+      4
+     ],
+     "t": "各界で最も議論される話題の一つ",
+     "cue": "Across … most … topics",
+     "packed": "",
+     "expand": "",
+     "sentence": 4
+    },
+    {
+     "no": 6,
+     "s": "S6",
+     "en": "The attention it is getting has been immense.",
+     "sym": "＝",
+     "lv": 1,
+     "role": "major",
+     "parent": 2,
+     "relParent": 2,
+     "relSym": "＝",
+     "relAlts": [],
+     "t": "受ける注目は甚大だ",
+     "cue": "immense",
+     "packed": "",
+     "expand": "",
+     "sentence": 5
+    },
+    {
+     "no": 7,
+     "s": "S7",
+     "en": "This is most likely because of its unquestionable impact on our environment.",
+     "sym": "←",
+     "lv": 1,
+     "role": "major",
+     "parent": 2,
+     "relParent": 2,
+     "relSym": "←",
+     "relAlts": [],
+     "t": "それはおそらく、環境への疑いない影響があるからだ",
+     "cue": "because of",
+     "packed": "",
+     "expand": "",
+     "sentence": 6
+    }
+   ],
+   "segments": [
+    {
+     "sentence": 0,
+     "token": 0,
+     "no": 1,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 0,
+     "no": 2,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 0,
+     "no": 3,
+     "cont": false
+    },
+    {
+     "sentence": 3,
+     "token": 0,
+     "no": 4,
+     "cont": false
+    },
+    {
+     "sentence": 4,
+     "token": 0,
+     "no": 5,
+     "cont": false
+    },
+    {
+     "sentence": 5,
+     "token": 0,
+     "no": 6,
+     "cont": false
+    },
+    {
+     "sentence": 6,
+     "token": 0,
+     "no": 7,
+     "cont": false
+    }
+   ],
+   "foldBoundaries": [],
+   "requiredCuts": [
+    {
+     "sentence": 1,
+     "gap": 0,
+     "beforeNo": 1,
+     "afterNo": 2,
+     "cue": "buzzword",
+     "sym": "TS",
+     "tBefore": "「気候変動！」の連呼で注目を演出",
+     "tAfter": "ここ5年で「気候変動」は流行語になった"
+    },
+    {
+     "sentence": 2,
+     "gap": 0,
+     "beforeNo": 2,
+     "afterNo": 3,
+     "cue": "always",
+     "sym": "＋",
+     "tBefore": "ここ5年で「気候変動」は流行語になった",
+     "tAfter": "常にニュースに出る"
+    },
+    {
+     "sentence": 3,
+     "gap": 0,
+     "beforeNo": 3,
+     "afterNo": 4,
+     "cue": "constantly",
+     "sym": "＋",
+     "tBefore": "常にニュースに出る",
+     "tAfter": "人々が絶えず話題にする"
+    },
+    {
+     "sentence": 4,
+     "gap": 0,
+     "beforeNo": 4,
+     "afterNo": 5,
+     "cue": "Across … most … topics",
+     "sym": "＋",
+     "tBefore": "人々が絶えず話題にする",
+     "tAfter": "各界で最も議論される話題の一つ"
+    },
+    {
+     "sentence": 5,
+     "gap": 0,
+     "beforeNo": 5,
+     "afterNo": 6,
+     "cue": "immense",
+     "sym": "＝",
+     "tBefore": "各界で最も議論される話題の一つ",
+     "tAfter": "受ける注目は甚大だ"
+    },
+    {
+     "sentence": 6,
+     "gap": 0,
+     "beforeNo": 6,
+     "afterNo": 7,
+     "cue": "because of",
+     "sym": "←",
+     "tBefore": "受ける注目は甚大だ",
+     "tAfter": "それはおそらく、環境への疑いない影響があるからだ"
+    }
+   ],
+   "macro": "気候変動は今や最も注目される話題（流行語）になった",
+   "macroSym": ""
+  },
+  {
+   "no": 2,
+   "sentences": [
+    {
+     "id": "P2-S1",
+     "text": "Studies show that climate change affects the natural features of the earth.",
+     "tokens": [
+      "Studies",
+      "show",
+      "that",
+      "climate",
+      "change",
+      "affects",
+      "the",
+      "natural",
+      "features",
+      "of",
+      "the",
+      "earth."
+     ]
+    },
+    {
+     "id": "P2-S2",
+     "text": "Heavy rainfall can cause seashores to overflow in some regions, while drought can cause dry lands in others.",
+     "tokens": [
+      "Heavy",
+      "rainfall",
+      "can",
+      "cause",
+      "seashores",
+      "to",
+      "overflow",
+      "in",
+      "some",
+      "regions,",
+      "while",
+      "drought",
+      "can",
+      "cause",
+      "dry",
+      "lands",
+      "in",
+      "others."
+     ]
+    },
+    {
+     "id": "P2-S3",
+     "text": "We have also been informed about the increase in the earth's average surface temperature.",
+     "tokens": [
+      "We",
+      "have",
+      "also",
+      "been",
+      "informed",
+      "about",
+      "the",
+      "increase",
+      "in",
+      "the",
+      "earth's",
+      "average",
+      "surface",
+      "temperature."
+     ]
+    },
+    {
+     "id": "P2-S4",
+     "text": "This means that we will experience excessively hot weather during the summer, while slightly colder weather will be felt during the winter.",
+     "tokens": [
+      "This",
+      "means",
+      "that",
+      "we",
+      "will",
+      "experience",
+      "excessively",
+      "hot",
+      "weather",
+      "during",
+      "the",
+      "summer,",
+      "while",
+      "slightly",
+      "colder",
+      "weather",
+      "will",
+      "be",
+      "felt",
+      "during",
+      "the",
+      "winter."
+     ]
+    },
+    {
+     "id": "P2-S5",
+     "text": "Scientists expect that these global weather changes will create stronger storms and sudden floods in some areas, while (a)others will see harsher droughts or dryness.",
+     "tokens": [
+      "Scientists",
+      "expect",
+      "that",
+      "these",
+      "global",
+      "weather",
+      "changes",
+      "will",
+      "create",
+      "stronger",
+      "storms",
+      "and",
+      "sudden",
+      "floods",
+      "in",
+      "some",
+      "areas,",
+      "while",
+      "(a)others",
+      "will",
+      "see",
+      "harsher",
+      "droughts",
+      "or",
+      "dryness."
+     ]
+    }
+   ],
+   "kotos": [
+    {
+     "no": 1,
+     "s": "S1",
+     "en": "Studies show",
+     "sym": "←",
+     "lv": 1,
+     "role": "minor",
+     "parent": 2,
+     "relParent": 2,
+     "relSym": "←",
+     "relAlts": [],
+     "t": "（出典）諸研究が示すところでは",
+     "cue": "Studies show",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 2,
+     "s": "S1",
+     "en": "that climate change affects the natural features of the earth.",
+     "sym": "TS",
+     "lv": 0,
+     "role": "claim",
+     "parent": null,
+     "relParent": null,
+     "relSym": "TS",
+     "relAlts": [],
+     "t": "気候変動は地球の自然環境に影響する",
+     "cue": "affects",
+     "packed": "climate change affects",
+     "expand": "気候が変わる →（原因） 地球の自然のありようが変わる",
+     "sentence": 0
+    },
+    {
+     "no": 3,
+     "s": "S2",
+     "en": "Heavy rainfall can cause seashores to overflow in some regions,",
+     "sym": "＋",
+     "lv": 2,
+     "role": "minor",
+     "parent": 2,
+     "relParent": 2,
+     "relSym": "ex.",
+     "relAlts": [],
+     "t": "豪雨で一部地域は海岸が氾濫",
+     "cue": "some regions",
+     "packed": "cause … to overflow",
+     "expand": "雨が激しく降る →（原因） 一部地域で海岸が氾濫する",
+     "sentence": 1
+    },
+    {
+     "no": 4,
+     "s": "S2",
+     "en": "while drought can cause dry lands in others.",
+     "sym": "⇔",
+     "lv": 3,
+     "role": "minor",
+     "parent": 3,
+     "relParent": 3,
+     "relSym": "⇔",
+     "relAlts": [],
+     "t": "一方、干ばつで他地域は乾燥地になる",
+     "cue": "while … others",
+     "packed": "cause dry lands",
+     "expand": "干ばつが起こる →（原因） 他地域が乾燥地になる",
+     "sentence": 1
+    },
+    {
+     "no": 5,
+     "s": "S3+S4",
+     "en": "We have also been informed about the increase in the earth's average surface temperature. This means that we will experience excessively hot weather during the summer, while slightly colder weather will be felt during the winter.",
+     "sym": "＋",
+     "lv": 2,
+     "role": "minor",
+     "parent": 2,
+     "relParent": 3,
+     "relSym": "＋",
+     "relAlts": [
+      3
+     ],
+     "t": "平均気温も上昇し、夏は酷暑・冬はやや寒くなる",
+     "cue": "also / This means",
+     "packed": "",
+     "expand": "",
+     "sentence": 2
+    },
+    {
+     "no": 6,
+     "s": "S5",
+     "en": "Scientists expect",
+     "sym": "←",
+     "lv": 3,
+     "role": "minor",
+     "parent": 7,
+     "relParent": 7,
+     "relSym": "←",
+     "relAlts": [],
+     "t": "（出典）科学者たちの予測では",
+     "cue": "Scientists expect",
+     "packed": "",
+     "expand": "",
+     "sentence": 4
+    },
+    {
+     "no": 7,
+     "s": "S5",
+     "en": "that these global weather changes will create stronger storms and sudden floods in some areas,",
+     "sym": "＋",
+     "lv": 2,
+     "role": "minor",
+     "parent": 2,
+     "relParent": 5,
+     "relSym": "＋",
+     "relAlts": [
+      3,
+      5
+     ],
+     "t": "将来は一部地域で強い嵐・洪水が生じる",
+     "cue": "create",
+     "packed": "changes will create",
+     "expand": "地球規模で天候が変わる →（原因） 一部地域で強い嵐・突発的な洪水が生じる",
+     "sentence": 4
+    },
+    {
+     "no": 8,
+     "s": "S5",
+     "en": "while (a)others will see harsher droughts or dryness.",
+     "sym": "⇔",
+     "lv": 3,
+     "role": "minor",
+     "parent": 7,
+     "relParent": 7,
+     "relSym": "⇔",
+     "relAlts": [],
+     "t": "一方、他地域はより厳しい干ばつ・乾燥になる",
+     "cue": "while … others",
+     "packed": "",
+     "expand": "",
+     "sentence": 4
+    }
+   ],
+   "segments": [
+    {
+     "sentence": 0,
+     "token": 0,
+     "no": 1,
+     "cont": false
+    },
+    {
+     "sentence": 0,
+     "token": 2,
+     "no": 2,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 0,
+     "no": 3,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 10,
+     "no": 4,
+     "cont": false
+    },
+    {
+     "sentence": 4,
+     "token": 0,
+     "no": 6,
+     "cont": false
+    },
+    {
+     "sentence": 4,
+     "token": 2,
+     "no": 7,
+     "cont": false
+    },
+    {
+     "sentence": 4,
+     "token": 17,
+     "no": 8,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 0,
+     "no": 5,
+     "cont": false
+    },
+    {
+     "sentence": 3,
+     "token": 0,
+     "no": 5,
+     "cont": true
+    }
+   ],
+   "foldBoundaries": [
+    {
+     "sentence": 3,
+     "gap": 0,
+     "no": 5,
+     "t": "平均気温も上昇し、夏は酷暑・冬はやや寒くなる",
+     "cue": "also / This means"
+    }
+   ],
+   "requiredCuts": [
+    {
+     "sentence": 0,
+     "gap": 2,
+     "beforeNo": 1,
+     "afterNo": 2,
+     "cue": "affects",
+     "sym": "TS",
+     "tBefore": "（出典）諸研究が示すところでは",
+     "tAfter": "気候変動は地球の自然環境に影響する"
+    },
+    {
+     "sentence": 1,
+     "gap": 0,
+     "beforeNo": 2,
+     "afterNo": 3,
+     "cue": "some regions",
+     "sym": "＋",
+     "tBefore": "気候変動は地球の自然環境に影響する",
+     "tAfter": "豪雨で一部地域は海岸が氾濫"
+    },
+    {
+     "sentence": 1,
+     "gap": 10,
+     "beforeNo": 3,
+     "afterNo": 4,
+     "cue": "while … others",
+     "sym": "⇔",
+     "tBefore": "豪雨で一部地域は海岸が氾濫",
+     "tAfter": "一方、干ばつで他地域は乾燥地になる"
+    },
+    {
+     "sentence": 2,
+     "gap": 0,
+     "beforeNo": 4,
+     "afterNo": 5,
+     "cue": "also / This means",
+     "sym": "＋",
+     "tBefore": "一方、干ばつで他地域は乾燥地になる",
+     "tAfter": "平均気温も上昇し、夏は酷暑・冬はやや寒くなる"
+    },
+    {
+     "sentence": 4,
+     "gap": 0,
+     "beforeNo": 5,
+     "afterNo": 6,
+     "cue": "Scientists expect",
+     "sym": "←",
+     "tBefore": "平均気温も上昇し、夏は酷暑・冬はやや寒くなる",
+     "tAfter": "（出典）科学者たちの予測では"
+    },
+    {
+     "sentence": 4,
+     "gap": 2,
+     "beforeNo": 6,
+     "afterNo": 7,
+     "cue": "create",
+     "sym": "＋",
+     "tBefore": "（出典）科学者たちの予測では",
+     "tAfter": "将来は一部地域で強い嵐・洪水が生じる"
+    },
+    {
+     "sentence": 4,
+     "gap": 17,
+     "beforeNo": 7,
+     "afterNo": 8,
+     "cue": "while … others",
+     "sym": "⇔",
+     "tBefore": "将来は一部地域で強い嵐・洪水が生じる",
+     "tAfter": "一方、他地域はより厳しい干ばつ・乾燥になる"
+    }
+   ],
+   "macro": "その注目に値する影響は、まず自然環境に現れる（地域ごとに正反対の極端を生む）",
+   "macroSym": "→"
+  },
+  {
+   "no": 3,
+   "sentences": [
+    {
+     "id": "P3-S1",
+     "text": "While there is clear evidence that climate change can affect the geography of the planet and generate severe weather conditions, can it have an impact on our health, too?",
+     "tokens": [
+      "While",
+      "there",
+      "is",
+      "clear",
+      "evidence",
+      "that",
+      "climate",
+      "change",
+      "can",
+      "affect",
+      "the",
+      "geography",
+      "of",
+      "the",
+      "planet",
+      "and",
+      "generate",
+      "severe",
+      "weather",
+      "conditions,",
+      "can",
+      "it",
+      "have",
+      "an",
+      "impact",
+      "on",
+      "our",
+      "health,",
+      "too?"
+     ]
+    },
+    {
+     "id": "P3-S2",
+     "text": "Recent studies on climate change actually indicate that it has direct impact on public health.",
+     "tokens": [
+      "Recent",
+      "studies",
+      "on",
+      "climate",
+      "change",
+      "actually",
+      "indicate",
+      "that",
+      "it",
+      "has",
+      "direct",
+      "impact",
+      "on",
+      "public",
+      "health."
+     ]
+    },
+    {
+     "id": "P3-S3",
+     "text": "According to Patricia Espinosa, executive secretary of United Nations Climate Change, and Richard Horton, editor-in-chief of the British medical journal The Lancet, (b)the change of weather and climate is already producing harmful effects on our health.",
+     "tokens": [
+      "According",
+      "to",
+      "Patricia",
+      "Espinosa,",
+      "executive",
+      "secretary",
+      "of",
+      "United",
+      "Nations",
+      "Climate",
+      "Change,",
+      "and",
+      "Richard",
+      "Horton,",
+      "editor-in-chief",
+      "of",
+      "the",
+      "British",
+      "medical",
+      "journal",
+      "The",
+      "Lancet,",
+      "(b)the",
+      "change",
+      "of",
+      "weather",
+      "and",
+      "climate",
+      "is",
+      "already",
+      "producing",
+      "harmful",
+      "effects",
+      "on",
+      "our",
+      "health."
+     ]
+    }
+   ],
+   "kotos": [
+    {
+     "no": 1,
+     "s": "S1",
+     "en": "While there is clear evidence that climate change can affect the geography of the planet and generate severe weather conditions,",
+     "sym": "△",
+     "lv": 0,
+     "role": "claim",
+     "parent": null,
+     "relParent": null,
+     "relSym": "△",
+     "relAlts": [],
+     "t": "気候変動が地理・気象に影響するのは明白だ",
+     "cue": "While … evidence",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 2,
+     "s": "S1",
+     "en": "can it have an impact on our health, too?",
+     "sym": "⇔",
+     "lv": 0,
+     "role": "claim",
+     "parent": null,
+     "relParent": null,
+     "relSym": "⇔",
+     "relAlts": [],
+     "t": "気候変動は健康にも影響するのではないか（修辞疑問＝健康にも影響する、という提起）",
+     "cue": "too?",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 3,
+     "s": "S2",
+     "en": "Recent studies on climate change actually indicate",
+     "sym": "←",
+     "lv": 1,
+     "role": "minor",
+     "parent": 4,
+     "relParent": 4,
+     "relSym": "←",
+     "relAlts": [],
+     "t": "（出典）近年の諸研究がまさに示すところでは",
+     "cue": "actually indicate",
+     "packed": "",
+     "expand": "",
+     "sentence": 1
+    },
+    {
+     "no": 4,
+     "s": "S2",
+     "en": "that it has direct impact on public health.",
+     "sym": "TS",
+     "lv": 0,
+     "role": "claim",
+     "parent": null,
+     "relParent": null,
+     "relSym": "TS",
+     "relAlts": [],
+     "t": "気候変動は公衆衛生に直接影響する",
+     "cue": "direct impact",
+     "packed": "",
+     "expand": "",
+     "sentence": 1
+    },
+    {
+     "no": 5,
+     "s": "S3",
+     "en": "According to Patricia Espinosa, executive secretary of United Nations Climate Change, and Richard Horton, editor-in-chief of the British medical journal The Lancet,",
+     "sym": "←",
+     "lv": 2,
+     "role": "minor",
+     "parent": 6,
+     "relParent": 6,
+     "relSym": "←",
+     "relAlts": [],
+     "t": "（出典）国連気候変動のEspinosa事務局長と医学誌LancetのHorton編集長によれば",
+     "cue": "According to",
+     "packed": "",
+     "expand": "",
+     "sentence": 2
+    },
+    {
+     "no": 6,
+     "s": "S3",
+     "en": "(b)the change of weather and climate is already producing harmful effects on our health.",
+     "sym": "←",
+     "lv": 1,
+     "role": "major",
+     "parent": 4,
+     "relParent": 4,
+     "relSym": "←",
+     "relAlts": [],
+     "t": "天候・気候の変化は、すでに健康に害を生じさせている",
+     "cue": "already producing",
+     "packed": "producing harmful effects",
+     "expand": "天候・気候が変わる →（原因） すでに健康に害が生じている",
+     "sentence": 2
+    }
+   ],
+   "segments": [
+    {
+     "sentence": 0,
+     "token": 0,
+     "no": 1,
+     "cont": false
+    },
+    {
+     "sentence": 0,
+     "token": 20,
+     "no": 2,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 0,
+     "no": 3,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 7,
+     "no": 4,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 0,
+     "no": 5,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 22,
+     "no": 6,
+     "cont": false
+    }
+   ],
+   "foldBoundaries": [],
+   "requiredCuts": [
+    {
+     "sentence": 0,
+     "gap": 20,
+     "beforeNo": 1,
+     "afterNo": 2,
+     "cue": "too?",
+     "sym": "⇔",
+     "tBefore": "気候変動が地理・気象に影響するのは明白だ",
+     "tAfter": "気候変動は健康にも影響するのではないか（修辞疑問＝健康にも影響する、という提起）"
+    },
+    {
+     "sentence": 1,
+     "gap": 0,
+     "beforeNo": 2,
+     "afterNo": 3,
+     "cue": "actually indicate",
+     "sym": "←",
+     "tBefore": "気候変動は健康にも影響するのではないか（修辞疑問＝健康にも影響する、という提起）",
+     "tAfter": "（出典）近年の諸研究がまさに示すところでは"
+    },
+    {
+     "sentence": 1,
+     "gap": 7,
+     "beforeNo": 3,
+     "afterNo": 4,
+     "cue": "direct impact",
+     "sym": "TS",
+     "tBefore": "（出典）近年の諸研究がまさに示すところでは",
+     "tAfter": "気候変動は公衆衛生に直接影響する"
+    },
+    {
+     "sentence": 2,
+     "gap": 0,
+     "beforeNo": 4,
+     "afterNo": 5,
+     "cue": "According to",
+     "sym": "←",
+     "tBefore": "気候変動は公衆衛生に直接影響する",
+     "tAfter": "（出典）国連気候変動のEspinosa事務局長と医学誌LancetのHorton編集長によれば"
+    },
+    {
+     "sentence": 2,
+     "gap": 22,
+     "beforeNo": 5,
+     "afterNo": 6,
+     "cue": "already producing",
+     "sym": "←",
+     "tBefore": "（出典）国連気候変動のEspinosa事務局長と医学誌LancetのHorton編集長によれば",
+     "tAfter": "天候・気候の変化は、すでに健康に害を生じさせている"
+    }
+   ],
+   "macro": "〔転換〕では健康はどうか？──気候変動は公衆衛生にも直接影響する（ここが本論の主題）",
+   "macroSym": "⇔"
+  },
+  {
+   "no": 4,
+   "sentences": [
+    {
+     "id": "P4-S1",
+     "text": "The World Health Organization (WHO) considers climate change as one of the main reasons why more people are getting sick.",
+     "tokens": [
+      "The",
+      "World",
+      "Health",
+      "Organization",
+      "(WHO)",
+      "considers",
+      "climate",
+      "change",
+      "as",
+      "one",
+      "of",
+      "the",
+      "main",
+      "reasons",
+      "why",
+      "more",
+      "people",
+      "are",
+      "getting",
+      "sick."
+     ]
+    },
+    {
+     "id": "P4-S2",
+     "text": "This is because climate change can have an impact on the social and environmental factors that relate to health, like food, water, air, and housing.",
+     "tokens": [
+      "This",
+      "is",
+      "because",
+      "climate",
+      "change",
+      "can",
+      "have",
+      "an",
+      "impact",
+      "on",
+      "the",
+      "social",
+      "and",
+      "environmental",
+      "factors",
+      "that",
+      "relate",
+      "to",
+      "health,",
+      "like",
+      "food,",
+      "water,",
+      "air,",
+      "and",
+      "housing."
+     ]
+    },
+    {
+     "id": "P4-S3",
+     "text": "If we ignore the ill effects of climate change on health, the WHO estimates that there will be about 250,000 more deaths per year between 2030 and 2050: 38,000 among the elderly because of heat stroke, 48,000 due to diarrhea, 60,000 because of malaria, and 95,000 among children with poor nutrition.",
+     "tokens": [
+      "If",
+      "we",
+      "ignore",
+      "the",
+      "ill",
+      "effects",
+      "of",
+      "climate",
+      "change",
+      "on",
+      "health,",
+      "the",
+      "WHO",
+      "estimates",
+      "that",
+      "there",
+      "will",
+      "be",
+      "about",
+      "250,000",
+      "more",
+      "deaths",
+      "per",
+      "year",
+      "between",
+      "2030",
+      "and",
+      "2050:",
+      "38,000",
+      "among",
+      "the",
+      "elderly",
+      "because",
+      "of",
+      "heat",
+      "stroke,",
+      "48,000",
+      "due",
+      "to",
+      "diarrhea,",
+      "60,000",
+      "because",
+      "of",
+      "malaria,",
+      "and",
+      "95,000",
+      "among",
+      "children",
+      "with",
+      "poor",
+      "nutrition."
+     ]
+    }
+   ],
+   "kotos": [
+    {
+     "no": 1,
+     "s": "S1",
+     "en": "The World Health Organization (WHO) considers climate change as one of the main reasons why more people are getting sick.",
+     "sym": "TS",
+     "lv": 0,
+     "role": "claim",
+     "parent": null,
+     "relParent": null,
+     "relSym": "TS",
+     "relAlts": [],
+     "t": "WHOは気候変動を病人増加の主因の一つとみなす",
+     "cue": "considers",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 2,
+     "s": "S2",
+     "en": "This is because climate change can have an impact on the social and environmental factors that relate to health, like food, water, air, and housing.",
+     "sym": "←",
+     "lv": 1,
+     "role": "major",
+     "parent": 1,
+     "relParent": 1,
+     "relSym": "←",
+     "relAlts": [],
+     "t": "健康に関わる社会・環境要因（食・水・空気・住）に影響するから",
+     "cue": "This is because",
+     "packed": "have an impact on",
+     "expand": "気候が変わる →（原因） 健康に関わる社会・環境要因（食・水・空気・住）が変わる",
+     "sentence": 1
+    },
+    {
+     "no": 3,
+     "s": "S3",
+     "en": "If we ignore the ill effects of climate change on health,",
+     "sym": "⊂",
+     "lv": 2,
+     "role": "minor",
+     "parent": 5,
+     "relParent": 5,
+     "relSym": "⊂",
+     "relAlts": [],
+     "t": "（条件）気候変動の健康への悪影響を無視すれば",
+     "cue": "If",
+     "packed": "",
+     "expand": "",
+     "sentence": 2
+    },
+    {
+     "no": 4,
+     "s": "S3",
+     "en": "the WHO estimates",
+     "sym": "←",
+     "lv": 2,
+     "role": "minor",
+     "parent": 5,
+     "relParent": 5,
+     "relSym": "←",
+     "relAlts": [],
+     "t": "（出典）WHOの試算では",
+     "cue": "estimates",
+     "packed": "",
+     "expand": "",
+     "sentence": 2
+    },
+    {
+     "no": 5,
+     "s": "S3",
+     "en": "that there will be about 250,000 more deaths per year between 2030 and 2050: 38,000 among the elderly because of heat stroke, 48,000 due to diarrhea, 60,000 because of malaria, and 95,000 among children with poor nutrition.",
+     "sym": "└",
+     "lv": 1,
+     "role": "major",
+     "parent": 1,
+     "relParent": 1,
+     "relSym": "└",
+     "relAlts": [],
+     "t": "2030-50年に年25万人の超過死：熱中症3.8万・下痢4.8万・マラリア6万・栄養不良の子9.5万",
+     "cue": "250,000 more deaths",
+     "packed": "",
+     "expand": "",
+     "sentence": 2
+    }
+   ],
+   "segments": [
+    {
+     "sentence": 0,
+     "token": 0,
+     "no": 1,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 0,
+     "no": 2,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 0,
+     "no": 3,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 11,
+     "no": 4,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 14,
+     "no": 5,
+     "cont": false
+    }
+   ],
+   "foldBoundaries": [],
+   "requiredCuts": [
+    {
+     "sentence": 1,
+     "gap": 0,
+     "beforeNo": 1,
+     "afterNo": 2,
+     "cue": "This is because",
+     "sym": "←",
+     "tBefore": "WHOは気候変動を病人増加の主因の一つとみなす",
+     "tAfter": "健康に関わる社会・環境要因（食・水・空気・住）に影響するから"
+    },
+    {
+     "sentence": 2,
+     "gap": 0,
+     "beforeNo": 2,
+     "afterNo": 3,
+     "cue": "If",
+     "sym": "⊂",
+     "tBefore": "健康に関わる社会・環境要因（食・水・空気・住）に影響するから",
+     "tAfter": "（条件）気候変動の健康への悪影響を無視すれば"
+    },
+    {
+     "sentence": 2,
+     "gap": 11,
+     "beforeNo": 3,
+     "afterNo": 4,
+     "cue": "estimates",
+     "sym": "←",
+     "tBefore": "（条件）気候変動の健康への悪影響を無視すれば",
+     "tAfter": "（出典）WHOの試算では"
+    },
+    {
+     "sentence": 2,
+     "gap": 14,
+     "beforeNo": 4,
+     "afterNo": 5,
+     "cue": "250,000 more deaths",
+     "sym": "└",
+     "tBefore": "（出典）WHOの試算では",
+     "tAfter": "2030-50年に年25万人の超過死：熱中症3.8万・下痢4.8万・マラリア6万・栄養不良の子9.5万"
+    }
+   ],
+   "macro": "健康への影響は深刻（WHO・年25万死）→ これから3つの状況を見る",
+   "macroSym": "→"
+  },
+  {
+   "no": 5,
+   "sentences": [
+    {
+     "id": "P5-S1",
+     "text": "This is, indeed, a major concern that we all should address and prepare for as threats of climate change are definitely alarming.",
+     "tokens": [
+      "This",
+      "is,",
+      "indeed,",
+      "a",
+      "major",
+      "concern",
+      "that",
+      "we",
+      "all",
+      "should",
+      "address",
+      "and",
+      "prepare",
+      "for",
+      "as",
+      "threats",
+      "of",
+      "climate",
+      "change",
+      "are",
+      "definitely",
+      "alarming."
+     ]
+    },
+    {
+     "id": "P5-S2",
+     "text": "These health risks, therefore, are so severe that medicine and technology are not advancing fast enough.",
+     "tokens": [
+      "These",
+      "health",
+      "risks,",
+      "therefore,",
+      "are",
+      "so",
+      "severe",
+      "that",
+      "medicine",
+      "and",
+      "technology",
+      "are",
+      "not",
+      "advancing",
+      "fast",
+      "enough."
+     ]
+    },
+    {
+     "id": "P5-S3",
+     "text": "To know what these health threats might look like, let's look at three situations where climate change is clearly influencing people's health.",
+     "tokens": [
+      "To",
+      "know",
+      "what",
+      "these",
+      "health",
+      "threats",
+      "might",
+      "look",
+      "like,",
+      "let's",
+      "look",
+      "at",
+      "three",
+      "situations",
+      "where",
+      "climate",
+      "change",
+      "is",
+      "clearly",
+      "influencing",
+      "people's",
+      "health."
+     ]
+    }
+   ],
+   "kotos": [
+    {
+     "no": 1,
+     "s": "S1",
+     "en": "This is, indeed, a major concern that we all should address and prepare for",
+     "sym": "TS",
+     "lv": 0,
+     "role": "claim",
+     "parent": null,
+     "relParent": null,
+     "relSym": "TS",
+     "relAlts": [],
+     "t": "これは皆が取り組み備えるべき重大な懸念",
+     "cue": "major concern",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 2,
+     "s": "S1",
+     "en": "as threats of climate change are definitely alarming.",
+     "sym": "←",
+     "lv": 1,
+     "role": "major",
+     "parent": 1,
+     "relParent": 1,
+     "relSym": "←",
+     "relAlts": [],
+     "t": "気候変動の脅威は明らかに憂慮すべきものだから",
+     "cue": "as … alarming",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 3,
+     "s": "S2",
+     "en": "These health risks, therefore, are so severe",
+     "sym": "→",
+     "lv": 1,
+     "role": "major",
+     "parent": 1,
+     "relParent": 1,
+     "relSym": "→",
+     "relAlts": [],
+     "t": "それゆえ、これらの健康リスクは深刻だ",
+     "cue": "therefore",
+     "packed": "",
+     "expand": "",
+     "sentence": 1
+    },
+    {
+     "no": 4,
+     "s": "S2",
+     "en": "that medicine and technology are not advancing fast enough.",
+     "sym": "→",
+     "lv": 2,
+     "role": "minor",
+     "parent": 3,
+     "relParent": 3,
+     "relSym": "→",
+     "relAlts": [],
+     "t": "医療・技術の進歩が追いつかないほどだ（帰結）",
+     "cue": "so … that",
+     "packed": "",
+     "expand": "",
+     "sentence": 1
+    },
+    {
+     "no": 5,
+     "s": "S3",
+     "en": "To know what these health threats might look like,",
+     "sym": "←",
+     "lv": 2,
+     "role": "minor",
+     "parent": 6,
+     "relParent": 6,
+     "relSym": "←",
+     "relAlts": [],
+     "t": "（目的）これらの健康脅威がどんなものかを知るために",
+     "cue": "To know",
+     "packed": "",
+     "expand": "",
+     "sentence": 2
+    },
+    {
+     "no": 6,
+     "s": "S3",
+     "en": "let's look at three situations where climate change is clearly influencing people's health.",
+     "sym": "→",
+     "lv": 1,
+     "role": "major",
+     "parent": 1,
+     "relParent": 1,
+     "relSym": "→",
+     "relAlts": [],
+     "t": "気候変動が健康に影響している3つの状況を見よう",
+     "cue": "let's look at three situations",
+     "packed": "",
+     "expand": "",
+     "sentence": 2
+    }
+   ],
+   "segments": [
+    {
+     "sentence": 0,
+     "token": 0,
+     "no": 1,
+     "cont": false
+    },
+    {
+     "sentence": 0,
+     "token": 14,
+     "no": 2,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 0,
+     "no": 3,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 7,
+     "no": 4,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 0,
+     "no": 5,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 9,
+     "no": 6,
+     "cont": false
+    }
+   ],
+   "foldBoundaries": [],
+   "requiredCuts": [
+    {
+     "sentence": 0,
+     "gap": 14,
+     "beforeNo": 1,
+     "afterNo": 2,
+     "cue": "as … alarming",
+     "sym": "←",
+     "tBefore": "これは皆が取り組み備えるべき重大な懸念",
+     "tAfter": "気候変動の脅威は明らかに憂慮すべきものだから"
+    },
+    {
+     "sentence": 1,
+     "gap": 0,
+     "beforeNo": 2,
+     "afterNo": 3,
+     "cue": "therefore",
+     "sym": "→",
+     "tBefore": "気候変動の脅威は明らかに憂慮すべきものだから",
+     "tAfter": "それゆえ、これらの健康リスクは深刻だ"
+    },
+    {
+     "sentence": 1,
+     "gap": 7,
+     "beforeNo": 3,
+     "afterNo": 4,
+     "cue": "so … that",
+     "sym": "→",
+     "tBefore": "それゆえ、これらの健康リスクは深刻だ",
+     "tAfter": "医療・技術の進歩が追いつかないほどだ（帰結）"
+    },
+    {
+     "sentence": 2,
+     "gap": 0,
+     "beforeNo": 4,
+     "afterNo": 5,
+     "cue": "To know",
+     "sym": "←",
+     "tBefore": "医療・技術の進歩が追いつかないほどだ（帰結）",
+     "tAfter": "（目的）これらの健康脅威がどんなものかを知るために"
+    },
+    {
+     "sentence": 2,
+     "gap": 9,
+     "beforeNo": 5,
+     "afterNo": 6,
+     "cue": "let's look at three situations",
+     "sym": "→",
+     "tBefore": "（目的）これらの健康脅威がどんなものかを知るために",
+     "tAfter": "気候変動が健康に影響している3つの状況を見よう"
+    }
+   ],
+   "macro": "健康への影響は深刻（WHO・年25万死）→ これから3つの状況を見る",
+   "macroSym": "→"
+  },
+  {
+   "no": 6,
+   "sentences": [
+    {
+     "id": "P6-S1",
+     "text": "The worsening spread of dengue fever, or \"bone-break fever\", is directly related to the change in global weather conditions.",
+     "tokens": [
+      "The",
+      "worsening",
+      "spread",
+      "of",
+      "dengue",
+      "fever,",
+      "or",
+      "\"bone-break",
+      "fever\",",
+      "is",
+      "directly",
+      "related",
+      "to",
+      "the",
+      "change",
+      "in",
+      "global",
+      "weather",
+      "conditions."
+     ]
+    },
+    {
+     "id": "P6-S2",
+     "text": "Normally found in warmer areas, the black-and-white striped mosquitoes that carry the virus are now living longer and populating even in colder, traditionally cooler regions.",
+     "tokens": [
+      "Normally",
+      "found",
+      "in",
+      "warmer",
+      "areas,",
+      "the",
+      "black-and-white",
+      "striped",
+      "mosquitoes",
+      "that",
+      "carry",
+      "the",
+      "virus",
+      "are",
+      "now",
+      "living",
+      "longer",
+      "and",
+      "populating",
+      "even",
+      "in",
+      "colder,",
+      "traditionally",
+      "cooler",
+      "regions."
+     ]
+    },
+    {
+     "id": "P6-S3",
+     "text": "Backed by the WHO, dengue is now widespread in 100 countries, causing up to 50 to 100 million new infections a year with 22,000 deaths, mainly among children.",
+     "tokens": [
+      "Backed",
+      "by",
+      "the",
+      "WHO,",
+      "dengue",
+      "is",
+      "now",
+      "widespread",
+      "in",
+      "100",
+      "countries,",
+      "causing",
+      "up",
+      "to",
+      "50",
+      "to",
+      "100",
+      "million",
+      "new",
+      "infections",
+      "a",
+      "year",
+      "with",
+      "22,000",
+      "deaths,",
+      "mainly",
+      "among",
+      "children."
+     ]
+    }
+   ],
+   "kotos": [
+    {
+     "no": 1,
+     "s": "S1",
+     "en": "The worsening spread of dengue fever, or \"bone-break fever\", is directly related to the change in global weather conditions.",
+     "sym": "TS",
+     "lv": 0,
+     "role": "claim",
+     "parent": null,
+     "relParent": null,
+     "relSym": "TS",
+     "relAlts": [],
+     "t": "デング熱の拡大は気候変動と直結",
+     "cue": "directly related",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 2,
+     "s": "S2",
+     "en": "Normally found in warmer areas,",
+     "sym": "△",
+     "lv": 2,
+     "role": "minor",
+     "parent": 3,
+     "relParent": 3,
+     "relSym": "△",
+     "relAlts": [],
+     "t": "（従来は）温暖な地域にのみ生息していたが",
+     "cue": "Normally",
+     "packed": "",
+     "expand": "",
+     "sentence": 1
+    },
+    {
+     "no": 3,
+     "s": "S2",
+     "en": "the black-and-white striped mosquitoes that carry the virus are now living longer and populating even in colder, traditionally cooler regions.",
+     "sym": "←",
+     "lv": 1,
+     "role": "major",
+     "parent": 1,
+     "relParent": 1,
+     "relSym": "←",
+     "relAlts": [],
+     "t": "ウイルスを媒介する蚊が、今や寒冷地でも長く生息・繁殖している",
+     "cue": "now",
+     "packed": "",
+     "expand": "",
+     "sentence": 1
+    },
+    {
+     "no": 4,
+     "s": "S3",
+     "en": "Backed by the WHO,",
+     "sym": "←",
+     "lv": 2,
+     "role": "minor",
+     "parent": 5,
+     "relParent": 5,
+     "relSym": "←",
+     "relAlts": [],
+     "t": "（出典）WHOの裏付けで",
+     "cue": "Backed by",
+     "packed": "",
+     "expand": "",
+     "sentence": 2
+    },
+    {
+     "no": 5,
+     "s": "S3",
+     "en": "dengue is now widespread in 100 countries,",
+     "sym": "└",
+     "lv": 1,
+     "role": "major",
+     "parent": 1,
+     "relParent": 1,
+     "relSym": "└",
+     "relAlts": [],
+     "t": "デング熱は今や100か国に広がっている",
+     "cue": "now widespread",
+     "packed": "",
+     "expand": "",
+     "sentence": 2
+    },
+    {
+     "no": 6,
+     "s": "S3",
+     "en": "causing up to 50 to 100 million new infections a year with 22,000 deaths, mainly among children.",
+     "sym": "→",
+     "lv": 2,
+     "role": "minor",
+     "parent": 5,
+     "relParent": 5,
+     "relSym": "→",
+     "relAlts": [],
+     "t": "（帰結）年5000万〜1億の新規感染・2.2万人の死（主に子供）を生んでいる",
+     "cue": "causing",
+     "packed": "",
+     "expand": "",
+     "sentence": 2
+    }
+   ],
+   "segments": [
+    {
+     "sentence": 0,
+     "token": 0,
+     "no": 1,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 0,
+     "no": 2,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 5,
+     "no": 3,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 0,
+     "no": 4,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 4,
+     "no": 5,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 11,
+     "no": 6,
+     "cont": false
+    }
+   ],
+   "foldBoundaries": [],
+   "requiredCuts": [
+    {
+     "sentence": 1,
+     "gap": 0,
+     "beforeNo": 1,
+     "afterNo": 2,
+     "cue": "Normally",
+     "sym": "△",
+     "tBefore": "デング熱の拡大は気候変動と直結",
+     "tAfter": "（従来は）温暖な地域にのみ生息していたが"
+    },
+    {
+     "sentence": 1,
+     "gap": 5,
+     "beforeNo": 2,
+     "afterNo": 3,
+     "cue": "now",
+     "sym": "←",
+     "tBefore": "（従来は）温暖な地域にのみ生息していたが",
+     "tAfter": "ウイルスを媒介する蚊が、今や寒冷地でも長く生息・繁殖している"
+    },
+    {
+     "sentence": 2,
+     "gap": 0,
+     "beforeNo": 3,
+     "afterNo": 4,
+     "cue": "Backed by",
+     "sym": "←",
+     "tBefore": "ウイルスを媒介する蚊が、今や寒冷地でも長く生息・繁殖している",
+     "tAfter": "（出典）WHOの裏付けで"
+    },
+    {
+     "sentence": 2,
+     "gap": 4,
+     "beforeNo": 4,
+     "afterNo": 5,
+     "cue": "now widespread",
+     "sym": "└",
+     "tBefore": "（出典）WHOの裏付けで",
+     "tAfter": "デング熱は今や100か国に広がっている"
+    },
+    {
+     "sentence": 2,
+     "gap": 11,
+     "beforeNo": 5,
+     "afterNo": 6,
+     "cue": "causing",
+     "sym": "→",
+     "tBefore": "デング熱は今や100か国に広がっている",
+     "tAfter": "（帰結）年5000万〜1億の新規感染・2.2万人の死（主に子供）を生んでいる"
+    }
+   ],
+   "macro": "¶6 デング熱",
+   "macroSym": ""
+  },
+  {
+   "no": 7,
+   "sentences": [
+    {
+     "id": "P7-S1",
+     "text": "( c ) effect of climate change is that of water-related illnesses.",
+     "tokens": [
+      "(",
+      "c",
+      ")",
+      "effect",
+      "of",
+      "climate",
+      "change",
+      "is",
+      "that",
+      "of",
+      "water-related",
+      "illnesses."
+     ]
+    },
+    {
+     "id": "P7-S2",
+     "text": "People can become sick if ( 2 ) to unclean water.",
+     "tokens": [
+      "People",
+      "can",
+      "become",
+      "sick",
+      "if",
+      "(",
+      "2",
+      ")",
+      "to",
+      "unclean",
+      "water."
+     ]
+    },
+    {
+     "id": "P7-S3",
+     "text": "Flooding ( 3 ) from heavy rainfall and high water can increasingly pollute areas of water, including the water we drink.",
+     "tokens": [
+      "Flooding",
+      "(",
+      "3",
+      ")",
+      "from",
+      "heavy",
+      "rainfall",
+      "and",
+      "high",
+      "water",
+      "can",
+      "increasingly",
+      "pollute",
+      "areas",
+      "of",
+      "water,",
+      "including",
+      "the",
+      "water",
+      "we",
+      "drink."
+     ]
+    },
+    {
+     "id": "P7-S4",
+     "text": "Because of this, people may suffer from illnesses like cholera, dysentery, and typhoid.",
+     "tokens": [
+      "Because",
+      "of",
+      "this,",
+      "people",
+      "may",
+      "suffer",
+      "from",
+      "illnesses",
+      "like",
+      "cholera,",
+      "dysentery,",
+      "and",
+      "typhoid."
+     ]
+    },
+    {
+     "id": "P7-S5",
+     "text": "According to the WHO, there are over 500,000 children aged under 5 who are at risk every year because of a lack of safe water.",
+     "tokens": [
+      "According",
+      "to",
+      "the",
+      "WHO,",
+      "there",
+      "are",
+      "over",
+      "500,000",
+      "children",
+      "aged",
+      "under",
+      "5",
+      "who",
+      "are",
+      "at",
+      "risk",
+      "every",
+      "year",
+      "because",
+      "of",
+      "a",
+      "lack",
+      "of",
+      "safe",
+      "water."
+     ]
+    }
+   ],
+   "kotos": [
+    {
+     "no": 1,
+     "s": "S1",
+     "en": "( c ) effect of climate change is that of water-related illnesses.",
+     "sym": "TS",
+     "lv": 0,
+     "role": "claim",
+     "parent": null,
+     "relParent": null,
+     "relSym": "TS",
+     "relAlts": [],
+     "t": "第2の影響は水系感染症",
+     "cue": "Another effect",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 2,
+     "s": "S2",
+     "en": "People can become sick",
+     "sym": "←",
+     "lv": 1,
+     "role": "major",
+     "parent": 1,
+     "relParent": 1,
+     "relSym": "←",
+     "relAlts": [],
+     "t": "人は病気になりうる",
+     "cue": "",
+     "packed": "",
+     "expand": "",
+     "sentence": 1
+    },
+    {
+     "no": 3,
+     "s": "S2",
+     "en": "if ( 2 ) to unclean water.",
+     "sym": "⊂",
+     "lv": 2,
+     "role": "minor",
+     "parent": 2,
+     "relParent": 2,
+     "relSym": "⊂",
+     "relAlts": [],
+     "t": "（条件）不衛生な水に曝されると",
+     "cue": "if",
+     "packed": "",
+     "expand": "",
+     "sentence": 1
+    },
+    {
+     "no": 4,
+     "s": "S3",
+     "en": "Flooding ( 3 ) from heavy rainfall and high water can increasingly pollute areas of water,",
+     "sym": "←",
+     "lv": 2,
+     "role": "minor",
+     "parent": 2,
+     "relParent": 2,
+     "relSym": "←",
+     "relAlts": [],
+     "t": "豪雨・高水による洪水が水域を汚染しうるから",
+     "cue": "pollute",
+     "packed": "Flooding … pollute",
+     "expand": "豪雨で洪水が起こる →（原因） 水域が汚染される",
+     "sentence": 2
+    },
+    {
+     "no": 5,
+     "s": "S3",
+     "en": "including the water we drink.",
+     "sym": "ex.",
+     "lv": 3,
+     "role": "minor",
+     "parent": 4,
+     "relParent": 4,
+     "relSym": "ex.",
+     "relAlts": [],
+     "t": "（例示）飲み水も含めて",
+     "cue": "including",
+     "packed": "",
+     "expand": "",
+     "sentence": 2
+    },
+    {
+     "no": 6,
+     "s": "S4",
+     "en": "Because of this, people may suffer from illnesses like cholera, dysentery, and typhoid.",
+     "sym": "→",
+     "lv": 2,
+     "role": "minor",
+     "parent": 2,
+     "relParent": 2,
+     "relSym": "→",
+     "relAlts": [],
+     "t": "その結果、コレラ・赤痢・腸チフス等にかかりうる",
+     "cue": "Because of this",
+     "packed": "",
+     "expand": "",
+     "sentence": 3
+    },
+    {
+     "no": 7,
+     "s": "S5",
+     "en": "According to the WHO,",
+     "sym": "←",
+     "lv": 2,
+     "role": "minor",
+     "parent": 8,
+     "relParent": 8,
+     "relSym": "←",
+     "relAlts": [],
+     "t": "（出典）WHOによれば",
+     "cue": "According to",
+     "packed": "",
+     "expand": "",
+     "sentence": 4
+    },
+    {
+     "no": 8,
+     "s": "S5",
+     "en": "there are over 500,000 children aged under 5 who are at risk every year",
+     "sym": "└",
+     "lv": 1,
+     "role": "major",
+     "parent": 1,
+     "relParent": 1,
+     "relSym": "└",
+     "relAlts": [],
+     "t": "5歳未満の子ども50万人超が毎年危険にさらされている",
+     "cue": "at risk",
+     "packed": "",
+     "expand": "",
+     "sentence": 4
+    },
+    {
+     "no": 9,
+     "s": "S5",
+     "en": "because of a lack of safe water.",
+     "sym": "←",
+     "lv": 2,
+     "role": "minor",
+     "parent": 8,
+     "relParent": 8,
+     "relSym": "←",
+     "relAlts": [],
+     "t": "（理由）安全な水が不足しているから",
+     "cue": "because of",
+     "packed": "",
+     "expand": "",
+     "sentence": 4
+    }
+   ],
+   "segments": [
+    {
+     "sentence": 0,
+     "token": 1,
+     "no": 1,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 0,
+     "no": 2,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 4,
+     "no": 3,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 0,
+     "no": 4,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 16,
+     "no": 5,
+     "cont": false
+    },
+    {
+     "sentence": 3,
+     "token": 0,
+     "no": 6,
+     "cont": false
+    },
+    {
+     "sentence": 4,
+     "token": 0,
+     "no": 7,
+     "cont": false
+    },
+    {
+     "sentence": 4,
+     "token": 4,
+     "no": 8,
+     "cont": false
+    },
+    {
+     "sentence": 4,
+     "token": 18,
+     "no": 9,
+     "cont": false
+    }
+   ],
+   "foldBoundaries": [],
+   "requiredCuts": [
+    {
+     "sentence": 1,
+     "gap": 0,
+     "beforeNo": 1,
+     "afterNo": 2,
+     "cue": "",
+     "sym": "←",
+     "tBefore": "第2の影響は水系感染症",
+     "tAfter": "人は病気になりうる"
+    },
+    {
+     "sentence": 1,
+     "gap": 4,
+     "beforeNo": 2,
+     "afterNo": 3,
+     "cue": "if",
+     "sym": "⊂",
+     "tBefore": "人は病気になりうる",
+     "tAfter": "（条件）不衛生な水に曝されると"
+    },
+    {
+     "sentence": 2,
+     "gap": 0,
+     "beforeNo": 3,
+     "afterNo": 4,
+     "cue": "pollute",
+     "sym": "←",
+     "tBefore": "（条件）不衛生な水に曝されると",
+     "tAfter": "豪雨・高水による洪水が水域を汚染しうるから"
+    },
+    {
+     "sentence": 2,
+     "gap": 16,
+     "beforeNo": 4,
+     "afterNo": 5,
+     "cue": "including",
+     "sym": "ex.",
+     "tBefore": "豪雨・高水による洪水が水域を汚染しうるから",
+     "tAfter": "（例示）飲み水も含めて"
+    },
+    {
+     "sentence": 3,
+     "gap": 0,
+     "beforeNo": 5,
+     "afterNo": 6,
+     "cue": "Because of this",
+     "sym": "→",
+     "tBefore": "（例示）飲み水も含めて",
+     "tAfter": "その結果、コレラ・赤痢・腸チフス等にかかりうる"
+    },
+    {
+     "sentence": 4,
+     "gap": 0,
+     "beforeNo": 6,
+     "afterNo": 7,
+     "cue": "According to",
+     "sym": "←",
+     "tBefore": "その結果、コレラ・赤痢・腸チフス等にかかりうる",
+     "tAfter": "（出典）WHOによれば"
+    },
+    {
+     "sentence": 4,
+     "gap": 4,
+     "beforeNo": 7,
+     "afterNo": 8,
+     "cue": "at risk",
+     "sym": "└",
+     "tBefore": "（出典）WHOによれば",
+     "tAfter": "5歳未満の子ども50万人超が毎年危険にさらされている"
+    },
+    {
+     "sentence": 4,
+     "gap": 18,
+     "beforeNo": 8,
+     "afterNo": 9,
+     "cue": "because of",
+     "sym": "←",
+     "tBefore": "5歳未満の子ども50万人超が毎年危険にさらされている",
+     "tAfter": "（理由）安全な水が不足しているから"
+    }
+   ],
+   "macro": "¶7 水系感染症",
+   "macroSym": ""
+  },
+  {
+   "no": 8,
+   "sentences": [
+    {
+     "id": "P8-S1",
+     "text": "Heat waves are another predicted consequence of climate change.",
+     "tokens": [
+      "Heat",
+      "waves",
+      "are",
+      "another",
+      "predicted",
+      "consequence",
+      "of",
+      "climate",
+      "change."
+     ]
+    },
+    {
+     "id": "P8-S2",
+     "text": "In the United States, for example, they are believed to be the most dangerous natural disasters with more people killed than hurricanes, earthquakes, and other disasters combined.",
+     "tokens": [
+      "In",
+      "the",
+      "United",
+      "States,",
+      "for",
+      "example,",
+      "they",
+      "are",
+      "believed",
+      "to",
+      "be",
+      "the",
+      "most",
+      "dangerous",
+      "natural",
+      "disasters",
+      "with",
+      "more",
+      "people",
+      "killed",
+      "than",
+      "hurricanes,",
+      "earthquakes,",
+      "and",
+      "other",
+      "disasters",
+      "combined."
+     ]
+    },
+    {
+     "id": "P8-S3",
+     "text": "Moreover, extreme heat worsens the health condition of those with lung and heart diseases, particularly among elderly people.",
+     "tokens": [
+      "Moreover,",
+      "extreme",
+      "heat",
+      "worsens",
+      "the",
+      "health",
+      "condition",
+      "of",
+      "those",
+      "with",
+      "lung",
+      "and",
+      "heart",
+      "diseases,",
+      "particularly",
+      "among",
+      "elderly",
+      "people."
+     ]
+    }
+   ],
+   "kotos": [
+    {
+     "no": 1,
+     "s": "S1",
+     "en": "Heat waves are another predicted consequence of climate change.",
+     "sym": "TS",
+     "lv": 0,
+     "role": "claim",
+     "parent": null,
+     "relParent": null,
+     "relSym": "TS",
+     "relAlts": [],
+     "t": "熱波も気候変動の予測される帰結",
+     "cue": "another consequence",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 2,
+     "s": "S2",
+     "en": "In the United States, for example, they are believed to be the most dangerous natural disasters with more people killed than hurricanes, earthquakes, and other disasters combined.",
+     "sym": "＋",
+     "lv": 2,
+     "role": "minor",
+     "parent": 1,
+     "relParent": 1,
+     "relSym": "ex.",
+     "relAlts": [],
+     "t": "米国では最も危険な自然災害（ハリケーン等の合計より死者が多い）",
+     "cue": "for example",
+     "packed": "",
+     "expand": "",
+     "sentence": 1
+    },
+    {
+     "no": 3,
+     "s": "S3",
+     "en": "Moreover, extreme heat worsens the health condition of those with lung and heart diseases, particularly among elderly people.",
+     "sym": "＋",
+     "lv": 2,
+     "role": "minor",
+     "parent": 1,
+     "relParent": 2,
+     "relSym": "＋",
+     "relAlts": [
+      2
+     ],
+     "t": "さらに、極端な暑さは肺・心疾患者（特に高齢者）を悪化させる",
+     "cue": "Moreover",
+     "packed": "",
+     "expand": "",
+     "sentence": 2
+    }
+   ],
+   "segments": [
+    {
+     "sentence": 0,
+     "token": 0,
+     "no": 1,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 0,
+     "no": 2,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 0,
+     "no": 3,
+     "cont": false
+    }
+   ],
+   "foldBoundaries": [],
+   "requiredCuts": [
+    {
+     "sentence": 1,
+     "gap": 0,
+     "beforeNo": 1,
+     "afterNo": 2,
+     "cue": "for example",
+     "sym": "＋",
+     "tBefore": "熱波も気候変動の予測される帰結",
+     "tAfter": "米国では最も危険な自然災害（ハリケーン等の合計より死者が多い）"
+    },
+    {
+     "sentence": 2,
+     "gap": 0,
+     "beforeNo": 2,
+     "afterNo": 3,
+     "cue": "Moreover",
+     "sym": "＋",
+     "tBefore": "米国では最も危険な自然災害（ハリケーン等の合計より死者が多い）",
+     "tAfter": "さらに、極端な暑さは肺・心疾患者（特に高齢者）を悪化させる"
+    }
+   ],
+   "macro": "¶8 熱波",
+   "macroSym": ""
+  },
+  {
+   "no": 9,
+   "sentences": [
+    {
+     "id": "P9-S1",
+     "text": "While these health threats caused by climate change are disturbing, there are ways to prepare for and ( 4 ) these problems — like having early warning systems for extreme weather and lessening its impact on disadvantaged sectors of society, such as the young and elderly.",
+     "tokens": [
+      "While",
+      "these",
+      "health",
+      "threats",
+      "caused",
+      "by",
+      "climate",
+      "change",
+      "are",
+      "disturbing,",
+      "there",
+      "are",
+      "ways",
+      "to",
+      "prepare",
+      "for",
+      "and",
+      "(",
+      "4",
+      ")",
+      "these",
+      "problems",
+      "—",
+      "like",
+      "having",
+      "early",
+      "warning",
+      "systems",
+      "for",
+      "extreme",
+      "weather",
+      "and",
+      "lessening",
+      "its",
+      "impact",
+      "on",
+      "disadvantaged",
+      "sectors",
+      "of",
+      "society,",
+      "such",
+      "as",
+      "the",
+      "young",
+      "and",
+      "elderly."
+     ]
+    },
+    {
+     "id": "P9-S2",
+     "text": "Educating healthcare professionals about its negative effects, raising public awareness, and understanding the dangers of climate change to health should also be realized.",
+     "tokens": [
+      "Educating",
+      "healthcare",
+      "professionals",
+      "about",
+      "its",
+      "negative",
+      "effects,",
+      "raising",
+      "public",
+      "awareness,",
+      "and",
+      "understanding",
+      "the",
+      "dangers",
+      "of",
+      "climate",
+      "change",
+      "to",
+      "health",
+      "should",
+      "also",
+      "be",
+      "realized."
+     ]
+    },
+    {
+     "id": "P9-S3",
+     "text": "Through these efforts, we hope to reduce its damaging effects and save more lives.",
+     "tokens": [
+      "Through",
+      "these",
+      "efforts,",
+      "we",
+      "hope",
+      "to",
+      "reduce",
+      "its",
+      "damaging",
+      "effects",
+      "and",
+      "save",
+      "more",
+      "lives."
+     ]
+    },
+    {
+     "id": "P9-S4",
+     "text": "Climate change may be unavoidable, but we can somehow ( 5 ) its impact on human health.",
+     "tokens": [
+      "Climate",
+      "change",
+      "may",
+      "be",
+      "unavoidable,",
+      "but",
+      "we",
+      "can",
+      "somehow",
+      "(",
+      "5",
+      ")",
+      "its",
+      "impact",
+      "on",
+      "human",
+      "health."
+     ]
+    }
+   ],
+   "kotos": [
+    {
+     "no": 1,
+     "s": "S1",
+     "en": "While these health threats caused by climate change are disturbing,",
+     "sym": "△",
+     "lv": 1,
+     "role": "major",
+     "parent": 2,
+     "relParent": 2,
+     "relSym": "△",
+     "relAlts": [],
+     "t": "これらの健康脅威は不穏だ",
+     "cue": "While … disturbing",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 2,
+     "s": "S1",
+     "en": "there are ways to prepare for and ( 4 ) these problems",
+     "sym": "TS",
+     "lv": 0,
+     "role": "claim",
+     "parent": null,
+     "relParent": null,
+     "relSym": "TS",
+     "relAlts": [],
+     "t": "備え・対処する方法はある",
+     "cue": "there are ways",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 3,
+     "s": "S1",
+     "en": "— like having early warning systems for extreme weather and lessening its impact on disadvantaged sectors of society, such as the young and elderly.",
+     "sym": "＋",
+     "lv": 2,
+     "role": "minor",
+     "parent": 2,
+     "relParent": 2,
+     "relSym": "ex.",
+     "relAlts": [],
+     "t": "極端気象の早期警戒システム／弱者（若者・高齢者）への影響軽減",
+     "cue": "like",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 4,
+     "s": "S2",
+     "en": "Educating healthcare professionals about its negative effects, raising public awareness, and understanding the dangers of climate change to health should also be realized.",
+     "sym": "＋",
+     "lv": 2,
+     "role": "minor",
+     "parent": 2,
+     "relParent": 3,
+     "relSym": "＋",
+     "relAlts": [
+      3
+     ],
+     "t": "医療者教育・市民啓発・危険理解の実現も必要",
+     "cue": "also … should",
+     "packed": "",
+     "expand": "",
+     "sentence": 1
+    },
+    {
+     "no": 5,
+     "s": "S3",
+     "en": "Through these efforts, we hope to reduce its damaging effects and save more lives.",
+     "sym": "→",
+     "lv": 1,
+     "role": "major",
+     "parent": 2,
+     "relParent": 2,
+     "relSym": "→",
+     "relAlts": [],
+     "t": "こうした努力で被害を減らし命を救いたい",
+     "cue": "Through these efforts",
+     "packed": "",
+     "expand": "",
+     "sentence": 2
+    },
+    {
+     "no": 6,
+     "s": "S4",
+     "en": "Climate change may be unavoidable,",
+     "sym": "△",
+     "lv": 1,
+     "role": "major",
+     "parent": 7,
+     "relParent": 7,
+     "relSym": "△",
+     "relAlts": [],
+     "t": "気候変動そのものは避けられないかもしれないが",
+     "cue": "may",
+     "packed": "",
+     "expand": "",
+     "sentence": 3
+    },
+    {
+     "no": 7,
+     "s": "S4",
+     "en": "but we can somehow ( 5 ) its impact on human health.",
+     "sym": "⇔",
+     "lv": 0,
+     "role": "claim",
+     "parent": null,
+     "relParent": null,
+     "relSym": "⇔",
+     "relAlts": [],
+     "t": "しかし健康への影響は何とか抑えられる（結論）",
+     "cue": "but",
+     "packed": "",
+     "expand": "",
+     "sentence": 3
+    }
+   ],
+   "segments": [
+    {
+     "sentence": 0,
+     "token": 0,
+     "no": 1,
+     "cont": false
+    },
+    {
+     "sentence": 0,
+     "token": 10,
+     "no": 2,
+     "cont": false
+    },
+    {
+     "sentence": 0,
+     "token": 23,
+     "no": 3,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 0,
+     "no": 4,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 0,
+     "no": 5,
+     "cont": false
+    },
+    {
+     "sentence": 3,
+     "token": 0,
+     "no": 6,
+     "cont": false
+    },
+    {
+     "sentence": 3,
+     "token": 5,
+     "no": 7,
+     "cont": false
+    }
+   ],
+   "foldBoundaries": [],
+   "requiredCuts": [
+    {
+     "sentence": 0,
+     "gap": 10,
+     "beforeNo": 1,
+     "afterNo": 2,
+     "cue": "there are ways",
+     "sym": "TS",
+     "tBefore": "これらの健康脅威は不穏だ",
+     "tAfter": "備え・対処する方法はある"
+    },
+    {
+     "sentence": 0,
+     "gap": 22,
+     "beforeNo": 2,
+     "afterNo": 3,
+     "cue": "like",
+     "sym": "＋",
+     "tBefore": "備え・対処する方法はある",
+     "tAfter": "極端気象の早期警戒システム／弱者（若者・高齢者）への影響軽減"
+    },
+    {
+     "sentence": 1,
+     "gap": 0,
+     "beforeNo": 3,
+     "afterNo": 4,
+     "cue": "also … should",
+     "sym": "＋",
+     "tBefore": "極端気象の早期警戒システム／弱者（若者・高齢者）への影響軽減",
+     "tAfter": "医療者教育・市民啓発・危険理解の実現も必要"
+    },
+    {
+     "sentence": 2,
+     "gap": 0,
+     "beforeNo": 4,
+     "afterNo": 5,
+     "cue": "Through these efforts",
+     "sym": "→",
+     "tBefore": "医療者教育・市民啓発・危険理解の実現も必要",
+     "tAfter": "こうした努力で被害を減らし命を救いたい"
+    },
+    {
+     "sentence": 3,
+     "gap": 0,
+     "beforeNo": 5,
+     "afterNo": 6,
+     "cue": "may",
+     "sym": "△",
+     "tBefore": "こうした努力で被害を減らし命を救いたい",
+     "tAfter": "気候変動そのものは避けられないかもしれないが"
+    },
+    {
+     "sentence": 3,
+     "gap": 5,
+     "beforeNo": 6,
+     "afterNo": 7,
+     "cue": "but",
+     "sym": "⇔",
+     "tBefore": "気候変動そのものは避けられないかもしれないが",
+     "tAfter": "しかし健康への影響は何とか抑えられる（結論）"
+    }
+   ],
+   "macro": "だが備え・緩和は可能（結論）",
+   "macroSym": "⇔"
+  }
+ ]
+}

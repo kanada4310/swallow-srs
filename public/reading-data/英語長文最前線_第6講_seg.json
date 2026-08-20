@@ -1,0 +1,2115 @@
+{
+ "meta": {
+  "subject": "英語",
+  "textbook": "英語長文最前線",
+  "lesson": "第6講",
+  "source": "Alexandra Rosati, \"Food for Thought: Was Cooking a Pivotal Step in Human Evolution?\", Scientific American, 2018 を素材とした出題文",
+  "university": "東京農工大学",
+  "target_time_min": 30,
+  "generated_by": "subjects/英語/build_seg_data.py",
+  "anchorStatus": null
+ },
+ "paragraphs": [
+  {
+   "no": 1,
+   "sentences": [
+    {
+     "id": "P1-S1",
+     "text": "The shift to a cooked-food diet was a decisive point in human history.",
+     "tokens": [
+      "The",
+      "shift",
+      "to",
+      "a",
+      "cooked-food",
+      "diet",
+      "was",
+      "a",
+      "decisive",
+      "point",
+      "in",
+      "human",
+      "history."
+     ]
+    },
+    {
+     "id": "P1-S2",
+     "text": "The main topic of debate is when, exactly, this change occurred.",
+     "tokens": [
+      "The",
+      "main",
+      "topic",
+      "of",
+      "debate",
+      "is",
+      "when,",
+      "exactly,",
+      "this",
+      "change",
+      "occurred."
+     ]
+    }
+   ],
+   "kotos": [
+    {
+     "no": 1,
+     "s": "S1",
+     "en": "The shift to a cooked-food diet was a decisive point in human history.",
+     "sym": "TS",
+     "lv": 0,
+     "role": "claim",
+     "parent": null,
+     "relParent": null,
+     "relSym": "TS",
+     "relAlts": [],
+     "t": "調理食への移行は人類史における決定的な転換点だった",
+     "cue": "a decisive point",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 2,
+     "s": "S2",
+     "en": "The main topic of debate is when, exactly, this change occurred.",
+     "sym": "└",
+     "lv": 1,
+     "role": "major",
+     "parent": 1,
+     "relParent": 1,
+     "relSym": "└",
+     "relAlts": [],
+     "t": "主な論点は、その変化が正確にいつ起きたのかである（＝本文の問い）",
+     "cue": "The main topic of debate",
+     "packed": "",
+     "expand": "",
+     "sentence": 1
+    }
+   ],
+   "segments": [
+    {
+     "sentence": 0,
+     "token": 0,
+     "no": 1,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 0,
+     "no": 2,
+     "cont": false
+    }
+   ],
+   "foldBoundaries": [],
+   "requiredCuts": [
+    {
+     "sentence": 1,
+     "gap": 0,
+     "beforeNo": 1,
+     "afterNo": 2,
+     "cue": "The main topic of debate",
+     "sym": "└",
+     "tBefore": "調理食への移行は人類史における決定的な転換点だった",
+     "tAfter": "主な論点は、その変化が正確にいつ起きたのかである（＝本文の問い）"
+    }
+   ],
+   "macro": "【導入・論点提示】調理食への移行は人類史の決定的転換点。争点は「それがいつ起きたか」",
+   "macroSym": ""
+  },
+  {
+   "no": 2,
+   "sentences": [
+    {
+     "id": "P2-S1",
+     "text": "All known human societies eat cooked foods, and biologists generally agree cooking could have had major effects on how the human body evolved.",
+     "tokens": [
+      "All",
+      "known",
+      "human",
+      "societies",
+      "eat",
+      "cooked",
+      "foods,",
+      "and",
+      "biologists",
+      "generally",
+      "agree",
+      "cooking",
+      "could",
+      "have",
+      "had",
+      "major",
+      "effects",
+      "on",
+      "how",
+      "the",
+      "human",
+      "body",
+      "evolved."
+     ]
+    },
+    {
+     "id": "P2-S2",
+     "text": "( a1 ), cooked foods tend to be softer than raw ones, so humans can eat them with smaller teeth and weaker jaws.",
+     "tokens": [
+      "(",
+      "a1",
+      "),",
+      "cooked",
+      "foods",
+      "tend",
+      "to",
+      "be",
+      "softer",
+      "than",
+      "raw",
+      "ones,",
+      "so",
+      "humans",
+      "can",
+      "eat",
+      "them",
+      "with",
+      "smaller",
+      "teeth",
+      "and",
+      "weaker",
+      "jaws."
+     ]
+    },
+    {
+     "id": "P2-S3",
+     "text": "Cooking also increases the energy they can get from the food they eat.",
+     "tokens": [
+      "Cooking",
+      "also",
+      "increases",
+      "the",
+      "energy",
+      "they",
+      "can",
+      "get",
+      "from",
+      "the",
+      "food",
+      "they",
+      "eat."
+     ]
+    },
+    {
+     "id": "P2-S4",
+     "text": "*Starchy potatoes and other *tubers, eaten by people across the world, are barely digestible when raw.",
+     "tokens": [
+      "*Starchy",
+      "potatoes",
+      "and",
+      "other",
+      "*tubers,",
+      "eaten",
+      "by",
+      "people",
+      "across",
+      "the",
+      "world,",
+      "are",
+      "barely",
+      "digestible",
+      "when",
+      "raw."
+     ]
+    },
+    {
+     "id": "P2-S5",
+     "text": "( a2 ), when humans try to eat more like chimpanzees and other primates, we cannot extract enough calories to live healthily.",
+     "tokens": [
+      "(",
+      "a2",
+      "),",
+      "when",
+      "humans",
+      "try",
+      "to",
+      "eat",
+      "more",
+      "like",
+      "chimpanzees",
+      "and",
+      "other",
+      "primates,",
+      "we",
+      "cannot",
+      "extract",
+      "enough",
+      "calories",
+      "to",
+      "live",
+      "healthily."
+     ]
+    },
+    {
+     "id": "P2-S6",
+     "text": "Up to 50 percent of women who exclusively eat raw foods develop *amenorrhea, or lack of *menstruation, a sign the body does not have enough energy to support a pregnancy — a big problem from an evolutionary perspective.",
+     "tokens": [
+      "Up",
+      "to",
+      "50",
+      "percent",
+      "of",
+      "women",
+      "who",
+      "exclusively",
+      "eat",
+      "raw",
+      "foods",
+      "develop",
+      "*amenorrhea,",
+      "or",
+      "lack",
+      "of",
+      "*menstruation,",
+      "a",
+      "sign",
+      "the",
+      "body",
+      "does",
+      "not",
+      "have",
+      "enough",
+      "energy",
+      "to",
+      "support",
+      "a",
+      "pregnancy",
+      "—",
+      "a",
+      "big",
+      "problem",
+      "from",
+      "an",
+      "evolutionary",
+      "perspective."
+     ]
+    }
+   ],
+   "kotos": [
+    {
+     "no": 1,
+     "s": "S1",
+     "en": "All known human societies eat cooked foods, and biologists generally agree cooking could have had major effects on how the human body evolved.",
+     "sym": "TS",
+     "lv": 0,
+     "role": "claim",
+     "parent": null,
+     "relParent": null,
+     "relSym": "TS",
+     "relAlts": [],
+     "t": "既知の人類社会はすべて調理食を食べており、生物学者は調理が人体の進化に大きな影響を与えたと概ね一致している",
+     "cue": "generally agree",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 2,
+     "s": "S2",
+     "en": "( a1 ), cooked foods tend to be softer than raw ones, so humans can eat them with smaller teeth and weaker jaws.",
+     "sym": "ex.",
+     "lv": 1,
+     "role": "minor",
+     "parent": 1,
+     "relParent": 1,
+     "relSym": "ex.",
+     "relAlts": [],
+     "t": "（例示）調理食は生より柔らかいので、小さい歯・弱い顎でも食べられる",
+     "cue": "( a1 ) … tend to be softer",
+     "packed": "",
+     "expand": "",
+     "sentence": 1
+    },
+    {
+     "no": 3,
+     "s": "S3",
+     "en": "Cooking also increases the energy they can get from the food they eat.",
+     "sym": "＋",
+     "lv": 1,
+     "role": "major",
+     "parent": 1,
+     "relParent": 2,
+     "relSym": "＋",
+     "relAlts": [
+      2
+     ],
+     "t": "調理は食物から得られるエネルギーも増やす（第2の効果）",
+     "cue": "also increases",
+     "packed": "",
+     "expand": "",
+     "sentence": 2
+    },
+    {
+     "no": 4,
+     "s": "S4",
+     "en": "*Starchy potatoes and other *tubers, eaten by people across the world, are barely digestible when raw.",
+     "sym": "└",
+     "lv": 2,
+     "role": "minor",
+     "parent": 3,
+     "relParent": 3,
+     "relSym": "└",
+     "relAlts": [],
+     "t": "世界中で食べられるデンプン質のイモ・塊茎は、生ではほとんど消化できない",
+     "cue": "barely digestible when raw",
+     "packed": "",
+     "expand": "",
+     "sentence": 3
+    },
+    {
+     "no": 5,
+     "s": "S5",
+     "en": "( a2 ), when humans try to eat more like chimpanzees and other primates, we cannot extract enough calories to live healthily.",
+     "sym": "＋",
+     "lv": 2,
+     "role": "minor",
+     "parent": 3,
+     "relParent": 4,
+     "relSym": "＋",
+     "relAlts": [
+      4
+     ],
+     "t": "（追加）チンパンジー等のように食べようとすると、健康に生きるだけのカロリーを取り出せない",
+     "cue": "( a2 ) … cannot extract enough calories",
+     "packed": "",
+     "expand": "",
+     "sentence": 4
+    },
+    {
+     "no": 6,
+     "s": "S6",
+     "en": "Up to 50 percent of women who exclusively eat raw foods develop *amenorrhea, or lack of *menstruation, a sign the body does not have enough energy to support a pregnancy — a big problem from an evolutionary perspective.",
+     "sym": "＋",
+     "lv": 2,
+     "role": "minor",
+     "parent": 3,
+     "relParent": 5,
+     "relSym": "＋",
+     "relAlts": [
+      4,
+      5
+     ],
+     "t": "生食のみの女性の最大50%が無月経になる＝妊娠を支えるエネルギーが足りない兆候で、進化的には大問題",
+     "cue": "a sign … not enough energy",
+     "packed": "",
+     "expand": "",
+     "sentence": 5
+    }
+   ],
+   "segments": [
+    {
+     "sentence": 0,
+     "token": 0,
+     "no": 1,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 1,
+     "no": 2,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 0,
+     "no": 3,
+     "cont": false
+    },
+    {
+     "sentence": 3,
+     "token": 0,
+     "no": 4,
+     "cont": false
+    },
+    {
+     "sentence": 4,
+     "token": 1,
+     "no": 5,
+     "cont": false
+    },
+    {
+     "sentence": 5,
+     "token": 0,
+     "no": 6,
+     "cont": false
+    }
+   ],
+   "foldBoundaries": [],
+   "requiredCuts": [
+    {
+     "sentence": 1,
+     "gap": 0,
+     "beforeNo": 1,
+     "afterNo": 2,
+     "cue": "( a1 ) … tend to be softer",
+     "sym": "ex.",
+     "tBefore": "既知の人類社会はすべて調理食を食べており、生物学者は調理が人体の進化に大きな影響を与えたと概ね一致している",
+     "tAfter": "（例示）調理食は生より柔らかいので、小さい歯・弱い顎でも食べられる"
+    },
+    {
+     "sentence": 2,
+     "gap": 0,
+     "beforeNo": 2,
+     "afterNo": 3,
+     "cue": "also increases",
+     "sym": "＋",
+     "tBefore": "（例示）調理食は生より柔らかいので、小さい歯・弱い顎でも食べられる",
+     "tAfter": "調理は食物から得られるエネルギーも増やす（第2の効果）"
+    },
+    {
+     "sentence": 3,
+     "gap": 0,
+     "beforeNo": 3,
+     "afterNo": 4,
+     "cue": "barely digestible when raw",
+     "sym": "└",
+     "tBefore": "調理は食物から得られるエネルギーも増やす（第2の効果）",
+     "tAfter": "世界中で食べられるデンプン質のイモ・塊茎は、生ではほとんど消化できない"
+    },
+    {
+     "sentence": 4,
+     "gap": 0,
+     "beforeNo": 4,
+     "afterNo": 5,
+     "cue": "( a2 ) … cannot extract enough calories",
+     "sym": "＋",
+     "tBefore": "世界中で食べられるデンプン質のイモ・塊茎は、生ではほとんど消化できない",
+     "tAfter": "（追加）チンパンジー等のように食べようとすると、健康に生きるだけのカロリーを取り出せない"
+    },
+    {
+     "sentence": 5,
+     "gap": 0,
+     "beforeNo": 5,
+     "afterNo": 6,
+     "cue": "a sign … not enough energy",
+     "sym": "＋",
+     "tBefore": "（追加）チンパンジー等のように食べようとすると、健康に生きるだけのカロリーを取り出せない",
+     "tAfter": "生食のみの女性の最大50%が無月経になる＝妊娠を支えるエネルギーが足りない兆候で、進化的には大問題"
+    }
+   ],
+   "macro": "【前提の裏づけ】調理は人体の進化に大きな影響を与えた（歯・顎の縮小／エネルギー獲得の増加）",
+   "macroSym": "└"
+  },
+  {
+   "no": 3,
+   "sentences": [
+    {
+     "id": "P3-S1",
+     "text": "Such evidence suggests modern humans are biologically dependent on cooking.",
+     "tokens": [
+      "Such",
+      "evidence",
+      "suggests",
+      "modern",
+      "humans",
+      "are",
+      "biologically",
+      "dependent",
+      "on",
+      "cooking."
+     ]
+    },
+    {
+     "id": "P3-S2",
+     "text": "But at what point in our evolutionary history was this strange new practice adopted?",
+     "tokens": [
+      "But",
+      "at",
+      "what",
+      "point",
+      "in",
+      "our",
+      "evolutionary",
+      "history",
+      "was",
+      "this",
+      "strange",
+      "new",
+      "practice",
+      "adopted?"
+     ]
+    },
+    {
+     "id": "P3-S3",
+     "text": "Some researchers think cooking is a relatively recent innovation — at most 500,000 years old.",
+     "tokens": [
+      "Some",
+      "researchers",
+      "think",
+      "cooking",
+      "is",
+      "a",
+      "relatively",
+      "recent",
+      "innovation",
+      "—",
+      "at",
+      "most",
+      "500,000",
+      "years",
+      "old."
+     ]
+    },
+    {
+     "id": "P3-S4",
+     "text": "Cooking requires control of fire, and there is not much archaeological evidence for *hearths and purposefully built fires before this time.",
+     "tokens": [
+      "Cooking",
+      "requires",
+      "control",
+      "of",
+      "fire,",
+      "and",
+      "there",
+      "is",
+      "not",
+      "much",
+      "archaeological",
+      "evidence",
+      "for",
+      "*hearths",
+      "and",
+      "purposefully",
+      "built",
+      "fires",
+      "before",
+      "this",
+      "time."
+     ]
+    }
+   ],
+   "kotos": [
+    {
+     "no": 1,
+     "s": "S1",
+     "en": "Such evidence suggests modern humans are biologically dependent on cooking.",
+     "sym": "TS",
+     "lv": 0,
+     "role": "claim",
+     "parent": null,
+     "relParent": null,
+     "relSym": "TS",
+     "relAlts": [],
+     "t": "こうした証拠は、現代人が生物学的に調理に依存していることを示す（¶2 のまとめ）",
+     "cue": "Such evidence suggests",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 2,
+     "s": "S2",
+     "en": "But at what point in our evolutionary history was this strange new practice adopted?",
+     "sym": "→",
+     "lv": 0,
+     "role": "claim",
+     "parent": null,
+     "relParent": null,
+     "relSym": "→",
+     "relAlts": [],
+     "t": "ではこの奇妙で新しい習慣は進化史のどの時点で採用されたのか（争点の再提示）",
+     "cue": "But at what point",
+     "packed": "",
+     "expand": "",
+     "sentence": 1
+    },
+    {
+     "no": 3,
+     "s": "S3",
+     "en": "Some researchers think cooking is a relatively recent innovation — at most 500,000 years old.",
+     "sym": "└",
+     "lv": 1,
+     "role": "major",
+     "parent": 2,
+     "relParent": 2,
+     "relSym": "└",
+     "relAlts": [],
+     "t": "【説①】一部の研究者は、調理は比較的新しく、せいぜい50万年前と考える",
+     "cue": "Some researchers think",
+     "packed": "",
+     "expand": "",
+     "sentence": 2
+    },
+    {
+     "no": 4,
+     "s": "S4",
+     "en": "Cooking requires control of fire, and there is not much archaeological evidence for *hearths and purposefully built fires before this time.",
+     "sym": "←",
+     "lv": 2,
+     "role": "minor",
+     "parent": 3,
+     "relParent": 3,
+     "relSym": "←",
+     "relAlts": [],
+     "t": "（根拠）調理には火の制御が必要だが、それ以前の炉床や意図的な火の考古学的証拠は乏しい",
+     "cue": "requires … there is not much evidence",
+     "packed": "",
+     "expand": "",
+     "sentence": 3
+    }
+   ],
+   "segments": [
+    {
+     "sentence": 0,
+     "token": 0,
+     "no": 1,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 0,
+     "no": 2,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 0,
+     "no": 3,
+     "cont": false
+    },
+    {
+     "sentence": 3,
+     "token": 0,
+     "no": 4,
+     "cont": false
+    }
+   ],
+   "foldBoundaries": [],
+   "requiredCuts": [
+    {
+     "sentence": 1,
+     "gap": 0,
+     "beforeNo": 1,
+     "afterNo": 2,
+     "cue": "But at what point",
+     "sym": "→",
+     "tBefore": "こうした証拠は、現代人が生物学的に調理に依存していることを示す（¶2 のまとめ）",
+     "tAfter": "ではこの奇妙で新しい習慣は進化史のどの時点で採用されたのか（争点の再提示）"
+    },
+    {
+     "sentence": 2,
+     "gap": 0,
+     "beforeNo": 2,
+     "afterNo": 3,
+     "cue": "Some researchers think",
+     "sym": "└",
+     "tBefore": "ではこの奇妙で新しい習慣は進化史のどの時点で採用されたのか（争点の再提示）",
+     "tAfter": "【説①】一部の研究者は、調理は比較的新しく、せいぜい50万年前と考える"
+    },
+    {
+     "sentence": 3,
+     "gap": 0,
+     "beforeNo": 3,
+     "afterNo": 4,
+     "cue": "requires … there is not much evidence",
+     "sym": "←",
+     "tBefore": "【説①】一部の研究者は、調理は比較的新しく、せいぜい50万年前と考える",
+     "tAfter": "（根拠）調理には火の制御が必要だが、それ以前の炉床や意図的な火の考古学的証拠は乏しい"
+    }
+   ],
+   "macro": "【問いの明確化＋説①】現代人は生物学的に調理に依存。ではいつ採用されたか。一部は「比較的最近（最大50万年前）」と考える",
+   "macroSym": "→"
+  },
+  {
+   "no": 4,
+   "sentences": [
+    {
+     "id": "P4-S1",
+     "text": "(b)The archaeological record becomes increasingly fragile farther back in time, however, so others think fire may have been controlled much earlier.",
+     "tokens": [
+      "(b)The",
+      "archaeological",
+      "record",
+      "becomes",
+      "increasingly",
+      "fragile",
+      "farther",
+      "back",
+      "in",
+      "time,",
+      "however,",
+      "so",
+      "others",
+      "think",
+      "fire",
+      "may",
+      "have",
+      "been",
+      "controlled",
+      "much",
+      "earlier."
+     ]
+    },
+    {
+     "id": "P4-S2",
+     "text": "Anthropologist Richard Wrangham has proposed cooking arose before 1.8 million years ago, an invention of our evolutionary ancestors.",
+     "tokens": [
+      "Anthropologist",
+      "Richard",
+      "Wrangham",
+      "has",
+      "proposed",
+      "cooking",
+      "arose",
+      "before",
+      "1.8",
+      "million",
+      "years",
+      "ago,",
+      "an",
+      "invention",
+      "of",
+      "our",
+      "evolutionary",
+      "ancestors."
+     ]
+    },
+    {
+     "id": "P4-S3",
+     "text": "If the custom emerged this early, it could explain a defining feature of our species: the increase in brain size that occurred around this time.",
+     "tokens": [
+      "If",
+      "the",
+      "custom",
+      "emerged",
+      "this",
+      "early,",
+      "it",
+      "could",
+      "explain",
+      "a",
+      "defining",
+      "feature",
+      "of",
+      "our",
+      "species:",
+      "the",
+      "increase",
+      "in",
+      "brain",
+      "size",
+      "that",
+      "occurred",
+      "around",
+      "this",
+      "time."
+     ]
+    }
+   ],
+   "kotos": [
+    {
+     "no": 1,
+     "s": "S1",
+     "en": "(b)The archaeological record becomes increasingly fragile farther back in time, however, so others think fire may have been controlled much earlier.",
+     "sym": "⇔",
+     "lv": 0,
+     "role": "claim",
+     "parent": null,
+     "relParent": null,
+     "relSym": "⇔",
+     "relAlts": [],
+     "t": "【説②】考古学的記録は時代を遡るほどもろくなる。ゆえに他の研究者は火の制御はもっとずっと早かったと考える（証拠がない＝なかった、ではない）",
+     "cue": "however … so others think",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 2,
+     "s": "S2",
+     "en": "Anthropologist Richard Wrangham has proposed cooking arose before 1.8 million years ago, an invention of our evolutionary ancestors.",
+     "sym": "└",
+     "lv": 1,
+     "role": "major",
+     "parent": 1,
+     "relParent": 1,
+     "relSym": "└",
+     "relAlts": [],
+     "t": "人類学者ラングハムは、調理は180万年前以前に生まれた祖先の発明だと提唱した",
+     "cue": "has proposed",
+     "packed": "",
+     "expand": "",
+     "sentence": 1
+    },
+    {
+     "no": 3,
+     "s": "S3",
+     "en": "If the custom emerged this early, it could explain a defining feature of our species: the increase in brain size that occurred around this time.",
+     "sym": "→",
+     "lv": 1,
+     "role": "major",
+     "parent": 1,
+     "relParent": 1,
+     "relSym": "→",
+     "relAlts": [],
+     "t": "その習慣がこれほど早く現れたなら、同時期に起きた脳容量の増大という人類の決定的特徴を説明できる",
+     "cue": "If … it could explain",
+     "packed": "",
+     "expand": "",
+     "sentence": 2
+    }
+   ],
+   "segments": [
+    {
+     "sentence": 0,
+     "token": 0,
+     "no": 1,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 0,
+     "no": 2,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 0,
+     "no": 3,
+     "cont": false
+    }
+   ],
+   "foldBoundaries": [],
+   "requiredCuts": [
+    {
+     "sentence": 1,
+     "gap": 0,
+     "beforeNo": 1,
+     "afterNo": 2,
+     "cue": "has proposed",
+     "sym": "└",
+     "tBefore": "【説②】考古学的記録は時代を遡るほどもろくなる。ゆえに他の研究者は火の制御はもっとずっと早かったと考える（証拠がない＝なかった、ではない）",
+     "tAfter": "人類学者ラングハムは、調理は180万年前以前に生まれた祖先の発明だと提唱した"
+    },
+    {
+     "sentence": 2,
+     "gap": 0,
+     "beforeNo": 2,
+     "afterNo": 3,
+     "cue": "If … it could explain",
+     "sym": "→",
+     "tBefore": "人類学者ラングハムは、調理は180万年前以前に生まれた祖先の発明だと提唱した",
+     "tAfter": "その習慣がこれほど早く現れたなら、同時期に起きた脳容量の増大という人類の決定的特徴を説明できる"
+    }
+   ],
+   "macro": "【説②】考古記録は遡るほどもろい。他はもっと早い（180万年前以前・ラングハム）と考え、脳の大型化を説明できるとする",
+   "macroSym": "⇔"
+  },
+  {
+   "no": 5,
+   "sentences": [
+    {
+     "id": "P5-S1",
+     "text": "What is the connection between cooking and brains?",
+     "tokens": [
+      "What",
+      "is",
+      "the",
+      "connection",
+      "between",
+      "cooking",
+      "and",
+      "brains?"
+     ]
+    },
+    {
+     "id": "P5-S2",
+     "text": "Understanding how and why our brains got so big has been a major puzzle because such a brain is *metabolically expensive.",
+     "tokens": [
+      "Understanding",
+      "how",
+      "and",
+      "why",
+      "our",
+      "brains",
+      "got",
+      "so",
+      "big",
+      "has",
+      "been",
+      "a",
+      "major",
+      "puzzle",
+      "because",
+      "such",
+      "a",
+      "brain",
+      "is",
+      "*metabolically",
+      "expensive."
+     ]
+    },
+    {
+     "id": "P5-S3",
+     "text": "In fact, the brain needs more energy for its size than any other organ.",
+     "tokens": [
+      "In",
+      "fact,",
+      "the",
+      "brain",
+      "needs",
+      "more",
+      "energy",
+      "for",
+      "its",
+      "size",
+      "than",
+      "any",
+      "other",
+      "organ."
+     ]
+    },
+    {
+     "id": "P5-S4",
+     "text": "Although it might seem being smarter is always better, having a big brain exerts a high toll.",
+     "tokens": [
+      "Although",
+      "it",
+      "might",
+      "seem",
+      "being",
+      "smarter",
+      "is",
+      "always",
+      "better,",
+      "having",
+      "a",
+      "big",
+      "brain",
+      "exerts",
+      "a",
+      "high",
+      "toll."
+     ]
+    },
+    {
+     "id": "P5-S5",
+     "text": "Ancestral humans may have compensated for this energy cost by cooking food.",
+     "tokens": [
+      "Ancestral",
+      "humans",
+      "may",
+      "have",
+      "compensated",
+      "for",
+      "this",
+      "energy",
+      "cost",
+      "by",
+      "cooking",
+      "food."
+     ]
+    }
+   ],
+   "kotos": [
+    {
+     "no": 1,
+     "s": "S1",
+     "en": "What is the connection between cooking and brains?",
+     "sym": "TS",
+     "lv": 0,
+     "role": "claim",
+     "parent": null,
+     "relParent": null,
+     "relSym": "TS",
+     "relAlts": [],
+     "t": "調理と脳のつながりは何か（¶4末の主張を掘り下げる問い）",
+     "cue": "What is the connection",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 2,
+     "s": "S2",
+     "en": "Understanding how and why our brains got so big has been a major puzzle because such a brain is *metabolically expensive.",
+     "sym": "└",
+     "lv": 1,
+     "role": "major",
+     "parent": 1,
+     "relParent": 1,
+     "relSym": "└",
+     "relAlts": [],
+     "t": "脳がどう・なぜ大きくなったかは大きな謎だった。大きな脳は代謝的にコストが高いからだ",
+     "cue": "because … metabolically expensive",
+     "packed": "",
+     "expand": "",
+     "sentence": 1
+    },
+    {
+     "no": 3,
+     "s": "S3",
+     "en": "In fact, the brain needs more energy for its size than any other organ.",
+     "sym": "＝",
+     "lv": 2,
+     "role": "minor",
+     "parent": 2,
+     "relParent": 2,
+     "relSym": "＝",
+     "relAlts": [],
+     "t": "実際、脳は大きさの割に他のどの器官より多くのエネルギーを必要とする",
+     "cue": "In fact",
+     "packed": "",
+     "expand": "",
+     "sentence": 2
+    },
+    {
+     "no": 4,
+     "s": "S4",
+     "en": "Although it might seem being smarter is always better, having a big brain exerts a high toll.",
+     "sym": "△",
+     "lv": 1,
+     "role": "major",
+     "parent": 1,
+     "relParent": 1,
+     "relSym": "△",
+     "relAlts": [],
+     "t": "賢い方が常に良いように思えるが、大きな脳は大きな代償を強いる",
+     "cue": "Although it might seem",
+     "packed": "",
+     "expand": "",
+     "sentence": 3
+    },
+    {
+     "no": 5,
+     "s": "S5",
+     "en": "Ancestral humans may have compensated for this energy cost by cooking food.",
+     "sym": "→",
+     "lv": 1,
+     "role": "major",
+     "parent": 1,
+     "relParent": 1,
+     "relSym": "→",
+     "relAlts": [],
+     "t": "祖先はこのエネルギーコストを、食物を調理することで埋め合わせたのかもしれない（調理仮説の核）",
+     "cue": "compensated for … by cooking",
+     "packed": "",
+     "expand": "",
+     "sentence": 4
+    }
+   ],
+   "segments": [
+    {
+     "sentence": 0,
+     "token": 0,
+     "no": 1,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 0,
+     "no": 2,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 0,
+     "no": 3,
+     "cont": false
+    },
+    {
+     "sentence": 3,
+     "token": 0,
+     "no": 4,
+     "cont": false
+    },
+    {
+     "sentence": 4,
+     "token": 0,
+     "no": 5,
+     "cont": false
+    }
+   ],
+   "foldBoundaries": [],
+   "requiredCuts": [
+    {
+     "sentence": 1,
+     "gap": 0,
+     "beforeNo": 1,
+     "afterNo": 2,
+     "cue": "because … metabolically expensive",
+     "sym": "└",
+     "tBefore": "調理と脳のつながりは何か（¶4末の主張を掘り下げる問い）",
+     "tAfter": "脳がどう・なぜ大きくなったかは大きな謎だった。大きな脳は代謝的にコストが高いからだ"
+    },
+    {
+     "sentence": 2,
+     "gap": 0,
+     "beforeNo": 2,
+     "afterNo": 3,
+     "cue": "In fact",
+     "sym": "＝",
+     "tBefore": "脳がどう・なぜ大きくなったかは大きな謎だった。大きな脳は代謝的にコストが高いからだ",
+     "tAfter": "実際、脳は大きさの割に他のどの器官より多くのエネルギーを必要とする"
+    },
+    {
+     "sentence": 3,
+     "gap": 0,
+     "beforeNo": 3,
+     "afterNo": 4,
+     "cue": "Although it might seem",
+     "sym": "△",
+     "tBefore": "実際、脳は大きさの割に他のどの器官より多くのエネルギーを必要とする",
+     "tAfter": "賢い方が常に良いように思えるが、大きな脳は大きな代償を強いる"
+    },
+    {
+     "sentence": 4,
+     "gap": 0,
+     "beforeNo": 4,
+     "afterNo": 5,
+     "cue": "compensated for … by cooking",
+     "sym": "→",
+     "tBefore": "賢い方が常に良いように思えるが、大きな脳は大きな代償を強いる",
+     "tAfter": "祖先はこのエネルギーコストを、食物を調理することで埋め合わせたのかもしれない（調理仮説の核）"
+    }
+   ],
+   "macro": "【説②の理屈】大きな脳は代謝的に高コスト。祖先は調理でそのエネルギーコストを埋め合わせた可能性",
+   "macroSym": "└"
+  },
+  {
+   "no": 6,
+   "sentences": [
+    {
+     "id": "P6-S1",
+     "text": "Like all ideas about human evolution, the cooking hypothesis can only be tested indirectly — without a time machine we cannot know exactly what happened in our evolutionary history.",
+     "tokens": [
+      "Like",
+      "all",
+      "ideas",
+      "about",
+      "human",
+      "evolution,",
+      "the",
+      "cooking",
+      "hypothesis",
+      "can",
+      "only",
+      "be",
+      "tested",
+      "indirectly",
+      "—",
+      "without",
+      "a",
+      "time",
+      "machine",
+      "we",
+      "cannot",
+      "know",
+      "exactly",
+      "what",
+      "happened",
+      "in",
+      "our",
+      "evolutionary",
+      "history."
+     ]
+    },
+    {
+     "id": "P6-S2",
+     "text": "But there are (c)several *converging pieces of evidence that support the cooking hypothesis.",
+     "tokens": [
+      "But",
+      "there",
+      "are",
+      "(c)several",
+      "*converging",
+      "pieces",
+      "of",
+      "evidence",
+      "that",
+      "support",
+      "the",
+      "cooking",
+      "hypothesis."
+     ]
+    }
+   ],
+   "kotos": [
+    {
+     "no": 1,
+     "s": "S1",
+     "en": "Like all ideas about human evolution, the cooking hypothesis can only be tested indirectly — without a time machine we cannot know exactly what happened in our evolutionary history.",
+     "sym": "△",
+     "lv": 1,
+     "role": "major",
+     "parent": null,
+     "relParent": null,
+     "relSym": "△",
+     "relAlts": [],
+     "t": "人類進化のあらゆる説と同様、調理仮説は間接的にしか検証できない（タイムマシンがない以上、正確には分からない）",
+     "cue": "can only be tested indirectly",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 2,
+     "s": "S2",
+     "en": "But there are (c)several *converging pieces of evidence that support the cooking hypothesis.",
+     "sym": "TS",
+     "lv": 0,
+     "role": "claim",
+     "parent": null,
+     "relParent": null,
+     "relSym": "TS",
+     "relAlts": [],
+     "t": "だが調理仮説を支持する、複数の収束する証拠がある（以下 ¶7 の列挙を予告）",
+     "cue": "But there are … evidence",
+     "packed": "",
+     "expand": "",
+     "sentence": 1
+    }
+   ],
+   "segments": [
+    {
+     "sentence": 0,
+     "token": 0,
+     "no": 1,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 0,
+     "no": 2,
+     "cont": false
+    }
+   ],
+   "foldBoundaries": [],
+   "requiredCuts": [
+    {
+     "sentence": 1,
+     "gap": 0,
+     "beforeNo": 1,
+     "afterNo": 2,
+     "cue": "But there are … evidence",
+     "sym": "TS",
+     "tBefore": "人類進化のあらゆる説と同様、調理仮説は間接的にしか検証できない（タイムマシンがない以上、正確には分からない）",
+     "tAfter": "だが調理仮説を支持する、複数の収束する証拠がある（以下 ¶7 の列挙を予告）"
+    }
+   ],
+   "macro": "【検証の限界と転換】仮説は間接的にしか検証できないが、収束する複数の証拠がある",
+   "macroSym": "△"
+  },
+  {
+   "no": 7,
+   "sentences": [
+    {
+     "id": "P7-S1",
+     "text": "Fossils show the teeth and *digestive tract of *Homo erectus decreased in size around the same time brain size increased.",
+     "tokens": [
+      "Fossils",
+      "show",
+      "the",
+      "teeth",
+      "and",
+      "*digestive",
+      "tract",
+      "of",
+      "*Homo",
+      "erectus",
+      "decreased",
+      "in",
+      "size",
+      "around",
+      "the",
+      "same",
+      "time",
+      "brain",
+      "size",
+      "increased."
+     ]
+    },
+    {
+     "id": "P7-S2",
+     "text": "This evidence likely means our ancestors started eating softer, higher-quality foods (although not necessarily cooked).",
+     "tokens": [
+      "This",
+      "evidence",
+      "likely",
+      "means",
+      "our",
+      "ancestors",
+      "started",
+      "eating",
+      "softer,",
+      "higher-quality",
+      "foods",
+      "(although",
+      "not",
+      "necessarily",
+      "cooked)."
+     ]
+    },
+    {
+     "id": "P7-S3",
+     "text": "New archaeological research has also continued to push back the earliest known date for the control of fire.",
+     "tokens": [
+      "New",
+      "archaeological",
+      "research",
+      "has",
+      "also",
+      "continued",
+      "to",
+      "push",
+      "back",
+      "the",
+      "earliest",
+      "known",
+      "date",
+      "for",
+      "the",
+      "control",
+      "of",
+      "fire."
+     ]
+    },
+    {
+     "id": "P7-S4",
+     "text": "For example, traces of purposeful fire at Wonderwerk Cave in South Africa have been dated at approximately a million years old.",
+     "tokens": [
+      "For",
+      "example,",
+      "traces",
+      "of",
+      "purposeful",
+      "fire",
+      "at",
+      "Wonderwerk",
+      "Cave",
+      "in",
+      "South",
+      "Africa",
+      "have",
+      "been",
+      "dated",
+      "at",
+      "approximately",
+      "a",
+      "million",
+      "years",
+      "old."
+     ]
+    },
+    {
+     "id": "P7-S5",
+     "text": "Recent studies further suggest humans have genetic adaptions for eating cooked foods — some of which are old, at least predating our split from Neandertals.",
+     "tokens": [
+      "Recent",
+      "studies",
+      "further",
+      "suggest",
+      "humans",
+      "have",
+      "genetic",
+      "adaptions",
+      "for",
+      "eating",
+      "cooked",
+      "foods",
+      "—",
+      "some",
+      "of",
+      "which",
+      "are",
+      "old,",
+      "at",
+      "least",
+      "predating",
+      "our",
+      "split",
+      "from",
+      "Neandertals."
+     ]
+    },
+    {
+     "id": "P7-S6",
+     "text": "Finally, some of my own work, with psychologist Felix Warneken, has shown chimpanzees possess many of the foundational cognitive capacities needed to start cooking — such as a preference for cooked food, patience to wait for foods to be cooked and the capacity to plan for and transport foods to a cooking site.",
+     "tokens": [
+      "Finally,",
+      "some",
+      "of",
+      "my",
+      "own",
+      "work,",
+      "with",
+      "psychologist",
+      "Felix",
+      "Warneken,",
+      "has",
+      "shown",
+      "chimpanzees",
+      "possess",
+      "many",
+      "of",
+      "the",
+      "foundational",
+      "cognitive",
+      "capacities",
+      "needed",
+      "to",
+      "start",
+      "cooking",
+      "—",
+      "such",
+      "as",
+      "a",
+      "preference",
+      "for",
+      "cooked",
+      "food,",
+      "patience",
+      "to",
+      "wait",
+      "for",
+      "foods",
+      "to",
+      "be",
+      "cooked",
+      "and",
+      "the",
+      "capacity",
+      "to",
+      "plan",
+      "for",
+      "and",
+      "transport",
+      "foods",
+      "to",
+      "a",
+      "cooking",
+      "site."
+     ]
+    },
+    {
+     "id": "P7-S7",
+     "text": "These data mean ancestral humans likely shared (d)the same abilities, and could have started cooking rapidly after gaining the ability to control fire.",
+     "tokens": [
+      "These",
+      "data",
+      "mean",
+      "ancestral",
+      "humans",
+      "likely",
+      "shared",
+      "(d)the",
+      "same",
+      "abilities,",
+      "and",
+      "could",
+      "have",
+      "started",
+      "cooking",
+      "rapidly",
+      "after",
+      "gaining",
+      "the",
+      "ability",
+      "to",
+      "control",
+      "fire."
+     ]
+    }
+   ],
+   "kotos": [
+    {
+     "no": 1,
+     "s": "S1",
+     "en": "Fossils show the teeth and *digestive tract of *Homo erectus decreased in size around the same time brain size increased.",
+     "sym": "ex.",
+     "lv": 1,
+     "role": "major",
+     "parent": null,
+     "relParent": null,
+     "relSym": "ex.",
+     "relAlts": [],
+     "t": "【証拠1・化石】ホモ・エレクトスの歯と消化管は、脳が大きくなったのとほぼ同時期に縮小した",
+     "cue": "Fossils show",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 2,
+     "s": "S2",
+     "en": "This evidence likely means our ancestors started eating softer, higher-quality foods (although not necessarily cooked).",
+     "sym": "└",
+     "lv": 2,
+     "role": "minor",
+     "parent": 1,
+     "relParent": 1,
+     "relSym": "└",
+     "relAlts": [],
+     "t": "この証拠は祖先がより柔らかく質の高い食物を食べ始めたことを意味する（必ずしも調理とは限らない＝留保）",
+     "cue": "likely means",
+     "packed": "",
+     "expand": "",
+     "sentence": 1
+    },
+    {
+     "no": 3,
+     "s": "S3",
+     "en": "New archaeological research has also continued to push back the earliest known date for the control of fire.",
+     "sym": "＋",
+     "lv": 1,
+     "role": "major",
+     "parent": null,
+     "relParent": 1,
+     "relSym": "＋",
+     "relAlts": [
+      1
+     ],
+     "t": "【証拠2・考古学】新しい研究は、火の制御が確認できる最古の年代を押し戻し続けている",
+     "cue": "also continued to push back",
+     "packed": "",
+     "expand": "",
+     "sentence": 2
+    },
+    {
+     "no": 4,
+     "s": "S4",
+     "en": "For example, traces of purposeful fire at Wonderwerk Cave in South Africa have been dated at approximately a million years old.",
+     "sym": "ex.",
+     "lv": 2,
+     "role": "minor",
+     "parent": 3,
+     "relParent": 3,
+     "relSym": "ex.",
+     "relAlts": [],
+     "t": "例えば南アフリカのワンダーワーク洞窟の意図的な火の痕跡は約100万年前と年代づけられている",
+     "cue": "For example",
+     "packed": "",
+     "expand": "",
+     "sentence": 3
+    },
+    {
+     "no": 5,
+     "s": "S5",
+     "en": "Recent studies further suggest humans have genetic adaptions for eating cooked foods — some of which are old, at least predating our split from Neandertals.",
+     "sym": "＋",
+     "lv": 1,
+     "role": "major",
+     "parent": null,
+     "relParent": 3,
+     "relSym": "＋",
+     "relAlts": [
+      1,
+      3
+     ],
+     "t": "【証拠3・遺伝】人間には調理食に対する遺伝的適応があり、一部はネアンデルタール人との分岐より古い",
+     "cue": "further suggest",
+     "packed": "",
+     "expand": "",
+     "sentence": 4
+    },
+    {
+     "no": 6,
+     "s": "S6",
+     "en": "Finally, some of my own work, with psychologist Felix Warneken, has shown chimpanzees possess many of the foundational cognitive capacities needed to start cooking — such as a preference for cooked food, patience to wait for foods to be cooked and the capacity to plan for and transport foods to a cooking site.",
+     "sym": "＋",
+     "lv": 1,
+     "role": "major",
+     "parent": null,
+     "relParent": 5,
+     "relSym": "＋",
+     "relAlts": [
+      1,
+      3,
+      5
+     ],
+     "t": "【証拠4・チンパンジー】筆者らの研究は、チンパンジーが調理を始めるのに必要な基礎的認知能力（調理食の選好・待つ忍耐・計画と運搬）の多くを持つと示した",
+     "cue": "Finally … has shown",
+     "packed": "",
+     "expand": "",
+     "sentence": 5
+    },
+    {
+     "no": 7,
+     "s": "S7",
+     "en": "These data mean ancestral humans likely shared (d)the same abilities, and could have started cooking rapidly after gaining the ability to control fire.",
+     "sym": "→",
+     "lv": 1,
+     "role": "major",
+     "parent": null,
+     "relParent": null,
+     "relSym": "→",
+     "relAlts": [],
+     "t": "これらのデータは、祖先も同じ能力を備えており、火を制御できるようになるとすぐ調理を始め得たことを意味する",
+     "cue": "These data mean",
+     "packed": "",
+     "expand": "",
+     "sentence": 6
+    }
+   ],
+   "segments": [
+    {
+     "sentence": 0,
+     "token": 0,
+     "no": 1,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 0,
+     "no": 2,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 0,
+     "no": 3,
+     "cont": false
+    },
+    {
+     "sentence": 3,
+     "token": 0,
+     "no": 4,
+     "cont": false
+    },
+    {
+     "sentence": 4,
+     "token": 0,
+     "no": 5,
+     "cont": false
+    },
+    {
+     "sentence": 5,
+     "token": 0,
+     "no": 6,
+     "cont": false
+    },
+    {
+     "sentence": 6,
+     "token": 0,
+     "no": 7,
+     "cont": false
+    }
+   ],
+   "foldBoundaries": [],
+   "requiredCuts": [
+    {
+     "sentence": 1,
+     "gap": 0,
+     "beforeNo": 1,
+     "afterNo": 2,
+     "cue": "likely means",
+     "sym": "└",
+     "tBefore": "【証拠1・化石】ホモ・エレクトスの歯と消化管は、脳が大きくなったのとほぼ同時期に縮小した",
+     "tAfter": "この証拠は祖先がより柔らかく質の高い食物を食べ始めたことを意味する（必ずしも調理とは限らない＝留保）"
+    },
+    {
+     "sentence": 2,
+     "gap": 0,
+     "beforeNo": 2,
+     "afterNo": 3,
+     "cue": "also continued to push back",
+     "sym": "＋",
+     "tBefore": "この証拠は祖先がより柔らかく質の高い食物を食べ始めたことを意味する（必ずしも調理とは限らない＝留保）",
+     "tAfter": "【証拠2・考古学】新しい研究は、火の制御が確認できる最古の年代を押し戻し続けている"
+    },
+    {
+     "sentence": 3,
+     "gap": 0,
+     "beforeNo": 3,
+     "afterNo": 4,
+     "cue": "For example",
+     "sym": "ex.",
+     "tBefore": "【証拠2・考古学】新しい研究は、火の制御が確認できる最古の年代を押し戻し続けている",
+     "tAfter": "例えば南アフリカのワンダーワーク洞窟の意図的な火の痕跡は約100万年前と年代づけられている"
+    },
+    {
+     "sentence": 4,
+     "gap": 0,
+     "beforeNo": 4,
+     "afterNo": 5,
+     "cue": "further suggest",
+     "sym": "＋",
+     "tBefore": "例えば南アフリカのワンダーワーク洞窟の意図的な火の痕跡は約100万年前と年代づけられている",
+     "tAfter": "【証拠3・遺伝】人間には調理食に対する遺伝的適応があり、一部はネアンデルタール人との分岐より古い"
+    },
+    {
+     "sentence": 5,
+     "gap": 0,
+     "beforeNo": 5,
+     "afterNo": 6,
+     "cue": "Finally … has shown",
+     "sym": "＋",
+     "tBefore": "【証拠3・遺伝】人間には調理食に対する遺伝的適応があり、一部はネアンデルタール人との分岐より古い",
+     "tAfter": "【証拠4・チンパンジー】筆者らの研究は、チンパンジーが調理を始めるのに必要な基礎的認知能力（調理食の選好・待つ忍耐・計画と運搬）の多くを持つと示した"
+    },
+    {
+     "sentence": 6,
+     "gap": 0,
+     "beforeNo": 6,
+     "afterNo": 7,
+     "cue": "These data mean",
+     "sym": "→",
+     "tBefore": "【証拠4・チンパンジー】筆者らの研究は、チンパンジーが調理を始めるのに必要な基礎的認知能力（調理食の選好・待つ忍耐・計画と運搬）の多くを持つと示した",
+     "tAfter": "これらのデータは、祖先も同じ能力を備えており、火を制御できるようになるとすぐ調理を始め得たことを意味する"
+    }
+   ],
+   "macro": "【証拠の列挙】化石／考古学の年代更新／遺伝的適応／チンパンジーの認知能力",
+   "macroSym": "ex."
+  },
+  {
+   "no": 8,
+   "sentences": [
+    {
+     "id": "P8-S1",
+     "text": "These converging pieces of evidence point to an earlier date for the adoption of a cooked diet, in line with Wrangham's proposed time line.",
+     "tokens": [
+      "These",
+      "converging",
+      "pieces",
+      "of",
+      "evidence",
+      "point",
+      "to",
+      "an",
+      "earlier",
+      "date",
+      "for",
+      "the",
+      "adoption",
+      "of",
+      "a",
+      "cooked",
+      "diet,",
+      "in",
+      "line",
+      "with",
+      "Wrangham's",
+      "proposed",
+      "time",
+      "line."
+     ]
+    },
+    {
+     "id": "P8-S2",
+     "text": "But many exciting questions remain open.",
+     "tokens": [
+      "But",
+      "many",
+      "exciting",
+      "questions",
+      "remain",
+      "open."
+     ]
+    },
+    {
+     "id": "P8-S3",
+     "text": "How much of these changes were due to eating cooked foods specifically, versus the increased use of other processing techniques such as *pounding or cutting foods?",
+     "tokens": [
+      "How",
+      "much",
+      "of",
+      "these",
+      "changes",
+      "were",
+      "due",
+      "to",
+      "eating",
+      "cooked",
+      "foods",
+      "specifically,",
+      "versus",
+      "the",
+      "increased",
+      "use",
+      "of",
+      "other",
+      "processing",
+      "techniques",
+      "such",
+      "as",
+      "*pounding",
+      "or",
+      "cutting",
+      "foods?"
+     ]
+    },
+    {
+     "id": "P8-S4",
+     "text": "Did the adoption of cooking — generally a communal process in humans — require changes in our social behavior, given that other apes rarely share food?",
+     "tokens": [
+      "Did",
+      "the",
+      "adoption",
+      "of",
+      "cooking",
+      "—",
+      "generally",
+      "a",
+      "communal",
+      "process",
+      "in",
+      "humans",
+      "—",
+      "require",
+      "changes",
+      "in",
+      "our",
+      "social",
+      "behavior,",
+      "given",
+      "that",
+      "other",
+      "apes",
+      "rarely",
+      "share",
+      "food?"
+     ]
+    },
+    {
+     "id": "P8-S5",
+     "text": "Are there other ways to grow a big brain?",
+     "tokens": [
+      "Are",
+      "there",
+      "other",
+      "ways",
+      "to",
+      "grow",
+      "a",
+      "big",
+      "brain?"
+     ]
+    },
+    {
+     "id": "P8-S6",
+     "text": "Answering these questions will continue to shed new light on human health, human psychology and the origins of our species.",
+     "tokens": [
+      "Answering",
+      "these",
+      "questions",
+      "will",
+      "continue",
+      "to",
+      "shed",
+      "new",
+      "light",
+      "on",
+      "human",
+      "health,",
+      "human",
+      "psychology",
+      "and",
+      "the",
+      "origins",
+      "of",
+      "our",
+      "species."
+     ]
+    }
+   ],
+   "kotos": [
+    {
+     "no": 1,
+     "s": "S1",
+     "en": "These converging pieces of evidence point to an earlier date for the adoption of a cooked diet, in line with Wrangham's proposed time line.",
+     "sym": "TS",
+     "lv": 0,
+     "role": "claim",
+     "parent": null,
+     "relParent": null,
+     "relSym": "TS",
+     "relAlts": [],
+     "t": "これら収束する証拠は、調理食の採用がより早い時期だったことを示し、ラングハムの年代と一致する（＝説②を支持）",
+     "cue": "point to … in line with",
+     "packed": "",
+     "expand": "",
+     "sentence": 0
+    },
+    {
+     "no": 2,
+     "s": "S2",
+     "en": "But many exciting questions remain open.",
+     "sym": "⇔",
+     "lv": 1,
+     "role": "major",
+     "parent": 1,
+     "relParent": 1,
+     "relSym": "⇔",
+     "relAlts": [],
+     "t": "だが多くの興味深い問いが未解決のまま残っている",
+     "cue": "But … remain open",
+     "packed": "",
+     "expand": "",
+     "sentence": 1
+    },
+    {
+     "no": 3,
+     "s": "S3",
+     "en": "How much of these changes were due to eating cooked foods specifically, versus the increased use of other processing techniques such as *pounding or cutting foods?",
+     "sym": "ex.",
+     "lv": 2,
+     "role": "minor",
+     "parent": 2,
+     "relParent": 2,
+     "relSym": "ex.",
+     "relAlts": [],
+     "t": "（問い1）これらの変化のどれだけが調理食そのものによるもので、どれだけがすりつぶし・切断など他の加工技術の増加によるものか",
+     "cue": "How much … versus",
+     "packed": "",
+     "expand": "",
+     "sentence": 2
+    },
+    {
+     "no": 4,
+     "s": "S4",
+     "en": "Did the adoption of cooking — generally a communal process in humans — require changes in our social behavior, given that other apes rarely share food?",
+     "sym": "＋",
+     "lv": 2,
+     "role": "minor",
+     "parent": 2,
+     "relParent": 3,
+     "relSym": "＋",
+     "relAlts": [
+      3
+     ],
+     "t": "（問い2）人間では共同作業である調理の採用は、社会行動の変化を必要としたのか（他の類人猿は食物をめったに分け合わないから）",
+     "cue": "Did … require",
+     "packed": "",
+     "expand": "",
+     "sentence": 3
+    },
+    {
+     "no": 5,
+     "s": "S5",
+     "en": "Are there other ways to grow a big brain?",
+     "sym": "＋",
+     "lv": 2,
+     "role": "minor",
+     "parent": 2,
+     "relParent": 4,
+     "relSym": "＋",
+     "relAlts": [
+      3,
+      4
+     ],
+     "t": "（問い3）大きな脳を育てる他の方法はあるのか",
+     "cue": "Are there other ways",
+     "packed": "",
+     "expand": "",
+     "sentence": 4
+    },
+    {
+     "no": 6,
+     "s": "S6",
+     "en": "Answering these questions will continue to shed new light on human health, human psychology and the origins of our species.",
+     "sym": "→",
+     "lv": 1,
+     "role": "major",
+     "parent": 1,
+     "relParent": 1,
+     "relSym": "→",
+     "relAlts": [],
+     "t": "これらの問いに答えることは、人間の健康・心理・種の起源に新たな光を当て続けるだろう（結び）",
+     "cue": "will continue to shed new light",
+     "packed": "",
+     "expand": "",
+     "sentence": 5
+    }
+   ],
+   "segments": [
+    {
+     "sentence": 0,
+     "token": 0,
+     "no": 1,
+     "cont": false
+    },
+    {
+     "sentence": 1,
+     "token": 0,
+     "no": 2,
+     "cont": false
+    },
+    {
+     "sentence": 2,
+     "token": 0,
+     "no": 3,
+     "cont": false
+    },
+    {
+     "sentence": 3,
+     "token": 0,
+     "no": 4,
+     "cont": false
+    },
+    {
+     "sentence": 4,
+     "token": 0,
+     "no": 5,
+     "cont": false
+    },
+    {
+     "sentence": 5,
+     "token": 0,
+     "no": 6,
+     "cont": false
+    }
+   ],
+   "foldBoundaries": [],
+   "requiredCuts": [
+    {
+     "sentence": 1,
+     "gap": 0,
+     "beforeNo": 1,
+     "afterNo": 2,
+     "cue": "But … remain open",
+     "sym": "⇔",
+     "tBefore": "これら収束する証拠は、調理食の採用がより早い時期だったことを示し、ラングハムの年代と一致する（＝説②を支持）",
+     "tAfter": "だが多くの興味深い問いが未解決のまま残っている"
+    },
+    {
+     "sentence": 2,
+     "gap": 0,
+     "beforeNo": 2,
+     "afterNo": 3,
+     "cue": "How much … versus",
+     "sym": "ex.",
+     "tBefore": "だが多くの興味深い問いが未解決のまま残っている",
+     "tAfter": "（問い1）これらの変化のどれだけが調理食そのものによるもので、どれだけがすりつぶし・切断など他の加工技術の増加によるものか"
+    },
+    {
+     "sentence": 3,
+     "gap": 0,
+     "beforeNo": 3,
+     "afterNo": 4,
+     "cue": "Did … require",
+     "sym": "＋",
+     "tBefore": "（問い1）これらの変化のどれだけが調理食そのものによるもので、どれだけがすりつぶし・切断など他の加工技術の増加によるものか",
+     "tAfter": "（問い2）人間では共同作業である調理の採用は、社会行動の変化を必要としたのか（他の類人猿は食物をめったに分け合わないから）"
+    },
+    {
+     "sentence": 4,
+     "gap": 0,
+     "beforeNo": 4,
+     "afterNo": 5,
+     "cue": "Are there other ways",
+     "sym": "＋",
+     "tBefore": "（問い2）人間では共同作業である調理の採用は、社会行動の変化を必要としたのか（他の類人猿は食物をめったに分け合わないから）",
+     "tAfter": "（問い3）大きな脳を育てる他の方法はあるのか"
+    },
+    {
+     "sentence": 5,
+     "gap": 0,
+     "beforeNo": 5,
+     "afterNo": 6,
+     "cue": "will continue to shed new light",
+     "sym": "→",
+     "tBefore": "（問い3）大きな脳を育てる他の方法はあるのか",
+     "tAfter": "これらの問いに答えることは、人間の健康・心理・種の起源に新たな光を当て続けるだろう（結び）"
+    }
+   ],
+   "macro": "【結論＋残された問い】証拠は早い年代を支持（ラングハムと一致）。ただし未解決の問いが多く残る",
+   "macroSym": "＝"
+  }
+ ]
+}
