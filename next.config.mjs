@@ -8,6 +8,12 @@ const config = withPWA({
   disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
+  // 読解の教材データ（public/reading-data）は先読みの対象から外す。
+  // 理由は2つ:
+  //  1. ログインが切れた状態で先読みすると、教材の代わりにログイン画面が
+  //     キャッシュに焼き付いてしまう（見張りが未ログインをログイン画面へ回すため）
+  //  2. 工房で教材を作り直したとき、古い内容が端末に残るのを避ける
+  publicExcludes: ['!noprecache/**/*', '!reading-data/**/*'],
   fallbacks: {
     document: '/offline',
   },

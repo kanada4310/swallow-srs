@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { FileText, LayoutTemplate, Bell, Settings, LogOut, ChevronRight } from 'lucide-react'
+import { BookOpen, FileText, LayoutTemplate, Bell, Settings, LogOut, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppLayout } from '@/components/layout/AppLayout'
 
@@ -13,6 +13,12 @@ interface MoreItem {
 }
 
 const moreItems: MoreItem[] = [
+  {
+    href: '/reading',
+    title: '読解',
+    description: '英語長文を意味のまとまりで区切って読む',
+    icon: <BookOpen className="w-5 h-5" />,
+  },
   {
     href: '/notes',
     title: 'ノート',

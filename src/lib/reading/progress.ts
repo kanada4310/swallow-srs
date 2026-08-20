@@ -250,7 +250,8 @@ export function progressChanged(a: ReadingProgressState, b: ReadingProgressState
 }
 
 function serializeForCompare(s: ReadingProgressState): string {
-  const { updatedAt: _updatedAt, ...rest } = s
+  const rest: Partial<ReadingProgressState> = { ...s }
+  delete rest.updatedAt
   return JSON.stringify(rest)
 }
 

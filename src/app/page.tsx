@@ -442,6 +442,20 @@ function StudentDashboard({ userId }: { userId: string }) {
         </section>
       )}
 
+      {/* 読解への導線 */}
+      <Link
+        href="/reading"
+        className="flex items-center justify-between w-full p-4 bg-white border border-gray-200 text-gray-700 rounded-2xl hover:bg-gray-50 transition-colors"
+      >
+        <span>
+          <span className="block font-bold">読解（英語長文）</span>
+          <span className="block text-xs text-ink-3 mt-0.5">意味のまとまりで区切って読む練習</span>
+        </span>
+        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </Link>
+
       {/* デッキ一覧への導線 */}
       <Link
         href="/decks"
