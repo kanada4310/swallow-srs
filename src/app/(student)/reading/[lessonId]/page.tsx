@@ -852,7 +852,12 @@ function LessonFlow({ entry, data, state, update, status, retry }: LessonFlowPro
         {/* ---------- ⑥まとめ ---------- */}
         {state.step === 'summary' && (
           <section className="space-y-3">
-            <SummaryStep data={data} state={state} segmentCounts={segmentCounts} />
+            <SummaryStep
+              data={data}
+              state={state}
+              segmentCounts={segmentCounts}
+              localOnly={status === 'local-only'}
+            />
 
             <button
               type="button"

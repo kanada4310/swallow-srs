@@ -16,9 +16,11 @@ interface SummaryStepProps {
   data: ReadingLessonData
   state: ReadingProgressState
   segmentCounts: number[]
+  /** サーバーに届いておらず、この端末の中にだけ残っている状態か */
+  localOnly?: boolean
 }
 
-export function SummaryStep({ data, state, segmentCounts }: SummaryStepProps) {
+export function SummaryStep({ data, state, segmentCounts, localOnly = false }: SummaryStepProps) {
   const [promptParaIdx, setPromptParaIdx] = useState<number | null>(null)
   const [copied, setCopied] = useState(false)
   const summary = summarizeProgress(state, segmentCounts)
@@ -86,7 +88,9 @@ export function SummaryStep({ data, state, segmentCounts }: SummaryStepProps) {
 
         <p className="mt-3 text-xs leading-relaxed text-ink-3">
           「自力」の列が増えていくことが、切れ目を見つける力がついてきた証拠です。
-          この内容は先生の画面にも届いているので、スクリーンショットを送る必要はありません。
+          {localOnly
+            ? 'いまはこの端末の中にだけ残っています。先生に見せたいときはこの画面を見せてください。'
+            : 'この内容は先生の画面にも届くので、スクリーンショットを送る必要はありません。'}
         </p>
       </div>
 
