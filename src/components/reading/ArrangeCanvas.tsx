@@ -98,6 +98,7 @@ export function ArrangeCanvas({
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               <select
                 value={item.sym || ''}
+                data-arrange-sym={item.no}
                 onChange={(e) => setSym(idx, e.target.value)}
                 disabled={disabled}
                 aria-label="関係の記号"

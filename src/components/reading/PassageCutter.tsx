@@ -127,6 +127,7 @@ function Gap({
     <button
       type="button"
       disabled={locked}
+      data-cut={cutKeyStr}
       onClick={() => onToggle(cutKeyStr)}
       aria-label={active ? 'この切れ目を消す' : 'ここで切る'}
       aria-pressed={active}

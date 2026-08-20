@@ -208,6 +208,31 @@ function LessonFlow({ entry, data, state, update, status, retry }: LessonFlowPro
     [update]
   )
 
+  /**
+   * 段落タブで別の段落へ移る。
+   * その段落がまだ進んでいない段階には入れない（切り終える前に組み立てを開くと空になるため）。
+   * いまの段階のほうが先なら、その段落が到達している一番先の段階まで戻す。
+   */
+  const goToParagraph = useCallback(
+    (idx: number) => {
+      update((prev) => {
+        const target = prev.paragraphs[idx]
+        const targetPara = data.paragraphs[idx]
+        const reached: ReadingStep = !target?.passed
+          ? 'cut'
+          : gistsComplete(targetPara, target)
+            ? 'arrange'
+            : 'gist'
+        const rank: Record<string, number> = { read: 0, cut: 1, gist: 2, arrange: 3 }
+        const current = rank[prev.step] ?? 1
+        const limit = rank[reached] ?? 1
+        const step: ReadingStep = current <= limit ? prev.step : reached
+        return { ...prev, paraIdx: idx, step: step === 'read' ? 'cut' : step }
+      })
+    },
+    [update, data.paragraphs]
+  )
+
   const updateParaAt = useCallback(
     (idx: number, fn: (w: ParagraphWork) => ParagraphWork) =>
       update((prev) => ({
@@ -417,7 +442,7 @@ function LessonFlow({ entry, data, state, update, status, retry }: LessonFlowPro
             total={data.paragraphs.length}
             current={paraIdx}
             passed={state.paragraphs.map((w) => w.passed)}
-            onSelect={(i) => update((prev) => ({ ...prev, paraIdx: i }))}
+            onSelect={goToParagraph}
           />
         )}
 
@@ -608,7 +633,7 @@ function LessonFlow({ entry, data, state, update, status, retry }: LessonFlowPro
                             roleLabel={ROLE_LABEL[m.rank]}
                             cut={m.cut}
                             hint={state.paragraphs[m.paraIdx].cutStats[`${m.cut.sentence}:${m.cut.gap}`]?.hint ?? 0}
-                            onOpen={() => update((prev) => ({ ...prev, paraIdx: m.paraIdx }))}
+                            onOpen={() => goToParagraph(m.paraIdx)}
                             onReveal={(level) => revealHint(m.paraIdx, m.cut, level)}
                           />
                         ))}
@@ -1220,6 +1245,7 @@ function GlobalGists({
           <p className="mb-1.5 text-sm font-extrabold text-ai">¶{p.no}</p>
           <input
             type="text"
+            data-global-gist={p.no}
             value={gists[String(p.no)] || ''}
             placeholder="この段落の要旨を1文で"
             onChange={(e) => onChange(String(p.no), e.target.value)}

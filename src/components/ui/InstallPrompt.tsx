@@ -84,8 +84,11 @@ export function InstallPrompt() {
     return null
   }
 
-  // 学習セッションの邪魔をしない: 学習ページではプロンプトを出さない
-  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/study')) {
+  // 学習セッションの邪魔をしない: 学習ページ・読解ページではプロンプトを出さない
+  if (
+    typeof window !== 'undefined' &&
+    (window.location.pathname.startsWith('/study') || window.location.pathname.startsWith('/reading'))
+  ) {
     return null
   }
 

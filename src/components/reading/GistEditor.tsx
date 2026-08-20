@@ -46,6 +46,7 @@ export function GistEditor({ para, work, onChange }: GistEditorProps) {
             {!structured ? (
               <input
                 type="text"
+                data-gist={s.id}
                 value={(g as string) || ''}
                 placeholder="このまとまりを一言で"
                 onChange={(e) => onChange(s.id, e.target.value)}
