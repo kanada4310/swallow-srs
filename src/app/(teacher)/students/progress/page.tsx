@@ -89,6 +89,12 @@ export default function StudentProgressPage() {
           <h1 className="text-2xl font-extrabold text-ai">生徒取組状況</h1>
           <div className="flex items-center gap-4">
             <Link
+              href="/students/reading"
+              className="text-sm text-sora hover:text-sora-dark font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+            >
+              読解の取組状況
+            </Link>
+            <Link
               href="/students/review-pause"
               className="text-sm text-sora hover:text-sora-dark font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
             >
