@@ -12,6 +12,7 @@ import StudyPage from '@/app/(student)/study/page'
 import StatsPage from '@/app/(student)/stats/page'
 import NotesPage from '@/app/(student)/notes/page'
 import MorePage from '@/app/(student)/more/page'
+import ReadingPage from '@/app/(student)/reading/page'
 import SettingsPage from '@/app/(student)/settings/page'
 import NotificationsSettingsPage from '@/app/(student)/settings/notifications/page'
 import NoteTypesPage from '@/app/(teacher)/note-types/page'
@@ -29,6 +30,9 @@ const pageMap: Record<string, ComponentType> = {
   '/stats': StatsPage,
   '/notes': NotesPage,
   '/more': MorePage,
+  // 読解は一覧だけ登録する。教材はネット越しに読むため、オフラインでは
+  // 一覧ページが「つながっていません」と正直に伝えて行き止まりにしない
+  '/reading': ReadingPage,
   '/settings': SettingsPage,
   '/settings/notifications': NotificationsSettingsPage,
   '/note-types': NoteTypesPage,
