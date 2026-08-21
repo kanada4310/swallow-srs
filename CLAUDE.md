@@ -386,7 +386,7 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 - **サブデッキも一緒に配布**: `deck_assignments.source_deck_id`（NULL=直接、非NULL=継承元）＋部分一意IDX＋既存配布のバックフィル（`022_subdeck_assignments.sql`）。配布API が子孫へ伝播（冪等）・解除も連動・後から作ったサブデッキも自動継承・削除ガードは直接配布のみ。継承行はUIで「親デッキから配布」バッジ＋解除不可。**notes/search のクラス配布403バグも修正**
 - **生徒別の学習設定を講師が変更**: `user_deck_settings` に講師RLS（`is_student_of_teacher` 基準・`023_teacher_student_deck_settings.sql`）＋API `/api/teacher/student-deck-settings`（GET/PUT/DELETE・**deckId をサーバーでルート解決**）＋生徒詳細のデッキ別進捗ルート行に⚙→ DeckAdvancedSettings モーダル（保存/既定に戻す）。生徒本人の変更し直しは許容（後勝ち）。反映は生徒の次回同期。**非オーナー設定がサブデッキIDで保存され読まれないバグもルートキーに統一して修正**
 
-## 構文添削AI判定の試行（2026-08-21）✅ 実装済み（本番反映は承認待ち）
+## 構文添削AI判定の試行（2026-08-21）✅ 実装・通し確認済み（**025適用済み**／本番反映は承認待ち）
 
 読解ページの1文画面「構文に降りる」を作業台化し、AI判定・添削問答・復習カード連携を追加（ADR `20260821-syntax-ai-trial`、承認は秘書ADR同slug）。試行の枠=**上限月3,000円・対象生徒2〜3人・期間1ヶ月**。
 - **入力**: 素振りのタップ入力UIを `SyntaxAnnotator` に共通化し `BlankSentence` に搭載。書き込みは `reading_progress` の JSON の `syntax` 欄（鍵=「段落:文」・`reconcileProgress` が教材作り直しに耐える形で引き継ぐ）。「分からない」マーク（波線＋?）は文単位のボタン
@@ -396,7 +396,9 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 - **採点基準**: quiz_generator のルールブック3本（正本PDF→`extract_core.py`でテキスト化・増補md・共通見解md）を `data/sync-syntax-rulebook.mjs` が `src/lib/syntax-ai/rulebook-text.ts` に生成（読み取り専用の取り込み・**新しい共有事項**）。system先頭ブロックでプロンプトキャッシュ（1h TTL・判定と問答で同一バイト列）
 - **個人情報を外部AIへ送らない**: プロンプト組み立て（`prompt.ts`/`serialize.ts`）は氏名・ID類を引数に取らない設計。教材文は `verifySentenceTokens` で実物と照合、書き込み値は選択肢リストで検証（`validate.ts`）
 - **モデル**: 既定 `claude-sonnet-4-6`・講師画面で変更可（`pricing.ts` の単価表で概算費用を毎回計上、為替は `SYNTAX_AI_USD_JPY` 既定150）。API鍵は `SYNTAX_AI_ANTHROPIC_API_KEY` 優先→無ければ `ANTHROPIC_API_KEY`
-- **テスト**: `src/lib/syntax-ai/syntax-ai.test.ts` 24件（費用・ゲート・直列化・判定JSON・プロンプト・カード描画・進捗互換）
+- **テスト**: `src/lib/syntax-ai/syntax-ai.test.ts` 27件（費用・ゲート・直列化・判定JSON・プロンプト・カード描画・進捗互換・入力検査）
+- **費用の実測（2026-08-21）**: その時間の最初の1回=ルールブック41,596トークンのキャッシュ書込で**38.6円**、以降の判定・問答は**1回2.3〜2.6円**（キャッシュは1時間・塾全体で共有）。1文（判定1＋問答6〜10往復）で**約17〜28円**＝構想v1.3の試算どおり
+- **注意**: `verifySentenceTokens` は自サイトの教材ファイルを取りに行くとき**呼び出し元のクッキーを引き継ぐ**（ミドルウェアがログイン画面へ転送して照合に失敗するため）。問答プロンプトは「辞書に◯◯と書いてある」型の言い方も答えを言ったものとして禁止している（原則1）
 
 ## 現在の進捗
 
