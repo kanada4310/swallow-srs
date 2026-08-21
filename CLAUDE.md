@@ -386,6 +386,18 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 - **サブデッキも一緒に配布**: `deck_assignments.source_deck_id`（NULL=直接、非NULL=継承元）＋部分一意IDX＋既存配布のバックフィル（`022_subdeck_assignments.sql`）。配布API が子孫へ伝播（冪等）・解除も連動・後から作ったサブデッキも自動継承・削除ガードは直接配布のみ。継承行はUIで「親デッキから配布」バッジ＋解除不可。**notes/search のクラス配布403バグも修正**
 - **生徒別の学習設定を講師が変更**: `user_deck_settings` に講師RLS（`is_student_of_teacher` 基準・`023_teacher_student_deck_settings.sql`）＋API `/api/teacher/student-deck-settings`（GET/PUT/DELETE・**deckId をサーバーでルート解決**）＋生徒詳細のデッキ別進捗ルート行に⚙→ DeckAdvancedSettings モーダル（保存/既定に戻す）。生徒本人の変更し直しは許容（後勝ち）。反映は生徒の次回同期。**非オーナー設定がサブデッキIDで保存され読まれないバグもルートキーに統一して修正**
 
+## 構文添削AI判定の試行（2026-08-21）✅ 実装済み（本番反映は承認待ち）
+
+読解ページの1文画面「構文に降りる」を作業台化し、AI判定・添削問答・復習カード連携を追加（ADR `20260821-syntax-ai-trial`、承認は秘書ADR同slug）。試行の枠=**上限月3,000円・対象生徒2〜3人・期間1ヶ月**。
+- **入力**: 素振りのタップ入力UIを `SyntaxAnnotator` に共通化し `BlankSentence` に搭載。書き込みは `reading_progress` の JSON の `syntax` 欄（鍵=「段落:文」・`reconcileProgress` が教材作り直しに耐える形で引き継ぐ）。「分からない」マーク（波線＋?）は文単位のボタン
+- **AI判定** `POST /api/reading/syntax-ai/judge`（1往復・JSON・文順全件。kind=notation直接示す/question問いの型①〜⑤/confirm根拠確認。clean=notation・questionゼロで**確定**）。**問答** `POST /api/reading/syntax-ai/dialogue`（履歴携行・正解を言わず引き先を指す）。入口可否 `GET /api/reading/syntax-ai/status`
+- **試行の枠の機械的担保**: `025_syntax_ai_trial.sql`（`syntax_ai_config` 1行=許可生徒最大3人・期間・上限・モデル / `syntax_ai_usage`=呼び出しごとのトークン・概算費用円）。ゲート判定 `src/lib/syntax-ai/gate.ts`（有効→許可→期間→当月額<上限。月=JST暦月）。講師画面 `/students/syntax-ai`（使用額・回数・生徒別実測・設定変更。導線は /students/progress）
+- **復習カード連携** `POST /api/reading/syntax-card`: 確定時に（分からないマーク or 誤りが出た文を）自動カード化。生徒個人デッキ「構文分析カード」＋is_systemノートタイプ「構文分析」（API側で自動作成・`card-template.ts`）。保存は英文＋分析表示HTML＋構文データJSON＋出典のみ（**訳文は保存しない**）。同一文の再確定は source_info で上書き。card_states/review_logs には触れない
+- **採点基準**: quiz_generator のルールブック3本（正本PDF→`extract_core.py`でテキスト化・増補md・共通見解md）を `data/sync-syntax-rulebook.mjs` が `src/lib/syntax-ai/rulebook-text.ts` に生成（読み取り専用の取り込み・**新しい共有事項**）。system先頭ブロックでプロンプトキャッシュ（1h TTL・判定と問答で同一バイト列）
+- **個人情報を外部AIへ送らない**: プロンプト組み立て（`prompt.ts`/`serialize.ts`）は氏名・ID類を引数に取らない設計。教材文は `verifySentenceTokens` で実物と照合、書き込み値は選択肢リストで検証（`validate.ts`）
+- **モデル**: 既定 `claude-sonnet-4-6`・講師画面で変更可（`pricing.ts` の単価表で概算費用を毎回計上、為替は `SYNTAX_AI_USD_JPY` 既定150）。API鍵は `SYNTAX_AI_ANTHROPIC_API_KEY` 優先→無ければ `ANTHROPIC_API_KEY`
+- **テスト**: `src/lib/syntax-ai/syntax-ai.test.ts` 24件（費用・ゲート・直列化・判定JSON・プロンプト・カード描画・進捗互換）
+
 ## 現在の進捗
 
 **進捗・現在地・次にやること・既知の課題は @docs/progress.md に集約**（このファイルには書かない）。詳しいセッション履歴は `docs/progress/`（ハンドオフ／アーカイブ）、技術判断は `docs/decisions.md`（ADR索引）を参照。
@@ -412,7 +424,8 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 
 ## セッション終了時のルール
 
-- **必ずコミット・プッシュする**: セッション終了前に未コミットの変更がある場合は、コミットしてGitHubにプッシュすること
+- **必ずコミットする**: セッション終了前に未コミットの変更がある場合は、コミットすること
+- **push はしない（下の開発運用ルールに従う）**: push は Vercel の自動デプロイ＝本番反映なので、**塾長の承認後**（またはユーザーの依頼時）にのみ行う（2026-08-21 に規程の食い違いを一本化。絶対規程4と整合）
 - コミットメッセージは変更内容を簡潔に説明する
 - **キャッシュクリア**: セッション終了時に `.next` フォルダを削除する（次回セッションでのフリーズ防止）
   ```bash
@@ -422,7 +435,7 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 ## 開発運用ルール（CMS方式を踏襲）
 
 - **実装前に必ず Plan Mode で計画を立て、承認を得てから実装に入る。** 3ファイル以上に影響する変更は必須
-- **git push はユーザーが依頼したとき or Phase 完了時。** Vercel が自動デプロイするため、動作確認済みの状態でのみ push する
+- **git push は塾長の承認後（またはユーザーが依頼したとき）だけ。** Vercel が自動デプロイするため、push＝本番反映として扱う（絶対規程4）。動作確認済みの状態でのみ push する
 - **ADR の検索と索引再生成はこの職場の道具を使う。** 関連タグで `grep -l "tags:.*<tag>" docs/decisions/*.md` → 該当 ADR を読む。新規作成後は `node scripts/regenerate-decisions-index.mjs` で索引更新
 - **品質チェックは `/check`。** 型（`npx tsc --noEmit`）・Lint（`npm run lint`）・テスト（`npm run test`）を一括点検。コミット前・Phase 完了時に回す
 - **DB マイグレーションは新規ファイルを追加する。** 既存の `supabase/migrations/` を直接編集しない
