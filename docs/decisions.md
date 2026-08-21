@@ -16,6 +16,9 @@
 
 ## ADR 一覧 (新しい順)
 
+### 2026-08-21
+- [20260821-syntax-ai-trial](decisions/20260821-syntax-ai-trial.md) `#reading` `#llm` `#schema` `#ui-ux` `#cost` _(Phase 読解 構文AI試行)_ — 構文添削AI判定の試行導入 — 実装設計
+
 ### 2026-08-20
 - [20260820-reading-page](decisions/20260820-reading-page.md) `#reading` `#工房連携` `#C22` `#途中保存` `#teacher` `#pwa` `#ui` _(Phase 読解 第1弾)_ — 読解ページ（工房の2アプリを1本の流れに統合して演習室へ移す・第1弾）
 
