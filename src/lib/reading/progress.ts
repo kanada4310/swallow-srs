@@ -87,12 +87,23 @@ export function reconcileProgress(
     }
   })
 
+  // 構文の書き込みは「いまの教材に存在する文」だけ引き継ぐ（教材の作り直しに耐える）
+  const syntax: NonNullable<ReadingProgressState['syntax']> = {}
+  for (const [key, work] of Object.entries(saved.syntax ?? {})) {
+    const [pi, si] = key.split(':').map(Number)
+    const sent = data.paragraphs[pi]?.sentences?.[si]
+    if (!sent || !work || !Array.isArray(work.answer?.pos)) continue
+    if (work.answer.pos.length !== sent.tokens.length) continue
+    syntax[key] = work
+  }
+
   return {
     ...fresh,
     mode: saved.mode === 'review' ? 'review' : 'drill',
     step: isStep(saved.step) ? saved.step : 'read',
     paraIdx: Math.min(Math.max(saved.paraIdx ?? 0, 0), Math.max(data.paragraphs.length - 1, 0)),
     paragraphs,
+    ...(Object.keys(syntax).length > 0 ? { syntax } : {}),
     global: {
       gists: saved.global?.gists ?? {},
       arrange: saved.global?.arrange ?? null,

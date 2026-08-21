@@ -167,6 +167,54 @@ export interface GlobalWork {
   passed: boolean
 }
 
+/* ===================== 構文AI試行（1文の通し分析） ===================== */
+
+/** AI判定の指摘1件。no は語番号（1始まり・文順の並びに使う。0=文全体） */
+export interface SyntaxJudgeIssue {
+  no: number
+  /** notation=記法の運用ミス（ルールを直接示す） / question=判断ミス（問いで降ろす） / confirm=正答の根拠を言語化させる */
+  kind: 'notation' | 'question' | 'confirm'
+  target: string
+  point: string
+  /** 問いの型（1〜5。共通見解の5種） */
+  questionType?: number
+  /** 辞書・文法書の引き先 */
+  lookup?: string
+}
+
+export interface SyntaxJudgeResult {
+  issues: SyntaxJudgeIssue[]
+  /** 誤りの指摘（notation/question）がゼロか。confirm だけなら true */
+  clean: boolean
+  comment?: string
+}
+
+export interface SyntaxDialogueTurn {
+  role: 'coach' | 'student'
+  text: string
+  at: string
+}
+
+/** 1文ぶんの構文の書き込み（reading_progress の JSON に入る。学習エンジンには触れない） */
+export interface SentenceSyntaxWork {
+  /** タップ入力の書き込み（品詞・働き・まとまり）。形は素振りと同じ */
+  answer: {
+    pos: Array<string | null>
+    role: Array<string | null>
+    spans: Array<{ from: number; to: number; type: string }>
+  }
+  /** 「分からない」マーク（波線＋?の自己申告） */
+  unknown: boolean
+  /** 一度でも判定で誤りが出たか（復習カード行きの条件） */
+  hadErrors: boolean
+  /** 指摘ゼロの判定を得たか（=確定） */
+  confirmed: boolean
+  judge: { result: SyntaxJudgeResult; at: string } | null
+  dialogue: SyntaxDialogueTurn[]
+  /** 復習カード化済みならそのノートID */
+  cardNoteId: string | null
+}
+
 /** 1本の流れのどこにいるか */
 export type ReadingStep = 'read' | 'cut' | 'gist' | 'arrange' | 'global' | 'summary'
 
@@ -193,6 +241,8 @@ export interface ReadingProgressState {
   paraIdx: number
   paragraphs: ParagraphWork[]
   global: GlobalWork
+  /** 構文の書き込み。鍵は「段落番号:文番号」（どちらも0始まり）。無い保存とも互換 */
+  syntax?: Record<string, SentenceSyntaxWork>
   /** ISO 文字列。端末をまたぐときの新旧判定に使う */
   updatedAt: string
   startedAt: string
