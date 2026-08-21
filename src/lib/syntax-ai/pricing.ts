@@ -45,6 +45,44 @@ export const DEFAULT_USD_JPY = 150
 
 const FALLBACK_PRICE = MODEL_PRICES['claude-sonnet-4-6']
 
+/**
+ * 採点基準（ルールブック全文）の分量。実測 41,596 トークン（2026-08-21）。
+ * 先取り計上の見積もりに使うので、安全側（多め）に丸める。
+ */
+export const RULEBOOK_APPROX_TOKENS = 45_000
+
+/**
+ * AIを呼ぶ「前」に上限へ積んでおく額（円）。
+ *
+ * 呼んだあとに記録が書けないと使用額が過少になり上限が効かなくなるため、
+ * 先に最悪値を積んでから呼び、成功したら実測値に置き換える（過大計上の側に倒す）。
+ * 最悪値＝その時間の最初の1回（ルールブックをキャッシュに書く）＋出力を上限まで使った場合。
+ */
+export function reserveCostYen(
+  model: string,
+  maxTokens: number,
+  usdJpy: number = DEFAULT_USD_JPY
+): number {
+  return estimateCostYen(
+    model,
+    { input: 3_000, output: maxTokens, cacheWrite: RULEBOOK_APPROX_TOKENS, cacheRead: 0 },
+    usdJpy
+  )
+}
+
+/**
+ * 呼び出しが失敗したときに残す額（円）。
+ * 課金されたかどうかは判定できないため、0 にはせず控えめな実費相当を残す
+ * （失敗を繰り返しても上限に近づく＝止まる側に倒すため）。
+ */
+export function failedCallYen(model: string, usdJpy: number = DEFAULT_USD_JPY): number {
+  return estimateCostYen(
+    model,
+    { input: 1_000, output: 100, cacheWrite: 0, cacheRead: RULEBOOK_APPROX_TOKENS },
+    usdJpy
+  )
+}
+
 /** 1回のAPI呼び出しの概算費用（円）。小数第4位まで保持する */
 export function estimateCostYen(
   model: string,

@@ -22,6 +22,8 @@ export type GateDenyReason =
   | 'before-start'
   | 'ended'
   | 'cap-reached'
+  /** 今月の使用額を集計できない（＝上限が効かせられない）。安全のため受け付けない */
+  | 'usage-unknown'
 
 export interface GateResult {
   allowed: boolean
@@ -40,6 +42,7 @@ export const GATE_DENY_LABEL: Record<GateDenyReason, string> = {
   'before-start': '試行はまだ開始されていません',
   ended: '試行期間が終了しました',
   'cap-reached': '今月の利用上限に達したため、AI判定はお休み中です',
+  'usage-unknown': '利用状況を確認できないため、AI判定はお休みしています',
 }
 
 /** 日本時間の暦月の始まり（UTCのISO文字列で返す）。月上限の集計区間に使う */

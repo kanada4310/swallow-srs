@@ -13,6 +13,7 @@ import {
   checkGate,
   createAdminClient,
   getAnthropicClient,
+  UsageRecordUnavailableError,
   verifySentenceTokens,
 } from '@/lib/syntax-ai/server'
 import { GATE_DENY_LABEL } from '@/lib/syntax-ai/gate'
@@ -121,6 +122,12 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({ reply, costYen })
   } catch (err) {
+    if (err instanceof UsageRecordUnavailableError) {
+      return NextResponse.json(
+        { error: '利用状況を記録できないため、いまは問答を受け付けられません' },
+        { status: 503 }
+      )
+    }
     console.error('添削問答の呼び出しに失敗:', err instanceof Error ? err.message : err)
     return NextResponse.json(
       { error: 'AIの呼び出しに失敗しました。少し待ってからお試しください' },

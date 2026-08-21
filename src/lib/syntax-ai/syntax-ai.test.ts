@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { estimateCostYen, DEFAULT_MODEL, MODEL_PRICES } from './pricing'
+import {
+  estimateCostYen,
+  failedCallYen,
+  reserveCostYen,
+  DEFAULT_MODEL,
+  MODEL_PRICES,
+} from './pricing'
+import { checkGate } from './server'
 import { evaluateGate, jstMonthStartIso, MAX_ALLOWED_STUDENTS, type SyntaxAiConfig } from './gate'
 import { parseJudgeResponse, serializeAnswer } from './serialize'
 import {
@@ -213,6 +220,110 @@ describe('renderAnalysisHtml / buildCardFields', () => {
     expect(Object.keys(fields).sort()).toEqual(['分析表示', '出典', '構文データ', '英文'].sort())
     expect(fields['英文']).toBe('My brother plays tennis very well .')
     expect(JSON.parse(fields['構文データ']).tokens).toEqual(TOKENS)
+  })
+})
+
+/* ===================== 上限装置は「止まる側」に倒れるか ===================== */
+
+/** checkGate が使う最小限の受け答えだけ持つ偽のデータベース窓口 */
+function fakeAdmin(opts: {
+  config?: Record<string, unknown> | null
+  configError?: boolean
+  usage?: Array<{ cost_yen: number }> | null
+  usageError?: boolean
+}) {
+  return {
+    from(table: string) {
+      if (table === 'syntax_ai_config') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () =>
+                opts.configError
+                  ? { data: null, error: { message: '読めません' } }
+                  : { data: opts.config ?? null, error: null },
+            }),
+          }),
+        }
+      }
+      return {
+        select: () => ({
+          gte: async () =>
+            opts.usageError
+              ? { data: null, error: { message: '読めません' } }
+              : { data: opts.usage ?? [], error: null },
+        }),
+      }
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any
+}
+
+const DB_CONFIG = {
+  enabled: true,
+  allowed_user_ids: ['stu-1'],
+  starts_at: '2026-08-01T00:00:00Z',
+  ends_at: '2026-09-01T00:00:00Z',
+  monthly_cap_yen: 3000,
+  model: 'claude-sonnet-4-6',
+}
+
+describe('checkGate（読めないものがあれば受け付けない）', () => {
+  it('ふつうに読めれば通す', async () => {
+    const { gate } = await checkGate(
+      fakeAdmin({ config: DB_CONFIG, usage: [{ cost_yen: 100 }] }),
+      'stu-1',
+      NOW
+    )
+    expect(gate).toMatchObject({ allowed: true, spentYen: 100 })
+  })
+
+  it('使用額を集計できないときは通さない（0円扱いにして通すと上限が効かない）', async () => {
+    const { gate } = await checkGate(
+      fakeAdmin({ config: DB_CONFIG, usageError: true }),
+      'stu-1',
+      NOW
+    )
+    expect(gate.allowed).toBe(false)
+    expect(gate.reason).toBe('usage-unknown')
+  })
+
+  it('設定が読めないときも通さない', async () => {
+    const { gate } = await checkGate(fakeAdmin({ configError: true }), 'stu-1', NOW)
+    expect(gate.allowed).toBe(false)
+    expect(gate.reason).toBe('disabled')
+  })
+
+  it('集計できた額が上限を超えていれば止まる', async () => {
+    const { gate } = await checkGate(
+      fakeAdmin({ config: DB_CONFIG, usage: [{ cost_yen: 2999 }, { cost_yen: 2 }] }),
+      'stu-1',
+      NOW
+    )
+    expect(gate.reason).toBe('cap-reached')
+  })
+})
+
+describe('先取り計上（記録できなければAIを呼ばない）', () => {
+  it('先に積む額は、実測でありうる最大（キャッシュ書込のある回）より大きい', () => {
+    const worstObserved = estimateCostYen('claude-sonnet-4-6', {
+      input: 968,
+      output: 331,
+      cacheWrite: 41_596,
+      cacheRead: 0,
+    })
+    expect(reserveCostYen('claude-sonnet-4-6', 2000)).toBeGreaterThan(worstObserved)
+  })
+
+  it('失敗時に残す額は 0 でない（失敗を繰り返しても上限に近づく）', () => {
+    expect(failedCallYen('claude-sonnet-4-6')).toBeGreaterThan(0)
+    expect(failedCallYen('claude-sonnet-4-6')).toBeLessThan(reserveCostYen('claude-sonnet-4-6', 2000))
+  })
+
+  it('下位モデルのほうが先取り額も小さい', () => {
+    expect(reserveCostYen('claude-haiku-4-5', 2000)).toBeLessThan(
+      reserveCostYen('claude-sonnet-4-6', 2000)
+    )
   })
 })
 
