@@ -9,6 +9,7 @@ import {
   describeIssuesForDialogue,
 } from './prompt'
 import { buildCardFields, renderAnalysisHtml } from './card'
+import { validateAnswer, validateTurns } from './validate'
 import { reconcileProgress, emptyProgress } from '@/lib/reading/progress'
 import type { ReadingLessonData, SentenceSyntaxWork } from '@/lib/reading/types'
 
@@ -212,6 +213,49 @@ describe('renderAnalysisHtml / buildCardFields', () => {
     expect(Object.keys(fields).sort()).toEqual(['分析表示', '出典', '構文データ', '英文'].sort())
     expect(fields['英文']).toBe('My brother plays tennis very well .')
     expect(JSON.parse(fields['構文データ']).tokens).toEqual(TOKENS)
+  })
+})
+
+/* ===================== 入力検査（外部AIへ渡る内容の制限） ===================== */
+
+describe('validateAnswer / validateTurns', () => {
+  it('選択肢に無い品詞・働きは通さない', () => {
+    expect(
+      validateAnswer(TOKENS, { ...ANSWER, pos: ['勝手な値', null, null, null, null, null, null] })
+    ).toBe('品詞の値が不正です')
+    expect(
+      validateAnswer(TOKENS, { ...ANSWER, role: ['X', null, null, null, null, null, null] })
+    ).toBe('働きの値が不正です')
+  })
+
+  it('範囲外・未知のまとまりは通さない', () => {
+    expect(
+      validateAnswer(TOKENS, { ...ANSWER, spans: [{ from: 0, to: 99, type: 'ul' }] })
+    ).toBe('まとまりの範囲が不正です')
+    expect(
+      validateAnswer(TOKENS, { ...ANSWER, spans: [{ from: 0, to: 1, type: 'zzz' }] })
+    ).toBe('まとまりの種類が不正です')
+    expect(validateAnswer(TOKENS, ANSWER)).toBeNull()
+  })
+
+  it('問答の履歴はコーチ終わりを認めず、長すぎる往復も止める', () => {
+    expect(validateTurns([{ role: 'coach', text: '問いです' }])).toBe(
+      '生徒の返答を待ってから送ってください'
+    )
+    const many = Array.from({ length: 61 }, (_, i) => ({
+      role: i % 2 ? 'coach' : 'student',
+      text: 'x',
+    }))
+    expect(typeof validateTurns(many)).toBe('string')
+    expect(
+      validateTurns([
+        { role: 'coach', text: '問い' },
+        { role: 'student', text: '答え' },
+      ])
+    ).toEqual([
+      { role: 'coach', text: '問い' },
+      { role: 'student', text: '答え' },
+    ])
   })
 })
 
