@@ -62,10 +62,10 @@ CREATE POLICY "Teachers view syntax ai config"
   ON public.syntax_ai_config
   FOR SELECT
   TO authenticated
-  USING (public.is_teacher_or_admin());
+  USING (public.is_teacher_or_admin(auth.uid()));
 
 CREATE POLICY "Teachers view syntax ai usage"
   ON public.syntax_ai_usage
   FOR SELECT
   TO authenticated
-  USING (public.is_teacher_or_admin());
+  USING (public.is_teacher_or_admin(auth.uid()));
