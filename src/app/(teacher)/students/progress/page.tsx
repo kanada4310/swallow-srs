@@ -101,6 +101,12 @@ export default function StudentProgressPage() {
               復習通知の管理
             </Link>
             <Link
+              href="/students/syntax-ai"
+              className="text-sm text-sora hover:text-sora-dark font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+            >
+              構文AIの管理
+            </Link>
+            <Link
               href="/students"
               className="text-sm text-sora hover:text-sora-dark font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
             >

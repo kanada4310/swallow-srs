@@ -20,6 +20,7 @@ import {
   lessonTitle,
 } from '@/lib/reading/lessons'
 import { useReadingProgress } from '@/lib/reading/useReadingProgress'
+import { emptySyntaxWork } from '@/lib/reading/progress'
 import {
   arrangeMatchesSegments,
   judgeCuts,
@@ -920,7 +921,25 @@ function LessonFlow({ entry, data, state, update, status, retry }: LessonFlowPro
       {syntaxSentence != null && (
         <BlankSentence
           para={para}
+          paraIdx={paraIdx}
           sentenceIndex={syntaxSentence}
+          lessonId={state.lessonId}
+          sourceLabel={`${lessonTitle(entry)} 第${paraIdx + 1}段落 第${syntaxSentence + 1}文`}
+          work={
+            state.syntax?.[`${paraIdx}:${syntaxSentence}`] ??
+            emptySyntaxWork(para.sentences[syntaxSentence]?.tokens.length ?? 0)
+          }
+          onWorkChange={(updater) => {
+            const workKey = `${paraIdx}:${syntaxSentence}`
+            const tokenCount = para.sentences[syntaxSentence]?.tokens.length ?? 0
+            update((prev) => ({
+              ...prev,
+              syntax: {
+                ...(prev.syntax ?? {}),
+                [workKey]: updater(prev.syntax?.[workKey] ?? emptySyntaxWork(tokenCount)),
+              },
+            }))
+          }}
           onClose={() => setSyntaxSentence(null)}
         />
       )}

@@ -13,8 +13,26 @@ import type {
   ReadingMode,
   ReadingProgressState,
   ReadingStep,
+  SentenceSyntaxWork,
 } from './types'
 import { cutKey } from './segments'
+
+/** 1文ぶんの構文の書き込みの初期値（語数ぶんの空欄） */
+export function emptySyntaxWork(tokenCount: number): SentenceSyntaxWork {
+  return {
+    answer: {
+      pos: Array.from({ length: tokenCount }, () => null),
+      role: Array.from({ length: tokenCount }, () => null),
+      spans: [],
+    },
+    unknown: false,
+    hadErrors: false,
+    confirmed: false,
+    judge: null,
+    dialogue: [],
+    cardNoteId: null,
+  }
+}
 
 export const PROGRESS_VERSION = 1 as const
 
