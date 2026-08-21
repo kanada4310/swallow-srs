@@ -29,11 +29,15 @@ export const MODEL_PRICES: Record<string, ModelPrice> = {
   'claude-haiku-4-5': { input: 1, output: 5, cacheWrite1h: 2, cacheRead: 0.1 },
 }
 
-/** 講師画面のモデル選択肢（既定は中位） */
+/**
+ * 講師画面のモデル選択肢。
+ * 3つとも 2026-08-21 に実際に呼んで使えることを確認済み。
+ * 中位2つは同じ単価（sonnet-5 は 2026-08-31 まで割引中だが、計算は割引前で見積もる＝安全側）。
+ */
 export const MODEL_OPTIONS: Array<{ id: string; label: string }> = [
-  { id: 'claude-sonnet-4-6', label: '中位 claude-sonnet-4-6（既定・推奨）' },
+  { id: 'claude-sonnet-5', label: '中位 claude-sonnet-5（新世代・推奨）' },
+  { id: 'claude-sonnet-4-6', label: '中位 claude-sonnet-4-6（現在の設定値・同単価）' },
   { id: 'claude-haiku-4-5', label: '下位 claude-haiku-4-5（費用約1/3・精度比較用）' },
-  { id: 'claude-sonnet-5', label: '中位 claude-sonnet-5（新世代・同単価）' },
 ]
 
 export const DEFAULT_MODEL = 'claude-sonnet-4-6'

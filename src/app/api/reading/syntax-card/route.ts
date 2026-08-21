@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
 
   const verified = await verifySentenceTokens(
     request.nextUrl.origin,
+    request.headers.get('cookie') ?? '',
     lessonId,
     sentenceKey,
     tokens as string[]
