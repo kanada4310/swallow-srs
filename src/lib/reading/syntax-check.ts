@@ -1,0 +1,219 @@
+/**
+ * 矛盾検査（0円の床）— ルールブックの「例外なしの言い切り」から機械的に検査する。
+ *
+ * 正解表が無くても指摘できる項目だけを扱う（構想の骨子(1)の「床」）。
+ * 対象の言い切り（正本ルールブックの該当ルール）:
+ * - Rule 1: S=名詞 / V=動詞 / O=名詞 / C=名詞 or 形容詞
+ * - Rule 4: S はいつでも一つ（名詞は S/O/C/Po か名詞修飾のどれか）
+ * - Rule 5: 形容詞は C になるか名詞を修飾する
+ * - Rule 6: 副詞は SVOC のどの要素も担わない（＝働きは M のみ）
+ * - Rule 9/14/18/28: 〈 〉は直前の名詞を修飾する
+ * - Rule 13: 前置詞のまとまりの中には名詞（Po）が一つだけ入る
+ * - Rule 20: { } は SVOC の C（＝前に O があるはず）
+ * - ［ ］は S/O/C/Po のどれかとして働く（ページ9）
+ *
+ * 検査は「確実に矛盾」だけを error にし、判断の余地が残るものは warn に落とす
+ * （誤検知で生徒を混乱させないための保守側の設計）。
+ */
+
+import { isPunct, type StudentSpan, type SyntaxAnswer } from './syntax'
+
+export interface ContradictionFinding {
+  /** 検査項目の識別子（テスト・集計用） */
+  code: string
+  severity: 'error' | 'warn'
+  text: string
+  /** 関係する単語の位置（あれば） */
+  tokens?: number[]
+}
+
+/** span の内側に完全に含まれるトークンか（ul は「まとまり」でないため除く） */
+function insideSpans(index: number, spans: StudentSpan[]): boolean {
+  return spans.some((s) => s.type !== 'ul' && index >= s.from && index <= s.to)
+}
+
+function prevContentToken(tokens: string[], from: number): number | null {
+  for (let i = from - 1; i >= 0; i--) {
+    if (!isPunct(tokens[i])) return i
+  }
+  return null
+}
+
+export function checkContradictions(tokens: string[], answer: SyntaxAnswer): ContradictionFinding[] {
+  const out: ContradictionFinding[] = []
+  const { pos, role, spans } = answer
+
+  // --- Rule 4: カッコの外で S が2つ（等位接続詞があれば許す） ---
+  for (const target of ['S', 'V'] as const) {
+    const hits = tokens
+      .map((_, i) => i)
+      .filter((i) => role[i] === target && !insideSpans(i, spans))
+    if (hits.length >= 2) {
+      const hasConj = tokens.some(
+        (_, i) => i > hits[0] && i < hits[hits.length - 1] && pos[i] === '接続詞',
+      )
+      if (!hasConj) {
+        out.push({
+          code: target === 'S' ? 'dup-s' : 'dup-v',
+          severity: 'error',
+          text:
+            target === 'S'
+              ? `S が${hits.length}つあります。S はいつでも一つです（ルール4）。カッコの中の要素なら、まとまりで囲ってください`
+              : `V が${hits.length}つあります。1つの文の V は一つです。並列（and など）でなければ、まとまりの中の動詞か確認してください`,
+          tokens: hits,
+        })
+      }
+    }
+  }
+
+  // --- Rule 1/5/6: 品詞と働きの対応 ---
+  tokens.forEach((w, i) => {
+    const p = pos[i]
+    const r = role[i]
+    if (!p || !r) return
+    if (p === '副詞' && r !== 'M') {
+      out.push({
+        code: 'adverb-role',
+        severity: 'error',
+        text: `「${w}」: 副詞は S・V・O・C のどの要素も担いません（ルール6）。副詞の働きは M（修飾）だけです`,
+        tokens: [i],
+      })
+    }
+    if ((r === 'S' || r === 'O' || r === '前O') && ['副詞', '前置詞', '接続詞', '冠詞', '形容詞'].includes(p)) {
+      out.push({
+        code: 'noun-role-pos',
+        severity: 'error',
+        text: `「${w}」: ${r} になれるのは名詞（と代名詞）だけです（ルール${r === '前O' ? '13' : '4'}）。品詞「${p}」と働き「${r}」は両立しません`,
+        tokens: [i],
+      })
+    }
+    if (r === 'C' && ['副詞', '前置詞', '接続詞', '冠詞'].includes(p)) {
+      out.push({
+        code: 'c-role-pos',
+        severity: 'error',
+        text: `「${w}」: C になれるのは名詞か形容詞です（ルール1）。品詞「${p}」と働き「C」は両立しません`,
+        tokens: [i],
+      })
+    }
+    if (r === 'V' && ['名詞', '代名詞', '形容詞', '副詞', '前置詞', '接続詞', '冠詞'].includes(p)) {
+      out.push({
+        code: 'v-role-pos',
+        severity: 'error',
+        text: `「${w}」: V になれるのは動詞（助動詞・分詞・不定詞を含むまとまり）だけです（ルール1）。品詞「${p}」と働き「V」は両立しません`,
+        tokens: [i],
+      })
+    }
+  })
+
+  // --- Rule 13: 前置詞と Po（前O）の対応 ---
+  const claimed = new Set<number>()
+  tokens.forEach((w, i) => {
+    if (role[i] !== '前O') return
+    let found = false
+    for (let j = i - 1; j >= 0; j--) {
+      if (role[j] === '前O' && !claimed.has(j)) break // 間に別の前O があるなら対応しない
+      if (pos[j] === '前置詞' && !claimed.has(j)) {
+        claimed.add(j)
+        found = true
+        break
+      }
+    }
+    if (!found) {
+      out.push({
+        code: 'po-without-p',
+        severity: 'error',
+        text: `「${w}」を前置詞の目的語（前O）としていますが、前に前置詞が見当たりません（ルール13）`,
+        tokens: [i],
+      })
+    }
+  })
+  tokens.forEach((w, i) => {
+    if (pos[i] !== '前置詞' || claimed.has(i)) return
+    // この前置詞より後ろに（次の前置詞より手前で）前O があるか
+    let found = false
+    for (let j = i + 1; j < tokens.length; j++) {
+      if (pos[j] === '前置詞') break
+      if (role[j] === '前O') {
+        found = true
+        break
+      }
+    }
+    if (!found && role.some((r) => r !== null)) {
+      out.push({
+        code: 'p-without-po',
+        severity: 'warn',
+        text: `前置詞「${w}」の目的語（前O）が書かれていません。前置詞のまとまりの中には名詞が一つ入ります（ルール13）`,
+        tokens: [i],
+      })
+    }
+  })
+
+  // --- 〈 〉は直前の名詞を修飾（ルール9・14・18・28） ---
+  spans.forEach((s) => {
+    if (s.type !== 'adjm') return
+    const prev = prevContentToken(tokens, s.from)
+    if (prev === null) {
+      out.push({
+        code: 'angle-no-noun',
+        severity: 'error',
+        text: `〈 〉（後置修飾）が文頭にあります。〈 〉は直前の名詞を修飾するので、前に名詞が必要です（ルール9）`,
+        tokens: [s.from],
+      })
+      return
+    }
+    const p = pos[prev]
+    if (p && !['名詞', '代名詞'].includes(p)) {
+      out.push({
+        code: 'angle-no-noun',
+        severity: 'error',
+        text: `〈${tokens.slice(s.from, s.to + 1).join(' ')}〉の直前「${tokens[prev]}」の品詞が「${p}」です。〈 〉は直前の名詞を修飾します（ルール9）`,
+        tokens: [prev, s.from],
+      })
+    }
+  })
+
+  // --- { } は SVOC の C（ルール20） ---
+  spans.forEach((s) => {
+    if (s.type !== 'comp') return
+    const hasObefore = tokens.some((_, i) => i < s.from && role[i] === 'O' && !insideSpans(i, spans))
+    if (!hasObefore && role.some((r) => r !== null)) {
+      out.push({
+        code: 'brace-no-o',
+        severity: 'warn',
+        text: `｛ ｝は SVOC の C に準動詞が来る特別な場合の印です。前に O が見当たりません（ルール20）`,
+        tokens: [s.from],
+      })
+    }
+  })
+
+  // --- ［ ］に役割がない（ページ9: ［ ］の下に S などの要素を記入） ---
+  spans.forEach((s) => {
+    if (s.type !== 'n') return
+    const hasRole = tokens.some(
+      (_, i) => i >= s.from && i <= s.to && ['S', 'O', 'C', '前O'].includes(role[i] ?? ''),
+    )
+    if (!hasRole && role.some((r) => r !== null)) {
+      out.push({
+        code: 'square-no-role',
+        severity: 'warn',
+        text: `[${tokens.slice(s.from, s.to + 1).join(' ')}] に役割（S・O・C・前O のどれか）が書かれていません。[ ] は名詞として働くまとまりです`,
+        tokens: [s.from],
+      })
+    }
+  })
+
+  // --- すべての文は S,V を備えている（ルール1） ---
+  const hasAnyRole = role.some((r) => r !== null)
+  if (hasAnyRole) {
+    const hasV = role.some((r, i) => r === 'V' && !insideSpans(i, spans))
+    if (!hasV) {
+      out.push({
+        code: 'no-v',
+        severity: 'warn',
+        text: 'カッコの外に V がありません。すべての文は S と V を備えています（ルール1）',
+      })
+    }
+  }
+
+  return out
+}
