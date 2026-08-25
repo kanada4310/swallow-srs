@@ -387,7 +387,7 @@ export function DeckAdvancedSettings({ settings, onChange }: DeckAdvancedSetting
                   </>
                 )}
 
-                <SettingField label="リーチしきい値" description="この回数失念するとリーチ判定。0で無効">
+                <SettingField label="失念回数のしきい値" description="この回数失念すると「失念の多いカード」と判定。0で無効">
                   <NumberInput
                     value={resolved.leech_threshold}
                     onChange={v => update('leech_threshold', v)}
@@ -397,7 +397,7 @@ export function DeckAdvancedSettings({ settings, onChange }: DeckAdvancedSetting
                   />
                 </SettingField>
 
-                <SettingField label="リーチ時のアクション">
+                <SettingField label="失念の多いカードの扱い">
                   <select
                     value={resolved.leech_action}
                     onChange={e => update('leech_action', e.target.value as 'suspend' | 'tag')}

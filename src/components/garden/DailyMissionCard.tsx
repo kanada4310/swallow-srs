@@ -26,7 +26,7 @@ export function DailyMissionCard({ userId }: { userId: string | null | undefined
     >
       <div className="flex items-center justify-between gap-3 mb-2">
         <h2 className="text-sm font-bold text-gray-800">
-          {mission.done ? '✅ 今日のお世話、完了！' : '🌱 今日のミッション'}
+          {mission.done ? '✅ 今日のお世話、完了！' : '🌱 今日の学習'}
         </h2>
         <span className="text-xs text-gray-500 tabular-nums">
           {mission.wateredToday}/{mission.goal}

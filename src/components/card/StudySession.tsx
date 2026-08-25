@@ -451,7 +451,7 @@ export function StudySession({ deckId, priorityCardId, deckName, initialCards, u
       if (ease === Ease.Again && newSchedule.lapses > (currentCard.schedule.lapses || 0)) {
         const isLeech = checkLeech(newSchedule, settings)
         if (isLeech) {
-          setLeechNotification(`このカードはリーチです（失念回数: ${newSchedule.lapses}回）`)
+          setLeechNotification(`失念の多いカードです（失念回数: ${newSchedule.lapses}回）`)
           if (settings.leech_action === 'suspend') {
             newSchedule.state = 'suspended'
             isSuspended = true

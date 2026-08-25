@@ -12,7 +12,7 @@ import { useStreak } from '@/lib/stats/useStreak'
 import { resolveDeckSettings } from '@/lib/srs/scheduler'
 import { db } from '@/lib/db/schema'
 
-/** 今日のミッション＝いま期限が来ている復習＋今日の新規枠（ルートデッキ毎の上限を反映） */
+/** 今日の学習＝いま期限が来ている復習＋今日の新規枠（ルートデッキ毎の上限を反映） */
 interface TodayMission {
   reviewDue: number
   newToday: number
@@ -313,14 +313,14 @@ function StudentDashboard({ userId }: { userId: string }) {
 
   return (
     <div className="space-y-6">
-      {/* 今日のミッション */}
+      {/* 今日の学習 */}
       <section className="relative overflow-hidden rounded-card bg-gradient-to-br from-ai to-ai-soft p-6 text-white shadow-card">
         <SwallowMark className="pointer-events-none absolute -right-2 top-3 w-32 opacity-15" fill="#fff" />
         {mission ? (
           mission.total > 0 ? (
             <>
               <div className="text-[11px] font-bold tracking-widest text-[#AEC4F5]">
-                今日のミッション
+                今日の学習
               </div>
               <div className="mt-1 flex items-baseline gap-2">
                 <span className="text-5xl font-extrabold tabular-nums leading-none">
@@ -369,7 +369,7 @@ function StudentDashboard({ userId }: { userId: string }) {
           ) : (
             <>
               <div className="text-[11px] font-bold tracking-widest text-[#AEC4F5]">
-                今日のミッション
+                今日の学習
               </div>
               <div className="mt-1 text-2xl font-extrabold">
                 {mission.reviewsToday > 0 ? '今日のノルマ完了！' : '今日やるカードはありません'}

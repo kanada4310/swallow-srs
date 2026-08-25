@@ -277,7 +277,7 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 ## デッキ単位の復習通知停止（2026-08-19）✅ SRS側完了
 
 学習を止めたデッキの復習通知（LINE・送信役はbilling）をデッキ単位で停止。ADR `20260819-deck-review-pause`。
-- **停止フラグ**: `user_deck_settings.settings` の `reviewPaused`/`reviewPausedAt`（**ルートデッキ×生徒**・新テーブルなし）。停止＝通知集計から外すだけで **card_states 不変**（リーチ用 suspended とは別概念）
+- **停止フラグ**: `user_deck_settings.settings` の `reviewPaused`/`reviewPausedAt`（**ルートデッキ×生徒**・新テーブルなし）。停止＝通知集計から外すだけで **card_states 不変**（失念の多いカード用 suspended とは別概念）
 - **自動解除**: 停止時刻より後にそのデッキ（配下含む）の review_logs があれば**集計時に**フラグを消して通知対象へ戻す（`src/lib/review-pause/server.ts` `checkAndAutoRelease`）
 - **due-cards-summary 拡張（後方互換）**: 既存フィールド維持＋`decks`（ルートデッキ別内訳）/`pausedDecks` 追加。dueCount・代表カードは停止中デッキ除外。全停止の生徒は通知対象外
 - **停止/再開API**: billing用 `POST /api/admin/deck-review-pause`（Bearer=SRS_AUTH_SECRET・lineUserId/userId・サブデッキIDはルート解決）＋講師用 `GET/POST /api/teacher/deck-review-pause`（実体は共通 `setReviewPause`）
@@ -375,7 +375,7 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 
 一次仕様 @docs/design-system.md（トークン・慣用句・置換マップ・禁止事項）。つばめの羽色をブランド化。
 - **トークン**（tailwind.config.ts）: `ai`(藍・見出し/濃地)・`sora`(空・アクション)・`nodo`(橙・最重要CTA/ストリーク、**1画面1箇所**)・`paper`/`ink`系・評価4色 `again/hard/good/easy`(+`-bg`)・`rounded-card`(18px)・`shadow-card`
-- **適用範囲**: 全ページ＋全共有コンポーネント。学習画面=回答4ボタン「淡地×濃字・正解のみ塗り」＋Anki式3色残数／完了画面=つばめメダル＋統計3枚組＋0枚時文言分岐／生徒ホーム=「今日のミッション」カード（日次新規枠を反映した実枚数＋開始CTA）＋🔥ストリークチップ／デッキ一覧=ラベル付き意味色チップ（新規=easy・学習中=hard・復習=good、モバイルでも表示）
+- **適用範囲**: 全ページ＋全共有コンポーネント。学習画面=回答4ボタン「淡地×濃字・正解のみ塗り」＋Anki式3色残数／完了画面=つばめメダル＋統計3枚組＋0枚時文言分岐／生徒ホーム=「今日の学習」カード（日次新規枠を反映した実枚数＋開始CTA）＋🔥ストリークチップ／デッキ一覧=ラベル付き意味色チップ（新規=easy・学習中=hard・復習=good、モバイルでも表示）
 - **カード内部の世界観は独立**: ノートタイプのテンプレートCSS・KobunTangoCard(paper/indigo/enji)・MultiStepCard(古文様式)・庭アートにはブランドを持ち込まない（カード様式ごとに自由）
 - **PWA**: theme_color=#1C2B4B。`SwallowMark`（`src/components/ui/SwallowMark.tsx`）はヘッダー/完了/空状態のみ。InstallPrompt は `/study` では出さない
 - **残**: public/icons のPNGアイコン再生成（旧ブルーのまま）／ダークモード（トークン化済みなので差し替えのみ）
@@ -406,7 +406,7 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 
 ## 構文添削AI判定の試行（2026-08-21）✅ 本番反映済み（**025適用済み**／試行は停止中・対象生徒0人）
 
-読解ページの1文画面「構文に降りる」を作業台化し、AI判定・添削問答・復習カード連携を追加（ADR `20260821-syntax-ai-trial`、承認は秘書ADR同slug）。試行の枠=**上限月3,000円・対象生徒2〜3人・期間1ヶ月**。
+読解ページの1文画面「構文を分析する」（旧称: 構文に降りる・2026-08-25 改名）を作業台化し、AI判定・添削問答・復習カード連携を追加（ADR `20260821-syntax-ai-trial`、承認は秘書ADR同slug）。試行の枠=**上限月3,000円・対象生徒2〜3人・期間1ヶ月**。
 - **入力**: 構文の練習のタップ入力UIを `SyntaxAnnotator` に共通化し `BlankSentence` に搭載。書き込みは `reading_progress` の JSON の `syntax` 欄（鍵=「段落:文」・`reconcileProgress` が教材作り直しに耐える形で引き継ぐ）。「分からない」マーク（波線＋?）は文単位のボタン
 - **AI判定** `POST /api/reading/syntax-ai/judge`（1往復・JSON・文順全件。kind=notation直接示す/question問いの型①〜⑤/confirm根拠確認。clean=notation・questionゼロで**確定**）。**問答** `POST /api/reading/syntax-ai/dialogue`（履歴携行・正解を言わず引き先を指す）。入口可否 `GET /api/reading/syntax-ai/status`
 - **試行の枠の機械的担保**: `025_syntax_ai_trial.sql`（`syntax_ai_config` 1行=許可生徒最大3人・期間・上限・モデル / `syntax_ai_usage`=呼び出しごとのトークン・概算費用円）。ゲート判定 `src/lib/syntax-ai/gate.ts`（有効→許可→期間→当月額<上限。月=JST暦月）。講師画面 `/students/syntax-ai`（使用額・回数・生徒別実測・設定変更。導線は /students/progress）

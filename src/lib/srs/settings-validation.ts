@@ -96,13 +96,13 @@ export function validateDeckSettings(raw: Partial<DeckSettings>): ValidationErro
 
   if (raw.leech_threshold !== undefined) {
     if (!Number.isInteger(raw.leech_threshold) || raw.leech_threshold < 0 || raw.leech_threshold > 99) {
-      errors.push({ field: 'leech_threshold', message: 'リーチしきい値は0〜99の整数で指定してください' })
+      errors.push({ field: 'leech_threshold', message: '失念回数のしきい値は0〜99の整数で指定してください' })
     }
   }
 
   if (raw.leech_action !== undefined) {
     if (raw.leech_action !== 'suspend' && raw.leech_action !== 'tag') {
-      errors.push({ field: 'leech_action', message: 'リーチアクションが不正です' })
+      errors.push({ field: 'leech_action', message: '失念の多いカードの扱いが不正です' })
     }
   }
 

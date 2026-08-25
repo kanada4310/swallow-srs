@@ -305,7 +305,7 @@ OCR読み取り結果をカスタムノートタイプのフィールドに動�
   - Dexie.js: *tags MultiEntryインデックス、updateNoteTagsLocally()
 
 ### 7.5 学習カスタマイズ（Anki互換デッキオプション） ✅ 完了
-デッキごとにAnki本家相当の学習設定（学習ステップ、間隔倍率、リーチ検知等）をカスタマイズ可能に。
+デッキごとにAnki本家相当の学習設定（学習ステップ、間隔倍率、失念の多いカードの検知等）をカスタマイズ可能に。
 
 - [x] DeckSettings型定義（17設定項目: 新規カード/復習/失念/表示順）
 - [x] resolveDeckSettings()でPartial→完全オブジェクト変換（後方互換）
@@ -315,15 +315,15 @@ OCR読み取り結果をカスタムノートタイプのフィールドに動�
   - learning_steps、graduating/easy_interval、interval_modifier、max_interval対応
   - hard_interval_modifier、easy_bonus対応
   - lapse_new_interval、lapse_min_interval対応
-  - リーチ検知（checkLeech: threshold+suspend/tagアクション）
+  - 失念の多いカードの検知（checkLeech: threshold+suspend/tagアクション）
 - [x] schedulerテスト（41テスト: カスタム設定の全パターン）
 - [x] DBマイグレーション（009_leech_support.sql: lapses列+suspended状態）
 - [x] Dexie.js v5（LocalCardStateにlapses追加、upgradeで既存データ初期化）
 - [x] カード並び順ロジック（card-ordering.ts: review_sort/new_card_order/new_review_mix）
 - [x] 学習ページ更新（オンライン/オフライン: orderStudyCards使用、suspended除外）
-- [x] answer API更新（デッキ設定読み込み、lapses保存、リーチ検知・tag/suspend）
+- [x] answer API更新（デッキ設定読み込み、lapses保存、失念の多いカードの検知・tag/suspend）
 - [x] sync.ts更新（saveAnswerLocallyにlapses対応）
-- [x] StudySession更新（deckSettings prop、リーチ通知トースト、suspend対応）
+- [x] StudySession更新（deckSettings prop、失念の多いカードの通知トースト、suspend対応）
 - [x] DeckAdvancedSettingsコンポーネント（4タブ: 新規/復習/失念/表示順）
 - [x] DeckForm統合（advancedSettings、レガシーnewCardsPerDay後方互換）
 - [x] decks API更新（settings全体保存、バリデーション）

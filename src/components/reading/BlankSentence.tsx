@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * 【構文に降りる】困った1文の作業台。
+ * 【構文を分析する】困った1文の作業台。
  *
  * 構文の練習と同じタップ入力（SyntaxAnnotator）で品詞・働き・まとまりを書き込める。
  * 書き込みは講の途中保存（reading_progress の syntax 欄）に入る。
@@ -239,7 +239,7 @@ export function BlankSentence({
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
       <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-card bg-white p-4 shadow-card sm:max-w-2xl sm:rounded-card">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-extrabold text-ai">構文に降りる（第{sentenceIndex + 1}文）</h2>
+          <h2 className="text-base font-extrabold text-ai">構文を分析する（第{sentenceIndex + 1}文）</h2>
           <button
             type="button"
             onClick={onClose}

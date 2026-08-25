@@ -94,8 +94,8 @@ export interface DeckSettings {
   relearning_steps: number[]         // 再学習ステップ（分）。デフォルト: [10]
   lapse_new_interval: number         // ラプス時の間隔倍率（0.0-1.0）。デフォルト: 0.5
   lapse_min_interval: number         // ラプス時の最小間隔（日）。デフォルト: 1
-  leech_threshold: number            // リーチしきい値。デフォルト: 8（0=無効）
-  leech_action: 'suspend' | 'tag'   // リーチ時のアクション。デフォルト: 'tag'
+  leech_threshold: number            // 失念回数のしきい値。デフォルト: 8（0=無効）
+  leech_action: 'suspend' | 'tag'   // 失念の多いカードの扱い。デフォルト: 'tag'
 
   // === 表示順 ===
   new_review_mix: 'mix' | 'new_first' | 'review_first'  // デフォルト: 'review_first'
