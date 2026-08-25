@@ -241,7 +241,7 @@ describe('判別率の機械計測（種固定・毎回同じ結果）', () => {
       }
       perKind.set(kind, kt)
     }
-    for (const [k, kt] of perKind) report(`群A ${k}`, kt)
+    Array.from(perKind.entries()).forEach(([k, kt]) => report(`群A ${k}`, kt))
     report('群A 合計', t)
     expect(t.top1 / t.total).toBeGreaterThanOrEqual(0.9)
     expect((t.top1 + t.rescued) / t.total).toBeGreaterThanOrEqual(0.97)
@@ -262,7 +262,7 @@ describe('判別率の機械計測（種固定・毎回同じ結果）', () => {
       }
       perKind.set(kind, kt)
     }
-    for (const [k, kt] of perKind) report(`群B ${k}`, kt)
+    Array.from(perKind.entries()).forEach(([k, kt]) => report(`群B ${k}`, kt))
     report('群B 合計', t)
     expect((t.top1 + t.rescued) / t.total).toBeGreaterThanOrEqual(0.85)
   })
@@ -281,7 +281,7 @@ describe('判別率の機械計測（種固定・毎回同じ結果）', () => {
       }
       perKind.set(src.symbol, kt)
     }
-    for (const [k, kt] of perKind) report(`群C 働き ${k}`, kt)
+    Array.from(perKind.entries()).forEach(([k, kt]) => report(`群C 働き ${k}`, kt))
     report('群C 働き 合計', t)
     expect((t.top1 + t.rescued) / t.total).toBeGreaterThanOrEqual(0.9)
   })
@@ -300,7 +300,7 @@ describe('判別率の機械計測（種固定・毎回同じ結果）', () => {
       }
       perKind.set(src.symbol, kt)
     }
-    for (const [k, kt] of perKind) report(`群C 品詞 ${k}`, kt)
+    Array.from(perKind.entries()).forEach(([k, kt]) => report(`群C 品詞 ${k}`, kt))
     report('群C 品詞 合計', t)
     expect((t.top1 + t.rescued) / t.total).toBeGreaterThanOrEqual(0.8)
   })

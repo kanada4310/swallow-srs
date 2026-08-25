@@ -8,6 +8,47 @@
 import type { Lane, PenStroke, TokenBox } from './types'
 import { strokesBBox } from './geometry'
 
+/** 文が折り返して複数行になったときの1行ぶんの単語箱 */
+export interface LineBoxes {
+  top: number
+  bottom: number
+  boxes: TokenBox[]
+}
+
+/** 単語箱を表示上の行ごとにまとめる（top の近さでまとめる） */
+export function groupLines(boxes: TokenBox[]): LineBoxes[] {
+  const sorted = [...boxes].sort((a, b) => a.top - b.top || a.left - b.left)
+  const lines: LineBoxes[] = []
+  for (const t of sorted) {
+    const line = lines.find((l) => Math.abs(l.top - t.top) < (t.bottom - t.top) * 0.6)
+    if (line) {
+      line.boxes.push(t)
+      line.top = Math.min(line.top, t.top)
+      line.bottom = Math.max(line.bottom, t.bottom)
+    } else {
+      lines.push({ top: t.top, bottom: t.bottom, boxes: [t] })
+    }
+  }
+  return lines
+}
+
+/** 線の重心に一番近い行を選ぶ（吸着・行判定はその行の単語箱だけで行う） */
+export function pickLine(strokes: PenStroke[], lines: LineBoxes[]): LineBoxes | null {
+  if (lines.length === 0) return null
+  const b = strokesBBox(strokes)
+  let best: LineBoxes | null = null
+  let bestD = Infinity
+  for (const line of lines) {
+    const cy = (line.top + line.bottom) / 2
+    const d = Math.abs(b.cy - cy)
+    if (d < bestD) {
+      bestD = d
+      best = line
+    }
+  }
+  return best
+}
+
 /** 線の重心の縦位置から、どの行（上=品詞/本文/下=働き）に書かれたかを決める */
 export function laneOf(strokes: PenStroke[], boxes: TokenBox[]): Lane {
   if (boxes.length === 0) return 'band'

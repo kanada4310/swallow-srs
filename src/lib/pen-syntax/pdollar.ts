@@ -6,7 +6,7 @@
  * 外部ライブラリ・外部サービスは使わない（追加費用0円の制約）。
  */
 
-import type { PenPoint, PenStroke } from './types'
+import type { PenStroke } from './types'
 import { dist, pathLength } from './geometry'
 
 export interface CloudPoint {

@@ -43,6 +43,8 @@ export interface ApplyOutcome {
   /** 反映できなかった・注意が要るときの短い説明（UI がそのまま出す） */
   message?: string
   applied: boolean
+  /** 吸着した単語の範囲（計測用） */
+  target?: { from: number; to: number }
 }
 
 const OPEN_TO_SPAN: Partial<Record<SymbolId, SpanType>> = {
@@ -71,6 +73,33 @@ export function emptyPenAnnotation(answer: SyntaxAnswer): PenAnnotation {
   return { answer, pendingOpens: [], extras: [] }
 }
 
+/**
+ * 記号の種類に応じた吸着先（単語の範囲）だけを計算する（計測ページ用）。
+ * 解答への反映はせず、開き/閉じ括弧も単独で吸着先を返す。
+ */
+export function snapTargetFor(
+  symbol: SymbolId,
+  strokes: PenStroke[],
+  boxes: TokenBox[],
+): { from: number; to: number } | null {
+  if (OPEN_TO_SPAN[symbol]) {
+    const s = snapOpenBracket(strokes, boxes)
+    return s ? { from: s.index, to: s.index } : null
+  }
+  if (CLOSE_TO_SPAN[symbol]) {
+    const s = snapCloseBracket(strokes, boxes)
+    return s ? { from: s.index, to: s.index } : null
+  }
+  if (symbol === 'hline' || symbol === 'wavy') {
+    return snapHorizontalRange(strokes, boxes)
+  }
+  if (symbol === 'circle') {
+    return snapEnclosedRange(strokes, boxes)
+  }
+  const s = snapNearestToken(strokes, boxes)
+  return s ? { from: s.index, to: s.index } : null
+}
+
 /** 判別済みの記号1つを解答へ反映する */
 export function applySymbol(
   state: PenAnnotation,
@@ -87,11 +116,19 @@ export function applySymbol(
     if (isPosLetter(symbol)) {
       const pos = [...state.answer.pos]
       pos[snap.index] = posLetterToAppPos(symbol)
-      return { next: { ...state, answer: { ...state.answer, pos } }, applied: true }
+      return {
+        next: { ...state, answer: { ...state.answer, pos } },
+        applied: true,
+        target: { from: snap.index, to: snap.index },
+      }
     }
     const role = [...state.answer.role]
     role[snap.index] = roleLetterToAppRole(symbol)
-    return { next: { ...state, answer: { ...state.answer, role } }, applied: true }
+    return {
+      next: { ...state, answer: { ...state.answer, role } },
+      applied: true,
+      target: { from: snap.index, to: snap.index },
+    }
   }
 
   // 開き括弧
@@ -102,6 +139,7 @@ export function applySymbol(
     return {
       next: { ...state, pendingOpens: [...state.pendingOpens, { type: openType, index: snap.index }] },
       applied: true,
+      target: { from: snap.index, to: snap.index },
     }
   }
 
@@ -138,6 +176,7 @@ export function applySymbol(
       },
       applied: true,
       message: exists ? '同じまとまりが既にあります' : undefined,
+      target: { from: span.from, to: span.to },
     }
   }
 
@@ -157,11 +196,13 @@ export function applySymbol(
         },
         applied: true,
         message: exists ? '同じ下線が既にあります' : undefined,
+        target: { from: span.from, to: span.to },
       }
     }
     return {
       next: { ...state, extras: [...state.extras, { kind: 'dash', from: range.from, to: range.to }] },
       applied: true,
+      target: { from: range.from, to: range.to },
     }
   }
 
@@ -172,6 +213,7 @@ export function applySymbol(
     return {
       next: { ...state, extras: [...state.extras, { kind: symbol, from: range.from, to: range.to }] },
       applied: true,
+      target: { from: range.from, to: range.to },
     }
   }
   if (symbol === 'question' || symbol === 'null-sign' || symbol === 'tick' || symbol === 'slash') {
@@ -183,6 +225,7 @@ export function applySymbol(
         extras: [...state.extras, { kind: symbol, from: snap.index, to: snap.index }],
       },
       applied: true,
+      target: { from: snap.index, to: snap.index },
     }
   }
   if (symbol === 'triangle') {
@@ -191,7 +234,11 @@ export function applySymbol(
     if (!snap) return { next: state, applied: false, message: '吸着先の単語が見つかりません' }
     const role = [...state.answer.role]
     role[snap.index] = '接'
-    return { next: { ...state, answer: { ...state.answer, role } }, applied: true }
+    return {
+      next: { ...state, answer: { ...state.answer, role } },
+      applied: true,
+      target: { from: snap.index, to: snap.index },
+    }
   }
 
   return { next: state, applied: false, message: 'この記号にはまだ対応していません' }
