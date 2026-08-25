@@ -15,6 +15,7 @@ import Link from 'next/link'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { SyntaxAnnotator } from '@/components/reading/SyntaxAnnotator'
 import { PenSyntaxAnnotator } from '@/components/pen-syntax/PenSyntaxAnnotator'
+import type { InputPolicy } from '@/lib/pen-syntax/palm'
 import {
   emptyAnswer,
   gradeSyntax,
@@ -34,6 +35,8 @@ export default function SyntaxDrillPage() {
   const [answer, setAnswer] = useState<SyntaxAnswer>(() => emptyAnswer(SYNTAX_PROBLEMS[0]))
   const [grade, setGrade] = useState<SyntaxGrade | null>(null)
   const [inputMode, setInputMode] = useState<'pen' | 'tap'>('pen')
+  // 既定は「ペンのみ」（手のひら対策）。ペンが反応しない端末向けの逃げ道として切り替え可
+  const [penPolicy, setPenPolicy] = useState<InputPolicy>('pen-only')
 
   const load = (idx: number) => {
     setProblemIdx(idx)
@@ -101,6 +104,17 @@ export default function SyntaxDrillPage() {
           </Link>
         </div>
 
+        {inputMode === 'pen' && (
+          <label className="mb-3 flex items-center gap-1.5 text-xs text-ink-3">
+            <input
+              type="checkbox"
+              checked={penPolicy === 'any'}
+              onChange={(e) => setPenPolicy(e.target.checked ? 'any' : 'pen-only')}
+            />
+            ペンが反応しない端末: 指・マウスでも書く（手のひらの誤反応は防げなくなります）
+          </label>
+        )}
+
         <div className="mb-3 rounded-card border border-gray-200 bg-white p-3 shadow-card">
           <label className="mb-1 block text-xs font-bold text-ink-3">問題</label>
           <select
@@ -128,6 +142,7 @@ export default function SyntaxDrillPage() {
             posMarks={grade?.posMark}
             roleMarks={grade?.roleMark}
             spanMarks={grade?.spanMark}
+            policy={penPolicy}
           />
         ) : (
           <SyntaxAnnotator

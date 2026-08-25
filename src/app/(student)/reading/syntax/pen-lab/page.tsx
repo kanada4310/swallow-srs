@@ -26,6 +26,7 @@ import {
   type PalmState,
 } from '@/lib/pen-syntax/palm'
 import type { UserTemplateStore } from '@/lib/pen-syntax/letters'
+import { usePenScreenGuard } from '@/components/pen-syntax/usePenScreenGuard'
 import {
   clearUserTemplates,
   loadUserTemplates,
@@ -146,7 +147,8 @@ const GROUP_WAIT_MS = 750
 
 export default function PenLabPage() {
   const [mode, setMode] = useState<ModeKey>('a')
-  const [policy, setPolicy] = useState<InputPolicy>('pen-or-mouse')
+  // 既定は「ペンのみ」（実運用と同じ・手のひら対策）
+  const [policy, setPolicy] = useState<InputPolicy>('pen-only')
   // お題は乱数で作るため、サーバー描画と食い違わないよう画面表示後に作る
   const [task, setTask] = useState<LabTask | null>(null)
   useEffect(() => {
@@ -155,6 +157,8 @@ export default function PenLabPage() {
   const [stats, setStats] = useState<Record<string, Stats>>({})
   const [attempts, setAttempts] = useState<Attempt[]>([])
   const [palm, setPalm] = useState<PalmState>(initialPalmState())
+  // ペンを一度でも見たら、画面全体で指・手のひらを無効化する（キャンバスの外の誤操作対策）
+  usePenScreenGuard(palm.penSeen && policy === 'pen-only')
   const [store, setStore] = useState<UserTemplateStore>({})
   const [lastResult, setLastResult] = useState<string | null>(null)
   const [chips, setChips] = useState<{
@@ -342,7 +346,11 @@ export default function PenLabPage() {
     )
     palmRef.current = decision.next
     setPalm(decision.next)
-    if (!decision.accept) return
+    if (!decision.accept) {
+      // 拒否した接触は既定動作ごと止める（長押しの選択・後続のクリック化を防ぐ）
+      e.preventDefault()
+      return
+    }
     if (timerRef.current) {
       clearTimeout(timerRef.current)
       timerRef.current = null
@@ -568,7 +576,7 @@ export default function PenLabPage() {
           />
         </div>
 
-        <EnrollmentSection store={store} onStoreChange={setStore} />
+        <EnrollmentSection store={store} onStoreChange={setStore} policy={policy} />
       </div>
     </AppLayout>
   )
@@ -590,14 +598,18 @@ const ENROLLABLE: SymbolId[] = [...POS_LETTERS, ...ROLE_LETTERS]
 function EnrollmentSection({
   store,
   onStoreChange,
+  policy,
 }: {
   store: UserTemplateStore
   onStoreChange: (s: UserTemplateStore) => void
+  policy: InputPolicy
 }) {
   const [symbol, setSymbol] = useState<SymbolId>('n')
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const strokesRef = useRef<PenStroke[]>([])
   const drawingRef = useRef<{ pointerId: number; stroke: PenPoint[] } | null>(null)
+  // お手本登録のキャンバスも判別キャンバスと同じポインタ判定を通す（手のひらを線にしない）
+  const palmRef = useRef<PalmState>(initialPalmState())
 
   const redraw = useCallback(() => {
     const canvas = canvasRef.current
@@ -680,6 +692,16 @@ function EnrollmentSection({
         className="rounded-xl border border-dashed border-gray-300 bg-paper"
         style={{ touchAction: 'none' }}
         onPointerDown={(e) => {
+          const decision = evaluatePointer(
+            { pointerType: e.pointerType, width: e.width, height: e.height },
+            policy,
+            palmRef.current,
+          )
+          palmRef.current = decision.next
+          if (!decision.accept) {
+            e.preventDefault()
+            return
+          }
           try {
             e.currentTarget.setPointerCapture(e.pointerId)
           } catch {

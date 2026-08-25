@@ -37,6 +37,7 @@ import type {
 import { applySymbol, emptyPenAnnotation, type PenAnnotation, type PenExtraMark } from '@/lib/pen-syntax/apply'
 import { recognizeGroup } from '@/lib/pen-syntax/recognize'
 import { evaluatePointer, initialPalmState, type InputPolicy, type PalmState } from '@/lib/pen-syntax/palm'
+import { usePenScreenGuard } from './usePenScreenGuard'
 import { groupLines, laneOf, pickLine, shouldGroupStrokes, underlineSegments } from '@/lib/pen-syntax/snap'
 import { pathLength, strokesBBox } from '@/lib/pen-syntax/geometry'
 import type { UserTemplateStore } from '@/lib/pen-syntax/letters'
@@ -126,7 +127,7 @@ export function PenSyntaxAnnotator({
   roleMarks,
   spanMarks,
   disabled,
-  policy = 'pen-or-mouse',
+  policy = 'pen-only',
   templateStore = null,
   onEvent,
   onPalm,
@@ -143,6 +144,9 @@ export function PenSyntaxAnnotator({
   const historyRef = useRef<PenAnnotation[]>([])
 
   const palmRef = useRef<PalmState>(initialPalmState())
+  // ペンを一度でも見たら、画面全体で指・手のひらを無効化する（キャンバスの外の誤操作対策）
+  const [penSeen, setPenSeen] = useState(false)
+  usePenScreenGuard(penSeen && policy === 'pen-only' && !disabled)
   const drawingRef = useRef<{ pointerId: number; stroke: PenPoint[] } | null>(null)
   const groupRef = useRef<PendingGroup | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -314,7 +318,10 @@ export function PenSyntaxAnnotator({
       palmRef.current,
     )
     palmRef.current = decision.next
+    if (e.pointerType === 'pen' && !penSeen) setPenSeen(true)
     if (!decision.accept) {
+      // 拒否した接触はここで既定動作ごと止める（長押しの選択・後続のクリック化を防ぐ）
+      e.preventDefault()
       if (e.pointerType === 'touch') onPalm?.(decision.next)
       return
     }
@@ -493,11 +500,16 @@ export function PenSyntaxAnnotator({
         >
           ↩ 一手戻す
         </button>
+        {penSeen && policy === 'pen-only' && (
+          <span className="rounded-full bg-paper px-3 py-1 text-[10px] font-bold text-ink-3">
+            🖐 手のひらを載せてもOK（この画面はペン専用になりました）
+          </span>
+        )}
       </div>
 
       <div
         ref={containerRef}
-        className="relative mb-3 rounded-card border border-gray-200 bg-white p-3 pb-6 pt-5 shadow-card"
+        className="relative mb-3 select-none rounded-card border border-gray-200 bg-white p-3 pb-6 pt-5 shadow-card [-webkit-touch-callout:none]"
       >
         <div className="flex flex-wrap items-end gap-x-1 gap-y-7">
           {tokens.map((tok, i) => (
