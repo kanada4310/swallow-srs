@@ -33,19 +33,36 @@ describe('構文の練習', () => {
     const g = gradeSyntax(p, emptyAnswer(p))
     expect(g.got).toBe(0)
     expect(g.percent).toBe(0)
-    expect(g.posMark[1].correct).toBe('名詞')
+    expect(g.posMark[1].correct).toBe('n') // 正解は英字略記で示す
     // まとまりの見落としも指摘する
     expect(g.feedback.some((f) => f.text.includes('見落とし'))).toBe(true)
   })
 
-  it('筋の通る別解は △ として受理する', () => {
+  it('品詞は英字略記（n・v・a・ad・aux・p）で書いても正解になる', () => {
+    const p = byId('ex1')
+    const answer = modelAnswer(p)
+    // 正解表は漢字名（代名詞・名詞・動詞・副詞…）だが、英字で答えても同値として採点する
+    answer.pos = ['n', 'n', 'v', 'n', 'ad', 'ad', null]
+    const g = gradeSyntax(p, answer)
+    expect(g.percent).toBe(100)
+  })
+
+  it('英字は動詞と分詞を区別しない（どちらも v で正解）', () => {
     const p = byId('ex2')
     const answer = modelAnswer(p)
-    answer.pos[2] = '動詞' // 分詞を動詞と見る
+    answer.pos[2] = 'v' // 正解表は「分詞」（別解: 動詞）
     const g = gradeSyntax(p, answer)
-    expect(g.posMark[2].mark).toBe('alt')
+    expect(g.posMark[2].mark).toBe('ok')
     expect(g.percent).toBe(100)
-    expect(g.feedback.some((f) => f.tone === 'alt')).toBe(true)
+  })
+
+  it('英字でも誤りは誤りとして指摘し、正解を英字で示す', () => {
+    const p = byId('ex1')
+    const answer = modelAnswer(p)
+    answer.pos[4] = 'n' // very（副詞=ad）を n と書いた
+    const g = gradeSyntax(p, answer)
+    expect(g.posMark[4].mark).toBe('bad')
+    expect(g.posMark[4].correct).toBe('ad')
   })
 
   it('曖昧文はどちらの掛かり先でも正解にする', () => {

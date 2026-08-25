@@ -78,20 +78,10 @@ export function roleLetterToAppRole(letter: RoleLetter): string {
   return letter
 }
 
-/** 品詞の略記 → アプリの品詞名 */
+/**
+ * 品詞の英字略記はそのまま解答値として保存する
+ * （採点側 gradeSyntax が漢字名の正解表と英字を同値として照合する）。
+ */
 export function posLetterToAppPos(letter: PosLetter): string {
-  const map: Record<PosLetter, string> = {
-    名: '名詞',
-    代: '代名詞',
-    動: '動詞',
-    助: '助動詞',
-    形: '形容詞',
-    副: '副詞',
-    前: '前置詞',
-    接: '接続詞',
-    冠: '冠詞',
-    分: '分詞',
-    不: '不定詞',
-  }
-  return map[letter]
+  return letter
 }

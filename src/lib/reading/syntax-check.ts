@@ -16,7 +16,7 @@
  * （誤検知で生徒を混乱させないための保守側の設計）。
  */
 
-import { isPunct, type StudentSpan, type SyntaxAnswer } from './syntax'
+import { isPunct, posLetter, type StudentSpan, type SyntaxAnswer } from './syntax'
 
 export interface ContradictionFinding {
   /** 検査項目の識別子（テスト・集計用） */
@@ -41,7 +41,11 @@ function prevContentToken(tokens: string[], from: number): number | null {
 
 export function checkContradictions(tokens: string[], answer: SyntaxAnswer): ContradictionFinding[] {
   const out: ContradictionFinding[] = []
-  const { pos, role, spans } = answer
+  const { pos: rawPos, role, spans } = answer
+  // 品詞は漢字名でも英字略記（n/v/a/ad/aux/p）でも検査できるよう、英字に正規化して比べる。
+  // 英字は 冠詞と形容詞（a）、動詞と分詞・不定詞（v）を区別しないため、
+  // 区別が要る検査（冠詞は C になれない等）はその分だけ検査対象を狭めている。
+  const pos = rawPos.map((p) => (p == null ? null : posLetter(p)))
 
   // --- Rule 4: カッコの外で S が2つ（等位接続詞があれば許す） ---
   for (const target of ['S', 'V'] as const) {
@@ -50,7 +54,7 @@ export function checkContradictions(tokens: string[], answer: SyntaxAnswer): Con
       .filter((i) => role[i] === target && !insideSpans(i, spans))
     if (hits.length >= 2) {
       const hasConj = tokens.some(
-        (_, i) => i > hits[0] && i < hits[hits.length - 1] && pos[i] === '接続詞',
+        (_, i) => i > hits[0] && i < hits[hits.length - 1] && pos[i] === '接',
       )
       if (!hasConj) {
         out.push({
@@ -71,7 +75,7 @@ export function checkContradictions(tokens: string[], answer: SyntaxAnswer): Con
     const p = pos[i]
     const r = role[i]
     if (!p || !r) return
-    if (p === '副詞' && r !== 'M') {
+    if (p === 'ad' && r !== 'M') {
       out.push({
         code: 'adverb-role',
         severity: 'error',
@@ -79,7 +83,7 @@ export function checkContradictions(tokens: string[], answer: SyntaxAnswer): Con
         tokens: [i],
       })
     }
-    if ((r === 'S' || r === 'O' || r === '前O') && ['副詞', '前置詞', '接続詞', '冠詞', '形容詞'].includes(p)) {
+    if ((r === 'S' || r === 'O' || r === '前O') && ['ad', 'p', '接', 'a'].includes(p)) {
       out.push({
         code: 'noun-role-pos',
         severity: 'error',
@@ -87,7 +91,8 @@ export function checkContradictions(tokens: string[], answer: SyntaxAnswer): Con
         tokens: [i],
       })
     }
-    if (r === 'C' && ['副詞', '前置詞', '接続詞', '冠詞'].includes(p)) {
+    // a は冠詞と形容詞を区別しない（形容詞は C になれる）ため、C の検査からは外す
+    if (r === 'C' && ['ad', 'p', '接'].includes(p)) {
       out.push({
         code: 'c-role-pos',
         severity: 'error',
@@ -95,7 +100,7 @@ export function checkContradictions(tokens: string[], answer: SyntaxAnswer): Con
         tokens: [i],
       })
     }
-    if (r === 'V' && ['名詞', '代名詞', '形容詞', '副詞', '前置詞', '接続詞', '冠詞'].includes(p)) {
+    if (r === 'V' && ['n', 'a', 'ad', 'p', '接'].includes(p)) {
       out.push({
         code: 'v-role-pos',
         severity: 'error',
@@ -112,7 +117,7 @@ export function checkContradictions(tokens: string[], answer: SyntaxAnswer): Con
     let found = false
     for (let j = i - 1; j >= 0; j--) {
       if (role[j] === '前O' && !claimed.has(j)) break // 間に別の前O があるなら対応しない
-      if (pos[j] === '前置詞' && !claimed.has(j)) {
+      if (pos[j] === 'p' && !claimed.has(j)) {
         claimed.add(j)
         found = true
         break
@@ -128,11 +133,11 @@ export function checkContradictions(tokens: string[], answer: SyntaxAnswer): Con
     }
   })
   tokens.forEach((w, i) => {
-    if (pos[i] !== '前置詞' || claimed.has(i)) return
+    if (pos[i] !== 'p' || claimed.has(i)) return
     // この前置詞より後ろに（次の前置詞より手前で）前O があるか
     let found = false
     for (let j = i + 1; j < tokens.length; j++) {
-      if (pos[j] === '前置詞') break
+      if (pos[j] === 'p') break
       if (role[j] === '前O') {
         found = true
         break
@@ -162,7 +167,7 @@ export function checkContradictions(tokens: string[], answer: SyntaxAnswer): Con
       return
     }
     const p = pos[prev]
-    if (p && !['名詞', '代名詞'].includes(p)) {
+    if (p && p !== 'n') {
       out.push({
         code: 'angle-no-noun',
         severity: 'error',

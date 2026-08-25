@@ -19,6 +19,9 @@ import {
   emptyAnswer,
   gradeSyntax,
   modelAnswer,
+  POS_LETTER_LEGEND,
+  POS_LETTER_OPTIONS,
+  posLetter,
   SYNTAX_PROBLEMS,
   type SyntaxAnswer,
   type SyntaxGrade,
@@ -50,16 +53,25 @@ export default function SyntaxDrillPage() {
         <p className="mb-3 text-sm leading-relaxed text-ink-2">
           {inputMode === 'pen' ? (
             <>
-              ペンで英文に直接書き込みます。<b>括弧・下線は本文に</b>、<b>品詞は単語の上</b>、
+              ペンで英文に直接書き込みます。<b>括弧・下線は本文に</b>、<b>品詞は単語の上に英字</b>、
               <b>働き（S・V・O など）は単語の下</b>に書くと、その場で判別して単語に付きます。
               マスをタップして一覧から選ぶこともできます。
             </>
           ) : (
             <>
-              単語の<b>上をタップ→品詞</b>、<b>下をタップ→働き</b>（S・V・O・C・M など）。
+              単語の<b>上をタップ→品詞（英字）</b>、<b>下をタップ→働き</b>（S・V・O・C・M など）。
               まとまりは下のボタンを押してから、最初の単語→最後の単語の順にタップします。
             </>
           )}
+        </p>
+        <p className="mb-3 rounded-xl bg-paper p-2.5 text-xs leading-relaxed text-ink-2">
+          品詞の書き方:{' '}
+          {POS_LETTER_OPTIONS.map((o, i) => (
+            <span key={o}>
+              {i > 0 && ' ／ '}
+              <b>{o}</b>={POS_LETTER_LEGEND[o]}
+            </span>
+          ))}
         </p>
 
         <div className="mb-3 flex gap-1.5">
@@ -128,6 +140,7 @@ export default function SyntaxDrillPage() {
             posMarks={grade?.posMark}
             roleMarks={grade?.roleMark}
             spanMarks={grade?.spanMark}
+            posOptions={POS_LETTER_OPTIONS}
           />
         )}
 
@@ -149,7 +162,9 @@ export default function SyntaxDrillPage() {
           <button
             type="button"
             onClick={() => {
-              const m = modelAnswer(problem)
+              const raw = modelAnswer(problem)
+              // 正解表は漢字の品詞名なので、表示用に英字略記へそろえる
+              const m = { ...raw, pos: raw.pos.map((v) => (v == null ? null : posLetter(v))) }
               setAnswer(m)
               setGrade(gradeSyntax(problem, m))
             }}

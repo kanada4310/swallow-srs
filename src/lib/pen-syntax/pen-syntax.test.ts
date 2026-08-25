@@ -19,7 +19,7 @@ import {
   snapOpenBracket,
 } from './snap'
 import { applySymbol, emptyPenAnnotation } from './apply'
-import { classifyRoleLetter } from './letters'
+import { classifyPosLetter, classifyRoleLetter } from './letters'
 import type { PenStroke, TokenBox } from './types'
 import { emptyAnswer, SYNTAX_PROBLEMS } from '@/lib/reading/syntax'
 
@@ -139,6 +139,22 @@ describe('classifyRoleLetter（働きの文字）', () => {
     expect(classifyRoleLetter(M).best?.symbol).toBe('M')
   })
 
+  it('品詞の英字（n・v・a・ad・aux・p）を判別する', () => {
+    const n = [line([32, 38], [32, 92]), [...arc(50, 64, 18, 180, 360, 10), ...line([68, 64], [68, 92])]]
+    const v = [line([30, 40], [50, 92], [70, 40])]
+    const a = [arc(46, 69, 21, -40, 320, 16), line([66, 46], [66, 92])]
+    const ad = [
+      arc(24, 72, 18, -40, 320, 14),
+      line([40, 54], [40, 92]),
+      arc(66, 72, 17, -40, 320, 14),
+      line([83, 28], [83, 92]),
+    ]
+    expect(classifyPosLetter(n).best?.symbol).toBe('n')
+    expect(classifyPosLetter(v).best?.symbol).toBe('v')
+    expect(classifyPosLetter(a).best?.symbol).toBe('a')
+    expect(classifyPosLetter(ad).best?.symbol).toBe('ad')
+  })
+
   it('お手本登録した字も照合対象になる', () => {
     // 内蔵お手本と大きく違う書き方の「V」（浅いチェック型）を登録すると拾えるようになる
     const odd = [line([10, 40], [45, 70], [90, 20])]
@@ -244,10 +260,10 @@ describe('applySymbol（解答への反映）', () => {
     expect(r.next.answer.spans).toEqual([{ from: 0, to: 1, type: 'ul' }])
   })
 
-  it('上の行の文字は品詞、下の行の文字は働きに入る', () => {
+  it('上の行の文字は品詞（英字略記のまま）、下の行の文字は働きに入る', () => {
     let state = init()
-    const pos = applySymbol(state, '名', [line([80, 10], [120, 30])], BOXES)
-    expect(pos.next.answer.pos[1]).toBe('名詞')
+    const pos = applySymbol(state, 'n', [line([80, 10], [120, 30])], BOXES)
+    expect(pos.next.answer.pos[1]).toBe('n')
     state = pos.next
     const role = applySymbol(state, 'S', [line([85, 80], [115, 95])], BOXES)
     expect(role.next.answer.role[1]).toBe('S')

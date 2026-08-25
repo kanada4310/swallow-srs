@@ -105,6 +105,31 @@ describe('checkContradictions（矛盾検査）', () => {
     expect(checkContradictions(tokens, a).some((f) => f.code === 'no-v')).toBe(true)
   })
 
+  it('品詞が英字略記（ad・p など）で書かれていても同じ検査が働く', () => {
+    const a = answerFor(tokens, {})
+    a.pos[6] = 'ad' // 副詞
+    a.role[6] = 'C'
+    expect(checkContradictions(tokens, a).some((f) => f.code === 'adverb-role')).toBe(true)
+
+    const b = answerFor(tokens, {})
+    b.pos[2] = 'p' // 前置詞
+    b.role[2] = 'V'
+    expect(checkContradictions(tokens, b).some((f) => f.code === 'v-role-pos')).toBe(true)
+
+    const c = answerFor(tokens, {})
+    c.pos[2] = 'p'
+    c.role[3] = '前O'
+    c.role[5] = 'V'
+    expect(checkContradictions(tokens, c).some((f) => f.code === 'po-without-p')).toBe(false)
+  })
+
+  it('英字 v は動詞・分詞を区別しないので V の働きと矛盾にしない', () => {
+    const a = answerFor(tokens, {})
+    a.pos[5] = 'v'
+    a.role[5] = 'V'
+    expect(checkContradictions(tokens, a).some((f) => f.code === 'v-role-pos')).toBe(false)
+  })
+
   it('採点（gradeSyntax）と独立に動く', () => {
     const problem = SYNTAX_PROBLEMS[0]
     const a = modelAnswer(problem)

@@ -39,7 +39,7 @@ type ModeKey = 'a' | 'b' | 'c-pos' | 'c-role' | 'free'
 const MODES: Array<{ key: ModeKey; label: string }> = [
   { key: 'a', label: '群A: 括弧4種＋下線' },
   { key: 'b', label: '群B: ○・波線・?・ダッシュ・Ø' },
-  { key: 'c-pos', label: '群C: 品詞の文字（上の行）' },
+  { key: 'c-pos', label: '群C: 品詞の英字（上の行）' },
   { key: 'c-role', label: '群C: 働きの文字（下の行）' },
   { key: 'free', label: '自由練習（数えない）' },
 ]
@@ -594,7 +594,7 @@ function EnrollmentSection({
   store: UserTemplateStore
   onStoreChange: (s: UserTemplateStore) => void
 }) {
-  const [symbol, setSymbol] = useState<SymbolId>('名')
+  const [symbol, setSymbol] = useState<SymbolId>('n')
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const strokesRef = useRef<PenStroke[]>([])
   const drawingRef = useRef<{ pointerId: number; stroke: PenPoint[] } | null>(null)

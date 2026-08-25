@@ -15,7 +15,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   isPunct,
-  POS_OPTIONS,
+  POS_LETTER_LEGEND,
+  POS_LETTER_OPTIONS,
+  posLetter,
   ROLE_OPTIONS,
   SPAN_TYPES,
   type Mark,
@@ -505,7 +507,7 @@ export function PenSyntaxAnnotator({
 
               <div className="flex flex-col items-center">
                 <Cell
-                  value={ann.answer.pos[i]}
+                  value={ann.answer.pos[i] == null ? null : posLetter(ann.answer.pos[i]!)}
                   mark={posMarks?.[i]?.mark}
                   onClick={() => !disabled && setPicker({ kind: 'pos', index: i })}
                 />
@@ -686,7 +688,7 @@ export function PenSyntaxAnnotator({
               「{tokens[picker.index]}」の{picker.kind === 'pos' ? '品詞' : '働き'}
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {(picker.kind === 'pos' ? POS_OPTIONS : ROLE_OPTIONS).map((o) => (
+              {(picker.kind === 'pos' ? POS_LETTER_OPTIONS : ROLE_OPTIONS).map((o) => (
                 <button
                   key={o}
                   type="button"
@@ -697,6 +699,11 @@ export function PenSyntaxAnnotator({
                   className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-ai"
                 >
                   {o}
+                  {picker.kind === 'pos' && (
+                    <span className="ml-1 text-[10px] font-normal text-ink-3">
+                      {POS_LETTER_LEGEND[o]}
+                    </span>
+                  )}
                 </button>
               ))}
               <button

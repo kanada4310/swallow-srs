@@ -12,6 +12,42 @@ export const POS_OPTIONS = [
   '名詞', '代名詞', '動詞', '助動詞', '形容詞', '副詞', '前置詞', '接続詞', '冠詞', '分詞', '不定詞',
 ]
 
+/**
+ * 品詞の英字略記（黄リー教式）。塾長の実書き込み（模範分析集 第7講・形式仕様.md）で
+ * 確認された字母のみを採用する: n=名詞・代名詞 / v=動詞（分詞・不定詞を含む） /
+ * a=冠詞・形容詞 / ad=副詞 / aux=助動詞 / p=前置詞。
+ * 接続詞は品詞の字母を書かない（従位=働き▷・等位=○囲みで表す）。
+ */
+export const POS_LETTER_OPTIONS = ['n', 'v', 'a', 'ad', 'aux', 'p']
+
+export const POS_LETTER_LEGEND: Record<string, string> = {
+  n: '名詞・代名詞',
+  v: '動詞（分詞・不定詞も）',
+  a: '冠詞・形容詞',
+  ad: '副詞',
+  aux: '助動詞',
+  p: '前置詞',
+}
+
+/** 品詞の値（漢字名・英字のどちらでも）→ 英字略記。未知の値はそのまま返す */
+const POS_TO_LETTER: Record<string, string> = {
+  名詞: 'n',
+  代名詞: 'n',
+  動詞: 'v',
+  分詞: 'v',
+  不定詞: 'v',
+  助動詞: 'aux',
+  形容詞: 'a',
+  冠詞: 'a',
+  副詞: 'ad',
+  前置詞: 'p',
+  接続詞: '接',
+}
+
+export function posLetter(value: string): string {
+  return POS_TO_LETTER[value] ?? value
+}
+
 export const ROLE_OPTIONS = ['S', 'V', 'O', 'C', 'M', '前O', '接']
 
 export type SpanType = 'ul' | 'adv' | 'n' | 'adjm' | 'comp'
@@ -170,13 +206,19 @@ export interface MarkResult {
   note?: string
 }
 
-export function judgeSlot(value: string | null, slot: KeySlot | undefined): MarkResult | null {
+export function judgeSlot(
+  value: string | null,
+  slot: KeySlot | undefined,
+  normalize: (v: string) => string = (v) => v,
+): MarkResult | null {
   if (!slot) return null
-  if (value == null) return { mark: 'bad', correct: slot.ok.join('/'), note: '未記入' }
-  if (slot.ok.includes(value)) return { mark: 'ok' }
-  const a = (slot.alt || []).find((x) => x.v === value)
+  const correct = Array.from(new Set(slot.ok.map(normalize))).join('/')
+  if (value == null) return { mark: 'bad', correct, note: '未記入' }
+  const nv = normalize(value)
+  if (slot.ok.some((o) => normalize(o) === nv)) return { mark: 'ok' }
+  const a = (slot.alt || []).find((x) => normalize(x.v) === nv)
   if (a) return { mark: 'alt', note: a.note }
-  return { mark: 'bad', correct: slot.ok.join('/') }
+  return { mark: 'bad', correct }
 }
 
 export interface SyntaxFeedback {
@@ -206,13 +248,18 @@ export function gradeSyntax(problem: SyntaxProblem, answer: SyntaxAnswer): Synta
   problem.tokens.forEach((w, i) => {
     const posSlot = k.pos?.[i]
     if (posSlot) {
-      const m = judgeSlot(answer.pos[i] ?? null, posSlot)!
+      // 品詞は英字略記（n/v/a/ad/aux/p）で書かれても漢字名の正解表と同値として採点する
+      const m = judgeSlot(answer.pos[i] ?? null, posSlot, posLetter)!
       posMark[i] = m
       total++
       if (m.mark !== 'bad') got++
-      if (m.mark === 'alt') feedback.push({ tone: 'alt', text: `△ 品詞「${w}」= ${answer.pos[i]}: ${m.note}` })
+      if (m.mark === 'alt')
+        feedback.push({ tone: 'alt', text: `△ 品詞「${w}」= ${posLetter(answer.pos[i] ?? '')}: ${m.note}` })
       else if (m.mark === 'bad')
-        feedback.push({ tone: 'bad', text: `× 品詞「${w}」: ${answer.pos[i] ?? '未記入'} → 正解は ${m.correct}` })
+        feedback.push({
+          tone: 'bad',
+          text: `× 品詞「${w}」: ${answer.pos[i] ? posLetter(answer.pos[i]!) : '未記入'} → 正解は ${m.correct}`,
+        })
     }
     const roleSlot = k.role?.[i]
     if (!isPunct(w) && roleSlot) {
