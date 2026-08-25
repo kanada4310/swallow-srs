@@ -68,7 +68,10 @@
       "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npx tsc --noEmit)",
       "Read(//c/Users/gaimo/AppData/Local/Programs/**)",
       "Read(//c/Users/gaimo/projects/**)",
-      "Read(//c/Users/gaimo/**)"
+      "Read(//c/Users/gaimo/**)",
+      "PowerShell(git push 2>&1)",
+      "PowerShell(git add docs/progress.md docs/progress/handoff-2026-08-25.md)",
+      "PowerShell(git commit -m \"docs: �{�Ԕ��f�̌��ʂ��L�^�ipush�ς݁E026�̂ݏm����ƂƂ��Ďc��j\")"
     ]
   }
 }
