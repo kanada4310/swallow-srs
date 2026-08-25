@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { SwallowMark } from '@/components/ui/SwallowMark'
 import { StudyDeckPicker } from '@/components/home/StudyDeckPicker'
+import { SpartaCard } from '@/components/home/SpartaCard'
 import { useStreak } from '@/lib/stats/useStreak'
 import { resolveDeckSettings } from '@/lib/srs/scheduler'
 import { db } from '@/lib/db/schema'
@@ -384,6 +385,9 @@ function StudentDashboard({ userId }: { userId: string }) {
           <div className="h-28 animate-pulse rounded-xl bg-white/10" />
         )}
       </section>
+
+      {/* スパルタ（登録があるときだけ表示） */}
+      <SpartaCard />
 
       {/* Recent Decks */}
       {recentDecks.length > 0 && (

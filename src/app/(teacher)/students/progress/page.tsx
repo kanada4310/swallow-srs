@@ -95,6 +95,12 @@ export default function StudentProgressPage() {
               読解の取組状況
             </Link>
             <Link
+              href="/students/sparta"
+              className="text-sm text-sora hover:text-sora-dark font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
+            >
+              スパルタの管理
+            </Link>
+            <Link
               href="/students/review-pause"
               className="text-sm text-sora hover:text-sora-dark font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ai"
             >
