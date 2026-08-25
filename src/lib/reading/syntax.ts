@@ -196,6 +196,26 @@ export const SYNTAX_PROBLEMS: SyntaxProblem[] = [
   },
 ]
 
+/**
+ * カッコの入れ子の深さ（0=一番外側）。spans と同じ並びで返す。
+ * 下線（ul）はカッコではないので深さ 0 のまま数えない。
+ * 範囲が同じカッコ同士は、先に書いたほうを外側とみなす。
+ * 開きと閉じを同じ深さの色で塗り分けるための表示用ロジック。
+ */
+export function bracketDepths(spans: StudentSpan[]): number[] {
+  return spans.map((s, i) => {
+    if (s.type === 'ul') return 0
+    let depth = 0
+    spans.forEach((o, j) => {
+      if (j === i || o.type === 'ul') return
+      const contains = o.from <= s.from && s.to <= o.to
+      const strictly = o.from < s.from || s.to < o.to
+      if (contains && (strictly || j < i)) depth++
+    })
+    return depth
+  })
+}
+
 /* ===================== 採点 ===================== */
 
 export type Mark = 'ok' | 'alt' | 'bad'

@@ -147,8 +147,34 @@ export function snapNearestToken(strokes: PenStroke[], boxes: TokenBox[]): SnapP
   return best
 }
 
+/** 下線の表示用の連結線分（コンテナ相対座標） */
+export interface UnderlineSegment {
+  left: number
+  right: number
+  /** 線を引く縦位置（単語の下端の少し下） */
+  y: number
+}
+
 /**
- * 2つの画をひとつの記号としてまとめて判別すべきか（Po・Ø・?・漢字などの複数画対応）。
+ * 下線のまとまり（from〜to）を、単語の間で途切れない連結線分にする（表示用）。
+ * 文が折り返して複数行にまたがる場合は行ごとに1本ずつ返す。
+ */
+export function underlineSegments(
+  span: { from: number; to: number },
+  boxes: TokenBox[],
+  gap = 2,
+): UnderlineSegment[] {
+  const covered = boxes.filter((t) => t.index >= span.from && t.index <= span.to)
+  if (covered.length === 0) return []
+  return groupLines(covered).map((line) => ({
+    left: Math.min(...line.boxes.map((t) => t.left)),
+    right: Math.max(...line.boxes.map((t) => t.right)),
+    y: line.bottom + gap,
+  }))
+}
+
+/**
+ * 2つの画をひとつの記号としてまとめて判別すべきか（Po・Ø・?・複数画の文字対応）。
  * 「時間が近く、場所も近い」を条件にする。
  */
 export function shouldGroupStrokes(

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  bracketDepths,
   emptyAnswer,
   gradeSyntax,
   isPunct,
@@ -83,6 +84,24 @@ describe('構文の練習', () => {
     const g = gradeSyntax(p, answer)
     expect(g.feedback.some((f) => f.text.includes('余分なまとまり'))).toBe(true)
     expect(g.percent).toBeLessThan(100)
+  })
+
+  it('カッコの入れ子の深さを数える（下線は数えない・同範囲は先に書いたほうが外）', () => {
+    expect(
+      bracketDepths([
+        { from: 2, to: 5, type: 'adjm' }, // 外側
+        { from: 3, to: 5, type: 'adv' }, // 1段内側
+        { from: 4, to: 5, type: 'ul' }, // 下線（カッコではない）
+        { from: 4, to: 4, type: 'n' }, // 2段内側
+      ]),
+    ).toEqual([0, 1, 0, 2])
+    expect(
+      bracketDepths([
+        { from: 1, to: 3, type: 'n' },
+        { from: 1, to: 3, type: 'adv' }, // 同じ範囲: 後から書いたほうが内側
+        { from: 5, to: 6, type: 'adv' }, // 離れたカッコは深さ 0
+      ]),
+    ).toEqual([0, 1, 0])
   })
 
   it('まとまりの種類が違えば正解を示す', () => {

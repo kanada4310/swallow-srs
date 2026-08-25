@@ -17,6 +17,7 @@ import {
   snapHorizontalRange,
   snapNearestToken,
   snapOpenBracket,
+  underlineSegments,
 } from './snap'
 import { applySymbol, emptyPenAnnotation } from './apply'
 import { classifyPosLetter, classifyRoleLetter } from './letters'
@@ -219,6 +220,27 @@ describe('snap（単語への吸着）', () => {
     expect(laneOf(letter, BOXES)).toBe('below')
     expect(laneOf([line([90, 10], [110, 20])], BOXES)).toBe('above')
     expect(laneOf([line([90, 45], [110, 60])], BOXES)).toBe('band')
+  })
+
+  it('下線の表示線分は単語間で途切れず1本につながる', () => {
+    // 1〜3語目（left=10〜right=200）に引いた下線 → 行全体で1本
+    const segs = underlineSegments({ from: 0, to: 2 }, BOXES, -3)
+    expect(segs).toHaveLength(1)
+    expect(segs[0].left).toBe(10)
+    expect(segs[0].right).toBe(200)
+    expect(segs[0].y).toBe(67) // 単語下端(70) - 3
+  })
+
+  it('折り返しで複数行にまたがる下線は行ごとに1本ずつになる', () => {
+    const wrapped: TokenBox[] = [
+      { index: 0, left: 10, right: 60, top: 40, bottom: 70 },
+      { index: 1, left: 70, right: 120, top: 40, bottom: 70 },
+      { index: 2, left: 10, right: 60, top: 110, bottom: 140 }, // 2行目
+    ]
+    const segs = underlineSegments({ from: 0, to: 2 }, wrapped, 2)
+    expect(segs).toHaveLength(2)
+    expect(segs[0]).toEqual({ left: 10, right: 120, y: 72 })
+    expect(segs[1]).toEqual({ left: 10, right: 60, y: 142 })
   })
 
   it('時間と場所が近い画はひとまとめにする', () => {

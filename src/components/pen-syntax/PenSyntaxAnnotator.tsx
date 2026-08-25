@@ -14,6 +14,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
+  bracketDepths,
   isPunct,
   POS_LETTER_LEGEND,
   POS_LETTER_OPTIONS,
@@ -36,7 +37,7 @@ import type {
 import { applySymbol, emptyPenAnnotation, type PenAnnotation, type PenExtraMark } from '@/lib/pen-syntax/apply'
 import { recognizeGroup } from '@/lib/pen-syntax/recognize'
 import { evaluatePointer, initialPalmState, type InputPolicy, type PalmState } from '@/lib/pen-syntax/palm'
-import { groupLines, laneOf, pickLine, shouldGroupStrokes } from '@/lib/pen-syntax/snap'
+import { groupLines, laneOf, pickLine, shouldGroupStrokes, underlineSegments } from '@/lib/pen-syntax/snap'
 import { pathLength, strokesBBox } from '@/lib/pen-syntax/geometry'
 import type { UserTemplateStore } from '@/lib/pen-syntax/letters'
 
@@ -103,6 +104,19 @@ interface PenSyntaxAnnotatorProps {
 }
 
 const GROUP_WAIT_MS = 750
+
+/**
+ * 入れ子カッコの深さ別の色（Okabe-Ito の色覚多様性対応パレットから4色）。
+ * 深さ 0=青 / 1=朱 / 2=緑 / 3=赤紫 で循環する。
+ */
+const BRACKET_COLORS = ['#0072B2', '#D55E00', '#009E73', '#CC79A7']
+
+export function bracketColor(depth: number): string {
+  return BRACKET_COLORS[depth % BRACKET_COLORS.length]
+}
+
+/** カッコの文字を本文の行の高さの箱に入れて上下中央に置く（字がカッコの中央に来る） */
+const BRACKET_CLASS = 'mb-6 flex h-9 items-center self-end text-2xl font-bold'
 
 export function PenSyntaxAnnotator({
   tokens,
@@ -437,18 +451,17 @@ export function PenSyntaxAnnotator({
   /* ---------- 表示の下ごしらえ ---------- */
   const ann = annotationRef.current
   const brackets = useMemo(() => {
-    const opens: Record<number, StudentSpan[]> = {}
-    const closes: Record<number, StudentSpan[]> = {}
-    ann.answer.spans.forEach((s) => {
+    // 入れ子の対応がひと目で分かるよう、深さごとに色を変える（開きと閉じが同じ色）
+    const depths = bracketDepths(ann.answer.spans)
+    const opens: Record<number, Array<{ s: StudentSpan; depth: number }>> = {}
+    const closes: Record<number, Array<{ s: StudentSpan; depth: number }>> = {}
+    ann.answer.spans.forEach((s, i) => {
       if (s.type === 'ul') return
-      ;(opens[s.from] = opens[s.from] || []).push(s)
-      ;(closes[s.to] = closes[s.to] || []).push(s)
+      ;(opens[s.from] = opens[s.from] || []).push({ s, depth: depths[i] })
+      ;(closes[s.to] = closes[s.to] || []).push({ s, depth: depths[i] })
     })
     return { opens, closes }
   }, [ann.answer.spans])
-
-  const underlined = (i: number) =>
-    ann.answer.spans.some((s) => s.type === 'ul' && i >= s.from && i <= s.to)
 
   const extraAt = (i: number): PenExtraMark[] => ann.extras.filter((x) => i >= x.from && i <= x.to)
 
@@ -491,16 +504,16 @@ export function PenSyntaxAnnotator({
             <div key={i} className="flex items-end">
               {(brackets.opens[i] || [])
                 .slice()
-                .sort((a, b) => b.to - b.from - (a.to - a.from))
-                .map((s, n) => (
-                  <span key={`o${n}`} className="pb-6 text-lg font-bold text-ai-soft">
+                .sort((a, b) => b.s.to - b.s.from - (a.s.to - a.s.from))
+                .map(({ s, depth }, n) => (
+                  <span key={`o${n}`} className={BRACKET_CLASS} style={{ color: bracketColor(depth) }}>
                     {SPAN_TYPES[s.type].open}
                   </span>
                 ))}
               {ann.pendingOpens
                 .filter((p) => p.index === i)
                 .map((p, n) => (
-                  <span key={`p${n}`} className="pb-6 text-lg font-bold text-gray-300">
+                  <span key={`p${n}`} className={`${BRACKET_CLASS} text-gray-300`}>
                     {SPAN_TYPES[p.type].open}
                   </span>
                 ))}
@@ -516,8 +529,9 @@ export function PenSyntaxAnnotator({
                     wordRefs.current[i] = el
                   }}
                   className={[
-                    'whitespace-nowrap px-1 py-0.5 font-serif text-lg',
-                    underlined(i) ? 'border-b-[3px] border-ink' : 'border-b-[3px] border-transparent',
+                    // 下線そのものは単語間で途切れない連結線分として別レイヤーに描く
+                    // （下の「下線オーバーレイ」）。ここでは線ぶんの余白(3px)だけ確保する
+                    'whitespace-nowrap border-b-[3px] border-transparent px-1 py-0.5 font-serif text-lg',
                     extraAt(i).some((x) => x.kind === 'wavy') ? '[text-decoration:underline_wavy_#c53030]' : '',
                     extraAt(i).some((x) => x.kind === 'circle') ? 'rounded-full ring-2 ring-nodo' : '',
                   ].join(' ')}
@@ -556,15 +570,28 @@ export function PenSyntaxAnnotator({
 
               {(brackets.closes[i] || [])
                 .slice()
-                .sort((a, b) => a.to - a.from - (b.to - b.from))
-                .map((s, n) => (
-                  <span key={`c${n}`} className="pb-6 text-lg font-bold text-ai-soft">
+                .sort((a, b) => a.s.to - a.s.from - (b.s.to - b.s.from))
+                .map(({ s, depth }, n) => (
+                  <span key={`c${n}`} className={BRACKET_CLASS} style={{ color: bracketColor(depth) }}>
                     {SPAN_TYPES[s.type].close}
                   </span>
                 ))}
             </div>
           ))}
         </div>
+
+        {/* 下線オーバーレイ: 単語間で途切れない連結線（実測した単語の箱から行ごとに1本引く） */}
+        {ann.answer.spans.map((s, idx) =>
+          s.type === 'ul'
+            ? underlineSegments(s, boxes, -3).map((seg, j) => (
+                <div
+                  key={`ul${idx}-${j}`}
+                  className="pointer-events-none absolute bg-ink"
+                  style={{ left: seg.left, top: seg.y, width: seg.right - seg.left, height: 1.5 }}
+                />
+              ))
+            : null,
+        )}
 
         {/* ペン入力のキャンバス（指はスクロールもさせない＝手のひら対策。誤反応は数える） */}
         <canvas
