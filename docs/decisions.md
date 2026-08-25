@@ -18,6 +18,7 @@
 
 ### 2026-08-25
 - [20260825-sparta-program-management](decisions/20260825-sparta-program-management.md) `#teacher` `#sparta` `#mastery` `#review_logs` `#progress` _(Phase sparta)_ — スパルタプログラム管理（登録・自動進捗・終了判定）
+- [20260825-pen-syntax-feasibility](decisions/20260825-pen-syntax-feasibility.md) `#reading` `#ui-ux` `#pen-input` `#testing` _(Phase 読解 ペン入力検証)_ — 構文分析のペン入力 — 実現可能性検証の実装設計
 
 ### 2026-08-21
 - [20260821-syntax-ai-trial](decisions/20260821-syntax-ai-trial.md) `#reading` `#llm` `#schema` `#ui-ux` `#cost` _(Phase 読解 構文AI試行)_ — 構文添削AI判定の試行導入 — 実装設計
