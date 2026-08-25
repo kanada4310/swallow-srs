@@ -188,7 +188,7 @@ export default function ReadingIndexPage() {
           href="/reading/syntax"
           className="mt-4 block rounded-card border border-dashed border-gray-300 bg-white p-4 text-center shadow-sm transition-colors hover:bg-sora-soft"
         >
-          <span className="block text-sm font-bold text-ai">構文の素振り</span>
+          <span className="block text-sm font-bold text-ai">構文の練習</span>
           <span className="mt-0.5 block text-xs text-ink-3">
             1文の品詞と働きを書き込む練習（採点つき）
           </span>

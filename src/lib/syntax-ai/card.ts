@@ -20,7 +20,7 @@ function esc(s: string): string {
 }
 
 /**
- * 分析済みの1文をHTMLへ。素振り画面と同じ見た目の並び:
+ * 分析済みの1文をHTMLへ。構文の練習画面と同じ見た目の並び:
  * 語ごとに 上=品詞 / 中=語（下線つき）/ 下=働き、まとまりのカッコを語の前後に置く。
  */
 export function renderAnalysisHtml(tokens: string[], answer: AnswerLike): string {

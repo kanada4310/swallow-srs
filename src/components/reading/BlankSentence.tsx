@@ -3,7 +3,7 @@
 /**
  * 【構文に降りる】困った1文の作業台。
  *
- * 素振りと同じタップ入力（SyntaxAnnotator）で品詞・働き・まとまりを書き込める。
+ * 構文の練習と同じタップ入力（SyntaxAnnotator）で品詞・働き・まとまりを書き込める。
  * 書き込みは講の途中保存（reading_progress の syntax 欄）に入る。
  *
  * 構文AI試行（ADR syntax-ai-trial）:

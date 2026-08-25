@@ -10,7 +10,7 @@ import {
 
 const byId = (id: string): SyntaxProblem => SYNTAX_PROBLEMS.find((p) => p.id === id)!
 
-describe('構文の素振り', () => {
+describe('構文の練習', () => {
   it('練習問題が3問ある', () => {
     expect(SYNTAX_PROBLEMS).toHaveLength(3)
   })

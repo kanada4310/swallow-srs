@@ -74,7 +74,7 @@ function toResult(matches: Array<{ symbol: string; score: number }>): Recognitio
 export function roleLetterToAppRole(letter: RoleLetter): string {
   if (letter === 'Po') return '前O'
   if (letter === '▷') return '接'
-  if (letter === 'P') return 'M' // アプリの素振りでは前置詞の働きを M と表記している
+  if (letter === 'P') return 'M' // アプリの構文の練習では前置詞の働きを M と表記している
   return letter
 }
 

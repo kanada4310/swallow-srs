@@ -197,7 +197,7 @@ export interface SyntaxDialogueTurn {
 
 /** 1文ぶんの構文の書き込み（reading_progress の JSON に入る。学習エンジンには触れない） */
 export interface SentenceSyntaxWork {
-  /** タップ入力の書き込み（品詞・働き・まとまり）。形は素振りと同じ */
+  /** タップ入力の書き込み（品詞・働き・まとまり）。形は構文の練習と同じ */
   answer: {
     pos: Array<string | null>
     role: Array<string | null>

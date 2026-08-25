@@ -402,7 +402,7 @@ export default function PenLabPage() {
     <AppLayout>
       <div className="mx-auto max-w-2xl px-4 py-6 pb-24">
         <Link href="/reading/syntax" className="text-xs font-semibold text-sora-dark">
-          ← 構文の素振り
+          ← 構文の練習
         </Link>
         <h1 className="mb-1 mt-1 text-2xl font-extrabold text-ai">ペン判別の計測</h1>
         <p className="mb-3 text-sm leading-relaxed text-ink-2">

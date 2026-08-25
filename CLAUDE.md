@@ -407,7 +407,7 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
 ## 構文添削AI判定の試行（2026-08-21）✅ 本番反映済み（**025適用済み**／試行は停止中・対象生徒0人）
 
 読解ページの1文画面「構文に降りる」を作業台化し、AI判定・添削問答・復習カード連携を追加（ADR `20260821-syntax-ai-trial`、承認は秘書ADR同slug）。試行の枠=**上限月3,000円・対象生徒2〜3人・期間1ヶ月**。
-- **入力**: 素振りのタップ入力UIを `SyntaxAnnotator` に共通化し `BlankSentence` に搭載。書き込みは `reading_progress` の JSON の `syntax` 欄（鍵=「段落:文」・`reconcileProgress` が教材作り直しに耐える形で引き継ぐ）。「分からない」マーク（波線＋?）は文単位のボタン
+- **入力**: 構文の練習のタップ入力UIを `SyntaxAnnotator` に共通化し `BlankSentence` に搭載。書き込みは `reading_progress` の JSON の `syntax` 欄（鍵=「段落:文」・`reconcileProgress` が教材作り直しに耐える形で引き継ぐ）。「分からない」マーク（波線＋?）は文単位のボタン
 - **AI判定** `POST /api/reading/syntax-ai/judge`（1往復・JSON・文順全件。kind=notation直接示す/question問いの型①〜⑤/confirm根拠確認。clean=notation・questionゼロで**確定**）。**問答** `POST /api/reading/syntax-ai/dialogue`（履歴携行・正解を言わず引き先を指す）。入口可否 `GET /api/reading/syntax-ai/status`
 - **試行の枠の機械的担保**: `025_syntax_ai_trial.sql`（`syntax_ai_config` 1行=許可生徒最大3人・期間・上限・モデル / `syntax_ai_usage`=呼び出しごとのトークン・概算費用円）。ゲート判定 `src/lib/syntax-ai/gate.ts`（有効→許可→期間→当月額<上限。月=JST暦月）。講師画面 `/students/syntax-ai`（使用額・回数・生徒別実測・設定変更。導線は /students/progress）
 - **★上限装置は必ず「止まる側」に倒す**（2026-08-21 秘書の審査で修正）: ①**使用額を集計できないときは受け付けない**（`monthSpentYen` は失敗時 `null`、`checkGate` が `usage-unknown` で拒否。0円扱いにすると上限が素通りする）②**費用は先取り計上**（`callClaudeAndRecord` が ①最悪値 `reserveCostYen` で1行置く→②置けなければ `UsageRecordUnavailableError` でAIを呼ばずに503→③実測値に置き換える）。呼んだ後に記録する順序だと、記録が落ちたとき使用額が過少になり上限が効かなくなる
@@ -442,7 +442,7 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
   解答反映（`apply.ts`・開き→閉じで span、○囲み等は採点対象外 extras）・内蔵お手本（`templates.ts`）
 - **ペン入力部品** `src/components/pen-syntax/PenSyntaxAnnotator.tsx`: キャンバス重ね書き→判別→吸着、
   迷ったら候補チップでワンタップ確定→一覧（ボタン）への逃げ道、一手戻す。**共有部品 SyntaxAnnotator は不変**
-- **素振りページ** `/reading/syntax`: ペン方式が既定・タップ方式は切り替えで残置（逃げ道）。
+- **構文の練習ページ**（旧称: 構文の素振り・2026-08-25 改名） `/reading/syntax`: ペン方式が既定・タップ方式は切り替えで残置（逃げ道）。
   採点に**矛盾検査**（`src/lib/reading/syntax-check.ts`・テスト14件・ルールブックの言い切り7項目＝
   Sが2つ/品詞と働きの対応/前置詞と前O/〈 〉の直前に名詞/{ }の前にO/[ ]に役割/Vがない）を表示
 - **計測ページ** `/reading/syntax/pen-lab`: お題方式で判別・吸着の正誤を自動集計（二車線別）＋

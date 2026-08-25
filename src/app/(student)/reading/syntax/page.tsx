@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * 構文の素振り — 1文の品詞（上）と働き（下）を書き込んで採点する練習。
+ * 構文の練習 — 1文の品詞（上）と働き（下）を書き込んで採点する練習。
  *
  * 入力は2方式:
  * - ペン方式（既定）: 英文の上にペンで括弧・下線・○・文字を直接書く（実現可能性検証の試作）
@@ -46,7 +46,7 @@ export default function SyntaxDrillPage() {
         <Link href="/reading" className="text-xs font-semibold text-sora-dark">
           ← 読解の一覧
         </Link>
-        <h1 className="mb-1 mt-1 text-2xl font-extrabold text-ai">構文の素振り</h1>
+        <h1 className="mb-1 mt-1 text-2xl font-extrabold text-ai">構文の練習</h1>
         <p className="mb-3 text-sm leading-relaxed text-ink-2">
           {inputMode === 'pen' ? (
             <>
