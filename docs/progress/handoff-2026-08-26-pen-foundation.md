@@ -13,7 +13,8 @@ ADR: `docs/decisions/20260826-pen-foundation-hardening.md`
    （品詞p廃止・＋記法・○囲み漢字・深さの自動色分けとダッシュ相互変換・カッコ下の働き欄）・
    入力の記録の**再生テスト化**（実機不具合3件収録）・設計の1枚
 3. テスト688件全緑（開始時664件）・ビルド成功・開発サーバーで2画面確認済み。
-   **本番反映は塾長の push 承認待ち**（質問ファイル 2026-08-26-srs-pen-foundation-push.md）
+   **push は承認済み（回答A）だが、セッションの実行権限の制限で push コマンドが止められ未反映**
+   （下の「残り」参照。`git push origin main` を1回実行すれば反映される）
 
 ## 設計の弱点一覧と直した点
 
@@ -63,8 +64,12 @@ ADR: `docs/decisions/20260826-pen-foundation-hardening.md`
 
 ## 残り・次にやること
 
-1. **push 承認待ち**: `knowledge/sessions/questions/2026-08-26-srs-pen-foundation-push.md`。
-   承認後 push→デプロイ確認→2画面確認
+1. **push の実行（承認済み・コマンドだけ保留）**: 回答A（answers/2026-08-26-srs-pen-foundation-push.md）で
+   承認済みだが、このセッションでは実行権限の制限で `git push` が止められた。
+   swallow-srs で `git push origin main` を1回実行（未反映9コミット＝本題8件＋前セッションの
+   記録1件・docsのみ）→ Vercel のデプロイ Ready を確認 → 本番の「構文の練習」
+   「ペン判別の計測」の2画面を確認（`node scripts/device-preview.mjs --base=https://srs.swallow-base.com
+   --device="iPad Mini" --paths=/reading/syntax,/reading/syntax/pen-lab --wait=9000`）
 2. 塾長の実機確認（反映後）: ①エリア外の指スクロールが待ちなしで効くか
    ②手のひらを載せたまま書けるか ③エリア外のボタンが指で押せるか（ペンでは無効）
    ④＋・○囲み漢字の書き味 ⑤深さの色分けの見え方
