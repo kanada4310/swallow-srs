@@ -18,6 +18,7 @@
 
 ### 2026-08-26
 - [20260826-pen-input-acceptance](decisions/20260826-pen-input-acceptance.md) `#pen-syntax` `#reading` `#input` `#palm` `#diagnostics` _(Phase 構文分析のペン入力)_ — ペン入力の受け付け方針: ペン由来の互換タッチは止めない・描画中は画面を固定する
+- [20260826-pen-finger-scroll](decisions/20260826-pen-finger-scroll.md) `#pen-syntax` `#reading` `#input` `#palm` `#ux` _(Phase 構文分析のペン入力)_ — ペン入力モード中の指の扱い: 常時無効化をやめ「ペンの接近・接触中と直後だけ止める」時間窓方式に
 
 ### 2026-08-25
 - [20260825-sparta-program-management](decisions/20260825-sparta-program-management.md) `#teacher` `#sparta` `#mastery` `#review_logs` `#progress` _(Phase sparta)_ — スパルタプログラム管理（登録・自動進捗・終了判定）
