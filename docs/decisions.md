@@ -17,6 +17,7 @@
 ## ADR 一覧 (新しい順)
 
 ### 2026-08-26
+- [20260826-pen-onboarding-calibration](decisions/20260826-pen-onboarding-calibration.md) `#pen-syntax` `#reading` `#input` `#recognition` `#ux` _(Phase 構文分析のペン入力)_ — ペン入力の初回お手本登録の義務化と、登録お手本による閉じ括弧の判別強化・記号の扱い3点の修正
 - [20260826-pen-input-acceptance](decisions/20260826-pen-input-acceptance.md) `#pen-syntax` `#reading` `#input` `#palm` `#diagnostics` _(Phase 構文分析のペン入力)_ — ペン入力の受け付け方針: ペン由来の互換タッチは止めない・描画中は画面を固定する
 - [20260826-pen-finger-scroll](decisions/20260826-pen-finger-scroll.md) `#pen-syntax` `#reading` `#input` `#palm` `#ux` _(Phase 構文分析のペン入力)_ — ペン入力モード中の指の扱い: 常時無効化をやめ「ペンの接近・接触中と直後だけ止める」時間窓方式に
 
