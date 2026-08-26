@@ -51,14 +51,14 @@ export interface ApplyOutcome {
   target?: { from: number; to: number }
 }
 
-const OPEN_TO_SPAN: Partial<Record<SymbolId, SpanType>> = {
+export const OPEN_TO_SPAN: Partial<Record<SymbolId, SpanType>> = {
   'paren-open': 'adv',
   'square-open': 'n',
   'angle-open': 'adjm',
   'brace-open': 'comp',
 }
 
-const CLOSE_TO_SPAN: Partial<Record<SymbolId, SpanType>> = {
+export const CLOSE_TO_SPAN: Partial<Record<SymbolId, SpanType>> = {
   'paren-close': 'adv',
   'square-close': 'n',
   'angle-close': 'adjm',

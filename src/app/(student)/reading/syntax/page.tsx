@@ -28,6 +28,18 @@ import {
   saveOnboardingDone,
 } from '@/lib/pen-syntax/onboarding'
 import {
+  appendOrderHistory,
+  describeStep,
+  loadModelOrders,
+  reduceOrderEvents,
+  saveModelOrder,
+  type AnalysisStep,
+  type ModelOrder,
+  type OrderEvent,
+} from '@/lib/pen-syntax/order'
+import { nextOrderHint, type OrderHint } from '@/lib/pen-syntax/order-hints'
+import { ModelOrderPanel } from '@/components/pen-syntax/ModelOrderPanel'
+import {
   emptyAnswer,
   gradeSyntax,
   modelAnswer,
@@ -42,12 +54,24 @@ import {
 import { checkContradictions } from '@/lib/reading/syntax-check'
 
 export default function SyntaxDrillPage() {
-  const { userId, isLoading: authLoading } = useAuth()
+  const { userId, profile, isLoading: authLoading } = useAuth()
+  const isTeacher = profile?.role === 'teacher' || profile?.role === 'admin'
   const [problemIdx, setProblemIdx] = useState(0)
   const problem = SYNTAX_PROBLEMS[problemIdx]
   const [answer, setAnswer] = useState<SyntaxAnswer>(() => emptyAnswer(SYNTAX_PROBLEMS[0]))
   const [grade, setGrade] = useState<SyntaxGrade | null>(null)
   const [inputMode, setInputMode] = useState<'pen' | 'tap'>('pen')
+  // 分析の順序の記録（ペン方式のみ）: 記入・取り消し・削除を時系列でため、採点時に並びへ畳む
+  const orderEventsRef = useRef<OrderEvent[]>([])
+  const [orderSteps, setOrderSteps] = useState<AnalysisStep[]>([])
+  // 検討順ヒント「迷ったらまずこれ」（規則ベース・答えは言わない）
+  const [hint, setHint] = useState<OrderHint | null>(null)
+  // 模範の順序（講師用・この端末に保存）
+  const [modelOrders, setModelOrders] = useState<ModelOrder[]>([])
+  const [modelSaved, setModelSaved] = useState(false)
+  useEffect(() => {
+    if (isTeacher) setModelOrders(loadModelOrders())
+  }, [isTeacher])
   // 既定は「ペンのみ」（手のひら対策）。ペンが反応しない端末向けの逃げ道として切り替え可
   const [penPolicy, setPenPolicy] = useState<InputPolicy>('pen-only')
   // 入力の記録（実機不具合の報告用）と、無効化した接触の件数表示
@@ -79,6 +103,28 @@ export default function SyntaxDrillPage() {
     setProblemIdx(idx)
     setAnswer(emptyAnswer(SYNTAX_PROBLEMS[idx]))
     setGrade(null)
+    orderEventsRef.current = []
+    setOrderSteps([])
+    setHint(null)
+    setModelSaved(false)
+  }
+
+  const gradeNow = () => {
+    const g = gradeSyntax(problem, answer)
+    setGrade(g)
+    setModelSaved(false)
+    // 確定した分析に「どの記号をどの順で書いたか」を付帯情報として持つ（ペン方式のみ）
+    const steps = inputMode === 'pen' ? reduceOrderEvents(orderEventsRef.current) : []
+    setOrderSteps(steps)
+    if (steps.length > 0) {
+      appendOrderHistory({
+        problemId: problem.id,
+        problemTitle: problem.title,
+        steps,
+        percent: g.percent,
+        gradedAt: new Date().toISOString(),
+      })
+    }
   }
 
   const contradictions = grade ? checkContradictions(problem.tokens, answer) : []
@@ -192,6 +238,37 @@ export default function SyntaxDrillPage() {
             }}
           />
         )}
+        {!showOnboarding && (
+          <div className="mb-3">
+            <button
+              type="button"
+              onClick={() => setHint(nextOrderHint(problem.tokens, answer))}
+              className="rounded-full border border-sora bg-white px-3 py-1.5 text-xs font-bold text-sora-dark"
+            >
+              💡 迷ったらまずこれ
+            </button>
+            {hint && (
+              <div className="mt-2 rounded-xl border border-sora/40 bg-sora-soft p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-bold text-ai">{hint.title}</p>
+                  <button
+                    type="button"
+                    onClick={() => setHint(null)}
+                    aria-label="ヒントを閉じる"
+                    className="shrink-0 rounded-lg px-2 py-0.5 text-xs font-bold text-ink-3"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <p className="mt-1 text-xs leading-relaxed text-ink-2">{hint.guide}</p>
+                <p className="mt-1 text-[10px] text-ink-3">
+                  ※ 正解ではなく「次に調べる対象と調べ方」の案内です。書き込みが進んだら、もう一度押すと次の項目が出ます。
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
         {inputMode === 'pen' && needOnboarding === null ? null : inputMode === 'pen' ? (
           !showOnboarding && (
             <PenSyntaxAnnotator
@@ -207,6 +284,7 @@ export default function SyntaxDrillPage() {
               policy={penPolicy}
               templateStore={templateStore}
               inputLog={inputLogRef.current}
+              onOrderEvent={(ev) => orderEventsRef.current.push(ev)}
               onPalm={setPalm}
             />
           )
@@ -237,7 +315,7 @@ export default function SyntaxDrillPage() {
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => setGrade(gradeSyntax(problem, answer))}
+            onClick={gradeNow}
             className="flex-1 rounded-xl bg-nodo px-4 py-3 text-base font-bold text-white"
           >
             採点する
@@ -257,6 +335,9 @@ export default function SyntaxDrillPage() {
               const m = { ...raw, pos: raw.pos.map((v) => (v == null ? null : posLetter(v))) }
               setAnswer(m)
               setGrade(gradeSyntax(problem, m))
+              // 表示した正解は自分で書いた並びではないので、順序の表示は消す
+              setOrderSteps([])
+              setModelSaved(false)
             }}
             className="rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-bold text-ai"
           >
@@ -313,6 +394,44 @@ export default function SyntaxDrillPage() {
               </div>
             )}
 
+            {orderSteps.length > 0 && (
+              <div className="rounded-xl border border-gray-200 bg-white p-3">
+                <p className="mb-1 text-sm font-bold text-ai">
+                  ✍️ 書いた順序
+                  <span className="ml-1 text-xs font-normal text-ink-3">
+                    — どの記号をどの順で書いたか（筆画の時刻から。順序も大切な作業）
+                  </span>
+                </p>
+                <ol className="list-decimal space-y-0.5 pl-5 text-sm text-ink-2">
+                  {orderSteps.map((s, i) => (
+                    <li key={i}>{describeStep(s, problem.tokens)}</li>
+                  ))}
+                </ol>
+                {isTeacher && (
+                  <button
+                    type="button"
+                    disabled={modelSaved}
+                    onClick={() => {
+                      setModelOrders(
+                        saveModelOrder({
+                          problemId: problem.id,
+                          problemTitle: problem.title,
+                          steps: orderSteps,
+                          summary: orderSteps.map((s) => describeStep(s, problem.tokens)),
+                        }),
+                      )
+                      setModelSaved(true)
+                    }}
+                    className={`mt-2 rounded-xl px-3 py-2 text-xs font-bold ${
+                      modelSaved ? 'bg-paper text-ink-3' : 'bg-sora text-white'
+                    }`}
+                  >
+                    {modelSaved ? '模範の順序として保存しました' : 'この筆順を模範の順序として保存（講師）'}
+                  </button>
+                )}
+              </div>
+            )}
+
             {problem.key.notes.length > 0 && (
               <div className="rounded-xl bg-sora-soft p-3 text-sm text-ai">
                 <p className="mb-1 font-bold">この文の分析ポイント・曖昧箇所</p>
@@ -331,6 +450,17 @@ export default function SyntaxDrillPage() {
             </summary>
             <div className="mt-2">
               <PenInputLogPanel log={inputLogRef.current} />
+            </div>
+          </details>
+        )}
+
+        {isTeacher && (
+          <details className="mt-4">
+            <summary className="cursor-pointer text-xs font-semibold text-ink-3">
+              模範の順序（講師用・この端末に保存 {modelOrders.length} 件）
+            </summary>
+            <div className="mt-2">
+              <ModelOrderPanel orders={modelOrders} onOrdersChange={setModelOrders} />
             </div>
           </details>
         )}

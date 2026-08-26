@@ -35,6 +35,7 @@ import type {
   TokenBox,
 } from '@/lib/pen-syntax/types'
 import { applySymbol, emptyPenAnnotation, type PenAnnotation, type PenExtraMark } from '@/lib/pen-syntax/apply'
+import { orderKeyFor, strokeStartTime, type OrderEvent } from '@/lib/pen-syntax/order'
 import { dashesForDepth, depthOfToken } from '@/lib/pen-syntax/dash-notation'
 import { deprecatedGuidance, symbolLabel } from '@/lib/pen-syntax/ledger'
 import { recognizeGroup } from '@/lib/pen-syntax/recognize'
@@ -87,6 +88,8 @@ interface PenSyntaxAnnotatorProps {
   policy?: InputPolicy
   templateStore?: UserTemplateStore | null
   onEvent?: (ev: PenRecognitionEvent) => void
+  /** 分析の順序の記録（order.ts）。記入・取り消し・削除を時系列で通知する */
+  onOrderEvent?: (ev: OrderEvent) => void
   onPalm?: (state: PalmState) => void
   /** 診断用「入力の記録」。渡すと接触の受理/拒否と画面の移動を時系列で記録する */
   inputLog?: PenInputLog | null
@@ -118,6 +121,7 @@ export function PenSyntaxAnnotator({
   policy = 'pen-only',
   templateStore = null,
   onEvent,
+  onOrderEvent,
   onPalm,
   inputLog = null,
 }: PenSyntaxAnnotatorProps) {
@@ -236,9 +240,24 @@ export function PenSyntaxAnnotator({
       if (out.message) showToast(out.message)
       if (out.applied) emitAnnotation(out.next)
       else historyRef.current.pop()
+      if (out.applied && out.target) {
+        // 分析の順序の記録: 筆画の開始時刻を並びの根拠にする（order.ts）
+        const key = orderKeyFor(symbol, out.target)
+        if (key) {
+          onOrderEvent?.({
+            kind: 'apply',
+            key,
+            symbol,
+            from: out.target.from,
+            to: out.target.to,
+            at: strokeStartTime(strokes) ?? performance.now(),
+            via: kind === 'candidate' ? 'chip' : 'pen',
+          })
+        }
+      }
       onEvent?.({ kind, symbol, candidates, lane, target: out.target, applied: out.applied })
     },
-    [emitAnnotation, onEvent, showToast],
+    [emitAnnotation, onEvent, onOrderEvent, showToast],
   )
 
   const finalizeGroup = useCallback(() => {
@@ -396,22 +415,35 @@ export function PenSyntaxAnnotator({
       showToast('戻せる操作がありません')
       return
     }
+    onOrderEvent?.({ kind: 'undo', at: performance.now() })
     emitAnnotation(prev)
   }
 
   const removeSpan = (idx: number) => {
     if (disabled) return
     const a = annotationRef.current
+    const s = a.answer.spans[idx]
+    if (s) onOrderEvent?.({ kind: 'remove', key: `span:${s.type}:${s.from}-${s.to}`, at: performance.now() })
     emitAnnotation({ ...a, answer: { ...a.answer, spans: a.answer.spans.filter((_, i) => i !== idx) } })
   }
 
   const removeExtra = (idx: number) => {
     const a = annotationRef.current
+    const x = a.extras[idx]
+    if (x) {
+      onOrderEvent?.({
+        kind: 'remove',
+        key: `extra:${x.kind === 'wavy' ? 'wavy' : x.label}:${x.from}-${x.to}`,
+        at: performance.now(),
+      })
+    }
     emitAnnotation({ ...a, extras: a.extras.filter((_, i) => i !== idx) })
   }
 
   const removePendingOpen = (idx: number) => {
     const a = annotationRef.current
+    const p = a.pendingOpens[idx]
+    if (p) onOrderEvent?.({ kind: 'remove', key: `open:${p.type}:${p.index}`, at: performance.now() })
     emitAnnotation({ ...a, pendingOpens: a.pendingOpens.filter((_, i) => i !== idx) })
   }
 
@@ -419,6 +451,11 @@ export function PenSyntaxAnnotator({
     const a = annotationRef.current
     const next = { ...a.answer, [kind]: [...a.answer[kind]] } as SyntaxAnswer
     next[kind][index] = value
+    const key = kind === 'pos' ? `pos:${index}` : `role:${index}-${index}`
+    if (value == null) onOrderEvent?.({ kind: 'remove', key, at: performance.now() })
+    else {
+      onOrderEvent?.({ kind: 'apply', key, symbol: value, from: index, to: index, at: performance.now(), via: 'list' })
+    }
     emitAnnotation({ ...a, answer: next })
   }
 
