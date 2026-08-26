@@ -45,6 +45,7 @@ import {
   loadUserTemplates,
   saveUserTemplate,
 } from '@/lib/pen-syntax/user-templates'
+import { BRACKET_SYMBOLS, OPTIONAL_SYMBOLS } from '@/lib/pen-syntax/onboarding'
 
 const TOKENS = ['The', 'girl', 'standing', 'by', 'the', 'door', 'is', 'my', 'sister', '.']
 
@@ -712,7 +713,13 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 /* ---------- お手本登録（本人の字を保存して判別に使う） ---------- */
 
-const ENROLLABLE: SymbolId[] = [...POS_LETTERS, ...ROLE_LETTERS]
+/** 登録できる記号: 括弧8種（閉じ括弧の判別強化に使う）＋文字＋任意の形の記号 */
+const ENROLLABLE: SymbolId[] = [
+  ...BRACKET_SYMBOLS,
+  ...POS_LETTERS,
+  ...ROLE_LETTERS,
+  ...OPTIONAL_SYMBOLS,
+]
 
 function EnrollmentSection({
   store,
@@ -776,7 +783,8 @@ function EnrollmentSection({
     <div className="rounded-card border border-gray-200 bg-white p-3 shadow-card">
       <p className="mb-1 text-sm font-bold text-ai">お手本登録（自分の字を判別に使う）</p>
       <p className="mb-2 text-xs text-ink-3">
-        文字の判別に迷いが多いときは、その文字を自分の字で1〜3回登録すると当たりやすくなります。
+        判別に迷いが多い記号・文字は、自分の字で1〜3回登録すると当たりやすくなります
+        （括弧は同じ向きの4種をそろえて登録すると閉じ括弧の見分けに効きます）。
         登録した字はこの端末の中だけに保存されます。
       </p>
       <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -787,7 +795,7 @@ function EnrollmentSection({
         >
           {ENROLLABLE.map((sym) => (
             <option key={sym} value={sym}>
-              {sym}（登録 {store[sym]?.length ?? 0} 件）
+              {symbolLabel(sym)}（登録 {store[sym]?.length ?? 0} 件）
             </option>
           ))}
         </select>

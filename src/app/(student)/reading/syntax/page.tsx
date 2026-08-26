@@ -10,14 +10,23 @@
  * ルールブックの言い切りによる「矛盾検査」（正解表なしで指摘できる項目）を表示する。
  */
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { useAuth } from '@/contexts/AuthContext'
 import { SyntaxAnnotator } from '@/components/reading/SyntaxAnnotator'
 import { PenSyntaxAnnotator } from '@/components/pen-syntax/PenSyntaxAnnotator'
+import { PenOnboarding } from '@/components/pen-syntax/PenOnboarding'
 import { PenInputLogPanel } from '@/components/pen-syntax/PenInputLogPanel'
 import { createPenInputLog, type PenInputLog } from '@/lib/pen-syntax/input-log'
 import { initialPalmState, type InputPolicy, type PalmState } from '@/lib/pen-syntax/palm'
+import type { UserTemplateStore } from '@/lib/pen-syntax/letters'
+import { loadUserTemplates } from '@/lib/pen-syntax/user-templates'
+import {
+  isEnrollmentComplete,
+  loadOnboardingDone,
+  saveOnboardingDone,
+} from '@/lib/pen-syntax/onboarding'
 import {
   emptyAnswer,
   gradeSyntax,
@@ -33,6 +42,7 @@ import {
 import { checkContradictions } from '@/lib/reading/syntax-check'
 
 export default function SyntaxDrillPage() {
+  const { userId, isLoading: authLoading } = useAuth()
   const [problemIdx, setProblemIdx] = useState(0)
   const problem = SYNTAX_PROBLEMS[problemIdx]
   const [answer, setAnswer] = useState<SyntaxAnswer>(() => emptyAnswer(SYNTAX_PROBLEMS[0]))
@@ -44,6 +54,26 @@ export default function SyntaxDrillPage() {
   const inputLogRef = useRef<PenInputLog | null>(null)
   if (!inputLogRef.current) inputLogRef.current = createPenInputLog()
   const [palm, setPalm] = useState<PalmState>(initialPalmState())
+
+  // 初回お手本登録（義務化）: 利用者ごとに1回だけ必ず通す。登録済みの字は判別に使う
+  const [templateStore, setTemplateStore] = useState<UserTemplateStore>({})
+  const [needOnboarding, setNeedOnboarding] = useState<boolean | null>(null)
+  const [redoOnboarding, setRedoOnboarding] = useState(false)
+  useEffect(() => {
+    if (authLoading) return
+    const s = loadUserTemplates()
+    setTemplateStore(s)
+    if (loadOnboardingDone(userId)) {
+      setNeedOnboarding(false)
+    } else if (isEnrollmentComplete(s)) {
+      // 計測ページなどで既に全種登録済みなら、案内は出さず完了扱いにする
+      saveOnboardingDone(userId)
+      setNeedOnboarding(false)
+    } else {
+      setNeedOnboarding(true)
+    }
+  }, [authLoading, userId])
+  const showOnboarding = inputMode === 'pen' && (needOnboarding === true || redoOnboarding)
 
   const load = (idx: number) => {
     setProblemIdx(idx)
@@ -142,21 +172,43 @@ export default function SyntaxDrillPage() {
           <p className="mt-1.5 text-xs text-ink-3">{problem.source}</p>
         </div>
 
-        {inputMode === 'pen' ? (
-          <PenSyntaxAnnotator
-            tokens={problem.tokens}
-            answer={answer}
-            onChange={(next) => {
-              setAnswer(next)
-              setGrade(null)
-            }}
-            posMarks={grade?.posMark}
-            roleMarks={grade?.roleMark}
-            spanMarks={grade?.spanMark}
+        {showOnboarding && (
+          <PenOnboarding
+            userId={userId}
+            store={templateStore}
+            onStoreChange={setTemplateStore}
             policy={penPolicy}
-            inputLog={inputLogRef.current}
-            onPalm={setPalm}
+            mode={redoOnboarding ? 'redo' : 'first'}
+            onFinish={() => {
+              setNeedOnboarding(false)
+              setRedoOnboarding(false)
+            }}
+            onExit={() => {
+              // 途中でやめたら登録済み分は残し、次回ペン方式を開いたとき続きから。
+              // それまでの練習はタップ方式で行える
+              setRedoOnboarding(false)
+              if (needOnboarding) setInputMode('tap')
+            }}
           />
+        )}
+        {inputMode === 'pen' && needOnboarding === null ? null : inputMode === 'pen' ? (
+          !showOnboarding && (
+            <PenSyntaxAnnotator
+              tokens={problem.tokens}
+              answer={answer}
+              onChange={(next) => {
+                setAnswer(next)
+                setGrade(null)
+              }}
+              posMarks={grade?.posMark}
+              roleMarks={grade?.roleMark}
+              spanMarks={grade?.spanMark}
+              policy={penPolicy}
+              templateStore={templateStore}
+              inputLog={inputLogRef.current}
+              onPalm={setPalm}
+            />
+          )
         ) : (
           <SyntaxAnnotator
             tokens={problem.tokens}
@@ -180,6 +232,7 @@ export default function SyntaxDrillPage() {
           </p>
         )}
 
+        {!showOnboarding && (
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
@@ -209,6 +262,7 @@ export default function SyntaxDrillPage() {
             正解を表示
           </button>
         </div>
+        )}
 
         {grade && (
           <div className="mt-4 space-y-2 border-t border-gray-200 pt-4">
@@ -278,6 +332,21 @@ export default function SyntaxDrillPage() {
               <PenInputLogPanel log={inputLogRef.current} />
             </div>
           </details>
+        )}
+
+        {inputMode === 'pen' && needOnboarding === false && !redoOnboarding && (
+          <p className="mt-3 text-xs text-ink-3">
+            記号の判別が合いにくいときは、
+            <button
+              type="button"
+              onClick={() => setRedoOnboarding(true)}
+              className="font-semibold text-sora-dark underline"
+            >
+              お手本を登録し直す
+            </button>
+            か、<Link href="/reading/syntax/pen-lab" className="font-semibold text-sora-dark underline">ペン判別の計測</Link>
+            ページ下部の「お手本登録」で字を追加できます。
+          </p>
         )}
       </div>
     </AppLayout>
