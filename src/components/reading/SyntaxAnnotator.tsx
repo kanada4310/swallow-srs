@@ -33,6 +33,8 @@ interface SyntaxAnnotatorProps {
   disabled?: boolean
   /** 品詞の選択肢。省略時は従来どおり漢字の品詞名（読解1文画面）。構文の練習は英字略記を渡す */
   posOptions?: readonly string[]
+  /** 働きの選択肢。省略時は従来表記（読解1文画面）。構文の練習は塾長表記（P・Po・▷）を渡す */
+  roleOptions?: readonly string[]
 }
 
 export function SyntaxAnnotator({
@@ -44,6 +46,7 @@ export function SyntaxAnnotator({
   spanMarks,
   disabled,
   posOptions = POS_OPTIONS,
+  roleOptions = ROLE_OPTIONS,
 }: SyntaxAnnotatorProps) {
   const [pendingSpan, setPendingSpan] = useState<SpanType | null>(null)
   const [pendingFrom, setPendingFrom] = useState<number | null>(null)
@@ -228,7 +231,7 @@ export function SyntaxAnnotator({
               「{tokens[picker.index]}」の{picker.kind === 'pos' ? '品詞' : '働き'}
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {(picker.kind === 'pos' ? posOptions : ROLE_OPTIONS).map((o) => (
+              {(picker.kind === 'pos' ? posOptions : roleOptions).map((o) => (
                 <button
                   key={o}
                   type="button"

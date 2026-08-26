@@ -19,7 +19,7 @@ import {
   POS_LETTER_LEGEND,
   POS_LETTER_OPTIONS,
   posLetter,
-  ROLE_OPTIONS,
+  ROLE_LETTER_OPTIONS,
   SPAN_TYPES,
   type Mark,
   type MarkResult,
@@ -860,7 +860,7 @@ export function PenSyntaxAnnotator({
               「{tokens[picker.index]}」の{picker.kind === 'pos' ? '品詞' : '働き'}
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {(picker.kind === 'pos' ? POS_LETTER_OPTIONS : ROLE_OPTIONS).map((o) => (
+              {(picker.kind === 'pos' ? POS_LETTER_OPTIONS : ROLE_LETTER_OPTIONS).map((o) => (
                 <button
                   key={o}
                   type="button"

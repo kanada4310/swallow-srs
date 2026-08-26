@@ -25,6 +25,7 @@ import {
   POS_LETTER_LEGEND,
   POS_LETTER_OPTIONS,
   posLetter,
+  ROLE_LETTER_OPTIONS,
   SYNTAX_PROBLEMS,
   type SyntaxAnswer,
   type SyntaxGrade,
@@ -68,12 +69,12 @@ export default function SyntaxDrillPage() {
             </>
           ) : (
             <>
-              単語の<b>上をタップ→品詞（英字）</b>、<b>下をタップ→働き</b>（S・V・O・C・M など）。
+              単語の<b>上をタップ→品詞（英字）</b>、<b>下をタップ→働き</b>（S・V・O・C・P・Po・▷）。
               まとまりは下のボタンを押してから、最初の単語→最後の単語の順にタップします。
             </>
           )}
         </p>
-        <p className="mb-3 rounded-xl bg-paper p-2.5 text-xs leading-relaxed text-ink-2">
+        <p className="mb-1.5 rounded-xl bg-paper p-2.5 text-xs leading-relaxed text-ink-2">
           品詞の書き方:{' '}
           {POS_LETTER_OPTIONS.map((o, i) => (
             <span key={o}>
@@ -81,6 +82,10 @@ export default function SyntaxDrillPage() {
               <b>{o}</b>={POS_LETTER_LEGEND[o]}
             </span>
           ))}
+        </p>
+        <p className="mb-3 rounded-xl bg-paper p-2.5 text-xs leading-relaxed text-ink-2">
+          働きの書き方: <b>S</b>・<b>V</b>・<b>O</b>・<b>C</b> ／ <b>P</b>=前置詞 ／{' '}
+          <b>Po</b>=前置詞の目的語 ／ <b>▷</b>=従位接続詞（記号はこの表記のまま使います）
         </p>
 
         <div className="mb-3 flex gap-1.5">
@@ -164,6 +169,7 @@ export default function SyntaxDrillPage() {
             roleMarks={grade?.roleMark}
             spanMarks={grade?.spanMark}
             posOptions={POS_LETTER_OPTIONS}
+            roleOptions={ROLE_LETTER_OPTIONS}
           />
         )}
 

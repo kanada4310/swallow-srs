@@ -6,7 +6,7 @@
  * - Rule 1: S=名詞 / V=動詞 / O=名詞 / C=名詞 or 形容詞
  * - Rule 4: S はいつでも一つ（名詞は S/O/C/Po か名詞修飾のどれか）
  * - Rule 5: 形容詞は C になるか名詞を修飾する
- * - Rule 6: 副詞は SVOC のどの要素も担わない（＝働きは M のみ）
+ * - Rule 6: 副詞は SVOC のどの要素も担わない（＝働きの文字を書かない）
  * - Rule 9/14/18/28: 〈 〉は直前の名詞を修飾する
  * - Rule 13: 前置詞のまとまりの中には名詞（Po）が一つだけ入る
  * - Rule 20: { } は SVOC の C（＝前に O があるはず）
@@ -53,8 +53,9 @@ export function checkContradictions(tokens: string[], answer: SyntaxAnswer): Con
       .map((_, i) => i)
       .filter((i) => role[i] === target && !insideSpans(i, spans))
     if (hits.length >= 2) {
+      // 接続詞は品詞「接」のほか、働きの ▷（従位接続詞の目印）でも書かれる
       const hasConj = tokens.some(
-        (_, i) => i > hits[0] && i < hits[hits.length - 1] && pos[i] === '接',
+        (_, i) => i > hits[0] && i < hits[hits.length - 1] && (pos[i] === '接' || role[i] === '▷'),
       )
       if (!hasConj) {
         out.push({
@@ -75,19 +76,19 @@ export function checkContradictions(tokens: string[], answer: SyntaxAnswer): Con
     const p = pos[i]
     const r = role[i]
     if (!p || !r) return
-    if (p === 'ad' && r !== 'M') {
+    if (p === 'ad') {
       out.push({
         code: 'adverb-role',
         severity: 'error',
-        text: `「${w}」: 副詞は S・V・O・C のどの要素も担いません（ルール6）。副詞の働きは M（修飾）だけです`,
+        text: `「${w}」: 副詞は S・V・O・C のどの要素も担いません（ルール6）。副詞には働きの文字を書きません`,
         tokens: [i],
       })
     }
-    if ((r === 'S' || r === 'O' || r === '前O') && ['ad', 'p', '接', 'a'].includes(p)) {
+    if ((r === 'S' || r === 'O' || r === 'Po') && ['ad', 'p', '接', 'a'].includes(p)) {
       out.push({
         code: 'noun-role-pos',
         severity: 'error',
-        text: `「${w}」: ${r} になれるのは名詞（と代名詞）だけです（ルール${r === '前O' ? '13' : '4'}）。品詞「${p}」と働き「${r}」は両立しません`,
+        text: `「${w}」: ${r} になれるのは名詞（と代名詞）だけです（ルール${r === 'Po' ? '13' : '4'}）。品詞「${p}」と働き「${r}」は両立しません`,
         tokens: [i],
       })
     }
@@ -110,14 +111,16 @@ export function checkContradictions(tokens: string[], answer: SyntaxAnswer): Con
     }
   })
 
-  // --- Rule 13: 前置詞と Po（前O）の対応 ---
+  // --- Rule 13: 前置詞と Po の対応 ---
+  // 前置詞の印は、品詞の p（上の段）と働きの P（下の段・塾長の実書き込みの書き方）のどちらでもよい
+  const isPrep = (i: number) => pos[i] === 'p' || role[i] === 'P'
   const claimed = new Set<number>()
   tokens.forEach((w, i) => {
-    if (role[i] !== '前O') return
+    if (role[i] !== 'Po') return
     let found = false
     for (let j = i - 1; j >= 0; j--) {
-      if (role[j] === '前O' && !claimed.has(j)) break // 間に別の前O があるなら対応しない
-      if (pos[j] === 'p' && !claimed.has(j)) {
+      if (role[j] === 'Po' && !claimed.has(j)) break // 間に別の Po があるなら対応しない
+      if (isPrep(j) && !claimed.has(j)) {
         claimed.add(j)
         found = true
         break
@@ -127,18 +130,18 @@ export function checkContradictions(tokens: string[], answer: SyntaxAnswer): Con
       out.push({
         code: 'po-without-p',
         severity: 'error',
-        text: `「${w}」を前置詞の目的語（前O）としていますが、前に前置詞が見当たりません（ルール13）`,
+        text: `「${w}」を前置詞の目的語（Po）としていますが、前に前置詞が見当たりません（ルール13）`,
         tokens: [i],
       })
     }
   })
   tokens.forEach((w, i) => {
-    if (pos[i] !== 'p' || claimed.has(i)) return
-    // この前置詞より後ろに（次の前置詞より手前で）前O があるか
+    if (!isPrep(i) || claimed.has(i)) return
+    // この前置詞より後ろに（次の前置詞より手前で）Po があるか
     let found = false
     for (let j = i + 1; j < tokens.length; j++) {
-      if (pos[j] === 'p') break
-      if (role[j] === '前O') {
+      if (isPrep(j)) break
+      if (role[j] === 'Po') {
         found = true
         break
       }
@@ -147,7 +150,7 @@ export function checkContradictions(tokens: string[], answer: SyntaxAnswer): Con
       out.push({
         code: 'p-without-po',
         severity: 'warn',
-        text: `前置詞「${w}」の目的語（前O）が書かれていません。前置詞のまとまりの中には名詞が一つ入ります（ルール13）`,
+        text: `前置詞「${w}」の目的語（Po）が書かれていません。前置詞のまとまりの中には名詞が一つ入ります（ルール13）`,
         tokens: [i],
       })
     }
@@ -195,13 +198,13 @@ export function checkContradictions(tokens: string[], answer: SyntaxAnswer): Con
   spans.forEach((s) => {
     if (s.type !== 'n') return
     const hasRole = tokens.some(
-      (_, i) => i >= s.from && i <= s.to && ['S', 'O', 'C', '前O'].includes(role[i] ?? ''),
+      (_, i) => i >= s.from && i <= s.to && ['S', 'O', 'C', 'Po'].includes(role[i] ?? ''),
     )
     if (!hasRole && role.some((r) => r !== null)) {
       out.push({
         code: 'square-no-role',
         severity: 'warn',
-        text: `[${tokens.slice(s.from, s.to + 1).join(' ')}] に役割（S・O・C・前O のどれか）が書かれていません。[ ] は名詞として働くまとまりです`,
+        text: `[${tokens.slice(s.from, s.to + 1).join(' ')}] に役割（S・O・C・Po のどれか）が書かれていません。[ ] は名詞として働くまとまりです`,
         tokens: [s.from],
       })
     }

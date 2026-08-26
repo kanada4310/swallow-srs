@@ -267,7 +267,7 @@ describe('判別率の機械計測（種固定・毎回同じ結果）', () => {
     expect((t.top1 + t.rescued) / t.total).toBeGreaterThanOrEqual(0.85)
   })
 
-  it('群C 働きの文字（S/V/O/C/M/P/Po/▷）: 救済込み 90% 以上', () => {
+  it('群C 働きの文字（S/V/O/C/P/Po/▷）: 救済込み 90% 以上', () => {
     const rng = mulberry32(20260827)
     const t = tally()
     const perKind = new Map<string, Tally>()

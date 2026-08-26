@@ -129,15 +129,16 @@ describe('classifyShape（形の記号）', () => {
 })
 
 describe('classifyRoleLetter（働きの文字）', () => {
-  it('S・V・O・C・M を判別する', () => {
+  it('S・V・O・C を判別する（M は記号一覧に無い）', () => {
     const S = [[...arc(50, 27, 21, -30, -270, 14), ...arc(50, 71, 23, -90, 130, 14)]]
     const V = [line([22, 10], [50, 90], [78, 10])]
     const O = [arc(50, 50, 38, -90, 268)]
-    const M = [line([14, 90], [20, 10], [50, 72], [80, 10], [86, 90])]
     expect(classifyRoleLetter(S).best?.symbol).toBe('S')
     expect(classifyRoleLetter(V).best?.symbol).toBe('V')
     expect(classifyRoleLetter(O).best?.symbol).toBe('O')
-    expect(classifyRoleLetter(M).best?.symbol).toBe('M')
+    // M は塾長の現在の分析で使われていないため候補に出ない
+    const M = [line([14, 90], [20, 10], [50, 72], [80, 10], [86, 90])]
+    expect(classifyRoleLetter(M).candidates.every((c) => String(c.symbol) !== 'M')).toBe(true)
   })
 
   it('品詞の英字（n・v・a・ad・aux・p）を判別する', () => {
@@ -291,11 +292,13 @@ describe('applySymbol（解答への反映）', () => {
     expect(role.next.answer.role[1]).toBe('S')
   })
 
-  it('働き表記の橋渡し: Po→前O・▷→接', () => {
+  it('働きの表記は言い換えず塾長表記のまま保存する（Po・▷・P）', () => {
     const po = applySymbol(init(), 'Po', [line([360, 80], [380, 95])], BOXES)
-    expect(po.next.answer.role[5]).toBe('前O')
+    expect(po.next.answer.role[5]).toBe('Po')
     const tri = applySymbol(init(), '▷', [line([10, 80], [40, 95])], BOXES)
-    expect(tri.next.answer.role[0]).toBe('接')
+    expect(tri.next.answer.role[0]).toBe('▷')
+    const p = applySymbol(init(), 'P', [line([85, 80], [115, 95])], BOXES)
+    expect(p.next.answer.role[1]).toBe('P')
   })
 
   it('○囲み・波線は採点対象外の extras として持つ', () => {

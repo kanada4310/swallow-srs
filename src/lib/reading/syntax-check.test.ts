@@ -68,18 +68,46 @@ describe('checkContradictions（矛盾検査）', () => {
     expect(checkContradictions(tokens, a).some((f) => f.code === 'v-role-pos')).toBe(true)
   })
 
-  it('前O の前に前置詞が無いと検出する（ルール13）', () => {
+  it('Po の前に前置詞が無いと検出する（ルール13）', () => {
     const a = answerFor(tokens, {})
-    a.role[1] = '前O'
+    a.role[1] = 'Po'
     expect(checkContradictions(tokens, a).some((f) => f.code === 'po-without-p')).toBe(true)
   })
 
-  it('前置詞に目的語（前O）が書かれていないと注意を出す（ルール13）', () => {
+  it('前置詞に目的語（Po）が書かれていないと注意を出す（ルール13）', () => {
     const a = answerFor(tokens, {})
     a.pos[2] = '前置詞'
     a.role[5] = 'V'
     const findings = checkContradictions(tokens, a)
     expect(findings.some((f) => f.code === 'p-without-po' && f.severity === 'warn')).toBe(true)
+  })
+
+  it('前置詞の印は働きの P（下の段）でもルール13を満たす', () => {
+    // 塾長の実書き込みでは前置詞は品詞 p ではなく働きの位置に P と書かれる
+    const a = answerFor(tokens, {})
+    a.role[2] = 'P' // on
+    a.role[4] = 'Po' // stage
+    a.role[5] = 'V'
+    const findings = checkContradictions(tokens, a)
+    expect(findings.some((f) => f.code === 'po-without-p')).toBe(false)
+    expect(findings.some((f) => f.code === 'p-without-po')).toBe(false)
+  })
+
+  it('副詞に働きの文字を書くと検出する（M は使わない）', () => {
+    const a = answerFor(tokens, {})
+    a.pos[6] = '副詞'
+    a.role[6] = 'S'
+    expect(checkContradictions(tokens, a).some((f) => f.code === 'adverb-role')).toBe(true)
+  })
+
+  it('働きの ▷ があれば S の並列として許す（従位接続詞の目印）', () => {
+    const t = ['I', 'think', 'that', 'he', 'runs', '.']
+    const a = answerFor(t, {})
+    a.role[0] = 'S'
+    a.role[2] = '▷'
+    a.role[3] = 'S'
+    a.role[1] = 'V'
+    expect(checkContradictions(t, a).some((f) => f.code === 'dup-s')).toBe(false)
   })
 
   it('〈 〉の直前が名詞でないと検出する（ルール9）', () => {
@@ -118,7 +146,7 @@ describe('checkContradictions（矛盾検査）', () => {
 
     const c = answerFor(tokens, {})
     c.pos[2] = 'p'
-    c.role[3] = '前O'
+    c.role[3] = 'Po'
     c.role[5] = 'V'
     expect(checkContradictions(tokens, c).some((f) => f.code === 'po-without-p')).toBe(false)
   })

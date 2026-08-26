@@ -91,7 +91,6 @@ export const ROLE_STROKE_SOURCES: Array<{ symbol: RoleLetter; strokes: PenStroke
   { symbol: 'V', strokes: [line([22, 10], [50, 90], [78, 10])] },
   { symbol: 'O', strokes: [circle(50, 50, 38)] },
   { symbol: 'C', strokes: [arc(54, 50, 40, -60, -300, 20)] },
-  { symbol: 'M', strokes: [line([14, 90], [20, 10], [50, 72], [80, 10], [86, 90])] },
   {
     symbol: 'P',
     strokes: [

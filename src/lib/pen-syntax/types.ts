@@ -45,8 +45,12 @@ export type ShapeKind =
 export const POS_LETTERS = ['n', 'v', 'a', 'ad', 'aux', 'p'] as const
 export type PosLetter = (typeof POS_LETTERS)[number]
 
-/** 働きの文字（ルールブック表記。前O は Po、接 は ▷ と書く） */
-export const ROLE_LETTERS = ['S', 'V', 'O', 'C', 'M', 'P', 'Po', '▷'] as const
+/**
+ * 働きの文字（塾長の実書き込み〔模範分析集 第7講・形式仕様.md〕の表記のまま。
+ * Po・▷ を「前O」「接」などに言い換えない。M は現在の分析で使われていないため無い。
+ * P（前置詞）は本来品詞だが、塾長は書く利便性から働きの位置（下の段）に書く。
+ */
+export const ROLE_LETTERS = ['S', 'V', 'O', 'C', 'P', 'Po', '▷'] as const
 export type RoleLetter = (typeof ROLE_LETTERS)[number]
 
 export type SymbolId = ShapeKind | PosLetter | RoleLetter

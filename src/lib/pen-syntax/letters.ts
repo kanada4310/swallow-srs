@@ -70,18 +70,6 @@ function toResult(matches: Array<{ symbol: string; score: number }>): Recognitio
   return { best: ranked[0], candidates: ranked, ambiguous }
 }
 
-/** アプリの働き表記（前O・接）とルールブック表記（Po・▷）の橋渡し */
-export function roleLetterToAppRole(letter: RoleLetter): string {
-  if (letter === 'Po') return '前O'
-  if (letter === '▷') return '接'
-  if (letter === 'P') return 'M' // アプリの構文の練習では前置詞の働きを M と表記している
-  return letter
-}
-
-/**
- * 品詞の英字略記はそのまま解答値として保存する
- * （採点側 gradeSyntax が漢字名の正解表と英字を同値として照合する）。
- */
-export function posLetterToAppPos(letter: PosLetter): string {
-  return letter
-}
+// 働き・品詞の文字は塾長の実書き込みの表記のまま解答値として保存する
+// （Po・▷・P を「前O」「接」「M」などに言い換えない。2026-08-26 塾長指示）。
+// 品詞の英字は採点側 gradeSyntax が漢字名の正解表と同値として照合する。

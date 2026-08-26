@@ -48,7 +48,20 @@ export function posLetter(value: string): string {
   return POS_TO_LETTER[value] ?? value
 }
 
+/**
+ * 読解1文画面（構文を分析する）の働きの選択肢。既存の書き込みデータ・AI判定の
+ * 語彙と揃えているため、ここは従来表記のまま（変更は別起案）。
+ */
 export const ROLE_OPTIONS = ['S', 'V', 'O', 'C', 'M', '前O', '接']
+
+/**
+ * 構文の練習（ペン方式・タップ方式）の働きの選択肢。塾長の実書き込み
+ * （模範分析集 第7講・形式仕様.md）の表記のまま使う（2026-08-26 塾長指示）:
+ * - Po・▷ を「前O」「接」に言い換えない
+ * - M は現在の分析で使われていないため無い（副詞・冠詞などの修飾語には働きを書かない）
+ * - P（前置詞）は本来品詞だが、書く利便性から働きの位置（下の段）に書く
+ */
+export const ROLE_LETTER_OPTIONS = ['S', 'V', 'O', 'C', 'P', 'Po', '▷']
 
 export type SpanType = 'ul' | 'adv' | 'n' | 'adjm' | 'comp'
 
@@ -114,9 +127,9 @@ export const SYNTAX_PROBLEMS: SyntaxProblem[] = [
         0: { ok: ['代名詞'] }, 1: { ok: ['名詞'] }, 2: { ok: ['動詞'] }, 3: { ok: ['名詞'] },
         4: { ok: ['副詞'] }, 5: { ok: ['副詞'] },
       },
+      // 働きは塾長の書き方に合わせ S・V・O・C・P・Po・▷ のみ。修飾語（My・very・well）には書かない
       role: {
-        0: { ok: ['M'] }, 1: { ok: ['S'] }, 2: { ok: ['V'] }, 3: { ok: ['O'] },
-        4: { ok: ['M'] }, 5: { ok: ['M'] },
+        1: { ok: ['S'] }, 2: { ok: ['V'] }, 3: { ok: ['O'] },
       },
       spans: [
         { from: 0, to: 1, ok: ['ul'], label: 'My brother' },
@@ -145,9 +158,10 @@ export const SYNTAX_PROBLEMS: SyntaxProblem[] = [
         3: { ok: ['前置詞'] }, 4: { ok: ['冠詞'] }, 5: { ok: ['名詞'] }, 6: { ok: ['動詞'] },
         7: { ok: ['代名詞'] }, 8: { ok: ['名詞'] },
       },
+      // 前置詞 by は働きの位置に P、その目的語 door は Po（塾長の実書き込みの表記）
       role: {
-        0: { ok: ['M'] }, 1: { ok: ['S'] }, 2: { ok: ['M'] }, 3: { ok: ['M'] }, 4: { ok: ['M'] },
-        5: { ok: ['前O'] }, 6: { ok: ['V'] }, 7: { ok: ['M'] }, 8: { ok: ['C'] },
+        1: { ok: ['S'] }, 3: { ok: ['P'] },
+        5: { ok: ['Po'] }, 6: { ok: ['V'] }, 8: { ok: ['C'] },
       },
       spans: [
         { from: 0, to: 1, ok: ['ul'], label: 'The girl' },
@@ -178,8 +192,8 @@ export const SYNTAX_PROBLEMS: SyntaxProblem[] = [
         4: { ok: ['前置詞'] }, 5: { ok: ['冠詞'] }, 6: { ok: ['名詞'] },
       },
       role: {
-        0: { ok: ['S'] }, 1: { ok: ['V'] }, 2: { ok: ['M'] }, 3: { ok: ['O'] },
-        4: { ok: ['M'] }, 5: { ok: ['M'] }, 6: { ok: ['前O'] },
+        0: { ok: ['S'] }, 1: { ok: ['V'] }, 3: { ok: ['O'] },
+        4: { ok: ['P'] }, 6: { ok: ['Po'] },
       },
       spans: [
         { from: 2, to: 3, ok: ['ul'], label: 'a man' },

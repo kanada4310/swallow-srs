@@ -11,7 +11,6 @@
 import type { SpanType, SyntaxAnswer } from '@/lib/reading/syntax'
 import type { Lane, PenStroke, PosLetter, RoleLetter, SymbolId, TokenBox } from './types'
 import { POS_LETTERS, ROLE_LETTERS } from './types'
-import { posLetterToAppPos, roleLetterToAppRole } from './letters'
 import {
   laneOf,
   snapCloseBracket,
@@ -115,7 +114,8 @@ export function applySymbol(
     if (!snap) return { next: state, applied: false, message: '吸着先の単語が見つかりません' }
     if (isPosLetter(symbol)) {
       const pos = [...state.answer.pos]
-      pos[snap.index] = posLetterToAppPos(symbol)
+      // 英字略記のまま保存する（採点側が漢字名の正解表と同値化する）
+      pos[snap.index] = symbol
       return {
         next: { ...state, answer: { ...state.answer, pos } },
         applied: true,
@@ -123,7 +123,8 @@ export function applySymbol(
       }
     }
     const role = [...state.answer.role]
-    role[snap.index] = roleLetterToAppRole(symbol)
+    // 塾長の実書き込みの表記のまま保存する（Po・▷・P を言い換えない）
+    role[snap.index] = symbol
     return {
       next: { ...state, answer: { ...state.answer, role } },
       applied: true,
@@ -229,11 +230,11 @@ export function applySymbol(
     }
   }
   if (symbol === 'triangle') {
-    // ▷ は従位接続詞の目印＝働きの「接」
+    // ▷ は従位接続詞の目印。働きの側（下の段）の記号で、表記も ▷ のまま
     const snap = snapNearestToken(strokes, boxes)
     if (!snap) return { next: state, applied: false, message: '吸着先の単語が見つかりません' }
     const role = [...state.answer.role]
-    role[snap.index] = '接'
+    role[snap.index] = '▷'
     return {
       next: { ...state, answer: { ...state.answer, role } },
       applied: true,
