@@ -11,7 +11,7 @@
 import { describe, expect, it } from 'vitest'
 import type { PenPoint, PenStroke, ShapeKind, SymbolId, TokenBox } from './types'
 import { classifyShape } from './shapes'
-import { classifyPosLetter, classifyRoleLetter } from './letters'
+import { classifyPosLetter, classifyRoleLetter, type UserTemplateStore } from './letters'
 import { POS_STROKE_SOURCES, ROLE_STROKE_SOURCES } from './templates'
 import { snapCloseBracket, snapHorizontalRange, snapNearestToken, snapOpenBracket } from './snap'
 import { strokesBBox, resample } from './geometry'
@@ -303,6 +303,116 @@ describe('判別率の機械計測（種固定・毎回同じ結果）', () => {
     Array.from(perKind.entries()).forEach(([k, kt]) => report(`群C 品詞 ${k}`, kt))
     report('群C 品詞 合計', t)
     expect((t.top1 + t.rescued) / t.total).toBeGreaterThanOrEqual(0.8)
+  })
+})
+
+/* ---------- 閉じ括弧の癖の模擬（お手本登録の効果測定） ---------- */
+
+/**
+ * 右に膨らむ閉じ括弧の輪郭を1本の線にする。
+ * n が大きいほど平ら＋丸い角（角括弧的）、小さいほど頂点がなだらか（山括弧的）。
+ */
+function closingProfile(d: number, h: number, n: number, m: number, steps = 28): PenStroke {
+  const pts: PenPoint[] = []
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps
+    const x = d * Math.pow(Math.max(0, 1 - Math.pow(Math.abs(2 * t - 1), n)), 1 / m)
+    pts.push({ x, y: h * t })
+  }
+  return pts
+}
+
+const QUIRK_KINDS = ['angle-close', 'square-close', 'brace-close'] as const
+type QuirkKind = (typeof QUIRK_KINDS)[number]
+
+/** 実機で判別率が低い書き癖の模擬: 角の尖り・折れが弱い閉じ括弧 */
+function quirkClose(kind: QuirkKind, rng: Rng): PenStroke[] {
+  const h = rand(rng, 42, 60)
+  if (kind === 'angle-close') {
+    // 山括弧の頂点を丸めて書く癖 → 素の判別では ）と紛れやすい
+    const d = rand(rng, 16, 26)
+    return jitter([closingProfile(d, h, rand(rng, 1.2, 1.4), 1.1)], rng, { size: rand(rng, 38, 56), rotDeg: 4 })
+  }
+  if (kind === 'square-close') {
+    // 角括弧の角を丸めて書く癖 → 折れが検出されず ）や 〉 と紛れやすい
+    const d = rand(rng, 12, 20)
+    return jitter([closingProfile(d, h, rand(rng, 5, 7), 1.3)], rng, { size: rand(rng, 38, 56), rotDeg: 4 })
+  }
+  // 波括弧のツノを浅く・なだらかに書く癖 → 折れの数が足りず他の括弧と紛れやすい
+  const w = rand(rng, 9, 13)
+  const base = line(
+    [0, 0], [w, h * 0.07], [w * 1.05, h * 0.3], [w * 1.05, h * 0.44], [w * 1.45, h * 0.5],
+    [w * 1.05, h * 0.56], [w * 1.05, h * 0.7], [w, h * 0.93], [0, h],
+  )
+  return jitter([base], rng, { size: rand(rng, 40, 58), rotDeg: 3 })
+}
+
+/**
+ * 初回お手本登録を済ませた想定の保存内容（種固定）。
+ * 括弧8種すべてを本人の字で登録する（閉じ3種は癖のある字・他5種は標準的な字）。
+ */
+function quirkStore(): UserTemplateStore {
+  const rng = mulberry32(20260901)
+  const store: UserTemplateStore = {}
+  for (const kind of QUIRK_KINDS) {
+    store[kind] = [quirkClose(kind, rng), quirkClose(kind, rng)]
+  }
+  const others: ShapeKind[] = ['paren-open', 'paren-close', 'square-open', 'angle-open', 'brace-open']
+  for (const kind of others) {
+    store[kind] = [drawShape(kind, rng), drawShape(kind, rng)]
+  }
+  return store
+}
+
+describe('お手本登録による閉じ括弧の判別強化（機械計測）', () => {
+  it('癖のある閉じ括弧: お手本登録で一発判別が改善する（数字はコンソールに出力）', () => {
+    const rng = mulberry32(20260902)
+    const store = quirkStore()
+    const before = tally()
+    const after = tally()
+    for (const kind of QUIRK_KINDS) {
+      const b = tally()
+      const a = tally()
+      for (let i = 0; i < N; i++) {
+        const strokes = quirkClose(kind, rng)
+        const rb = classifyShape(strokes)
+        const ra = classifyShape(strokes, store)
+        record(before, kind, rb)
+        record(b, kind, rb)
+        record(after, kind, ra)
+        record(a, kind, ra)
+      }
+      report(`閉じ括弧（癖あり・お手本なし）${kind}`, b)
+      report(`閉じ括弧（癖あり・お手本あり）${kind}`, a)
+    }
+    report('閉じ括弧（癖あり・お手本なし）合計', before)
+    report('閉じ括弧（癖あり・お手本あり）合計', after)
+    // お手本登録で一発判別が確実に良くなり、救済込みでは 97% 以上に達すること
+    expect(after.top1).toBeGreaterThan(before.top1)
+    expect((after.top1 + after.rescued) / after.total).toBeGreaterThanOrEqual(0.97)
+  })
+
+  it('標準的な字の利用者がお手本を登録しても、判別は劣化しない', () => {
+    // 実運用ではお手本と本番の線は同じ人の手になる。標準的な字の利用者を模す
+    const enrollRng = mulberry32(20260903)
+    const store: UserTemplateStore = {}
+    const brackets: ShapeKind[] = [
+      'paren-open', 'paren-close', 'square-open', 'square-close',
+      'angle-open', 'angle-close', 'brace-open', 'brace-close',
+    ]
+    for (const kind of brackets) {
+      store[kind] = [drawShape(kind, enrollRng), drawShape(kind, enrollRng)]
+    }
+    const rng = mulberry32(20260825) // 群A のベンチと同じ種・同じ線で比較する
+    const t = tally()
+    for (const kind of [...brackets, 'hline' as ShapeKind]) {
+      for (let i = 0; i < N; i++) {
+        record(t, kind, classifyShape(drawShape(kind, rng), store))
+      }
+    }
+    report('群A（同じ書き手のお手本あり）合計', t)
+    expect(t.top1 / t.total).toBeGreaterThanOrEqual(0.9)
+    expect((t.top1 + t.rescued) / t.total).toBeGreaterThanOrEqual(0.97)
   })
 })
 

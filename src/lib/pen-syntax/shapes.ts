@@ -4,6 +4,10 @@
  * まず線をならしてから幾何特徴（折れの数・閉じ具合・膨らみの向きなど）で当たりを付け、
  * $P 点群照合の結果と混ぜて最終スコアにする。
  * 確信が拮抗したときは candidates を複数返し、UI が候補チップを出す（構想 v1.1 論点3）。
+ *
+ * 加えて「お手本登録」（本人の字・localStorage）があれば照合対象にする（2026-08-26）。
+ * 実機で判別率の低い閉じ括弧（〉 ｝ ]）は書き手の癖の影響が大きく、本人のお手本との
+ * 距離が近ければそれを強い証拠として扱う。お手本が無いときの挙動は従来と同一。
  */
 
 import type { PenStroke, RecognitionResult, ShapeKind, SymbolCandidate } from './types'
@@ -23,8 +27,9 @@ import {
   straightness,
   turnAngles,
 } from './geometry'
-import { matchClouds } from './pdollar'
-import { SHAPE_TEMPLATES } from './templates'
+import { matchClouds, type CloudTemplate } from './pdollar'
+import { SHAPE_STROKE_SOURCES, SHAPE_TEMPLATES } from './templates'
+import { userTemplatesFor, type UserTemplateStore } from './letters'
 
 /** 確信の差がこれ未満なら「迷った」として候補チップを出す */
 export const AMBIGUOUS_MARGIN = 0.12
@@ -188,27 +193,129 @@ function ruleScores(strokes: PenStroke[]): Partial<Record<ShapeKind, number>> {
   return scores
 }
 
-/** 形の記号を判別する。座標は px 前提（tick と slash の境目などに大きさを使う） */
-export function classifyShape(strokes: PenStroke[]): RecognitionResult {
+/** 形の記号の全種類（登録お手本の照合対象を絞るのに使う） */
+const SHAPE_KINDS: readonly string[] = Array.from(
+  new Set(SHAPE_STROKE_SOURCES.map((s) => s.symbol)),
+)
+
+/** 同じ向きの括弧4種（お手本の相対比較の母集団） */
+const OPEN_BRACKETS: ShapeKind[] = ['paren-open', 'square-open', 'angle-open', 'brace-open']
+const CLOSE_BRACKETS: ShapeKind[] = ['paren-close', 'square-close', 'angle-close', 'brace-close']
+
+/** お手本の相対比較で「明確に一番近い」とみなす最小の差 */
+const USER_MARGIN = 0.02
+/** 幾何特徴が強い確信（0.9級）で別の括弧を指しているとき、覆すのに要求する差 */
+const USER_MARGIN_VS_STRONG_RULE = 0.08
+
+/**
+ * 括弧らしい1画の線の「開き/閉じ」の向き（膨らみの側）。括弧でなければ null。
+ * $P 点群照合は左右の向きの違いに弱いため、お手本の照合はこの向きが一致する
+ * 括弧にだけ効かせる（開き括弧の線が閉じ括弧のお手本に吸われるのを防ぐ）。
+ */
+function bracketOpenish(strokes: PenStroke[]): boolean | null {
+  if (strokes.length !== 1) return null
+  const s = smooth(resample(strokes[0], 48), 2)
+  const b = bbox(s)
+  const size = Math.max(b.width, b.height)
+  if (
+    closedness(s) < 0.3 ||
+    b.height <= b.width * 0.9 ||
+    straightness(s) > 0.95 ||
+    size < BRACKET_MIN_SIZE
+  ) {
+    return null
+  }
+  const first = s[0]
+  const last = s[s.length - 1]
+  let bulge = bulgeSide(s)
+  if (last.y < first.y) bulge = -bulge // 下→上に書いても同じ扱いにする
+  return bulge > 0
+}
+
+/** 記号が括弧の開き/閉じのどちらか（括弧でなければ null） */
+function symbolOpenish(symbol: ShapeKind): boolean | null {
+  if (symbol.endsWith('-open')) return true
+  if (symbol.endsWith('-close')) return false
+  return null
+}
+
+/**
+ * 形の記号を判別する。座標は px 前提（tick と slash の境目などに大きさを使う）。
+ * store（お手本登録）を渡すと本人の字も照合対象になる。無ければ従来と同じ挙動。
+ */
+export function classifyShape(
+  strokes: PenStroke[],
+  store: UserTemplateStore | null = null,
+): RecognitionResult {
   const rules = ruleScores(strokes)
   const pMatches = matchClouds(strokes, SHAPE_TEMPLATES)
   const pScore = new Map<ShapeKind, number>()
   for (const m of pMatches) pScore.set(m.symbol, m.score)
 
+  // 登録お手本（本人の字）。書き手の癖ごと照合できるため、閉じ括弧の見分けに効く。
+  // 括弧のお手本は、書かれた線の開き/閉じの向きが一致するものにだけ効かせる
+  // （$P 点群照合は左右の向きの違いに弱く、逆向きの括弧に吸われるのを防ぐ）
+  const uScore = new Map<ShapeKind, number>()
+  const userTpls = userTemplatesFor(store, SHAPE_KINDS) as Array<CloudTemplate<ShapeKind>>
+  const openish = userTpls.length > 0 ? bracketOpenish(strokes) : null
+  if (userTpls.length > 0) {
+    for (const m of matchClouds(strokes, userTpls)) {
+      const so = symbolOpenish(m.symbol)
+      if (so !== null && openish !== null && so !== openish) continue
+      uScore.set(m.symbol, m.score)
+    }
+  }
+
+  // 括弧の種類は「本人のお手本4種の中でどれに一番近いか」の相対比較で決める。
+  // 同じ向きの4種がすべて登録済みで、かつ2位と明確な差があるときだけ採用する
+  // （未登録の種類があると、書いた記号のお手本が無いせいで別の種類に吸われるため）。
+  let override: { symbol: ShapeKind; margin: number } | null = null
+  if (openish !== null && store) {
+    const family = openish ? OPEN_BRACKETS : CLOSE_BRACKETS
+    if (family.every((k) => (store[k] ?? []).length > 0)) {
+      const fam = family
+        .map((k) => ({ symbol: k, score: uScore.get(k) ?? 0 }))
+        .sort((a, b) => b.score - a.score)
+      const margin = fam[0].score - fam[1].score
+      if (fam[0].score > 0 && margin >= USER_MARGIN) {
+        override = { symbol: fam[0].symbol, margin }
+      }
+    }
+  }
+
   const kinds = new Set<ShapeKind>([
     ...(Object.keys(rules) as ShapeKind[]),
     ...pMatches.map((m) => m.symbol),
+    ...uScore.keys(),
   ])
-  const ranked: SymbolCandidate[] = Array.from(kinds)
+  let ranked: SymbolCandidate[] = Array.from(kinds)
     .map((symbol) => {
       const r = rules[symbol]
-      const p = pScore.get(symbol) ?? 0
+      const p = Math.max(pScore.get(symbol) ?? 0, uScore.get(symbol) ?? 0)
       // 幾何特徴の裏付けがある候補を優先し、$P だけの候補は控えめに扱う
       const score = r !== undefined ? 0.65 * r + 0.35 * p : 0.5 * p
       return { symbol, score }
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, 3)
+
+  if (override && ranked[0] && override.symbol !== ranked[0].symbol) {
+    // 幾何特徴（円弧・2本線の当てはめ等）が強い確信で別の括弧を指しているときは、
+    // お手本側により大きな差を要求する（当てはめの得意分野を弱い証拠で覆さない）
+    const need =
+      (rules[ranked[0].symbol] ?? 0) >= 0.9 ? USER_MARGIN_VS_STRONG_RULE : USER_MARGIN
+    if (override.margin >= need) {
+      // 本人のお手本で明確に一番近い括弧を先頭へ。差が大きいほど確信を上げる
+      // （差が小さいときは先頭には置くが、候補チップでの確認に回りやすくする）
+      const top = ranked[0].score
+      const own = ranked.find((c) => c.symbol === override!.symbol)?.score ?? 0
+      const boosted = Math.max(own, top + Math.min(override.margin, 0.2))
+      ranked = [
+        { symbol: override.symbol, score: boosted },
+        ...ranked.filter((c) => c.symbol !== override!.symbol),
+      ].slice(0, 3)
+    }
+  }
 
   if (ranked.length === 0 || ranked[0].score < MIN_SCORE) {
     return { best: null, candidates: ranked, ambiguous: true }

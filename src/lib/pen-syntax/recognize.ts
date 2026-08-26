@@ -33,7 +33,7 @@ export function recognizeGroup(
   const line = pickLine(strokes, groupLines(allBoxes))
   const boxes = line ? line.boxes : allBoxes
   const lane = laneOf(strokes, boxes)
-  const shape = classifyShape(strokes)
+  const shape = classifyShape(strokes, store)
 
   if (lane === 'band') {
     return { result: shape, lane, boxes }
