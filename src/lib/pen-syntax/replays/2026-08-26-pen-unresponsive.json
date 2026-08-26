@@ -1,0 +1,41 @@
+{
+  "note": "実機不具合①（2026-08-26 第2便）: ペンのタップに付随する互換タッチを旧ガードが一律に止め、候補チップのボタンがクリックにならなかった。ペン接触の直後・同じ位置のタッチはペン由来として通すのが正。",
+  "env": {
+    "userAgent": "Mozilla/5.0 (iPad; CPU OS 17_5 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1",
+    "devicePixelRatio": 2,
+    "visualViewportSupported": true
+  },
+  "entries": [
+    {
+      "kind": "pointer",
+      "at": 1000,
+      "phase": "down",
+      "pointerType": "pen",
+      "pointerId": 3,
+      "client": { "x": 210, "y": 140 },
+      "local": { "x": 180, "y": 90 },
+      "contact": { "w": 0, "h": 0 },
+      "accepted": true,
+      "reason": "pen"
+    },
+    {
+      "kind": "pointer",
+      "at": 1080,
+      "phase": "up",
+      "pointerType": "pen",
+      "pointerId": 3,
+      "client": { "x": 210, "y": 141 },
+      "local": { "x": 180, "y": 91 }
+    },
+    {
+      "kind": "guard",
+      "at": 1090,
+      "event": "touchstart",
+      "action": "blocked",
+      "reason": "finger",
+      "zone": "ui",
+      "x": 211,
+      "y": 142
+    }
+  ]
+}

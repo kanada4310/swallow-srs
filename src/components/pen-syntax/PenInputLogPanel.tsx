@@ -10,24 +10,28 @@
 
 import { useEffect, useState } from 'react'
 import { formatInputLog, type PenInputLog } from '@/lib/pen-syntax/input-log'
+import { dumpInputLog } from '@/lib/pen-syntax/replay'
 
 export function PenInputLogPanel({ log }: { log: PenInputLog }) {
   const [, setTick] = useState(0)
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState<'text' | 'json' | null>(null)
 
   useEffect(() => log.subscribe(() => setTick((n) => n + 1)), [log])
 
-  const text = formatInputLog(log.entries(), {
+  const env = {
     userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
     devicePixelRatio: typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1,
     visualViewportSupported: typeof window !== 'undefined' && !!window.visualViewport,
-  })
+  }
+  const text = formatInputLog(log.entries(), env)
 
-  const copy = async () => {
+  const copy = async (kind: 'text' | 'json') => {
+    // json はそのまま再生テスト（replays/）に収録できる形
+    const payload = kind === 'json' ? dumpInputLog(log.entries(), env) : text
     try {
-      await navigator.clipboard.writeText(text)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      await navigator.clipboard.writeText(payload)
+      setCopied(kind)
+      setTimeout(() => setCopied(null), 2000)
     } catch {
       // クリップボードが使えない環境では手動で全選択してもらう
       const el = document.getElementById('pen-input-log-textarea') as HTMLTextAreaElement | null
@@ -42,10 +46,17 @@ export function PenInputLogPanel({ log }: { log: PenInputLog }) {
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={copy}
+            onClick={() => copy('text')}
             className="rounded-lg bg-sora px-3 py-1.5 text-xs font-bold text-white"
           >
-            {copied ? 'コピーしました' : '記録をコピー'}
+            {copied === 'text' ? 'コピーしました' : '記録をコピー'}
+          </button>
+          <button
+            type="button"
+            onClick={() => copy('json')}
+            className="rounded-lg border border-sora bg-white px-3 py-1.5 text-xs font-bold text-sora-dark"
+          >
+            {copied === 'json' ? 'コピーしました' : '再生用をコピー'}
           </button>
           <button
             type="button"

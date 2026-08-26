@@ -1,0 +1,56 @@
+{
+  "note": "実機不具合②（2026-08-26 第2便）: ピンチズーム中に画面座標と枠位置の座標系が食い違い、線が常に一定量ずれた。当時の記録の local は「画面座標−枠位置」で計算した誤った値。ズーム中はブラウザ計算の要素相対座標（offset）を使うのが正。あわせて描画中に画面が動いた記録（shift）も収録。",
+  "env": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Lenovo TB-X6C6F) AppleWebKit/537.36 Chrome/126 Mobile Safari/537.36",
+    "devicePixelRatio": 2,
+    "visualViewportSupported": true
+  },
+  "entries": [
+    {
+      "kind": "pointer",
+      "at": 5000,
+      "phase": "down",
+      "pointerType": "pen",
+      "pointerId": 7,
+      "client": { "x": 240, "y": 300 },
+      "local": { "x": 210, "y": 220 },
+      "offset": { "x": 158, "y": 172 },
+      "accepted": true,
+      "reason": "pen",
+      "screen": {
+        "rectLeft": 30,
+        "rectTop": 80,
+        "scrollX": 0,
+        "scrollY": 340,
+        "vvOffsetLeft": 55,
+        "vvOffsetTop": 62,
+        "vvScale": 2.35
+      }
+    },
+    {
+      "kind": "pointer",
+      "at": 5200,
+      "phase": "move",
+      "pointerType": "pen",
+      "pointerId": 7,
+      "client": { "x": 290, "y": 306 },
+      "local": { "x": 260, "y": 226 },
+      "offset": { "x": 179, "y": 174 },
+      "screen": {
+        "rectLeft": 30,
+        "rectTop": 80,
+        "scrollX": 0,
+        "scrollY": 340,
+        "vvOffsetLeft": 55,
+        "vvOffsetTop": 62,
+        "vvScale": 2.35
+      }
+    },
+    {
+      "kind": "shift",
+      "at": 5320,
+      "during": "stroke",
+      "detail": "スクロール (0,340)→(0,368)"
+    }
+  ]
+}

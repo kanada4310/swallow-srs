@@ -1,0 +1,50 @@
+{
+  "note": "実機不具合③（2026-08-26 第3便の発端）: 旧ガードがペンを見た後の指を止め続け（のちに1.2秒の時間窓）、ペンを離した直後にエリア外を指でスクロールできなかった。ゾーン方式ではエリア外の指は待ちなしで通し、ペン接触中に載った手のひらだけを止めるのが正。",
+  "env": {
+    "userAgent": "Mozilla/5.0 (iPad; CPU OS 17_5 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1",
+    "devicePixelRatio": 2,
+    "visualViewportSupported": true
+  },
+  "entries": [
+    {
+      "kind": "pointer",
+      "at": 1000,
+      "phase": "down",
+      "pointerType": "pen",
+      "pointerId": 2,
+      "client": { "x": 180, "y": 220 },
+      "local": { "x": 150, "y": 170 },
+      "accepted": true,
+      "reason": "pen"
+    },
+    {
+      "kind": "guard",
+      "at": 1300,
+      "event": "touchstart",
+      "action": "blocked",
+      "reason": "pen-writing",
+      "zone": "page",
+      "x": 320,
+      "y": 780
+    },
+    {
+      "kind": "pointer",
+      "at": 1600,
+      "phase": "up",
+      "pointerType": "pen",
+      "pointerId": 2,
+      "client": { "x": 200, "y": 224 },
+      "local": { "x": 170, "y": 174 }
+    },
+    {
+      "kind": "guard",
+      "at": 2000,
+      "event": "touchstart",
+      "action": "blocked",
+      "reason": "pen-recent",
+      "zone": "page",
+      "x": 330,
+      "y": 800
+    }
+  ]
+}
