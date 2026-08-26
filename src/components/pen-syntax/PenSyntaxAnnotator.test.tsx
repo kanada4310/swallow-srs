@@ -103,3 +103,18 @@ describe('PenSyntaxAnnotator 下線オーバーレイ', () => {
     expect(left + width).toBeCloseTo(expectedRight, 5)
   })
 })
+
+describe('PenSyntaxAnnotator バッジのレイアウト（2026-08-26 実機不具合の再発防止）', () => {
+  it('「手のひらOK」バッジはペン接触前から場所を確保している（初回接触の瞬間に画面が動かない）', () => {
+    // 不具合: ペンの初回接触でバッジが出現し、書いている最中に画面レイアウトが
+    // 下へずれて線の狙いが狂った。場所を常に確保し表示だけ切り替える。
+    const { container } = render(
+      <PenSyntaxAnnotator tokens={TOKENS} answer={emptyAnswer(TOKENS.length)} onChange={() => {}} />,
+    )
+    const badge = Array.from(container.querySelectorAll('span')).find((el) =>
+      (el.textContent ?? '').includes('手のひらを載せてもOK'),
+    )
+    expect(badge).toBeTruthy()
+    expect(badge!.className).toContain('invisible')
+  })
+})

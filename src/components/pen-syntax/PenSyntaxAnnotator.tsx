@@ -37,7 +37,14 @@ import type {
 import { applySymbol, emptyPenAnnotation, type PenAnnotation, type PenExtraMark } from '@/lib/pen-syntax/apply'
 import { recognizeGroup } from '@/lib/pen-syntax/recognize'
 import { evaluatePointer, initialPalmState, type InputPolicy, type PalmState } from '@/lib/pen-syntax/palm'
-import { usePenScreenGuard } from './usePenScreenGuard'
+import { resolveLocalPoint } from '@/lib/pen-syntax/local-point'
+import {
+  captureScreenSnapshot,
+  describeScreenShift,
+  type PenInputLog,
+  type ScreenSnapshot,
+} from '@/lib/pen-syntax/input-log'
+import { freezeScreenDuringStroke, usePenScreenGuard, type PenGuardEvent } from './usePenScreenGuard'
 import { groupLines, laneOf, pickLine, shouldGroupStrokes, underlineSegments } from '@/lib/pen-syntax/snap'
 import { pathLength, strokesBBox } from '@/lib/pen-syntax/geometry'
 import type { UserTemplateStore } from '@/lib/pen-syntax/letters'
@@ -102,6 +109,8 @@ interface PenSyntaxAnnotatorProps {
   templateStore?: UserTemplateStore | null
   onEvent?: (ev: PenRecognitionEvent) => void
   onPalm?: (state: PalmState) => void
+  /** 診断用「入力の記録」。渡すと接触の受理/拒否と画面の移動を時系列で記録する */
+  inputLog?: PenInputLog | null
 }
 
 const GROUP_WAIT_MS = 750
@@ -131,6 +140,7 @@ export function PenSyntaxAnnotator({
   templateStore = null,
   onEvent,
   onPalm,
+  inputLog = null,
 }: PenSyntaxAnnotatorProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -146,8 +156,27 @@ export function PenSyntaxAnnotator({
   const palmRef = useRef<PalmState>(initialPalmState())
   // ペンを一度でも見たら、画面全体で指・手のひらを無効化する（キャンバスの外の誤操作対策）
   const [penSeen, setPenSeen] = useState(false)
-  usePenScreenGuard(penSeen && policy === 'pen-only' && !disabled)
+  const logRef = useRef<PenInputLog | null>(inputLog)
+  logRef.current = inputLog
+  const onGuard = useCallback((ev: PenGuardEvent) => {
+    logRef.current?.push({
+      kind: 'guard',
+      at: performance.now(),
+      event: ev.event,
+      action: ev.action,
+      reason: ev.reason,
+      x: ev.x,
+      y: ev.y,
+    })
+  }, [])
+  usePenScreenGuard(penSeen && policy === 'pen-only' && !disabled, onGuard)
   const drawingRef = useRef<{ pointerId: number; stroke: PenPoint[] } | null>(null)
+  // 描画中の画面固定の解除関数と、画面移動の検出用の基準
+  const unfreezeRef = useRef<(() => void) | null>(null)
+  const strokeScreenRef = useRef<ScreenSnapshot | null>(null)
+  const lastMoveLogRef = useRef(0)
+  // ペンでのタップ（onPointerUp）とその後のクリックの二重発火を防ぐ時刻
+  const penTapAtRef = useRef(0)
   const groupRef = useRef<PendingGroup | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [chips, setChips] = useState<ChipState | null>(null)
@@ -308,13 +337,55 @@ export function PenSyntaxAnnotator({
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
+      unfreezeRef.current?.()
     }
   }, [])
 
   /* ---------- ポインタ処理 ---------- */
   const toLocal = (e: React.PointerEvent): PenPoint => {
     const rect = containerRef.current!.getBoundingClientRect()
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top, t: e.timeStamp }
+    const ne = e.nativeEvent as PointerEvent
+    const vv = typeof window !== 'undefined' ? window.visualViewport : null
+    // 毎イベントで枠の位置を測り直し（スクロール追従）、ピンチズーム中は
+    // ブラウザ計算の要素相対座標に切り替える（座標系の食い違い対策）
+    const p = resolveLocalPoint({
+      clientX: e.clientX,
+      clientY: e.clientY,
+      rectLeft: rect.left,
+      rectTop: rect.top,
+      offsetX: typeof ne.offsetX === 'number' ? ne.offsetX : undefined,
+      offsetY: typeof ne.offsetY === 'number' ? ne.offsetY : undefined,
+      vvScale: vv ? vv.scale : null,
+      vvOffsetLeft: vv ? vv.offsetLeft : null,
+      vvOffsetTop: vv ? vv.offsetTop : null,
+    })
+    return { x: p.x, y: p.y, t: e.timeStamp }
+  }
+
+  const logPointer = (
+    e: React.PointerEvent,
+    phase: 'down' | 'move' | 'up' | 'cancel',
+    local: PenPoint,
+    accepted?: boolean,
+    reason?: string,
+  ) => {
+    const lg = logRef.current
+    if (!lg) return
+    const ne = e.nativeEvent as PointerEvent
+    lg.push({
+      kind: 'pointer',
+      at: e.timeStamp,
+      phase,
+      pointerType: e.pointerType,
+      pointerId: e.pointerId,
+      client: { x: e.clientX, y: e.clientY },
+      local: { x: local.x, y: local.y },
+      offset: typeof ne.offsetX === 'number' ? { x: ne.offsetX, y: ne.offsetY } : null,
+      contact: { w: e.width || 0, h: e.height || 0 },
+      accepted,
+      reason,
+      screen: captureScreenSnapshot(containerRef.current),
+    })
   }
 
   const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -326,6 +397,7 @@ export function PenSyntaxAnnotator({
     )
     palmRef.current = decision.next
     if (e.pointerType === 'pen' && !penSeen) setPenSeen(true)
+    logPointer(e, 'down', toLocal(e), decision.accept, decision.reason)
     if (!decision.accept) {
       // 拒否した接触はここで既定動作ごと止める（長押しの選択・後続のクリック化を防ぐ）
       e.preventDefault()
@@ -341,6 +413,11 @@ export function PenSyntaxAnnotator({
     } catch {
       // 一部環境（合成イベント等）で失敗しても描画は続けられる
     }
+    // 線を描いている間は画面全体のスクロールを止める（狙いがずれる不具合対策）
+    unfreezeRef.current?.()
+    unfreezeRef.current = freezeScreenDuringStroke()
+    strokeScreenRef.current = logRef.current ? captureScreenSnapshot(containerRef.current) : null
+    lastMoveLogRef.current = e.timeStamp
     drawingRef.current = { pointerId: e.pointerId, stroke: [toLocal(e)] }
     redraw()
   }
@@ -349,14 +426,33 @@ export function PenSyntaxAnnotator({
     const d = drawingRef.current
     if (!d || d.pointerId !== e.pointerId) return
     d.stroke.push(toLocal(e))
+    // 描画中に画面が動いたら記録に残す（線ずれの原因特定用）
+    const lg = logRef.current
+    if (lg) {
+      const snap = captureScreenSnapshot(containerRef.current)
+      const base = strokeScreenRef.current
+      const shift = base ? describeScreenShift(base, snap) : null
+      if (shift) {
+        lg.push({ kind: 'shift', at: e.timeStamp, during: 'stroke', detail: shift })
+        strokeScreenRef.current = snap
+      }
+      if (shift || e.timeStamp - lastMoveLogRef.current > 150) {
+        lastMoveLogRef.current = e.timeStamp
+        logPointer(e, 'move', d.stroke[d.stroke.length - 1])
+      }
+    }
     redraw()
   }
 
-  const onPointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+  const onPointerUp = (e: React.PointerEvent<HTMLCanvasElement>, phase: 'up' | 'cancel' = 'up') => {
     const d = drawingRef.current
     if (!d || d.pointerId !== e.pointerId) return
+    unfreezeRef.current?.()
+    unfreezeRef.current = null
+    strokeScreenRef.current = null
     drawingRef.current = null
     const stroke = d.stroke
+    logPointer(e, phase, stroke[stroke.length - 1] ?? toLocal(e))
 
     // ごく小さな接触は「タップ」として扱い、品詞・働きのマスを開く
     // （キャンバスが全面を覆うため、マスのタップはここで拾う。
@@ -400,6 +496,26 @@ export function PenSyntaxAnnotator({
   }
 
   /* ---------- チップ・一覧・取り消し ---------- */
+
+  /**
+   * ペンのタップでボタンを確実に反応させる保険（2026-08-26 実機不具合対策）。
+   * 環境によってはペンのタップがクリックにならないことがあるため、
+   * ペンのポインタイベントで直接発火させる。クリックも届く環境での
+   * 二重発火は直前のペン発火時刻で防ぐ。押されないと先へ進めない
+   * ボタン（候補チップ・一覧）にだけ付ける。
+   */
+  const penTap = (fn: () => void) => ({
+    onClick: () => {
+      if (performance.now() - penTapAtRef.current < 400) return
+      fn()
+    },
+    onPointerUp: (e: React.PointerEvent) => {
+      if (e.pointerType !== 'pen') return
+      penTapAtRef.current = performance.now()
+      fn()
+    },
+  })
+
   const resolveChip = (symbol: SymbolId | null) => {
     if (!chips) return
     if (symbol) {
@@ -506,8 +622,16 @@ export function PenSyntaxAnnotator({
         >
           ↩ 一手戻す
         </button>
-        {penSeen && policy === 'pen-only' && (
-          <span className="rounded-full bg-paper px-3 py-1 text-[10px] font-bold text-ink-3">
+        {policy === 'pen-only' && (
+          // ペン初回接触の瞬間に出現させると、書いている最中に画面レイアウトが
+          // ずれて線の狙いが狂う（2026-08-26 実機不具合）。場所は常に確保し、
+          // 表示だけを切り替える
+          <span
+            className={`rounded-full bg-paper px-3 py-1 text-[10px] font-bold text-ink-3 ${
+              penSeen ? '' : 'invisible'
+            }`}
+            aria-hidden={!penSeen}
+          >
             🖐 手のひらを載せてもOK（この画面はペン専用になりました）
           </span>
         )}
@@ -619,7 +743,7 @@ export function PenSyntaxAnnotator({
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
+          onPointerCancel={(e) => onPointerUp(e, 'cancel')}
         />
 
         {/* 迷ったときの候補チップ */}
@@ -634,7 +758,7 @@ export function PenSyntaxAnnotator({
                 <button
                   key={c.symbol}
                   type="button"
-                  onClick={() => resolveChip(c.symbol)}
+                  {...penTap(() => resolveChip(c.symbol))}
                   className="rounded-lg bg-sora-soft px-2.5 py-1.5 text-sm font-bold text-ai"
                 >
                   {symbolLabel(c.symbol)}
@@ -643,7 +767,7 @@ export function PenSyntaxAnnotator({
               {chips.lane !== 'band' && (
                 <button
                   type="button"
-                  onClick={openFallback}
+                  {...penTap(openFallback)}
                   className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-xs font-bold text-ink-2"
                 >
                   一覧から選ぶ
@@ -651,7 +775,7 @@ export function PenSyntaxAnnotator({
               )}
               <button
                 type="button"
-                onClick={() => resolveChip(null)}
+                {...penTap(() => resolveChip(null))}
                 aria-label="この線を破棄"
                 className="rounded-lg px-2 py-1.5 text-xs font-bold text-again"
               >
@@ -723,11 +847,12 @@ export function PenSyntaxAnnotator({
       {picker && (
         <div
           className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 sm:items-center"
-          onClick={() => setPicker(null)}
+          {...penTap(() => setPicker(null))}
         >
           <div
             className="w-full rounded-t-card bg-white p-4 shadow-card sm:max-w-sm sm:rounded-card"
             onClick={(e) => e.stopPropagation()}
+            onPointerUp={(e) => e.stopPropagation()}
           >
             <p className="mb-2 text-sm font-bold text-ai">
               「{tokens[picker.index]}」の{picker.kind === 'pos' ? '品詞' : '働き'}
@@ -737,10 +862,10 @@ export function PenSyntaxAnnotator({
                 <button
                   key={o}
                   type="button"
-                  onClick={() => {
+                  {...penTap(() => {
                     setSlot(picker.kind, picker.index, o)
                     setPicker(null)
-                  }}
+                  })}
                   className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-ai"
                 >
                   {o}
@@ -753,10 +878,10 @@ export function PenSyntaxAnnotator({
               ))}
               <button
                 type="button"
-                onClick={() => {
+                {...penTap(() => {
                   setSlot(picker.kind, picker.index, null)
                   setPicker(null)
-                }}
+                })}
                 className="rounded-xl border border-again bg-white px-3 py-2 text-sm font-bold text-again"
               >
                 消す
