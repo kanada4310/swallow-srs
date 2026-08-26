@@ -13,6 +13,7 @@ import type { SpanType, SyntaxAnswer } from '@/lib/reading/syntax'
 import type { ExceptionKanji, Lane, PenStroke, PosLetter, RoleLetter, SymbolId, TokenBox } from './types'
 import { EXCEPTION_KANJI, POS_LETTERS, ROLE_LETTERS } from './types'
 import { deprecatedGuidance } from './ledger'
+import { strokesBBox } from './geometry'
 import {
   laneOf,
   snapCloseBracket,
@@ -145,6 +146,30 @@ export function applySymbol(
         next: { ...state, answer: { ...state.answer, pos } },
         applied: true,
         target: { from: snap.index, to: snap.index },
+      }
+    }
+    // 開始カッコ（[・｛）の真下に書いた働きは、そのまとまり全体の働きとして付ける
+    // （第7講 P8-S3 ほか「開始｛の下に C」の書き方・記号の台帳・確定版）
+    if (lane === 'below') {
+      const b = strokesBBox(strokes)
+      const tokenBox = boxes.find((t) => t.index === snap.index)
+      if (tokenBox && b.cx < tokenBox.left) {
+        const starts = state.answer.spans
+          .map((s, i) => ({ s, i }))
+          .filter(({ s }) => s.from === snap.index && (s.type === 'n' || s.type === 'comp'))
+        if (starts.length > 0) {
+          // 同じ位置から始まるまとまりが複数あるときは内側（短いほう）に付ける
+          starts.sort((a, c) => a.s.to - a.s.from - (c.s.to - c.s.from))
+          const target = starts[0]
+          const spans = state.answer.spans.map((s, i) =>
+            i === target.i ? { ...s, role: symbol } : s,
+          )
+          return {
+            next: { ...state, answer: { ...state.answer, spans } },
+            applied: true,
+            target: { from: target.s.from, to: target.s.to },
+          }
+        }
       }
     }
     const role = [...state.answer.role]

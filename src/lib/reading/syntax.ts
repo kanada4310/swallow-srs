@@ -109,6 +109,12 @@ export interface StudentSpan {
   from: number
   to: number
   type: SpanType
+  /**
+   * まとまり全体の働き（開始カッコの真下に書く書き方・[ ] と { } のみ）。
+   * 第7講 P8-S3 ほかの「開始｛の下に C」の実例に基づく（記号の台帳・確定版 2026-08-26）。
+   * 既存データには無い任意項目（採点は単語ごとの働きで行い、これは表示・検査の補助）。
+   */
+  role?: string
 }
 
 export interface SyntaxAnswer {

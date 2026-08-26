@@ -35,6 +35,7 @@ import type {
   TokenBox,
 } from '@/lib/pen-syntax/types'
 import { applySymbol, emptyPenAnnotation, type PenAnnotation, type PenExtraMark } from '@/lib/pen-syntax/apply'
+import { dashesForDepth, depthOfToken } from '@/lib/pen-syntax/dash-notation'
 import { deprecatedGuidance, symbolLabel } from '@/lib/pen-syntax/ledger'
 import { recognizeGroup } from '@/lib/pen-syntax/recognize'
 import type { InputPolicy, PalmState } from '@/lib/pen-syntax/palm'
@@ -481,8 +482,17 @@ export function PenSyntaxAnnotator({
                 .slice()
                 .sort((a, b) => b.s.to - b.s.from - (a.s.to - a.s.from))
                 .map(({ s, depth }, n) => (
-                  <span key={`o${n}`} className={BRACKET_CLASS} style={{ color: bracketColor(depth) }}>
-                    {SPAN_TYPES[s.type].open}
+                  // 開始カッコの列。[ ] と { } は真下にまとまり全体の働きを書ける
+                  // （h-9＋h-6 で従来の h-9＋mb-6 と同じ背丈＝レイアウト不変）
+                  <span
+                    key={`o${n}`}
+                    className="flex flex-col items-center self-end"
+                    style={{ color: bracketColor(depth) }}
+                  >
+                    <span className="flex h-9 items-center text-2xl font-bold">
+                      {SPAN_TYPES[s.type].open}
+                    </span>
+                    <span className="flex h-6 items-center text-xs font-bold">{s.role ?? ''}</span>
                   </span>
                 ))}
               {ann.pendingOpens
@@ -528,6 +538,13 @@ export function PenSyntaxAnnotator({
                   <Cell
                     value={ann.answer.role[i]}
                     mark={roleMarks?.[i]?.mark}
+                    // 節・句の深さは書かずに自動判定: 囲んだ括弧と同じ色＋控えめなダッシュ印
+                    accent={
+                      depthOfToken(ann.answer.spans, i) > 0
+                        ? bracketColor(depthOfToken(ann.answer.spans, i) - 1)
+                        : undefined
+                    }
+                    depthMark={dashesForDepth(depthOfToken(ann.answer.spans, i))}
                     onClick={() => !disabled && setPicker({ kind: 'role', index: i })}
                   />
                 )}
@@ -644,6 +661,7 @@ export function PenSyntaxAnnotator({
                 className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs ${tone}`}
               >
                 <b>{SPAN_TYPES[s.type].short}</b>
+                {s.role ? <b>＝{s.role}</b> : null}
                 {tokens.slice(s.from, s.to + 1).join(' ')}
                 <button type="button" onClick={() => removeSpan(idx)} aria-label="このまとまりを消す">
                   ×
@@ -731,10 +749,16 @@ export function PenSyntaxAnnotator({
 function Cell({
   value,
   mark,
+  accent,
+  depthMark,
   onClick,
 }: {
   value: string | null
   mark?: Mark
+  /** 深さの色（囲んだ括弧と同じ色）。採点マークが付いたらマークの色を優先 */
+  accent?: string
+  /** 深さの印（自動ダッシュ ′ ″ ‴。書かなくても囲んだ括弧から判定して表示） */
+  depthMark?: string
   onClick: () => void
 }) {
   const tone =
@@ -752,8 +776,16 @@ function Cell({
       type="button"
       onClick={onClick}
       className={`min-h-6 min-w-[2.2rem] rounded px-1 text-xs ${tone}`}
+      style={!mark && value && accent ? { color: accent } : undefined}
     >
-      {value || '＋'}
+      {value ? (
+        <>
+          {value}
+          {depthMark ? <span className="ml-px text-[9px] opacity-70">{depthMark}</span> : null}
+        </>
+      ) : (
+        '・'
+      )}
     </button>
   )
 }

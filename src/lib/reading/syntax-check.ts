@@ -200,9 +200,12 @@ export function checkContradictions(tokens: string[], answer: SyntaxAnswer): Con
   // --- ［ ］に役割がない（ページ9: ［ ］の下に S などの要素を記入） ---
   spans.forEach((s) => {
     if (s.type !== 'n') return
-    const hasRole = tokens.some(
-      (_, i) => i >= s.from && i <= s.to && ['S', 'O', 'C', 'Po'].includes(role[i] ?? ''),
-    )
+    // まとまり全体の働き（開始カッコの真下の書き込み）があれば役割ありとみなす
+    const hasRole =
+      (s.role != null && s.role !== '') ||
+      tokens.some(
+        (_, i) => i >= s.from && i <= s.to && ['S', 'O', 'C', 'Po'].includes(role[i] ?? ''),
+      )
     if (!hasRole && role.some((r) => r !== null)) {
       out.push({
         code: 'square-no-role',

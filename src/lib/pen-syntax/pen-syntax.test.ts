@@ -352,6 +352,25 @@ describe('applySymbol（解答への反映）', () => {
     expect(r.next.answer.role[1]).toBe('＋')
   })
 
+  it('開始カッコ（[・{）の真下に書いた働きは、まとまり全体の働きになる', () => {
+    // 3語目（left=150）から始まる [ ] のまとまりを作っておく
+    let state = init()
+    state = {
+      ...state,
+      answer: { ...state.answer, spans: [{ from: 2, to: 4, type: 'n' as const }] },
+    }
+    // 開始カッコの真下（単語の左端より左・下の行）に C を書く
+    const r = applySymbol(state, 'C', [line([138, 80], [146, 95])], BOXES)
+    expect(r.applied).toBe(true)
+    expect(r.next.answer.spans[0]).toEqual({ from: 2, to: 4, type: 'n', role: 'C' })
+    // 単語のマスには入らない（まとまり全体の働き）
+    expect(r.next.answer.role[2]).toBeNull()
+    // 単語の真下に書けば従来どおり単語の働きに入る
+    const onWord = applySymbol(state, 'S', [line([165, 80], [180, 95])], BOXES)
+    expect(onWord.next.answer.role[2]).toBe('S')
+    expect(onWord.next.answer.spans[0].role).toBeUndefined()
+  })
+
   it('台帳から外れた形（単語囲みの○・?・ダッシュ・Ø）は反映せず案内を返す', () => {
     for (const symbol of ['circle', 'question', 'tick', 'null-sign', 'slash'] as const) {
       const r = applySymbol(init(), symbol, [arc(105, 55, 35, -90, 266)], BOXES)

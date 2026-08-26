@@ -127,6 +127,20 @@ describe('checkContradictions（矛盾検査）', () => {
     expect(checkContradictions(tokens, a).some((f) => f.code === 'square-no-role')).toBe(true)
   })
 
+  it('開始カッコの真下の働き（まとまり全体の働き）があれば [ ] の役割ありとみなす', () => {
+    const a = answerFor(tokens, { spans: [{ from: 2, to: 4, type: 'n', role: 'O' }] })
+    a.role[5] = 'V'
+    expect(checkContradictions(tokens, a).some((f) => f.code === 'square-no-role')).toBe(false)
+  })
+
+  it('働きの＋（等位接続詞）があれば S が2つでも矛盾にしない', () => {
+    const a = answerFor(tokens, {})
+    a.role[0] = 'S'
+    a.role[2] = '＋'
+    a.role[4] = 'S'
+    expect(checkContradictions(tokens, a).some((f) => f.code === 'dup-s')).toBe(false)
+  })
+
   it('書き込みがあるのに V が無いと注意を出す（ルール1）', () => {
     const a = answerFor(tokens, {})
     a.role[1] = 'S'
