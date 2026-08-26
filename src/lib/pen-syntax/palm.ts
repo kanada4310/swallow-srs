@@ -88,3 +88,46 @@ export function evaluatePointer(e: PointerLike, policy: InputPolicy, state: Palm
     next: { ...state, acceptedTouches: state.acceptedTouches + 1 },
   }
 }
+
+/* ---------- ペン由来タッチの判定（画面ガード用） ---------- */
+
+/**
+ * 多くのタブレットでは、ペンの接触そのものが互換タッチイベントも発生させる。
+ * 画面ガード（指・手のひらの無効化）がこれまで全タッチを一律に止めていたため、
+ * ペンのタップまで「クリックにならない＝ボタンが反応しない」不具合が出た
+ * （2026-08-26 実機）。そこで「ペン由来とみなせるタッチは止めない」判定を設ける。
+ */
+
+/** ペン由来のタッチとみなす、直近のペン接触からの距離（px） */
+export const PEN_TOUCH_RADIUS = 32
+/** ペン由来のタッチとみなす、直近のペン接触からの時間差（ms） */
+export const PEN_TOUCH_MS = 500
+
+/** 直近に観測したペンの位置と時刻 */
+export interface RecentPen {
+  x: number
+  y: number
+  t: number
+}
+
+export type TouchOrigin = 'stylus-type' | 'pen-nearby' | 'finger'
+
+/**
+ * タッチ1点がペン由来かを判定する。
+ * - iPad 系は touchType が 'stylus' と報告される → 即ペン由来
+ * - それ以外は「直近のペン接触と時間・位置が近い」ことで判定する
+ *   （ペンの互換タッチはペンのポインタイベント直後・同じ位置で発生するため）
+ */
+export function classifyTouchContact(
+  touch: { clientX: number; clientY: number; touchType?: string },
+  recentPen: RecentPen | null,
+  now: number,
+): TouchOrigin {
+  if (touch.touchType === 'stylus') return 'stylus-type'
+  if (recentPen && now - recentPen.t <= PEN_TOUCH_MS) {
+    const dx = touch.clientX - recentPen.x
+    const dy = touch.clientY - recentPen.y
+    if (dx * dx + dy * dy <= PEN_TOUCH_RADIUS * PEN_TOUCH_RADIUS) return 'pen-nearby'
+  }
+  return 'finger'
+}
