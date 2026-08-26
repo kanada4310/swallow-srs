@@ -13,6 +13,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import type { PenPoint, PenStroke } from '@/lib/pen-syntax/types'
 import type { InputPolicy } from '@/lib/pen-syntax/palm'
 import { useStrokeCanvas, type DrawingStroke } from './useStrokeCanvas'
+import { PEN_WRITE_ZONE_ATTR } from '@/lib/pen-syntax/zone-guard'
 
 interface EnrollCanvasProps {
   policy: InputPolicy
@@ -85,6 +86,7 @@ export function EnrollCanvas({
       height={height}
       className="max-w-full rounded-xl border border-dashed border-gray-300 bg-paper"
       style={{ touchAction: 'none' }}
+      {...{ [PEN_WRITE_ZONE_ATTR]: '' }}
       {...handlers}
     />
   )

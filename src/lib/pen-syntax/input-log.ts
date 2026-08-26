@@ -41,9 +41,11 @@ export type InputLogEntry =
   | {
       kind: 'guard'
       at: number
-      event: 'touchstart' | 'touchmove'
+      event: 'touchstart' | 'touchmove' | 'pen-down'
       action: 'blocked' | 'allowed'
       reason: string
+      /** どの区域で起きたか（write=書き込みエリア / ui=操作部品 / page=それ以外） */
+      zone?: 'write' | 'ui' | 'page'
       x: number
       y: number
     }
@@ -68,15 +70,27 @@ function fmtScreen(s: ScreenSnapshot): string {
 
 const TYPE_LABEL: Record<string, string> = { pen: 'ペン', touch: '指', mouse: 'マウス' }
 
-/** 画面ガードが指の接触を通した/止めた理由の日本語表示（finger-guard.ts の判定と対応） */
+/** 画面ガードが接触を通した/止めた理由の日本語表示（zone-guard.ts の判定と対応） */
 const GUARD_REASON_LABEL: Record<string, string> = {
   'stylus-type': 'ペン由来:種別',
   'pen-nearby': 'ペン由来:近接',
+  'while-writing': 'ペン接触中の指=手のひら',
+  'in-write-zone': '書き込みエリア内の指',
+  'blocked-continued': '止めた接触の続き',
+  'free-finger': 'エリア外の指=通常操作',
+  'pen-out-of-zone': 'エリア外のペン=無効',
+  'pen-in-zone': 'エリア内のペン',
+  // 旧方式（時間窓）の記録との互換
   'pen-writing': 'ペン接触中の指=手のひら',
   'pen-recent': 'ペン接近中・直後の指=手のひら',
-  'blocked-continued': '止めた接触の続き',
   'finger-free': 'ペンなし=普通の指操作',
-  finger: '指', // 旧方式の記録との互換
+  finger: '指',
+}
+
+const ZONE_LABEL: Record<string, string> = {
+  write: '書き込みエリア内',
+  ui: '操作部品',
+  page: 'エリア外',
 }
 
 export function formatInputLogEntry(e: InputLogEntry, startAt: number): string {
@@ -99,7 +113,8 @@ export function formatInputLogEntry(e: InputLogEntry, startAt: number): string {
   if (e.kind === 'guard') {
     const act = e.action === 'blocked' ? '遮断' : '通過'
     const reason = GUARD_REASON_LABEL[e.reason] ?? e.reason
-    return `${t} ガード ${e.event} ${act}(${reason}) 位置(${round1(e.x)},${round1(e.y)})`
+    const zone = e.zone ? ` 区域=${ZONE_LABEL[e.zone] ?? e.zone}` : ''
+    return `${t} ガード ${e.event} ${act}(${reason})${zone} 位置(${round1(e.x)},${round1(e.y)})`
   }
   if (e.kind === 'shift') {
     const when = e.during === 'stroke' ? '線を描いている最中' : '待機中'

@@ -21,7 +21,8 @@ import { snapTargetFor } from '@/lib/pen-syntax/apply'
 import { shouldGroupStrokes } from '@/lib/pen-syntax/snap'
 import { initialPalmState, type InputPolicy, type PalmState } from '@/lib/pen-syntax/palm'
 import type { UserTemplateStore } from '@/lib/pen-syntax/letters'
-import { usePenScreenGuard, type PenGuardEvent } from '@/components/pen-syntax/usePenScreenGuard'
+import { usePenZoneGuard, type PenGuardEvent } from '@/components/pen-syntax/usePenZoneGuard'
+import { PEN_UI_ATTR, PEN_WRITE_ZONE_ATTR } from '@/lib/pen-syntax/zone-guard'
 import { PenInputLogPanel } from '@/components/pen-syntax/PenInputLogPanel'
 import { useTokenBoxes } from '@/components/pen-syntax/useTokenBoxes'
 import { useStrokeCanvas, type DrawingStroke } from '@/components/pen-syntax/useStrokeCanvas'
@@ -170,14 +171,15 @@ export default function PenLabPage() {
         event: ev.event,
         action: ev.action,
         reason: ev.reason,
+        zone: ev.zone,
         x: ev.x,
         y: ev.y,
       })
     },
     [inputLog],
   )
-  // ペンの接近・接触中と離した直後だけ指を止める（手のひら対策と指スクロールの両立）
-  usePenScreenGuard(policy === 'pen-only', onGuard)
+  // ゾーン方式の画面ガード（書き込みエリア内=ペン専用／エリア外=指のみ）
+  usePenZoneGuard(policy === 'pen-only', onGuard)
   const [store, setStore] = useState<UserTemplateStore>({})
   const [lastResult, setLastResult] = useState<string | null>(null)
   const [chips, setChips] = useState<{
@@ -444,6 +446,7 @@ export default function PenLabPage() {
         <div
           ref={containerRef}
           className="relative mb-2 rounded-card border border-gray-200 bg-white px-3 pb-14 pt-14 shadow-card"
+          {...{ [PEN_WRITE_ZONE_ATTR]: '' }}
         >
           <div className="flex flex-wrap items-end gap-x-1.5 gap-y-16">
             {TOKENS.map((tok, i) => (
@@ -468,6 +471,7 @@ export default function PenLabPage() {
             <div
               className="absolute z-20 -translate-x-1/2 rounded-xl border border-sora bg-white p-2 shadow-card"
               style={{ left: Math.max(90, chips.x), top: Math.max(0, chips.y - 58) }}
+              {...{ [PEN_UI_ATTR]: '' }}
             >
               <p className="mb-1 text-[10px] font-bold text-ink-3">どの記号を書きましたか？</p>
               <div className="flex items-center gap-1.5">
@@ -590,7 +594,7 @@ function EnrollmentSection({
   const [resetToken, setResetToken] = useState(0)
 
   return (
-    <div className="rounded-card border border-gray-200 bg-white p-3 shadow-card">
+    <div className="rounded-card border border-gray-200 bg-white p-3 shadow-card" {...{ [PEN_UI_ATTR]: '' }}>
       <p className="mb-1 text-sm font-bold text-ai">お手本登録（自分の字を判別に使う）</p>
       <p className="mb-2 text-xs text-ink-3">
         判別に迷いが多い記号・文字は、自分の字で1〜3回登録すると当たりやすくなります

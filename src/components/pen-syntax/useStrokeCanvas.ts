@@ -35,7 +35,7 @@ import {
   type PenInputLog,
   type ScreenSnapshot,
 } from '@/lib/pen-syntax/input-log'
-import { freezeScreenDuringStroke } from './usePenScreenGuard'
+import { freezeScreenDuringStroke } from './usePenZoneGuard'
 
 /** 書きかけの線（描画側が participates in redraw のため参照を共有する） */
 export interface DrawingStroke {

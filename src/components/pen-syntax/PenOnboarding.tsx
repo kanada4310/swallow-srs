@@ -26,6 +26,7 @@ import {
   saveOnboardingDone,
 } from '@/lib/pen-syntax/onboarding'
 import { clearUserTemplates, saveUserTemplate } from '@/lib/pen-syntax/user-templates'
+import { PEN_UI_ATTR } from '@/lib/pen-syntax/zone-guard'
 import { pathLength } from '@/lib/pen-syntax/geometry'
 import { POS_LETTER_LEGEND } from '@/lib/reading/syntax'
 import { symbolLabel } from './PenSyntaxAnnotator'
@@ -163,7 +164,7 @@ export function PenOnboarding({
 
   if (!current) {
     return (
-      <div className="mb-3 rounded-card border border-gray-200 bg-white p-4 shadow-card">
+      <div className="mb-3 rounded-card border border-gray-200 bg-white p-4 shadow-card" {...{ [PEN_UI_ATTR]: '' }}>
         <p className="mb-1 text-base font-extrabold text-ai">✅ お手本の登録が終わりました</p>
         <p className="mb-3 text-sm leading-relaxed text-ink-2">
           これで、あなたの字に合わせて記号を判別できます。
@@ -185,7 +186,8 @@ export function PenOnboarding({
   }
 
   return (
-    <div className="mb-3 rounded-card border border-sora bg-white p-4 shadow-card">
+    // ペン用の操作部品（登録の流れはペンだけで完結できるようにする）
+    <div className="mb-3 rounded-card border border-sora bg-white p-4 shadow-card" {...{ [PEN_UI_ATTR]: '' }}>
       <p className="mb-1 text-base font-extrabold text-ai">
         {mode === 'redo' ? 'お手本の登録し直し' : 'はじめに: 記号のお手本登録（1回だけ・2〜4分）'}
       </p>

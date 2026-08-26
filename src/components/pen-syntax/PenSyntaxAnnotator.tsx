@@ -38,7 +38,8 @@ import { applySymbol, emptyPenAnnotation, type PenAnnotation, type PenExtraMark 
 import { recognizeGroup } from '@/lib/pen-syntax/recognize'
 import type { InputPolicy, PalmState } from '@/lib/pen-syntax/palm'
 import type { PenInputLog } from '@/lib/pen-syntax/input-log'
-import { usePenScreenGuard, type PenGuardEvent } from './usePenScreenGuard'
+import { usePenZoneGuard, type PenGuardEvent } from './usePenZoneGuard'
+import { PEN_UI_ATTR, PEN_WRITE_ZONE_ATTR } from '@/lib/pen-syntax/zone-guard'
 import { useStrokeCanvas, type DrawingStroke } from './useStrokeCanvas'
 import { useTokenBoxes } from './useTokenBoxes'
 import { groupLines, laneOf, pickLine, shouldGroupStrokes, underlineSegments } from '@/lib/pen-syntax/snap'
@@ -148,7 +149,7 @@ export function PenSyntaxAnnotator({
   const lastEmittedAnswer = useRef<SyntaxAnswer>(answer)
   const historyRef = useRef<PenAnnotation[]>([])
 
-  // 「手のひらOK」バッジの表示切替用（ガード自体は常時有効で、ペンの接近・接触中だけ指を止める）
+  // 「手のひらOK」バッジの表示切替用
   const [penSeen, setPenSeen] = useState(false)
   const logRef = useRef<PenInputLog | null>(inputLog)
   logRef.current = inputLog
@@ -159,13 +160,14 @@ export function PenSyntaxAnnotator({
       event: ev.event,
       action: ev.action,
       reason: ev.reason,
+      zone: ev.zone,
       x: ev.x,
       y: ev.y,
     })
   }, [])
-  // ペンの接近・接触中と離した直後だけ指を止める（手のひら対策と描画エリア外の
-  // 指スクロールの両立）。ペンを見ていない間は何も止めないので常時有効でよい
-  usePenScreenGuard(policy === 'pen-only' && !disabled, onGuard)
+  // ゾーン方式の画面ガード: 書き込みエリア内=ペン専用（指・手のひら無効）／
+  // エリア外=指は常時有効・ペンは無効（書く道具に徹する）。詳細は zone-guard.ts
+  usePenZoneGuard(policy === 'pen-only' && !disabled, onGuard)
   const drawingRef = useRef<DrawingStroke | null>(null)
   // ペンでのタップ（onPointerUp）とその後のクリックの二重発火を防ぐ時刻
   const penTapAtRef = useRef(0)
@@ -469,9 +471,10 @@ export function PenSyntaxAnnotator({
 
   return (
     <div>
-      <div className="mb-2 flex flex-wrap items-center gap-2">
+      {/* ペン用の操作部品（ペンでも指でも押せる） */}
+      <div className="mb-2 flex flex-wrap items-center gap-2" {...{ [PEN_UI_ATTR]: '' }}>
         <span className="rounded-full bg-sora-soft px-3 py-1 text-xs font-bold text-ai">
-          ✍️ ペンで直接書き込めます（括弧・下線・○・品詞・働き）
+          ✍️ ペンで直接書き込めます（括弧・下線・品詞・働き）
         </span>
         <button
           type="button"
@@ -490,7 +493,7 @@ export function PenSyntaxAnnotator({
             }`}
             aria-hidden={!penSeen}
           >
-            🖐 手のひらを載せてもOK（ペンを離せば指でスクロールできます）
+            🖐 手のひらを載せてもOK（枠の外のボタンや画面送りは指で）
           </span>
         )}
       </div>
@@ -498,6 +501,7 @@ export function PenSyntaxAnnotator({
       <div
         ref={containerRef}
         className="relative mb-3 select-none rounded-card border border-gray-200 bg-white p-3 pb-6 pt-5 shadow-card [-webkit-touch-callout:none]"
+        {...{ [PEN_WRITE_ZONE_ATTR]: '' }}
       >
         <div className="flex flex-wrap items-end gap-x-1 gap-y-7">
           {tokens.map((tok, i) => (
@@ -606,6 +610,7 @@ export function PenSyntaxAnnotator({
           <div
             className="absolute z-20 -translate-x-1/2 rounded-xl border border-sora bg-white p-2 shadow-card"
             style={{ left: Math.max(80, chips.x), top: Math.max(0, chips.y - 58) }}
+            {...{ [PEN_UI_ATTR]: '' }}
           >
             <p className="mb-1 text-[10px] font-bold text-ink-3">どの記号ですか？</p>
             <div className="flex items-center gap-1.5">
@@ -649,7 +654,7 @@ export function PenSyntaxAnnotator({
 
       {/* まとまり・マークの一覧（タップで消せる） */}
       {(ann.answer.spans.length > 0 || ann.extras.length > 0 || ann.pendingOpens.length > 0) && (
-        <div className="mb-3 flex flex-wrap gap-1.5">
+        <div className="mb-3 flex flex-wrap gap-1.5" {...{ [PEN_UI_ATTR]: '' }}>
           {ann.answer.spans.map((s, idx) => {
             const mark = spanMarks?.[idx]
             const tone =
@@ -703,6 +708,7 @@ export function PenSyntaxAnnotator({
         <div
           className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 sm:items-center"
           {...penTap(() => setPicker(null))}
+          {...{ [PEN_UI_ATTR]: '' }}
         >
           <div
             className="w-full rounded-t-card bg-white p-4 shadow-card sm:max-w-sm sm:rounded-card"
