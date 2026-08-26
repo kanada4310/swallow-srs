@@ -219,6 +219,13 @@ export function PenSyntaxAnnotator({
     // tokens が変わったら描画後に測り直す
   }, [measure, tokens])
 
+  // カッコ記号の挿入・削除や採点マークの表示で単語が左右へ押されたときも測り直す
+  // （文とサイズの変化だけ見ていると、下線オーバーレイが古い箱の位置に引かれてずれる）
+  const ann = annotationRef.current
+  useEffect(() => {
+    measure()
+  }, [measure, ann.answer, ann.pendingOpens, ann.extras, posMarks, roleMarks, spanMarks])
+
   /* ---------- インクの描画 ---------- */
   const redraw = useCallback(() => {
     const canvas = canvasRef.current
@@ -456,7 +463,6 @@ export function PenSyntaxAnnotator({
   }
 
   /* ---------- 表示の下ごしらえ ---------- */
-  const ann = annotationRef.current
   const brackets = useMemo(() => {
     // 入れ子の対応がひと目で分かるよう、深さごとに色を変える（開きと閉じが同じ色）
     const depths = bracketDepths(ann.answer.spans)
