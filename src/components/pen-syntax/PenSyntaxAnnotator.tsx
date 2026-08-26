@@ -36,15 +36,10 @@ import type {
 } from '@/lib/pen-syntax/types'
 import { applySymbol, emptyPenAnnotation, type PenAnnotation, type PenExtraMark } from '@/lib/pen-syntax/apply'
 import { recognizeGroup } from '@/lib/pen-syntax/recognize'
-import { evaluatePointer, initialPalmState, type InputPolicy, type PalmState } from '@/lib/pen-syntax/palm'
-import { resolveLocalPoint } from '@/lib/pen-syntax/local-point'
-import {
-  captureScreenSnapshot,
-  describeScreenShift,
-  type PenInputLog,
-  type ScreenSnapshot,
-} from '@/lib/pen-syntax/input-log'
-import { freezeScreenDuringStroke, usePenScreenGuard, type PenGuardEvent } from './usePenScreenGuard'
+import type { InputPolicy, PalmState } from '@/lib/pen-syntax/palm'
+import type { PenInputLog } from '@/lib/pen-syntax/input-log'
+import { usePenScreenGuard, type PenGuardEvent } from './usePenScreenGuard'
+import { useStrokeCanvas, type DrawingStroke } from './useStrokeCanvas'
 import { useTokenBoxes } from './useTokenBoxes'
 import { groupLines, laneOf, pickLine, shouldGroupStrokes, underlineSegments } from '@/lib/pen-syntax/snap'
 import { pathLength, strokesBBox } from '@/lib/pen-syntax/geometry'
@@ -153,7 +148,6 @@ export function PenSyntaxAnnotator({
   const lastEmittedAnswer = useRef<SyntaxAnswer>(answer)
   const historyRef = useRef<PenAnnotation[]>([])
 
-  const palmRef = useRef<PalmState>(initialPalmState())
   // 「手のひらOK」バッジの表示切替用（ガード自体は常時有効で、ペンの接近・接触中だけ指を止める）
   const [penSeen, setPenSeen] = useState(false)
   const logRef = useRef<PenInputLog | null>(inputLog)
@@ -172,11 +166,7 @@ export function PenSyntaxAnnotator({
   // ペンの接近・接触中と離した直後だけ指を止める（手のひら対策と描画エリア外の
   // 指スクロールの両立）。ペンを見ていない間は何も止めないので常時有効でよい
   usePenScreenGuard(policy === 'pen-only' && !disabled, onGuard)
-  const drawingRef = useRef<{ pointerId: number; stroke: PenPoint[] } | null>(null)
-  // 描画中の画面固定の解除関数と、画面移動の検出用の基準
-  const unfreezeRef = useRef<(() => void) | null>(null)
-  const strokeScreenRef = useRef<ScreenSnapshot | null>(null)
-  const lastMoveLogRef = useRef(0)
+  const drawingRef = useRef<DrawingStroke | null>(null)
   // ペンでのタップ（onPointerUp）とその後のクリックの二重発火を防ぐ時刻
   const penTapAtRef = useRef(0)
   const groupRef = useRef<PendingGroup | null>(null)
@@ -297,126 +287,14 @@ export function PenSyntaxAnnotator({
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
-      unfreezeRef.current?.()
     }
   }, [])
 
-  /* ---------- ポインタ処理 ---------- */
-  const toLocal = (e: React.PointerEvent): PenPoint => {
-    const rect = containerRef.current!.getBoundingClientRect()
-    const ne = e.nativeEvent as PointerEvent
-    const vv = typeof window !== 'undefined' ? window.visualViewport : null
-    // 毎イベントで枠の位置を測り直し（スクロール追従）、ピンチズーム中は
-    // ブラウザ計算の要素相対座標に切り替える（座標系の食い違い対策）
-    const p = resolveLocalPoint({
-      clientX: e.clientX,
-      clientY: e.clientY,
-      rectLeft: rect.left,
-      rectTop: rect.top,
-      offsetX: typeof ne.offsetX === 'number' ? ne.offsetX : undefined,
-      offsetY: typeof ne.offsetY === 'number' ? ne.offsetY : undefined,
-      vvScale: vv ? vv.scale : null,
-      vvOffsetLeft: vv ? vv.offsetLeft : null,
-      vvOffsetTop: vv ? vv.offsetTop : null,
-    })
-    return { x: p.x, y: p.y, t: e.timeStamp }
-  }
-
-  const logPointer = (
-    e: React.PointerEvent,
-    phase: 'down' | 'move' | 'up' | 'cancel',
-    local: PenPoint,
-    accepted?: boolean,
-    reason?: string,
-  ) => {
-    const lg = logRef.current
-    if (!lg) return
-    const ne = e.nativeEvent as PointerEvent
-    lg.push({
-      kind: 'pointer',
-      at: e.timeStamp,
-      phase,
-      pointerType: e.pointerType,
-      pointerId: e.pointerId,
-      client: { x: e.clientX, y: e.clientY },
-      local: { x: local.x, y: local.y },
-      offset: typeof ne.offsetX === 'number' ? { x: ne.offsetX, y: ne.offsetY } : null,
-      contact: { w: e.width || 0, h: e.height || 0 },
-      accepted,
-      reason,
-      screen: captureScreenSnapshot(containerRef.current),
-    })
-  }
-
-  const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (disabled || chips) return
-    const decision = evaluatePointer(
-      { pointerType: e.pointerType, width: e.width, height: e.height },
-      policy,
-      palmRef.current,
-    )
-    palmRef.current = decision.next
-    if (e.pointerType === 'pen' && !penSeen) setPenSeen(true)
-    logPointer(e, 'down', toLocal(e), decision.accept, decision.reason)
-    if (!decision.accept) {
-      // 拒否した接触はここで既定動作ごと止める（長押しの選択・後続のクリック化を防ぐ）
-      e.preventDefault()
-      if (e.pointerType === 'touch') onPalm?.(decision.next)
-      return
-    }
-    if (timerRef.current) {
-      clearTimeout(timerRef.current)
-      timerRef.current = null
-    }
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId)
-    } catch {
-      // 一部環境（合成イベント等）で失敗しても描画は続けられる
-    }
-    // 線を描いている間は画面全体のスクロールを止める（狙いがずれる不具合対策）
-    unfreezeRef.current?.()
-    unfreezeRef.current = freezeScreenDuringStroke()
-    strokeScreenRef.current = logRef.current ? captureScreenSnapshot(containerRef.current) : null
-    lastMoveLogRef.current = e.timeStamp
-    drawingRef.current = { pointerId: e.pointerId, stroke: [toLocal(e)] }
-    redraw()
-  }
-
-  const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const d = drawingRef.current
-    if (!d || d.pointerId !== e.pointerId) return
-    d.stroke.push(toLocal(e))
-    // 描画中に画面が動いたら記録に残す（線ずれの原因特定用）
-    const lg = logRef.current
-    if (lg) {
-      const snap = captureScreenSnapshot(containerRef.current)
-      const base = strokeScreenRef.current
-      const shift = base ? describeScreenShift(base, snap) : null
-      if (shift) {
-        lg.push({ kind: 'shift', at: e.timeStamp, during: 'stroke', detail: shift })
-        strokeScreenRef.current = snap
-      }
-      if (shift || e.timeStamp - lastMoveLogRef.current > 150) {
-        lastMoveLogRef.current = e.timeStamp
-        logPointer(e, 'move', d.stroke[d.stroke.length - 1])
-      }
-    }
-    redraw()
-  }
-
-  const onPointerUp = (e: React.PointerEvent<HTMLCanvasElement>, phase: 'up' | 'cancel' = 'up') => {
-    const d = drawingRef.current
-    if (!d || d.pointerId !== e.pointerId) return
-    unfreezeRef.current?.()
-    unfreezeRef.current = null
-    strokeScreenRef.current = null
-    drawingRef.current = null
-    const stroke = d.stroke
-    logPointer(e, phase, stroke[stroke.length - 1] ?? toLocal(e))
-
+  /* ---------- ポインタ処理（入力・座標・画面固定は useStrokeCanvas が受け持つ） ---------- */
+  const handleStroke = (stroke: PenPoint[]) => {
     // ごく小さな接触は「タップ」として扱い、品詞・働きのマスを開く
     // （キャンバスが全面を覆うため、マスのタップはここで拾う。
-    //   書きかけの記号がある間は ? の点・ダッシュ等の2画目として線に数える）
+    //   書きかけの記号がある間は複数画の記号の2画目として線に数える）
     const duration = (stroke[stroke.length - 1].t ?? 0) - (stroke[0].t ?? 0)
     if (!groupRef.current && pathLength(stroke) < 7 && duration < 400) {
       const p = stroke[0]
@@ -440,7 +318,7 @@ export function PenSyntaxAnnotator({
     }
 
     if (stroke.length < 2) {
-      // 触れただけの点も1画として扱う（? の点・ダッシュなど）
+      // 触れただけの点も1画として扱う（複数画の記号の点など）
       stroke.push({ ...stroke[0], x: stroke[0].x + 0.5 })
     }
     const group = groupRef.current
@@ -454,6 +332,26 @@ export function PenSyntaxAnnotator({
     timerRef.current = setTimeout(finalizeGroup, GROUP_WAIT_MS)
     redraw()
   }
+
+  const { handlers } = useStrokeCanvas({
+    containerRef,
+    drawingRef,
+    policy,
+    active: !disabled && !chips,
+    log: inputLog,
+    onDecision: (d, e) => {
+      if (e.pointerType === 'pen' && !penSeen) setPenSeen(true)
+      if (!d.accept && e.pointerType === 'touch') onPalm?.(d.next)
+    },
+    onStrokeStart: () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+        timerRef.current = null
+      }
+    },
+    onStroke: handleStroke,
+    onRedraw: redraw,
+  })
 
   /* ---------- チップ・一覧・取り消し ---------- */
 
@@ -700,10 +598,7 @@ export function PenSyntaxAnnotator({
           ref={canvasRef}
           className="absolute inset-0 z-10 h-full w-full"
           style={{ touchAction: 'none' }}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={(e) => onPointerUp(e, 'cancel')}
+          {...handlers}
         />
 
         {/* 迷ったときの候補チップ */}

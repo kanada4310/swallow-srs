@@ -19,28 +19,14 @@ import { POS_LETTERS, ROLE_LETTERS } from '@/lib/pen-syntax/types'
 import { recognizeGroup } from '@/lib/pen-syntax/recognize'
 import { snapTargetFor } from '@/lib/pen-syntax/apply'
 import { shouldGroupStrokes } from '@/lib/pen-syntax/snap'
-import {
-  evaluatePointer,
-  initialPalmState,
-  type InputPolicy,
-  type PalmState,
-} from '@/lib/pen-syntax/palm'
+import { initialPalmState, type InputPolicy, type PalmState } from '@/lib/pen-syntax/palm'
 import type { UserTemplateStore } from '@/lib/pen-syntax/letters'
-import {
-  freezeScreenDuringStroke,
-  usePenScreenGuard,
-  type PenGuardEvent,
-} from '@/components/pen-syntax/usePenScreenGuard'
+import { usePenScreenGuard, type PenGuardEvent } from '@/components/pen-syntax/usePenScreenGuard'
 import { PenInputLogPanel } from '@/components/pen-syntax/PenInputLogPanel'
 import { useTokenBoxes } from '@/components/pen-syntax/useTokenBoxes'
-import { resolveLocalPoint } from '@/lib/pen-syntax/local-point'
-import {
-  captureScreenSnapshot,
-  createPenInputLog,
-  describeScreenShift,
-  type PenInputLog,
-  type ScreenSnapshot,
-} from '@/lib/pen-syntax/input-log'
+import { useStrokeCanvas, type DrawingStroke } from '@/components/pen-syntax/useStrokeCanvas'
+import { EnrollCanvas } from '@/components/pen-syntax/EnrollCanvas'
+import { createPenInputLog, type PenInputLog } from '@/lib/pen-syntax/input-log'
 import {
   clearUserTemplates,
   loadUserTemplates,
@@ -209,10 +195,9 @@ export default function PenLabPage() {
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const wordRefs = useRef<Array<HTMLElement | null>>([])
-  const drawingRef = useRef<{ pointerId: number; stroke: PenPoint[] } | null>(null)
+  const drawingRef = useRef<DrawingStroke | null>(null)
   const groupRef = useRef<PenStroke[] | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const palmRef = useRef<PalmState>(initialPalmState())
 
   // 単語の箱の採寸（毎描画後に自動で測り直す・キャンバスの画素数合わせも行う）
   const boxes = useTokenBoxes(containerRef, wordRefs, TOKENS, canvasRef)
@@ -348,130 +333,34 @@ export default function PenLabPage() {
     },
   })
 
-  // 描画中の画面固定の解除関数と、画面移動の検出用の基準
-  const unfreezeRef = useRef<(() => void) | null>(null)
-  const strokeScreenRef = useRef<ScreenSnapshot | null>(null)
-  const lastMoveLogRef = useRef(0)
-  useEffect(() => {
-    return () => unfreezeRef.current?.()
-  }, [])
-
-  const toLocal = (e: React.PointerEvent): PenPoint => {
-    const rect = containerRef.current!.getBoundingClientRect()
-    const ne = e.nativeEvent as PointerEvent
-    const vv = typeof window !== 'undefined' ? window.visualViewport : null
-    // 毎イベントで枠の位置を測り直し（スクロール追従）、ピンチズーム中は
-    // ブラウザ計算の要素相対座標に切り替える（座標系の食い違い対策）
-    const p = resolveLocalPoint({
-      clientX: e.clientX,
-      clientY: e.clientY,
-      rectLeft: rect.left,
-      rectTop: rect.top,
-      offsetX: typeof ne.offsetX === 'number' ? ne.offsetX : undefined,
-      offsetY: typeof ne.offsetY === 'number' ? ne.offsetY : undefined,
-      vvScale: vv ? vv.scale : null,
-      vvOffsetLeft: vv ? vv.offsetLeft : null,
-      vvOffsetTop: vv ? vv.offsetTop : null,
-    })
-    return { x: p.x, y: p.y, t: e.timeStamp }
-  }
-
-  const logPointer = (
-    e: React.PointerEvent,
-    phase: 'down' | 'move' | 'up' | 'cancel',
-    local: PenPoint,
-    accepted?: boolean,
-    reason?: string,
-  ) => {
-    const ne = e.nativeEvent as PointerEvent
-    inputLog.push({
-      kind: 'pointer',
-      at: e.timeStamp,
-      phase,
-      pointerType: e.pointerType,
-      pointerId: e.pointerId,
-      client: { x: e.clientX, y: e.clientY },
-      local: { x: local.x, y: local.y },
-      offset: typeof ne.offsetX === 'number' ? { x: ne.offsetX, y: ne.offsetY } : null,
-      contact: { w: e.width || 0, h: e.height || 0 },
-      accepted,
-      reason,
-      screen: captureScreenSnapshot(containerRef.current),
-    })
-  }
-
-  const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (chips) return
-    const decision = evaluatePointer(
-      { pointerType: e.pointerType, width: e.width, height: e.height },
-      policy,
-      palmRef.current,
-    )
-    palmRef.current = decision.next
-    setPalm(decision.next)
-    logPointer(e, 'down', toLocal(e), decision.accept, decision.reason)
-    if (!decision.accept) {
-      // 拒否した接触は既定動作ごと止める（長押しの選択・後続のクリック化を防ぐ）
-      e.preventDefault()
-      return
-    }
-    if (timerRef.current) {
-      clearTimeout(timerRef.current)
-      timerRef.current = null
-    }
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId)
-    } catch {
-      // 一部環境（合成イベント等）で失敗しても描画は続けられる
-    }
-    // 線を描いている間は画面全体のスクロールを止める（狙いがずれる不具合対策）
-    unfreezeRef.current?.()
-    unfreezeRef.current = freezeScreenDuringStroke()
-    strokeScreenRef.current = captureScreenSnapshot(containerRef.current)
-    lastMoveLogRef.current = e.timeStamp
-    drawingRef.current = { pointerId: e.pointerId, stroke: [toLocal(e)] }
-    redraw()
-  }
-
-  const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const d = drawingRef.current
-    if (!d || d.pointerId !== e.pointerId) return
-    d.stroke.push(toLocal(e))
-    // 描画中に画面が動いたら記録に残す（線ずれの原因特定用）
-    const snap = captureScreenSnapshot(containerRef.current)
-    const base = strokeScreenRef.current
-    const shift = base ? describeScreenShift(base, snap) : null
-    if (shift) {
-      inputLog.push({ kind: 'shift', at: e.timeStamp, during: 'stroke', detail: shift })
-      strokeScreenRef.current = snap
-    }
-    if (shift || e.timeStamp - lastMoveLogRef.current > 150) {
-      lastMoveLogRef.current = e.timeStamp
-      logPointer(e, 'move', d.stroke[d.stroke.length - 1])
-    }
-    redraw()
-  }
-
-  const onPointerUp = (e: React.PointerEvent<HTMLCanvasElement>, phase: 'up' | 'cancel' = 'up') => {
-    const d = drawingRef.current
-    if (!d || d.pointerId !== e.pointerId) return
-    unfreezeRef.current?.()
-    unfreezeRef.current = null
-    strokeScreenRef.current = null
-    drawingRef.current = null
-    const stroke = d.stroke
-    logPointer(e, phase, stroke[stroke.length - 1] ?? toLocal(e))
-    if (stroke.length < 2) stroke.push({ ...stroke[0], x: stroke[0].x + 0.5 })
-    const group = groupRef.current
-    if (group && shouldGroupStrokes(group, stroke)) group.push(stroke)
-    else {
-      if (group) finalizeGroup()
-      groupRef.current = [stroke]
-    }
-    if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(finalizeGroup, GROUP_WAIT_MS)
-    redraw()
-  }
+  // 入力・座標・画面固定は useStrokeCanvas が受け持つ（書き込み部品と同じ実装を共有）
+  const { handlers } = useStrokeCanvas({
+    containerRef,
+    drawingRef,
+    policy,
+    active: !chips,
+    log: inputLog,
+    onDecision: (d) => setPalm(d.next),
+    onStrokeStart: () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+        timerRef.current = null
+      }
+    },
+    onStroke: (stroke) => {
+      if (stroke.length < 2) stroke.push({ ...stroke[0], x: stroke[0].x + 0.5 })
+      const group = groupRef.current
+      if (group && shouldGroupStrokes(group, stroke)) group.push(stroke)
+      else {
+        if (group) finalizeGroup()
+        groupRef.current = [stroke]
+      }
+      if (timerRef.current) clearTimeout(timerRef.current)
+      timerRef.current = setTimeout(finalizeGroup, GROUP_WAIT_MS)
+      redraw()
+    },
+    onRedraw: redraw,
+  })
 
   const s = stats[mode] ?? emptyStats()
   const pct = (n: number, dd: number) => (dd === 0 ? '-' : `${((n / dd) * 100).toFixed(1)}%`)
@@ -573,10 +462,7 @@ export default function PenLabPage() {
             ref={canvasRef}
             className="absolute inset-0 z-10 h-full w-full"
             style={{ touchAction: 'none' }}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={(e) => onPointerUp(e, 'cancel')}
+            {...handlers}
           />
           {chips && (
             <div
@@ -700,53 +586,8 @@ function EnrollmentSection({
   policy: InputPolicy
 }) {
   const [symbol, setSymbol] = useState<SymbolId>('n')
-  const canvasRef = useRef<HTMLCanvasElement>(null)
   const strokesRef = useRef<PenStroke[]>([])
-  const drawingRef = useRef<{ pointerId: number; stroke: PenPoint[] } | null>(null)
-  // お手本登録のキャンバスも判別キャンバスと同じポインタ判定を通す（手のひらを線にしない）
-  const palmRef = useRef<PalmState>(initialPalmState())
-  const unfreezeRef = useRef<(() => void) | null>(null)
-  useEffect(() => {
-    return () => unfreezeRef.current?.()
-  }, [])
-
-  const redraw = useCallback(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.lineWidth = 2.5
-    ctx.lineCap = 'round'
-    ctx.strokeStyle = '#1C2B4B'
-    const paint = (stroke: PenPoint[]) => {
-      if (stroke.length < 2) return
-      ctx.beginPath()
-      ctx.moveTo(stroke[0].x, stroke[0].y)
-      for (let i = 1; i < stroke.length; i++) ctx.lineTo(stroke[i].x, stroke[i].y)
-      ctx.stroke()
-    }
-    for (const s of strokesRef.current) paint(s)
-    if (drawingRef.current) paint(drawingRef.current.stroke)
-  }, [])
-
-  const toLocal = (e: React.PointerEvent<HTMLCanvasElement>): PenPoint => {
-    const rect = e.currentTarget.getBoundingClientRect()
-    const ne = e.nativeEvent as PointerEvent
-    const vv = typeof window !== 'undefined' ? window.visualViewport : null
-    const p = resolveLocalPoint({
-      clientX: e.clientX,
-      clientY: e.clientY,
-      rectLeft: rect.left,
-      rectTop: rect.top,
-      offsetX: typeof ne.offsetX === 'number' ? ne.offsetX : undefined,
-      offsetY: typeof ne.offsetY === 'number' ? ne.offsetY : undefined,
-      vvScale: vv ? vv.scale : null,
-      vvOffsetLeft: vv ? vv.offsetLeft : null,
-      vvOffsetTop: vv ? vv.offsetTop : null,
-    })
-    return { x: p.x, y: p.y, t: e.timeStamp }
-  }
+  const [resetToken, setResetToken] = useState(0)
 
   return (
     <div className="rounded-card border border-gray-200 bg-white p-3 shadow-card">
@@ -773,8 +614,7 @@ function EnrollmentSection({
           onClick={() => {
             if (strokesRef.current.length === 0) return
             onStoreChange(saveUserTemplate(symbol, strokesRef.current))
-            strokesRef.current = []
-            redraw()
+            setResetToken((n) => n + 1)
           }}
           className="rounded-xl bg-sora px-3 py-2 text-sm font-bold text-white"
         >
@@ -782,10 +622,7 @@ function EnrollmentSection({
         </button>
         <button
           type="button"
-          onClick={() => {
-            strokesRef.current = []
-            redraw()
-          }}
+          onClick={() => setResetToken((n) => n + 1)}
           className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-ai"
         >
           書き直す
@@ -798,56 +635,13 @@ function EnrollmentSection({
           この字の登録を消す
         </button>
       </div>
-      <canvas
-        ref={canvasRef}
-        width={280}
+      {/* 書き込みキャンバスは初回登録フローと同じ共通部品（入力層の一本化） */}
+      <EnrollCanvas
+        policy={policy}
+        resetToken={resetToken}
         height={140}
-        className="rounded-xl border border-dashed border-gray-300 bg-paper"
-        style={{ touchAction: 'none' }}
-        onPointerDown={(e) => {
-          const decision = evaluatePointer(
-            { pointerType: e.pointerType, width: e.width, height: e.height },
-            policy,
-            palmRef.current,
-          )
-          palmRef.current = decision.next
-          if (!decision.accept) {
-            e.preventDefault()
-            return
-          }
-          try {
-            e.currentTarget.setPointerCapture(e.pointerId)
-          } catch {
-            // 失敗しても書ける
-          }
-          // 線を描いている間は画面全体のスクロールを止める（狙いがずれる不具合対策）
-          unfreezeRef.current?.()
-          unfreezeRef.current = freezeScreenDuringStroke()
-          drawingRef.current = { pointerId: e.pointerId, stroke: [toLocal(e)] }
-          redraw()
-        }}
-        onPointerMove={(e) => {
-          const d = drawingRef.current
-          if (!d || d.pointerId !== e.pointerId) return
-          d.stroke.push(toLocal(e))
-          redraw()
-        }}
-        onPointerUp={(e) => {
-          const d = drawingRef.current
-          if (!d || d.pointerId !== e.pointerId) return
-          unfreezeRef.current?.()
-          unfreezeRef.current = null
-          drawingRef.current = null
-          if (d.stroke.length >= 2) strokesRef.current.push(d.stroke)
-          redraw()
-        }}
-        onPointerCancel={(e) => {
-          const d = drawingRef.current
-          if (!d || d.pointerId !== e.pointerId) return
-          unfreezeRef.current?.()
-          unfreezeRef.current = null
-          drawingRef.current = null
-          redraw()
+        onStrokesChange={(s) => {
+          strokesRef.current = s
         }}
       />
     </div>

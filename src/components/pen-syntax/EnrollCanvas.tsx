@@ -1,18 +1,18 @@
 'use client'
 
 /**
- * お手本登録用の書き込みキャンバス（初回登録フローで使う共通部品）。
+ * お手本登録用の書き込みキャンバス（初回登録フロー・計測ページの登録欄で共用）。
  *
- * 判別キャンバスと同じポインタ判定（手のひらを線にしない）・描画中の画面固定・
- * ピンチズーム対応の座標変換を備える。書き終えるたびに onStrokesChange で全画を親へ渡す。
+ * 入力処理（接触の受理判定・描画中の画面固定・ピンチズーム対応の座標変換）は
+ * 判別キャンバスと同じ useStrokeCanvas を使う（入力層の一本化・2026-08-26）。
+ * 書き終えるたびに onStrokesChange で全画を親へ渡す。
  * 親が resetToken を変えると白紙に戻る。
  */
 
 import { useCallback, useEffect, useRef } from 'react'
 import type { PenPoint, PenStroke } from '@/lib/pen-syntax/types'
-import { evaluatePointer, initialPalmState, type InputPolicy, type PalmState } from '@/lib/pen-syntax/palm'
-import { resolveLocalPoint } from '@/lib/pen-syntax/local-point'
-import { freezeScreenDuringStroke } from './usePenScreenGuard'
+import type { InputPolicy } from '@/lib/pen-syntax/palm'
+import { useStrokeCanvas, type DrawingStroke } from './useStrokeCanvas'
 
 interface EnrollCanvasProps {
   policy: InputPolicy
@@ -32,13 +32,7 @@ export function EnrollCanvas({
 }: EnrollCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const strokesRef = useRef<PenStroke[]>([])
-  const drawingRef = useRef<{ pointerId: number; stroke: PenPoint[] } | null>(null)
-  const palmRef = useRef<PalmState>(initialPalmState())
-  const unfreezeRef = useRef<(() => void) | null>(null)
-
-  useEffect(() => {
-    return () => unfreezeRef.current?.()
-  }, [])
+  const drawingRef = useRef<DrawingStroke | null>(null)
 
   const redraw = useCallback(() => {
     const canvas = canvasRef.current
@@ -69,23 +63,20 @@ export function EnrollCanvas({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetToken])
 
-  const toLocal = (e: React.PointerEvent<HTMLCanvasElement>): PenPoint => {
-    const rect = e.currentTarget.getBoundingClientRect()
-    const ne = e.nativeEvent as PointerEvent
-    const vv = typeof window !== 'undefined' ? window.visualViewport : null
-    const p = resolveLocalPoint({
-      clientX: e.clientX,
-      clientY: e.clientY,
-      rectLeft: rect.left,
-      rectTop: rect.top,
-      offsetX: typeof ne.offsetX === 'number' ? ne.offsetX : undefined,
-      offsetY: typeof ne.offsetY === 'number' ? ne.offsetY : undefined,
-      vvScale: vv ? vv.scale : null,
-      vvOffsetLeft: vv ? vv.offsetLeft : null,
-      vvOffsetTop: vv ? vv.offsetTop : null,
-    })
-    return { x: p.x, y: p.y, t: e.timeStamp }
-  }
+  const { handlers } = useStrokeCanvas({
+    containerRef: canvasRef,
+    drawingRef,
+    policy,
+    onStroke: (stroke, phase) => {
+      // 中断（cancel）した画は登録に数えない
+      if (phase === 'up' && stroke.length >= 2) {
+        strokesRef.current = [...strokesRef.current, stroke]
+        onStrokesChange(strokesRef.current)
+      }
+      redraw()
+    },
+    onRedraw: redraw,
+  })
 
   return (
     <canvas
@@ -94,54 +85,7 @@ export function EnrollCanvas({
       height={height}
       className="max-w-full rounded-xl border border-dashed border-gray-300 bg-paper"
       style={{ touchAction: 'none' }}
-      onPointerDown={(e) => {
-        const decision = evaluatePointer(
-          { pointerType: e.pointerType, width: e.width, height: e.height },
-          policy,
-          palmRef.current,
-        )
-        palmRef.current = decision.next
-        if (!decision.accept) {
-          e.preventDefault()
-          return
-        }
-        try {
-          e.currentTarget.setPointerCapture(e.pointerId)
-        } catch {
-          // 失敗しても書ける
-        }
-        // 線を描いている間は画面全体のスクロールを止める（狙いがずれる不具合対策）
-        unfreezeRef.current?.()
-        unfreezeRef.current = freezeScreenDuringStroke()
-        drawingRef.current = { pointerId: e.pointerId, stroke: [toLocal(e)] }
-        redraw()
-      }}
-      onPointerMove={(e) => {
-        const d = drawingRef.current
-        if (!d || d.pointerId !== e.pointerId) return
-        d.stroke.push(toLocal(e))
-        redraw()
-      }}
-      onPointerUp={(e) => {
-        const d = drawingRef.current
-        if (!d || d.pointerId !== e.pointerId) return
-        unfreezeRef.current?.()
-        unfreezeRef.current = null
-        drawingRef.current = null
-        if (d.stroke.length >= 2) {
-          strokesRef.current = [...strokesRef.current, d.stroke]
-          onStrokesChange(strokesRef.current)
-        }
-        redraw()
-      }}
-      onPointerCancel={(e) => {
-        const d = drawingRef.current
-        if (!d || d.pointerId !== e.pointerId) return
-        unfreezeRef.current?.()
-        unfreezeRef.current = null
-        drawingRef.current = null
-        redraw()
-      }}
+      {...handlers}
     />
   )
 }
