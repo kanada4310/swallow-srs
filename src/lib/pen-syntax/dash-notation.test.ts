@@ -31,6 +31,9 @@ describe('depthOfToken（括弧からの深さの自動判定）', () => {
 
 describe('ダッシュ表記との相互変換', () => {
   it('深さ 1・2・3 は ′ ″ ‴（模範分析集の表記）', () => {
+    expect(dashesForDepth(0)).toBe('')
+    expect(dashesForDepth(1)).toBe('′')
+    expect(dashesForDepth(4)).toBe('′′′′')
     expect(roleWithDepth('S', 0)).toBe('S')
     expect(roleWithDepth('S', 1)).toBe('S′')
     expect(roleWithDepth('V', 2)).toBe('V″')
