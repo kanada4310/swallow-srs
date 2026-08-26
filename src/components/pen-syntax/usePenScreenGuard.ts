@@ -5,27 +5,32 @@
  *
  * キャンバスの touch-action: none はキャンバスの上にしか効かないため、
  * キャンバスの外（画面の下側など）に載せた手のひらはページのスクロールや
- * ボタンのタップとして働いてしまう。このフックは「ペン入力を一度でも見たら、
- * 画面全体で指・手のひらのタッチ操作を無効化する」ことでそれを塞ぐ。
+ * ボタンのタップとして働いてしまう。このフックはそれを塞ぐ。
  *
- * ★2026-08-26 修正: 多くのタブレットでは、ペンの接触そのものが互換タッチ
- * イベントも発生させる。以前は全タッチを一律に preventDefault していたため、
- * ペンのタップがクリックにならず「正しい部分でもペンが反応しない」不具合が
- * 実機で発生した。ペン由来とみなせるタッチ（touchType が 'stylus'、または
- * 直近のペン接触と時間・位置が近い）は止めないようにした。
- *
- * - ペンの線・タップはそのまま生きる（ポインタ・クリックとも）
- * - ペンを一度も使っていない端末（指だけの生徒）では働かない＝指の操作は普通に生きる
+ * ★2026-08-26 改修（使いやすさ）: 以前は「ペンを一度でも見たら画面全体で
+ * 指を常時無効化」していたが、描画エリア外を指でスクロールする普通の操作まで
+ * 止めてしまい使いづらかった。判定を finger-guard.ts の時間窓方式に置き換え、
+ * 「ペンの接近・接触中と離した直後だけ」指を止める。
+ * - 手のひらを載せたまま書ける（ペンが近くにある間の指は止める）
+ * - ペンを離してしばらく経てば、指のスクロール・タップは普通に効く
+ * - ペン由来の互換タッチは常に通す（ペンのタップがクリックになる。8/26 修正の維持）
+ * - ペンを一度も使っていない端末（指だけの生徒）では何も止めない
  * - ガードは画面を離れる（部品が外れる）と解除される
  */
 
 import { useEffect, useRef } from 'react'
-import { classifyTouchContact, type RecentPen, type TouchOrigin } from '@/lib/pen-syntax/palm'
+import {
+  createFingerGuardState,
+  decideTouchEvent,
+  releaseTouch,
+  trackPen,
+  type FingerGuardReason,
+} from '@/lib/pen-syntax/finger-guard'
 
 export interface PenGuardEvent {
   event: 'touchstart' | 'touchmove'
   action: 'blocked' | 'allowed'
-  reason: TouchOrigin
+  reason: FingerGuardReason
   x: number
   y: number
 }
@@ -37,59 +42,68 @@ export function usePenScreenGuard(active: boolean, onEvent?: (e: PenGuardEvent) 
 
   useEffect(() => {
     if (!active) return
-    let recentPen: RecentPen | null = null
+    const state = createFingerGuardState()
     // 記録が touchmove で埋まらないよう、同種の連続イベントは間引いて通知する
     let lastNotified = 0
 
-    const trackPen = (e: PointerEvent) => {
-      if (e.pointerType === 'pen') recentPen = { x: e.clientX, y: e.clientY, t: e.timeStamp }
+    const track = (e: PointerEvent) => {
+      if (e.pointerType !== 'pen') return
+      const phase =
+        e.type === 'pointerdown'
+          ? 'down'
+          : e.type === 'pointerup'
+            ? 'up'
+            : e.type === 'pointercancel'
+              ? 'cancel'
+              : 'move'
+      trackPen(state, phase, e.clientX, e.clientY, e.timeStamp)
     }
 
     const guard = (ev: TouchEvent) => {
-      const touches = Array.from(ev.changedTouches)
-      let origin: TouchOrigin = 'finger'
-      for (const t of touches) {
-        const o = classifyTouchContact(
-          {
-            clientX: t.clientX,
-            clientY: t.clientY,
-            touchType: (t as Touch & { touchType?: string }).touchType,
-          },
-          recentPen,
-          ev.timeStamp,
-        )
-        if (o !== 'finger') {
-          origin = o
-          break
-        }
-      }
-      // ペン由来のタッチを止めるとペンのタップがクリックにならなくなるため通す
-      const blocked = origin === 'finger'
-      if (blocked) ev.preventDefault()
+      const touches = Array.from(ev.changedTouches).map((t) => ({
+        identifier: t.identifier,
+        clientX: t.clientX,
+        clientY: t.clientY,
+        touchType: (t as Touch & { touchType?: string }).touchType,
+      }))
+      const decision = decideTouchEvent(state, touches, ev.timeStamp)
+      if (!decision.allow) ev.preventDefault()
       const type = ev.type === 'touchstart' ? 'touchstart' : 'touchmove'
       if (cb.current && (type === 'touchstart' || ev.timeStamp - lastNotified > 250)) {
         lastNotified = ev.timeStamp
         cb.current({
           event: type,
-          action: blocked ? 'blocked' : 'allowed',
-          reason: origin,
+          action: decision.allow ? 'allowed' : 'blocked',
+          reason: decision.reason,
           x: touches[0]?.clientX ?? 0,
           y: touches[0]?.clientY ?? 0,
         })
       }
     }
 
+    const release = (ev: TouchEvent) => {
+      for (const t of Array.from(ev.changedTouches)) releaseTouch(state, t.identifier)
+    }
+
     const opts: AddEventListenerOptions = { passive: false, capture: true }
     const trackOpts: AddEventListenerOptions = { capture: true }
-    document.addEventListener('pointerdown', trackPen, trackOpts)
-    document.addEventListener('pointermove', trackPen, trackOpts)
+    document.addEventListener('pointerdown', track, trackOpts)
+    document.addEventListener('pointermove', track, trackOpts)
+    document.addEventListener('pointerup', track, trackOpts)
+    document.addEventListener('pointercancel', track, trackOpts)
     document.addEventListener('touchstart', guard, opts)
     document.addEventListener('touchmove', guard, opts)
+    document.addEventListener('touchend', release, trackOpts)
+    document.addEventListener('touchcancel', release, trackOpts)
     return () => {
-      document.removeEventListener('pointerdown', trackPen, trackOpts)
-      document.removeEventListener('pointermove', trackPen, trackOpts)
+      document.removeEventListener('pointerdown', track, trackOpts)
+      document.removeEventListener('pointermove', track, trackOpts)
+      document.removeEventListener('pointerup', track, trackOpts)
+      document.removeEventListener('pointercancel', track, trackOpts)
       document.removeEventListener('touchstart', guard, opts)
       document.removeEventListener('touchmove', guard, opts)
+      document.removeEventListener('touchend', release, trackOpts)
+      document.removeEventListener('touchcancel', release, trackOpts)
     }
   }, [active])
 }

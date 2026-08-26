@@ -68,6 +68,17 @@ function fmtScreen(s: ScreenSnapshot): string {
 
 const TYPE_LABEL: Record<string, string> = { pen: 'ペン', touch: '指', mouse: 'マウス' }
 
+/** 画面ガードが指の接触を通した/止めた理由の日本語表示（finger-guard.ts の判定と対応） */
+const GUARD_REASON_LABEL: Record<string, string> = {
+  'stylus-type': 'ペン由来:種別',
+  'pen-nearby': 'ペン由来:近接',
+  'pen-writing': 'ペン接触中の指=手のひら',
+  'pen-recent': 'ペン接近中・直後の指=手のひら',
+  'blocked-continued': '止めた接触の続き',
+  'finger-free': 'ペンなし=普通の指操作',
+  finger: '指', // 旧方式の記録との互換
+}
+
 export function formatInputLogEntry(e: InputLogEntry, startAt: number): string {
   const t = `+${((e.at - startAt) / 1000).toFixed(2)}s`
   if (e.kind === 'pointer') {
@@ -87,7 +98,8 @@ export function formatInputLogEntry(e: InputLogEntry, startAt: number): string {
   }
   if (e.kind === 'guard') {
     const act = e.action === 'blocked' ? '遮断' : '通過'
-    return `${t} ガード ${e.event} ${act}(${e.reason}) 位置(${round1(e.x)},${round1(e.y)})`
+    const reason = GUARD_REASON_LABEL[e.reason] ?? e.reason
+    return `${t} ガード ${e.event} ${act}(${reason}) 位置(${round1(e.x)},${round1(e.y)})`
   }
   if (e.kind === 'shift') {
     const when = e.during === 'stroke' ? '線を描いている最中' : '待機中'

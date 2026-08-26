@@ -154,7 +154,7 @@ export function PenSyntaxAnnotator({
   const historyRef = useRef<PenAnnotation[]>([])
 
   const palmRef = useRef<PalmState>(initialPalmState())
-  // ペンを一度でも見たら、画面全体で指・手のひらを無効化する（キャンバスの外の誤操作対策）
+  // 「手のひらOK」バッジの表示切替用（ガード自体は常時有効で、ペンの接近・接触中だけ指を止める）
   const [penSeen, setPenSeen] = useState(false)
   const logRef = useRef<PenInputLog | null>(inputLog)
   logRef.current = inputLog
@@ -169,7 +169,9 @@ export function PenSyntaxAnnotator({
       y: ev.y,
     })
   }, [])
-  usePenScreenGuard(penSeen && policy === 'pen-only' && !disabled, onGuard)
+  // ペンの接近・接触中と離した直後だけ指を止める（手のひら対策と描画エリア外の
+  // 指スクロールの両立）。ペンを見ていない間は何も止めないので常時有効でよい
+  usePenScreenGuard(policy === 'pen-only' && !disabled, onGuard)
   const drawingRef = useRef<{ pointerId: number; stroke: PenPoint[] } | null>(null)
   // 描画中の画面固定の解除関数と、画面移動の検出用の基準
   const unfreezeRef = useRef<(() => void) | null>(null)
@@ -632,7 +634,7 @@ export function PenSyntaxAnnotator({
             }`}
             aria-hidden={!penSeen}
           >
-            🖐 手のひらを載せてもOK（この画面はペン専用になりました）
+            🖐 手のひらを載せてもOK（ペンを離せば指でスクロールできます）
           </span>
         )}
       </div>

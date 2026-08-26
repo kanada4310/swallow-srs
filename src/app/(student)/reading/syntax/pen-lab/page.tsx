@@ -188,8 +188,8 @@ export default function PenLabPage() {
     },
     [inputLog],
   )
-  // ペンを一度でも見たら、画面全体で指・手のひらを無効化する（キャンバスの外の誤操作対策）
-  usePenScreenGuard(palm.penSeen && policy === 'pen-only', onGuard)
+  // ペンの接近・接触中と離した直後だけ指を止める（手のひら対策と指スクロールの両立）
+  usePenScreenGuard(policy === 'pen-only', onGuard)
   const [store, setStore] = useState<UserTemplateStore>({})
   const [lastResult, setLastResult] = useState<string | null>(null)
   const [chips, setChips] = useState<{

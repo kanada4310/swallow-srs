@@ -147,8 +147,9 @@ describe('入力の記録（作成・整形・保持）', () => {
         accepted: false,
         reason: 'touch-rejected-policy',
       },
-      { kind: 'guard', at: 1210, event: 'touchstart', action: 'blocked', reason: 'finger', x: 300, y: 500 },
+      { kind: 'guard', at: 1210, event: 'touchstart', action: 'blocked', reason: 'pen-writing', x: 300, y: 500 },
       { kind: 'guard', at: 1220, event: 'touchstart', action: 'allowed', reason: 'pen-nearby', x: 120, y: 84 },
+      { kind: 'guard', at: 1230, event: 'touchstart', action: 'allowed', reason: 'finger-free', x: 200, y: 600 },
       { kind: 'shift', at: 1500, during: 'stroke', detail: 'スクロール (0,120)→(0,148)' },
     ]
     const text = formatInputLog(entries, env)
@@ -156,8 +157,9 @@ describe('入力の記録（作成・整形・保持）', () => {
     expect(text).toContain('受理(pen)')
     expect(text).toContain('拒否(touch-rejected-policy)')
     expect(text).toContain('接触=28x30')
-    expect(text).toContain('遮断(finger)')
-    expect(text).toContain('通過(pen-nearby)')
+    expect(text).toContain('遮断(ペン接触中の指=手のひら)')
+    expect(text).toContain('通過(ペン由来:近接)')
+    expect(text).toContain('通過(ペンなし=普通の指操作)')
     expect(text).toContain('⚠ 画面移動（線を描いている最中）')
     expect(text).toContain('端末: TestUA')
   })
