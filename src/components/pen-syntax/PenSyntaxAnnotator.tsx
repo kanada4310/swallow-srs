@@ -35,6 +35,7 @@ import type {
   TokenBox,
 } from '@/lib/pen-syntax/types'
 import { applySymbol, emptyPenAnnotation, type PenAnnotation, type PenExtraMark } from '@/lib/pen-syntax/apply'
+import { deprecatedGuidance, symbolLabel } from '@/lib/pen-syntax/ledger'
 import { recognizeGroup } from '@/lib/pen-syntax/recognize'
 import type { InputPolicy, PalmState } from '@/lib/pen-syntax/palm'
 import type { PenInputLog } from '@/lib/pen-syntax/input-log'
@@ -58,28 +59,8 @@ export interface PenRecognitionEvent {
   applied: boolean
 }
 
-export const SYMBOL_LABELS: Record<string, string> = {
-  'paren-open': '（',
-  'paren-close': '）',
-  'square-open': '[',
-  'square-close': ']',
-  'angle-open': '〈',
-  'angle-close': '〉',
-  'brace-open': '{',
-  'brace-close': '}',
-  hline: '下線',
-  circle: '○囲み',
-  wavy: '波線',
-  question: '?',
-  slash: '斜線',
-  tick: '’（ダッシュ）',
-  'null-sign': 'Ø',
-  triangle: '▷',
-}
-
-export function symbolLabel(symbol: SymbolId): string {
-  return SYMBOL_LABELS[symbol] ?? symbol
-}
+// 記号の表示名の正本は台帳（ledger.ts）。既存の呼び出し元のために再輸出する
+export { SYMBOL_LABELS, symbolLabel } from '@/lib/pen-syntax/ledger'
 
 interface PendingGroup {
   strokes: PenStroke[]
@@ -274,10 +255,12 @@ export function PenSyntaxAnnotator({
       redraw()
       return
     }
-    // 迷った・拾えなかった: 候補チップを出してワンタップ確定
+    // 迷った・拾えなかった: 候補チップを出してワンタップ確定。
+    // 台帳から外れた形（?・ダッシュ・Ø・単語囲みの○）は候補に出さない（記号の台帳）
+    const usable = result.candidates.filter((c) => !deprecatedGuidance(c.symbol))
     const b = strokesBBox(group.strokes)
     setChips({
-      candidates: result.candidates,
+      candidates: usable,
       strokes: group.strokes,
       boxes: rec.boxes,
       lane: rec.lane,
@@ -455,19 +438,7 @@ export function PenSyntaxAnnotator({
   const extraAt = (i: number): PenExtraMark[] => ann.extras.filter((x) => i >= x.from && i <= x.to)
 
   const extraLabel = (x: PenExtraMark) =>
-    x.kind === 'circle'
-      ? '○囲み'
-      : x.kind === 'wavy'
-        ? '波線'
-        : x.kind === 'question'
-          ? '?'
-          : x.kind === 'null-sign'
-            ? 'Ø'
-            : x.kind === 'dash'
-              ? 'ダッシュ（上）'
-              : x.kind === 'tick'
-                ? '’'
-                : '斜線'
+    x.kind === 'wavy' ? '波線（熟語）' : `○${x.label ?? ''}`
 
   return (
     <div>
@@ -537,15 +508,17 @@ export function PenSyntaxAnnotator({
                     // （下の「下線オーバーレイ」）。ここでは線ぶんの余白(3px)だけ確保する
                     'whitespace-nowrap border-b-[3px] border-transparent px-1 py-0.5 font-serif text-lg',
                     extraAt(i).some((x) => x.kind === 'wavy') ? '[text-decoration:underline_wavy_#c53030]' : '',
-                    extraAt(i).some((x) => x.kind === 'circle') ? 'rounded-full ring-2 ring-nodo' : '',
                   ].join(' ')}
                 >
                   {tok}
                   {extraAt(i)
-                    .filter((x) => x.from === i && ['question', 'null-sign', 'tick'].includes(x.kind))
+                    .filter((x) => x.from === i && x.kind === 'exception')
                     .map((x, n) => (
-                      <sup key={n} className="ml-0.5 text-xs font-bold text-nodo-dark">
-                        {x.kind === 'question' ? '?' : x.kind === 'null-sign' ? 'Ø' : '’'}
+                      <sup
+                        key={n}
+                        className="ml-0.5 inline-block rounded-full border border-nodo px-0.5 text-[10px] font-bold leading-tight text-nodo-dark"
+                      >
+                        {x.label}
                       </sup>
                     ))}
                 </span>

@@ -20,6 +20,7 @@ import {
   underlineSegments,
 } from './snap'
 import { applySymbol, emptyPenAnnotation } from './apply'
+import { classifyExceptionMark } from './recognize'
 import { classifyPosLetter, classifyRoleLetter } from './letters'
 import type { PenStroke, TokenBox } from './types'
 import { emptyAnswer, SYNTAX_PROBLEMS } from '@/lib/reading/syntax'
@@ -141,7 +142,7 @@ describe('classifyRoleLetter（働きの文字）', () => {
     expect(classifyRoleLetter(M).candidates.every((c) => String(c.symbol) !== 'M')).toBe(true)
   })
 
-  it('品詞の英字（n・v・a・ad・aux・p）を判別する', () => {
+  it('品詞の英字（n・v・a・ad・aux）を判別する', () => {
     const n = [line([32, 38], [32, 92]), [...arc(50, 64, 18, 180, 360, 10), ...line([68, 64], [68, 92])]]
     const v = [line([30, 40], [50, 92], [70, 40])]
     const a = [arc(46, 69, 21, -40, 320, 16), line([66, 46], [66, 92])]
@@ -162,6 +163,37 @@ describe('classifyRoleLetter（働きの文字）', () => {
     const odd = [line([10, 40], [45, 70], [90, 20])]
     const store = { V: [odd] }
     expect(classifyRoleLetter(odd, store).best?.symbol).toBe('V')
+  })
+})
+
+describe('classifyExceptionMark（○で囲んだ漢字の例外マーク）', () => {
+  // 「仮」に見立てた字画（縦棒＋斜め2画）を大きな円で囲む
+  const kanji = [line([95, 45], [95, 62]), line([100, 45], [112, 52]), line([100, 58], [112, 64])]
+  const circled = [arc(103, 54, 22, -90, 266), ...kanji]
+
+  it('円＋中の字画の組を例外マークとして拾い、候補は台帳の漢字4種から出す', () => {
+    const r = classifyExceptionMark(circled, null)
+    expect(r).not.toBeNull()
+    expect(r!.candidates.map((c) => c.symbol)).toEqual(expect.arrayContaining(['仮']))
+    // お手本が無ければ確定させず、候補チップで選んでもらう
+    expect(r!.ambiguous).toBe(true)
+  })
+
+  it('本人のお手本があれば、その漢字が最有力になる', () => {
+    const store = { 仮: [kanji] }
+    const r = classifyExceptionMark(circled, store)
+    expect(r!.best?.symbol).toBe('仮')
+  })
+
+  it('英字の a（丸＋縦棒）や Po の小さな丸は例外マークに誤検出しない', () => {
+    const a = [arc(46, 69, 21, -40, 320, 16), line([66, 46], [66, 92])]
+    expect(classifyExceptionMark(a, null)).toBeNull()
+    const po = [
+      line([24, 10], [24, 82]),
+      [...line([24, 14], [40, 14]), ...arc(40, 26, 12, -90, 90, 10), ...line([40, 38], [24, 38])],
+      arc(66, 68, 14, -90, 266),
+    ]
+    expect(classifyExceptionMark(po, null)).toBeNull()
   })
 })
 
@@ -301,11 +333,38 @@ describe('applySymbol（解答への反映）', () => {
     expect(p.next.answer.role[1]).toBe('P')
   })
 
-  it('○囲み・波線は採点対象外の extras として持つ', () => {
-    const circle = applySymbol(init(), 'circle', [arc(105, 55, 35, -90, 266)], BOXES)
-    expect(circle.next.extras).toEqual([{ kind: 'circle', from: 1, to: 1 }])
-    expect(circle.next.answer.spans).toEqual([])
+  it('波線（熟語の印）は採点対象外の extras として持つ', () => {
     const wavy = applySymbol(init(), 'wavy', [line([15, 76], [130, 78])], BOXES)
+    expect(wavy.applied).toBe(true)
     expect(wavy.next.extras[0].kind).toBe('wavy')
+    expect(wavy.next.answer.spans).toEqual([])
+  })
+
+  it('○で囲んだ漢字の例外マーク（仮・真など）は extras として近くの単語に付く', () => {
+    const r = applySymbol(init(), '仮', [arc(105, 20, 16, -90, 266), line([100, 14], [110, 26])], BOXES)
+    expect(r.applied).toBe(true)
+    expect(r.next.extras).toEqual([{ kind: 'exception', label: '仮', from: 1, to: 1 }])
+  })
+
+  it('働きの＋（等位接続詞）はそのまま働きに入る', () => {
+    const r = applySymbol(init(), '＋', [line([85, 80], [115, 82]), line([100, 74], [100, 92])], BOXES)
+    expect(r.applied).toBe(true)
+    expect(r.next.answer.role[1]).toBe('＋')
+  })
+
+  it('台帳から外れた形（単語囲みの○・?・ダッシュ・Ø）は反映せず案内を返す', () => {
+    for (const symbol of ['circle', 'question', 'tick', 'null-sign', 'slash'] as const) {
+      const r = applySymbol(init(), symbol, [arc(105, 55, 35, -90, 266)], BOXES)
+      expect(r.applied).toBe(false)
+      expect(r.message).toBeTruthy()
+      expect(r.next).toBe(r.next) // 状態は変わらない
+      expect(r.next.extras).toEqual([])
+    }
+  })
+
+  it('上の行の横線（ダッシュの名残）は反映せず、自動色分けの案内を返す', () => {
+    const r = applySymbol(init(), 'hline', [line([85, 20], [120, 21])], BOXES)
+    expect(r.applied).toBe(false)
+    expect(r.message).toContain('自動で色分け')
   })
 })

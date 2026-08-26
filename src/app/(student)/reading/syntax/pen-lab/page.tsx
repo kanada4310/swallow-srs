@@ -15,7 +15,8 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { symbolLabel } from '@/components/pen-syntax/PenSyntaxAnnotator'
 import { isPunct } from '@/lib/reading/syntax'
 import type { PenPoint, PenStroke, SymbolId, TokenBox } from '@/lib/pen-syntax/types'
-import { POS_LETTERS, ROLE_LETTERS } from '@/lib/pen-syntax/types'
+import { EXCEPTION_KANJI, POS_LETTERS, ROLE_LETTERS } from '@/lib/pen-syntax/types'
+import { ENROLLABLE_SYMBOLS } from '@/lib/pen-syntax/ledger'
 import { recognizeGroup } from '@/lib/pen-syntax/recognize'
 import { snapTargetFor } from '@/lib/pen-syntax/apply'
 import { shouldGroupStrokes } from '@/lib/pen-syntax/snap'
@@ -33,7 +34,6 @@ import {
   loadUserTemplates,
   saveUserTemplate,
 } from '@/lib/pen-syntax/user-templates'
-import { BRACKET_SYMBOLS, OPTIONAL_SYMBOLS } from '@/lib/pen-syntax/onboarding'
 
 const TOKENS = ['The', 'girl', 'standing', 'by', 'the', 'door', 'is', 'my', 'sister', '.']
 
@@ -41,7 +41,7 @@ type ModeKey = 'a' | 'b' | 'c-pos' | 'c-role' | 'free'
 
 const MODES: Array<{ key: ModeKey; label: string }> = [
   { key: 'a', label: '群A: 括弧4種＋下線' },
-  { key: 'b', label: '群B: ○・波線・?・ダッシュ・Ø' },
+  { key: 'b', label: '群B: 波線・○で囲む漢字' },
   { key: 'c-pos', label: '群C: 品詞の英字（上の行）' },
   { key: 'c-role', label: '群C: 働きの文字（下の行）' },
   { key: 'free', label: '自由練習（数えない）' },
@@ -113,17 +113,11 @@ function makeTask(mode: ModeKey): LabTask | null {
     }
   }
   if (mode === 'b') {
-    const symbol = randOf(['circle', 'wavy', 'question', 'tick', 'null-sign'] as SymbolId[])
+    const symbol = randOf(['wavy', ...EXCEPTION_KANJI] as SymbolId[])
     const where =
-      symbol === 'circle'
-        ? 'を丸で囲む'
-        : symbol === 'wavy'
-          ? 'の下に波線を書く'
-          : symbol === 'question'
-            ? 'の下に ? を書く'
-            : symbol === 'tick'
-              ? 'の下に ’（短い点画）を書く'
-              : 'の下に Ø（円＋斜線）を書く'
+      symbol === 'wavy'
+        ? 'の下に波線（熟語の印）を書く'
+        : `の近くに「${symbol}」と書いて○で囲む`
     return { symbol, target: { from: i, to: i }, description: `${word(i)}${where}` }
   }
   if (mode === 'c-pos') {
@@ -572,13 +566,8 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 /* ---------- お手本登録（本人の字を保存して判別に使う） ---------- */
 
-/** 登録できる記号: 括弧8種（閉じ括弧の判別強化に使う）＋文字＋任意の形の記号 */
-const ENROLLABLE: SymbolId[] = [
-  ...BRACKET_SYMBOLS,
-  ...POS_LETTERS,
-  ...ROLE_LETTERS,
-  ...OPTIONAL_SYMBOLS,
-]
+/** 登録できる記号の一覧の正本は台帳（ledger.ts） */
+const ENROLLABLE: SymbolId[] = ENROLLABLE_SYMBOLS
 
 function EnrollmentSection({
   store,

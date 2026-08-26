@@ -115,7 +115,8 @@ export default function SyntaxDrillPage() {
         </p>
         <p className="mb-3 rounded-xl bg-paper p-2.5 text-xs leading-relaxed text-ink-2">
           働きの書き方: <b>S</b>・<b>V</b>・<b>O</b>・<b>C</b> ／ <b>P</b>=前置詞 ／{' '}
-          <b>Po</b>=前置詞の目的語 ／ <b>▷</b>=従位接続詞（記号はこの表記のまま使います）
+          <b>Po</b>=前置詞の目的語 ／ <b>▷</b>=従位接続詞 ／ <b>＋</b>=等位接続詞
+          （記号はこの表記のまま使います。節・句の深さは括弧から自動で色分けされます）
         </p>
 
         <div className="mb-3 flex gap-1.5">

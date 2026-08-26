@@ -9,40 +9,11 @@
  */
 
 import type { SymbolId } from './types'
-import { POS_LETTERS, ROLE_LETTERS } from './types'
 import type { UserTemplateStore } from './letters'
+import { BRACKET_SYMBOLS, OPTIONAL_SYMBOLS, REQUIRED_SYMBOLS } from './ledger'
 
-/** 括弧4種の開き・閉じ（計8種）。判別強化の相対比較はこの8種の登録がそろって効く */
-export const BRACKET_SYMBOLS: SymbolId[] = [
-  'paren-open',
-  'paren-close',
-  'square-open',
-  'square-close',
-  'angle-open',
-  'angle-close',
-  'brace-open',
-  'brace-close',
-]
-
-/**
- * 必須のお手本（登録の順もこの並び）: 括弧8種 → 品詞の英字6種 → 働きの文字7種。
- * P・▷ は働きの側に並べる（模範分析集の実書き込みどおり。2026-08-26 塾長指示）。
- */
-export const REQUIRED_SYMBOLS: SymbolId[] = [
-  ...BRACKET_SYMBOLS,
-  ...POS_LETTERS,
-  ...ROLE_LETTERS,
-]
-
-/** 任意のお手本（あとで登録でも可）: 下線・○囲み・波線・?・ダッシュ・Ø */
-export const OPTIONAL_SYMBOLS: SymbolId[] = [
-  'hline',
-  'circle',
-  'wavy',
-  'question',
-  'tick',
-  'null-sign',
-]
+// 記号の一覧の正本は台帳（ledger.ts）。既存の呼び出し元のためにここから再輸出する
+export { BRACKET_SYMBOLS, OPTIONAL_SYMBOLS, REQUIRED_SYMBOLS }
 
 /**
  * 記号ごとの必要本数。括弧は2本ずつ書いてもらう

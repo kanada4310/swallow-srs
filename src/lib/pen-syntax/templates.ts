@@ -107,6 +107,8 @@ export const ROLE_STROKE_SOURCES: Array<{ symbol: RoleLetter; strokes: PenStroke
     ],
   },
   { symbol: '▷', strokes: [line([34, 18], [34, 82], [76, 50], [34, 18])] },
+  // ＋（等位接続詞の印・横棒＋縦棒の2画。1画で書く十字も同じ点群に近い）
+  { symbol: '＋', strokes: [line([20, 50], [80, 50]), line([50, 20], [50, 80])] },
 ]
 
 export const ROLE_TEMPLATES: Array<CloudTemplate<RoleLetter>> = ROLE_STROKE_SOURCES.map((s) =>
@@ -114,7 +116,7 @@ export const ROLE_TEMPLATES: Array<CloudTemplate<RoleLetter>> = ROLE_STROKE_SOUR
 )
 
 /* ===================== 品詞の文字（群C・上の行） =====================
- * 黄リー教式の英字略記（n / v / a / ad / aux / p）の骨格。
+ * 黄リー教式の英字略記（n / v / a / ad / aux）の骨格。
  * 塾長の実書き込み（模範分析集 第7講・形式仕様.md）で確認された字母のみを候補にする。
  * 英字は漢字より画数が少なく個人差も小さいが、実運用は「お手本登録」で本人の字を足せる。
  */
@@ -170,25 +172,7 @@ export const POS_STROKE_SOURCES: Array<{ symbol: PosLetter; strokes: PenStroke[]
       line([94, 56], [70, 92]),
     ],
   },
-  // p: 下に伸びる縦棒＋上の丸（2画）と、ひと筆書き
-  {
-    symbol: 'p',
-    strokes: [
-      line([34, 42], [34, 96]),
-      [...line([34, 46], [46, 42]), ...arc(46, 56, 14, -90, 90, 10), ...line([46, 70], [34, 70])],
-    ],
-  },
-  {
-    symbol: 'p',
-    strokes: [
-      [
-        ...line([34, 42], [34, 96]),
-        ...line([34, 96], [34, 46]),
-        ...arc(46, 58, 14, -90, 90, 12),
-        ...line([46, 72], [34, 72]),
-      ],
-    ],
-  },
+  // ※ p（前置詞）は台帳の確定版（2026-08-26）で品詞の段から外れた（働きの段の P で書く）
 ]
 
 export const POS_TEMPLATES: Array<CloudTemplate<PosLetter>> = POS_STROKE_SOURCES.map((s) =>

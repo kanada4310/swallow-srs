@@ -1,11 +1,12 @@
 /**
- * ペン入力の構文分析（実現可能性検証）の型定義。
+ * ペン入力の構文分析の型定義。
  *
- * ルールブックの記号を、ペンで書いた線からの判別しやすさで3群に分ける（構想 v1.1 論点1）:
- * - 群A: （ ）[ ] 〈 〉{ } の括弧4種＋下線
- * - 群B: ○囲み・波線＋?・ダッシュ（'）・Ø
- * - 群C: 文字（品詞の英字6種・働き8種の有限候補への当てはめ）
- * 検証は「形の記号（A+B）」と「文字（C）」の二車線で別々に数える（v1.2 確定）。
+ * 使う記号は「記号の台帳」（ledger.ts・2026-08-26 塾長確定版）に限定する:
+ * - 括弧4種＋下線＋波線（熟語の印）
+ * - 品詞の英字5種（n・v・a・ad・aux）・働きの文字（S・V・O・C・P・Po・▷・＋）
+ * - ○で囲んだ漢字の例外マーク（仮・真・強調・同格）
+ * ShapeKind には台帳外の形（?・ダッシュ・Ø・単語囲みの○など）も残るが、
+ * これは「書かれたら台帳外と判別して案内する」ための検出用（台帳の DEPRECATED 参照）。
  */
 
 export interface PenPoint {
@@ -40,20 +41,29 @@ export type ShapeKind =
 /**
  * 文字（群C）の候補。品詞は黄リー教式の英字略記
  * （塾長の実書き込み〔模範分析集 第7講・形式仕様.md〕で確認された字母のみ）。
- * n=名詞・代名詞 / v=動詞（分詞・不定詞も） / a=冠詞・形容詞 / ad=副詞 / aux=助動詞 / p=前置詞
+ * n=名詞・代名詞 / v=動詞（分詞・不定詞も） / a=冠詞・形容詞 / ad=副詞 / aux=助動詞。
+ * 前置詞は品詞の段には書かず、働きの段に P と書く（台帳の確定版・2026-08-26）。
  */
-export const POS_LETTERS = ['n', 'v', 'a', 'ad', 'aux', 'p'] as const
+export const POS_LETTERS = ['n', 'v', 'a', 'ad', 'aux'] as const
 export type PosLetter = (typeof POS_LETTERS)[number]
 
 /**
  * 働きの文字（塾長の実書き込み〔模範分析集 第7講・形式仕様.md〕の表記のまま。
  * Po・▷ を「前O」「接」などに言い換えない。M は現在の分析で使われていないため無い。
  * P（前置詞）は本来品詞だが、塾長は書く利便性から働きの位置（下の段）に書く。
+ * ＋は等位接続詞の印（英単語を○で囲む書き方の置き換え・2026-08-26 塾長裁定）。
  */
-export const ROLE_LETTERS = ['S', 'V', 'O', 'C', 'P', 'Po', '▷'] as const
+export const ROLE_LETTERS = ['S', 'V', 'O', 'C', 'P', 'Po', '▷', '＋'] as const
 export type RoleLetter = (typeof ROLE_LETTERS)[number]
 
-export type SymbolId = ShapeKind | PosLetter | RoleLetter
+/**
+ * ○で囲んだ漢字の例外マーク（仮主語・真主語・強調構文・同格）。
+ * 第7講の実書き込み（it仮 / to真 / 強調）に基づく。候補は実例で拡張する。
+ */
+export const EXCEPTION_KANJI = ['仮', '真', '強調', '同格'] as const
+export type ExceptionKanji = (typeof EXCEPTION_KANJI)[number]
+
+export type SymbolId = ShapeKind | PosLetter | RoleLetter | ExceptionKanji
 
 /** 判別結果の1候補 */
 export interface SymbolCandidate {

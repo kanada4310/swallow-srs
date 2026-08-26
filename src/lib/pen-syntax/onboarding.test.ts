@@ -16,20 +16,21 @@ const stroke: PenStroke = [
 ]
 
 describe('初回お手本登録（義務化）', () => {
-  it('必須は括弧8種＋品詞6種＋働き7種の21種（M は含まない）', () => {
-    expect(REQUIRED_SYMBOLS).toHaveLength(21)
+  it('必須は括弧8種＋品詞5種＋働き7種の20種（M・p は含まない・記号の台帳）', () => {
+    expect(REQUIRED_SYMBOLS).toHaveLength(20)
     expect(REQUIRED_SYMBOLS.map(String)).not.toContain('M')
+    expect(REQUIRED_SYMBOLS.map(String)).not.toContain('p') // 前置詞は働きの段の P
     for (const b of BRACKET_SYMBOLS) expect(REQUIRED_SYMBOLS).toContain(b)
     for (const r of ['P', 'Po', '▷'] as const) expect(REQUIRED_SYMBOLS).toContain(r)
   })
 
   it('P・▷ は働きの並び（品詞の英字の後）に置かれる', () => {
-    expect(REQUIRED_SYMBOLS.indexOf('P')).toBeGreaterThan(REQUIRED_SYMBOLS.indexOf('p'))
+    expect(REQUIRED_SYMBOLS.indexOf('P')).toBeGreaterThan(REQUIRED_SYMBOLS.indexOf('aux'))
     expect(REQUIRED_SYMBOLS.indexOf('▷')).toBeGreaterThan(REQUIRED_SYMBOLS.indexOf('aux'))
   })
 
-  it('任意は下線・○囲み・波線・?・ダッシュ・Ø（必須と重複しない）', () => {
-    expect(OPTIONAL_SYMBOLS).toEqual(['hline', 'circle', 'wavy', 'question', 'tick', 'null-sign'])
+  it('任意は下線・波線・＋・○で囲む漢字（必須と重複しない・台帳外の記号は無い）', () => {
+    expect(OPTIONAL_SYMBOLS).toEqual(['hline', 'wavy', '＋', '仮', '真', '強調', '同格'])
     for (const s of OPTIONAL_SYMBOLS) expect(REQUIRED_SYMBOLS).not.toContain(s)
   })
 

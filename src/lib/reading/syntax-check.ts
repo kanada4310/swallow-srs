@@ -53,9 +53,12 @@ export function checkContradictions(tokens: string[], answer: SyntaxAnswer): Con
       .map((_, i) => i)
       .filter((i) => role[i] === target && !insideSpans(i, spans))
     if (hits.length >= 2) {
-      // 接続詞は品詞「接」のほか、働きの ▷（従位接続詞の目印）でも書かれる
+      // 接続詞は品詞「接」のほか、働きの ▷（従位）・＋（等位）でも書かれる
       const hasConj = tokens.some(
-        (_, i) => i > hits[0] && i < hits[hits.length - 1] && (pos[i] === '接' || role[i] === '▷'),
+        (_, i) =>
+          i > hits[0] &&
+          i < hits[hits.length - 1] &&
+          (pos[i] === '接' || role[i] === '▷' || role[i] === '＋'),
       )
       if (!hasConj) {
         out.push({

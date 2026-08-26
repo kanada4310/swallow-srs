@@ -11,6 +11,7 @@
 import { describe, expect, it } from 'vitest'
 import type { PenPoint, PenStroke, ShapeKind, SymbolId, TokenBox } from './types'
 import { classifyShape } from './shapes'
+import { classifyExceptionMark } from './recognize'
 import { classifyPosLetter, classifyRoleLetter, type UserTemplateStore } from './letters'
 import { POS_STROKE_SOURCES, ROLE_STROKE_SOURCES } from './templates'
 import { snapCloseBracket, snapHorizontalRange, snapNearestToken, snapOpenBracket } from './snap'
@@ -247,7 +248,9 @@ describe('判別率の機械計測（種固定・毎回同じ結果）', () => {
     expect((t.top1 + t.rescued) / t.total).toBeGreaterThanOrEqual(0.97)
   })
 
-  it('群B（○囲み・波線・?・ダッシュ・Ø）: 救済込み 85% 以上', () => {
+  it('群B（波線＋台帳外の形の検出）: 救済込み 85% 以上', () => {
+    // 波線は台帳の記号（熟語の印）。○・?・ダッシュ・Ø は台帳外だが、
+    // 「書かれたら正しくその形と検出して案内する」（別記号に化けない）ために測り続ける
     const rng = mulberry32(20260826)
     const kinds: ShapeKind[] = ['circle', 'wavy', 'question', 'tick', 'null-sign']
     const t = tally()
@@ -267,7 +270,7 @@ describe('判別率の機械計測（種固定・毎回同じ結果）', () => {
     expect((t.top1 + t.rescued) / t.total).toBeGreaterThanOrEqual(0.85)
   })
 
-  it('群C 働きの文字（S/V/O/C/P/Po/▷）: 救済込み 90% 以上', () => {
+  it('群C 働きの文字（S/V/O/C/P/Po/▷/＋）: 救済込み 90% 以上', () => {
     const rng = mulberry32(20260827)
     const t = tally()
     const perKind = new Map<string, Tally>()
@@ -286,7 +289,7 @@ describe('判別率の機械計測（種固定・毎回同じ結果）', () => {
     expect((t.top1 + t.rescued) / t.total).toBeGreaterThanOrEqual(0.9)
   })
 
-  it('群C 品詞の文字（英字6種 n/v/a/ad/aux/p）: 救済込み 80% 以上', () => {
+  it('群C 品詞の文字（英字5種 n/v/a/ad/aux）: 救済込み 80% 以上', () => {
     const rng = mulberry32(20260828)
     const t = tally()
     const perKind = new Map<string, Tally>()
@@ -413,6 +416,69 @@ describe('お手本登録による閉じ括弧の判別強化（機械計測）'
     report('群A（同じ書き手のお手本あり）合計', t)
     expect(t.top1 / t.total).toBeGreaterThanOrEqual(0.9)
     expect((t.top1 + t.rescued) / t.total).toBeGreaterThanOrEqual(0.97)
+  })
+})
+
+/* ---------- ○で囲んだ漢字の例外マーク（台帳・確定版） ---------- */
+
+/** 「仮」に見立てた粗い字画（$P 照合は点群の形しか見ないため、骨格が再現できていればよい） */
+function kanjiKaStrokes(): PenStroke[] {
+  return [
+    line([18, 22], [10, 48]),
+    line([14, 32], [14, 88]),
+    line([42, 22], [34, 84]),
+    line([40, 24], [86, 24]),
+    line([56, 42], [44, 84]),
+    line([56, 42], [84, 84]),
+  ]
+}
+
+/** 「真」に見立てた粗い字画 */
+function kanjiShinStrokes(): PenStroke[] {
+  return [
+    line([20, 14], [80, 14]),
+    line([50, 6], [50, 30]),
+    line([28, 30], [72, 30], [72, 68], [28, 68], [28, 30]),
+    line([28, 44], [72, 44]),
+    line([20, 82], [42, 72]),
+    line([80, 82], [58, 72]),
+  ]
+}
+
+describe('○で囲んだ漢字の例外マークの機械計測', () => {
+  it('お手本登録があれば、円＋中の字画から正しい漢字を候補に出せる（救済込み 85% 以上）', () => {
+    const rng = mulberry32(20260905)
+    const sources: Array<{ symbol: string; strokes: PenStroke[] }> = [
+      { symbol: '仮', strokes: kanjiKaStrokes() },
+      { symbol: '真', strokes: kanjiShinStrokes() },
+    ]
+    // 本人のお手本（2本ずつ・種固定の揺れ）
+    const store: UserTemplateStore = {}
+    for (const s of sources) {
+      store[s.symbol] = [
+        jitter(s.strokes, rng, { size: 30, noise: 0.8, rotDeg: 3 }),
+        jitter(s.strokes, rng, { size: 30, noise: 0.8, rotDeg: 3 }),
+      ]
+    }
+    const t = tally()
+    for (const s of sources) {
+      for (let i = 0; i < N; i++) {
+        const inner = jitter(s.strokes, rng, { size: rand(rng, 24, 34), noise: 1.0, rotDeg: 4 })
+        const b = strokesBBox(inner.flat().length ? inner : [[{ x: 0, y: 0 }]])
+        const r = rand(rng, 0.7, 0.9) * Math.max(b.width, b.height)
+        const start = rand(rng, 0, 360)
+        const circle = arcPts(b.cx, b.cy, Math.max(r, 26), start, start + rand(rng, 335, 360))
+        const result = classifyExceptionMark([circle, ...inner], store)
+        if (!result) {
+          t.total++
+          t.failed++
+          continue
+        }
+        record(t, s.symbol as SymbolId, result)
+      }
+    }
+    report('○囲みの漢字（お手本あり）', t)
+    expect((t.top1 + t.rescued) / t.total).toBeGreaterThanOrEqual(0.85)
   })
 })
 
