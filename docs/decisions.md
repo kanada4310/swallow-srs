@@ -17,6 +17,7 @@
 ## ADR 一覧 (新しい順)
 
 ### 2026-08-26
+- [20260826-pen-order-hints](decisions/20260826-pen-order-hints.md) `#pen-syntax` `#reading` `#order` `#hints` `#teacher` _(Phase 構文分析のペン入力)_ — 分析の順序の記録と検討順ヒント（筆画の時刻から・規則ベース0円）
 - [20260826-pen-onboarding-calibration](decisions/20260826-pen-onboarding-calibration.md) `#pen-syntax` `#reading` `#input` `#recognition` `#ux` _(Phase 構文分析のペン入力)_ — ペン入力の初回お手本登録の義務化と、登録お手本による閉じ括弧の判別強化・記号の扱い3点の修正
 - [20260826-pen-input-acceptance](decisions/20260826-pen-input-acceptance.md) `#pen-syntax` `#reading` `#input` `#palm` `#diagnostics` _(Phase 構文分析のペン入力)_ — ペン入力の受け付け方針: ペン由来の互換タッチは止めない・描画中は画面を固定する
 - [20260826-pen-foundation-hardening](decisions/20260826-pen-foundation-hardening.md) `#pen-syntax` `#reading` `#input` `#recognition` `#architecture` `#testing` _(Phase 構文分析のペン入力)_ — ペン入力の基盤の作り込み（ゾーン方式・入力/座標の一元化・記号台帳の確定版・記録の再生）
