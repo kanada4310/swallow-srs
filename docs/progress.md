@@ -4,7 +4,9 @@
 
 ## 現在の作業
 - Phase: **ペン入力の実機フィードバック6点の改修**（2026-08-25・指示書 2026-08-25-srs-pen-refinements・
-  ADR `20260825-pen-pos-letters`・**push は塾長承認待ち**）。
+  ADR `20260825-pen-pos-letters`・**2026-08-26 に本番公開済み**＝塾長承認のうえ push・デプロイ成功。
+  本番でスマホ・タブレット両幅の表示確認済み（構文の練習／ペン判別の計測とも応答200・改修起因のJSエラーなし）。
+  ただし**下線の位置ずれを1件発見**（既知の課題参照・修正は別指示書待ち））。
   ①下線を単語間で途切れない連結線に ②太さ3px→1.5px ③カッコを本文行の上下中央揃えに
   ④入れ子カッコを深さ別4色（色覚多様性対応）で色分け ⑤品詞を黄リー教式英字6種 n/v/a/ad/aux/p に
   （採点は漢字正解表と同値化・読解1文画面は漢字のまま）⑥パーム対策=「ペンのみ」既定＋
@@ -77,6 +79,7 @@
 - 庭（記憶のいきもの育成）は `src/lib/garden/feature.ts` の `GARDEN_ENABLED=false` で停止中（機能は残置）
 
 ## 既知の課題
+- **ペン入力の下線が、同じ行の左側にカッコがあるとカッコの幅ぶん左にずれる**（2026-08-26 本番確認で発見・スマホ/タブレット両方で再現）。原因: `PenSyntaxAnnotator` の単語の箱の採寸（`measure`）が tokens 変更と ResizeObserver でしか走らず、カッコ記号の挿入で単語が右へ押されても測り直さないため、`underlineSegments` が古い箱から線を引く。修正はカッコ（spans）変更時にも採寸し直すだけの小変更で済む見込み（別指示書待ち）
 - `scripts/device-preview.mjs` は **Git Bash から実行時 `MSYS_NO_PATHCONV=1` 必須**（`/decks` 等の引数が Windows パスに変換され壊れる）。`--teacher` は偽講師アカウントが講師間共有同期に載るため通常使わない（講師画面は実アカウントで確認）
 - Claude Code 内蔵プレビュー（preview_screenshot）はこの環境で恒常的にタイムアウト（a11y snapshot は可）。画面確認は Chrome 連携 or Playwright（device-preview）を使う
 - billing側のビルドがWindows環境でOOMになることがある（`--max-old-space-size=4096` で回避）
