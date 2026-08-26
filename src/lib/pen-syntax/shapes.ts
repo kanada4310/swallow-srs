@@ -286,7 +286,7 @@ export function classifyShape(
   const kinds = new Set<ShapeKind>([
     ...(Object.keys(rules) as ShapeKind[]),
     ...pMatches.map((m) => m.symbol),
-    ...uScore.keys(),
+    ...Array.from(uScore.keys()),
   ])
   let ranked: SymbolCandidate[] = Array.from(kinds)
     .map((symbol) => {
@@ -303,7 +303,7 @@ export function classifyShape(
     // 幾何特徴（円弧・2本線の当てはめ等）が強い確信で別の括弧を指しているときは、
     // お手本側により大きな差を要求する（当てはめの得意分野を弱い証拠で覆さない）
     const need =
-      (rules[ranked[0].symbol] ?? 0) >= 0.9 ? USER_MARGIN_VS_STRONG_RULE : USER_MARGIN
+      (rules[ranked[0].symbol as ShapeKind] ?? 0) >= 0.9 ? USER_MARGIN_VS_STRONG_RULE : USER_MARGIN
     if (override.margin >= need) {
       // 本人のお手本で明確に一番近い括弧を先頭へ。差が大きいほど確信を上げる
       // （差が小さいときは先頭には置くが、候補チップでの確認に回りやすくする）
