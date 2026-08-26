@@ -45,6 +45,7 @@ import {
   type ScreenSnapshot,
 } from '@/lib/pen-syntax/input-log'
 import { freezeScreenDuringStroke, usePenScreenGuard, type PenGuardEvent } from './usePenScreenGuard'
+import { useTokenBoxes } from './useTokenBoxes'
 import { groupLines, laneOf, pickLine, shouldGroupStrokes, underlineSegments } from '@/lib/pen-syntax/snap'
 import { pathLength, strokesBBox } from '@/lib/pen-syntax/geometry'
 import type { UserTemplateStore } from '@/lib/pen-syntax/letters'
@@ -145,7 +146,6 @@ export function PenSyntaxAnnotator({
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const wordRefs = useRef<Array<HTMLElement | null>>([])
-  const [boxes, setBoxes] = useState<TokenBox[]>([])
 
   // 解答＋ペン特有の状態（開きかけの括弧・採点対象外マーク）
   const annotationRef = useRef<PenAnnotation>(emptyPenAnnotation(answer))
@@ -211,51 +211,9 @@ export function PenSyntaxAnnotator({
     setTimeout(() => setToast((t) => (t === text ? null : t)), 2600)
   }, [])
 
-  /* ---------- 単語の箱の採寸 ---------- */
-  const measure = useCallback(() => {
-    const container = containerRef.current
-    if (!container) return
-    const cRect = container.getBoundingClientRect()
-    const next: TokenBox[] = []
-    wordRefs.current.forEach((el, i) => {
-      if (!el) return
-      if (isPunct(tokens[i])) return // 句読点には吸着させない
-      const r = el.getBoundingClientRect()
-      next.push({
-        index: i,
-        left: r.left - cRect.left,
-        right: r.right - cRect.left,
-        top: r.top - cRect.top,
-        bottom: r.bottom - cRect.top,
-      })
-    })
-    setBoxes(next)
-    const canvas = canvasRef.current
-    if (canvas) {
-      const dpr = window.devicePixelRatio || 1
-      if (canvas.width !== Math.round(cRect.width * dpr) || canvas.height !== Math.round(cRect.height * dpr)) {
-        canvas.width = Math.round(cRect.width * dpr)
-        canvas.height = Math.round(cRect.height * dpr)
-      }
-    }
-  }, [tokens])
-
-  useEffect(() => {
-    measure()
-    const container = containerRef.current
-    if (!container || typeof ResizeObserver === 'undefined') return
-    const ro = new ResizeObserver(() => measure())
-    ro.observe(container)
-    return () => ro.disconnect()
-    // tokens が変わったら描画後に測り直す
-  }, [measure, tokens])
-
-  // カッコ記号の挿入・削除や採点マークの表示で単語が左右へ押されたときも測り直す
-  // （文とサイズの変化だけ見ていると、下線オーバーレイが古い箱の位置に引かれてずれる）
+  /* ---------- 単語の箱の採寸（useTokenBoxes が毎描画後に自動で測り直す） ---------- */
+  const boxes = useTokenBoxes(containerRef, wordRefs, tokens, canvasRef)
   const ann = annotationRef.current
-  useEffect(() => {
-    measure()
-  }, [measure, ann.answer, ann.pendingOpens, ann.extras, posMarks, roleMarks, spanMarks])
 
   /* ---------- インクの描画 ---------- */
   const redraw = useCallback(() => {

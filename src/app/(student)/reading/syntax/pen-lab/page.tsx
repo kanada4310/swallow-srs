@@ -32,6 +32,7 @@ import {
   type PenGuardEvent,
 } from '@/components/pen-syntax/usePenScreenGuard'
 import { PenInputLogPanel } from '@/components/pen-syntax/PenInputLogPanel'
+import { useTokenBoxes } from '@/components/pen-syntax/useTokenBoxes'
 import { resolveLocalPoint } from '@/lib/pen-syntax/local-point'
 import {
   captureScreenSnapshot,
@@ -208,45 +209,13 @@ export default function PenLabPage() {
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const wordRefs = useRef<Array<HTMLElement | null>>([])
-  const [boxes, setBoxes] = useState<TokenBox[]>([])
   const drawingRef = useRef<{ pointerId: number; stroke: PenPoint[] } | null>(null)
   const groupRef = useRef<PenStroke[] | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const palmRef = useRef<PalmState>(initialPalmState())
 
-  const measure = useCallback(() => {
-    const container = containerRef.current
-    if (!container) return
-    const cRect = container.getBoundingClientRect()
-    const next: TokenBox[] = []
-    wordRefs.current.forEach((el, i) => {
-      if (!el) return
-      if (isPunct(TOKENS[i])) return // 句読点には吸着させない
-      const r = el.getBoundingClientRect()
-      next.push({
-        index: i,
-        left: r.left - cRect.left,
-        right: r.right - cRect.left,
-        top: r.top - cRect.top,
-        bottom: r.bottom - cRect.top,
-      })
-    })
-    setBoxes(next)
-    const canvas = canvasRef.current
-    if (canvas) {
-      const dpr = window.devicePixelRatio || 1
-      canvas.width = Math.round(cRect.width * dpr)
-      canvas.height = Math.round(cRect.height * dpr)
-    }
-  }, [])
-
-  useEffect(() => {
-    measure()
-    if (typeof ResizeObserver === 'undefined' || !containerRef.current) return
-    const ro = new ResizeObserver(() => measure())
-    ro.observe(containerRef.current)
-    return () => ro.disconnect()
-  }, [measure])
+  // 単語の箱の採寸（毎描画後に自動で測り直す・キャンバスの画素数合わせも行う）
+  const boxes = useTokenBoxes(containerRef, wordRefs, TOKENS, canvasRef)
 
   const redraw = useCallback(() => {
     const canvas = canvasRef.current
