@@ -12,7 +12,8 @@
   ズーム中の座標系食い違い）。あわせて「入力の記録」（受理/拒否・座標・画面移動を
   時系列でコピーできる診断）を計測ページ常設＋構文の練習に折りたたみで追加。
   テスト637件全緑（新規14件）・ビルド成功・開発サーバーで動作確認済み。
-  **実機（タブレット＋ペン）の確認は未＝塾長の再確認待ち**。
+  **本番反映済み（2026-08-26 塾長承認のうえ push・デプロイ成功。テスト生徒で
+  本番2画面のタブレット幅表示を確認）**。**実機（タブレット＋ペン）の確認は未＝塾長の再確認待ち**。
   詳細は [handoff-2026-08-26-pen-input-fixes](progress/handoff-2026-08-26-pen-input-fixes.md)
 - 前フェーズ: **ペン下線ずれ修正＋テストデータの後片付け**（2026-08-26・指示書 2026-08-26-srs-pen-underline-fix）。
   ①既知の課題だった「同じ行の左側にカッコがあると下線がカッコの幅ぶん左にずれる」を修正
@@ -105,7 +106,7 @@
 
 ## 既知の課題
 - `scripts/device-preview.mjs` は **Git Bash から実行時 `MSYS_NO_PATHCONV=1` 必須**（`/decks` 等の引数が Windows パスに変換され壊れる）。`--teacher` は偽講師アカウントが講師間共有同期に載るため通常使わない（講師画面は実アカウントで確認）
-- Claude Code 内蔵プレビュー（preview_screenshot）はこの環境で恒常的にタイムアウト（a11y snapshot は可）。画面確認は Chrome 連携 or Playwright（device-preview）を使う
+- Claude Code 内蔵プレビュー（preview_screenshot）はこの環境で恒常的にタイムアウト（a11y snapshot は可）。画面確認は Chrome 連携 or Playwright（device-preview）を使う。**内蔵ブラウザは本番（srs.swallow-base.com）のスクリプト読み込みを一律ブロックする（ERR_BLOCKED_BY_CLIENT・ページが対話不能になる）ため本番確認にも使えない**（2026-08-26 実測。localhost は正常）
 - billing側のビルドがWindows環境でOOMになることがある（`--max-old-space-size=4096` で回避）
 - LINE端末のIndexedDBに古いユーザーIDがキャッシュされる場合がある（pull APIで対処済み、push APIも同様の対処が必要かもしれない）
 - コロケーションパイロットの例文プール: 語彙統制で範囲外語(OOV) ~5-7%（scissors/aloud/vase/cashier/essay 等）。禁止語指定での再生成リペアが未実施
