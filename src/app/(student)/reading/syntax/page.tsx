@@ -10,12 +10,14 @@
  * ルールブックの言い切りによる「矛盾検査」（正解表なしで指摘できる項目）を表示する。
  */
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { SyntaxAnnotator } from '@/components/reading/SyntaxAnnotator'
 import { PenSyntaxAnnotator } from '@/components/pen-syntax/PenSyntaxAnnotator'
-import type { InputPolicy } from '@/lib/pen-syntax/palm'
+import { PenInputLogPanel } from '@/components/pen-syntax/PenInputLogPanel'
+import { createPenInputLog, type PenInputLog } from '@/lib/pen-syntax/input-log'
+import { initialPalmState, type InputPolicy, type PalmState } from '@/lib/pen-syntax/palm'
 import {
   emptyAnswer,
   gradeSyntax,
@@ -37,6 +39,10 @@ export default function SyntaxDrillPage() {
   const [inputMode, setInputMode] = useState<'pen' | 'tap'>('pen')
   // 既定は「ペンのみ」（手のひら対策）。ペンが反応しない端末向けの逃げ道として切り替え可
   const [penPolicy, setPenPolicy] = useState<InputPolicy>('pen-only')
+  // 入力の記録（実機不具合の報告用）と、無効化した接触の件数表示
+  const inputLogRef = useRef<PenInputLog | null>(null)
+  if (!inputLogRef.current) inputLogRef.current = createPenInputLog()
+  const [palm, setPalm] = useState<PalmState>(initialPalmState())
 
   const load = (idx: number) => {
     setProblemIdx(idx)
@@ -143,6 +149,8 @@ export default function SyntaxDrillPage() {
             roleMarks={grade?.roleMark}
             spanMarks={grade?.spanMark}
             policy={penPolicy}
+            inputLog={inputLogRef.current}
+            onPalm={setPalm}
           />
         ) : (
           <SyntaxAnnotator
@@ -157,6 +165,13 @@ export default function SyntaxDrillPage() {
             spanMarks={grade?.spanMark}
             posOptions={POS_LETTER_OPTIONS}
           />
+        )}
+
+        {inputMode === 'pen' && palm.rejectedTouches > 0 && (
+          <p className="mb-3 text-xs text-ink-3">
+            🖐 手のひら・指とみなした接触を {palm.rejectedTouches} 件、線にせず無効化しました（ペン専用）。
+            ペンで書いた線まで反応しない場合は、ページ下部の「入力の記録」をコピーして報告に貼ってください。
+          </p>
         )}
 
         <div className="flex flex-wrap gap-2">
@@ -246,6 +261,17 @@ export default function SyntaxDrillPage() {
               </div>
             )}
           </div>
+        )}
+
+        {inputMode === 'pen' && (
+          <details className="mt-6">
+            <summary className="cursor-pointer text-xs font-semibold text-ink-3">
+              入力の記録（ペンの不具合の報告用）
+            </summary>
+            <div className="mt-2">
+              <PenInputLogPanel log={inputLogRef.current} />
+            </div>
+          </details>
         )}
       </div>
     </AppLayout>
