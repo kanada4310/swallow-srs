@@ -10,12 +10,11 @@ import fs from 'node:fs'
 import path from 'node:path'
 import {
   buildInstructorProblems,
-  INSTRUCTOR_SET,
   instructorProblemId,
   isInstructorProblem,
-  loadInstructorSyntaxProblems,
   syntaxProblemsFor,
 } from './syntax-instructor'
+import { INSTRUCTOR_SET, loadInstructorSyntax } from './syntax-instructor-load'
 import { gradeSyntax, modelAnswer, SYNTAX_PROBLEMS } from './syntax'
 import type { ReadingLessonData } from './types'
 
@@ -100,7 +99,7 @@ describe('講師用の問題を誰に見せるか', () => {
     const forStudent = syntaxProblemsFor(SYNTAX_PROBLEMS, built, false)
     expect(forStudent).toHaveLength(3)
     expect(forStudent.map((p) => p.id)).toEqual(['ex1', 'ex2', 'ex3'])
-    expect(forStudent.some(isInstructorProblem)).toBe(false)
+    expect(forStudent.some((p) => isInstructorProblem(p, INSTRUCTOR_SET))).toBe(false)
   })
 
   it('★講師用の問題が1問でも生徒側に混ざっていない', () => {
@@ -112,7 +111,7 @@ describe('講師用の問題を誰に見せるか', () => {
   it('講師・管理者には練習3問＋模範分析集35問を出す', () => {
     const forTeacher = syntaxProblemsFor(SYNTAX_PROBLEMS, built, true)
     expect(forTeacher).toHaveLength(38)
-    expect(forTeacher.slice(3).every(isInstructorProblem)).toBe(true)
+    expect(forTeacher.slice(3).every((p) => isInstructorProblem(p, INSTRUCTOR_SET))).toBe(true)
   })
 
   it('問題の番号が既存3問とぶつからず、35問の中でも重ならない（模範の順序の保存の鍵）', () => {
@@ -138,7 +137,7 @@ describe('教材データを取りに行く経路', () => {
       return res
     }) as typeof fetch
     try {
-      await expect(loadInstructorSyntaxProblems()).rejects.toThrow(/一覧にありません/)
+      await expect(loadInstructorSyntax()).rejects.toThrow(/一覧にありません/)
     } finally {
       global.fetch = original
     }

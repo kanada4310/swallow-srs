@@ -50,10 +50,9 @@ import {
 } from '@/lib/reading/syntax'
 import { checkContradictions } from '@/lib/reading/syntax-check'
 import {
-  INSTRUCTOR_SET,
   isInstructorProblem,
-  loadInstructorSyntaxProblems,
   syntaxProblemsFor,
+  type InstructorSyntaxSet,
 } from '@/lib/reading/syntax-instructor'
 import { describeReadingError } from '@/lib/reading/lessons'
 
@@ -67,6 +66,7 @@ export default function SyntaxDrillPage() {
    * 語の並びは教材データから読み合わせるので、講師のときだけ取りに行く。
    */
   const [instructorProblems, setInstructorProblems] = useState<SyntaxProblem[]>([])
+  const [instructorSet, setInstructorSet] = useState<InstructorSyntaxSet | null>(null)
   const [instructorError, setInstructorError] = useState<string | null>(null)
   const problems = syntaxProblemsFor(SYNTAX_PROBLEMS, instructorProblems, isTeacher)
   const problem = problems[problemIdx] ?? problems[0]
@@ -87,13 +87,18 @@ export default function SyntaxDrillPage() {
   useEffect(() => {
     if (!isTeacher) {
       setInstructorProblems([])
+      setInstructorSet(null)
       setInstructorError(null)
       return
     }
     let alive = true
-    loadInstructorSyntaxProblems()
-      .then((list) => {
-        if (alive) setInstructorProblems(list)
+    // 講師用の正解表（35文ぶん）は重いので、講師のときだけ後から読み込む
+    import('@/lib/reading/syntax-instructor-load')
+      .then((m) => m.loadInstructorSyntax())
+      .then(({ set, problems: list }) => {
+        if (!alive) return
+        setInstructorSet(set)
+        setInstructorProblems(list)
       })
       .catch((err) => {
         if (alive) setInstructorError(describeReadingError(err).message)
@@ -244,9 +249,9 @@ export default function SyntaxDrillPage() {
                 </option>
               ))}
             </optgroup>
-            {instructorProblems.length > 0 && (
+            {instructorSet && instructorProblems.length > 0 && (
               <optgroup
-                label={`模範分析集 ${INSTRUCTOR_SET.lesson}（講師用 ${instructorProblems.length}問・生徒には出しません）`}
+                label={`模範分析集 ${instructorSet.lesson}（講師用 ${instructorProblems.length}問・生徒には出しません）`}
               >
                 {instructorProblems.map((p, i) => (
                   <option key={p.id} value={SYNTAX_PROBLEMS.length + i}>
@@ -264,7 +269,7 @@ export default function SyntaxDrillPage() {
           )}
         </div>
 
-        {isInstructorProblem(problem) && (
+        {instructorSet && isInstructorProblem(problem, instructorSet) && (
           /* 講師用の問題は、開いた時点で「何が落ちているか」を読めるようにする。
              記号の一部に受け皿が無く、許容解も無いまま取り込んでいるため */
           <div className="mb-3 rounded-card border border-hard/40 bg-hard-bg p-3 text-sm text-ai">
@@ -272,7 +277,7 @@ export default function SyntaxDrillPage() {
               ⚠ 講師用の問題です（生徒には出ません）
             </p>
             <p className="mt-1 text-xs leading-relaxed text-ink-2">
-              {INSTRUCTOR_SET.notReadyNote}
+              {instructorSet.notReadyNote}
             </p>
             <p className="mt-2 text-xs font-bold text-ai">この文の分析ポイント・落とした記号</p>
             <ul className="mt-0.5 space-y-0.5 text-xs leading-relaxed text-ink-2">

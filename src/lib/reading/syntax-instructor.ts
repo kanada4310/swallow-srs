@@ -14,8 +14,7 @@
  */
 
 import type { KeySlot, KeySpan, SyntaxProblem } from './syntax'
-import { INSTRUCTOR_SYNTAX_SET } from './syntax-instructor-data'
-import { loadLesson, loadLessonIndex, ReadingDataError } from './lessons'
+import { ReadingDataError } from './lessons'
 import type { ReadingLessonData } from './types'
 
 /** 1文ぶんの正解表（英文は持たない） */
@@ -49,16 +48,17 @@ export interface InstructorSyntaxSet {
   entries: InstructorSyntaxEntry[]
 }
 
-export const INSTRUCTOR_SET = INSTRUCTOR_SYNTAX_SET
-
 /** 講師用の問題の番号（既存の練習3問 ex1〜ex3 と重ならない形） */
 export function instructorProblemId(set: InstructorSyntaxSet, sentenceId: string): string {
   return `${set.textbook}_${set.lesson}_${sentenceId}`
 }
 
 /** その問題が講師用（模範分析集から取り込んだもの）か */
-export function isInstructorProblem(problem: SyntaxProblem): boolean {
-  return problem.id.startsWith(`${INSTRUCTOR_SET.textbook}_${INSTRUCTOR_SET.lesson}_`)
+export function isInstructorProblem(
+  problem: SyntaxProblem,
+  set: Pick<InstructorSyntaxSet, 'textbook' | 'lesson'>
+): boolean {
+  return problem.id.startsWith(`${set.textbook}_${set.lesson}_`)
 }
 
 /** 見出し（英文の頭だけ）。長い文は途中で切る */
@@ -105,21 +105,6 @@ export function buildInstructorProblems(
       key: { pos: e.key.pos, role: e.key.role, spans, notes: e.key.notes },
     }
   })
-}
-
-/** 教材データを取りに行って、講師用の問題を組み立てる（画面から呼ぶ） */
-export async function loadInstructorSyntaxProblems(
-  set: InstructorSyntaxSet = INSTRUCTOR_SET
-): Promise<SyntaxProblem[]> {
-  const lessons = await loadLessonIndex()
-  const entry = lessons.find((l) => l.textbook === set.textbook && l.lesson === set.lesson)
-  if (!entry) {
-    throw new ReadingDataError(
-      `模範分析集の元になる教材「${set.textbook} ${set.lesson}」が一覧にありません。`
-    )
-  }
-  const lesson = await loadLesson(entry)
-  return buildInstructorProblems(set, lesson)
 }
 
 /**
