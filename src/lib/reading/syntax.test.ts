@@ -5,6 +5,7 @@ import {
   gradeSyntax,
   isPunct,
   modelAnswer,
+  roleBase,
   SYNTAX_PROBLEMS,
   type SyntaxProblem,
 } from './syntax'
@@ -55,6 +56,16 @@ describe('構文の練習', () => {
     expect(gradeSyntax(p, answer).roleMark[1].mark).toBe('ok')
     answer.role[1] = 'O′'
     expect(gradeSyntax(p, answer).roleMark[1].mark).toBe('bad')
+  })
+
+  it('例外の印は1字と2字を同じ扱いにする（同 ≡ 同格）', () => {
+    const p = byId('ex1')
+    const answer = modelAnswer(p)
+    answer.role[1] = '同格'
+    // 正解表が S なので、同格 は当然ちがう。表記の言い換えだけを揃える働きであることを確かめる
+    expect(gradeSyntax(p, answer).roleMark[1].mark).toBe('bad')
+    expect(roleBase('同格')).toBe('同')
+    expect(roleBase('S″')).toBe('S')
   })
 
   it('英字は動詞と分詞を区別しない（どちらも v で正解）', () => {

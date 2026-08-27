@@ -245,11 +245,16 @@ export function bracketDepths(spans: StudentSpan[]): number[] {
 /* ===================== 採点 ===================== */
 
 /**
- * 働きの採点で見るところ。ダッシュ（深さの印）を落として比べる。
- * 例: 'S′' ≡ 'S'（深さは囲んだ括弧から自動で判定できるので採点同値）。
+ * 働きの採点で見るところ。表記のゆれを落として比べる。
+ * - ダッシュ（深さの印）: 'S′' ≡ 'S'（深さは囲んだ括弧から自動で判定できる）
+ * - 例外の印の2字表記: '同格' ≡ '同'（1字に統一・2026-08-27 塾長確定。
+ *   模範分析集の転記には2字のものが残っている）
  */
+const ROLE_ALIASES: Record<string, string> = { 同格: '同' }
+
 export function roleBase(value: string): string {
-  return parseDashedRole(value).role
+  const { role } = parseDashedRole(value)
+  return ROLE_ALIASES[role] ?? role
 }
 
 export type Mark = 'ok' | 'alt' | 'bad'
