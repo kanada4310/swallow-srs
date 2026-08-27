@@ -16,6 +16,9 @@
 
 ## ADR 一覧 (新しい順)
 
+### 2026-08-27
+- [20260827-pen-commit-latency](decisions/20260827-pen-commit-latency.md) `#pen-syntax` `#reading` `#input` `#recognition` `#performance` `#testing` _(Phase 構文分析のペン入力)_ — 続けて書いた記号が1つにまとまる問題の解消（境界で即確定・まとめ判定の一本化）
+
 ### 2026-08-26
 - [20260826-pen-order-hints](decisions/20260826-pen-order-hints.md) `#pen-syntax` `#reading` `#order` `#hints` `#teacher` _(Phase 構文分析のペン入力)_ — 分析の順序の記録と検討順ヒント（筆画の時刻から・規則ベース0円）
 - [20260826-pen-onboarding-calibration](decisions/20260826-pen-onboarding-calibration.md) `#pen-syntax` `#reading` `#input` `#recognition` `#ux` _(Phase 構文分析のペン入力)_ — ペン入力の初回お手本登録の義務化と、登録お手本による閉じ括弧の判別強化・記号の扱い3点の修正

@@ -528,7 +528,7 @@ export default function PenLabPage() {
           <div className="grid grid-cols-2 gap-1.5 text-sm sm:grid-cols-4">
             <Stat label="確定した記号" value={`${latency.n}`} />
             <Stat label="書き終えてから 平均" value={ms(latency.sumWait, latency.n)} />
-            <Stat label="同 最大" value={`${Math.round(latency.maxWait)}ms`} />
+            <Stat label="同 最大" value={latency.n === 0 ? '-' : `${Math.round(latency.maxWait)}ms`} />
             <Stat
               label="次を書き始めてから 平均"
               value={latency.nSince === 0 ? '-' : ms(latency.sumSince, latency.nSince)}
