@@ -17,6 +17,7 @@
 ## ADR 一覧 (新しい順)
 
 ### 2026-08-27
+- [20260827-pen-write-as-on-paper](decisions/20260827-pen-write-as-on-paper.md) `#pen-syntax` `#reading` `#input` `#recognition` `#ui-ux` `#testing` _(Phase 構文分析のペン入力)_ — 紙のとおりに書けるようにする3点（カッコの下の働き・お手本の持ち主・候補の置き場所）
 - [20260827-pen-commit-latency](decisions/20260827-pen-commit-latency.md) `#pen-syntax` `#reading` `#input` `#recognition` `#performance` `#testing` _(Phase 構文分析のペン入力)_ — 続けて書いた記号が1つにまとまる問題の解消（境界で即確定・まとめ判定の一本化）
 - [20260827-pen-chip-interrupt](decisions/20260827-pen-chip-interrupt.md) `#pen-syntax` `#reading` `#input` `#recognition` `#testing` _(Phase 構文分析のペン入力)_ — 候補が出ている最中でも書き始めを受け付ける（線を失わない）
 
