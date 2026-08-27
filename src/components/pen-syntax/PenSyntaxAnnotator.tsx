@@ -44,8 +44,9 @@ import type { PenInputLog } from '@/lib/pen-syntax/input-log'
 import { usePenZoneGuard, type PenGuardEvent } from './usePenZoneGuard'
 import { PEN_UI_ATTR, PEN_WRITE_ZONE_ATTR } from '@/lib/pen-syntax/zone-guard'
 import { useStrokeCanvas, type DrawingStroke } from './useStrokeCanvas'
+import { useStrokeGrouping, type StrokeGrouping } from './useStrokeGrouping'
 import { useTokenBoxes } from './useTokenBoxes'
-import { groupLines, laneOf, pickLine, shouldGroupStrokes, underlineSegments } from '@/lib/pen-syntax/snap'
+import { groupLines, laneOf, pickLine, underlineSegments } from '@/lib/pen-syntax/snap'
 import { pathLength, strokesBBox } from '@/lib/pen-syntax/geometry'
 import type { UserTemplateStore } from '@/lib/pen-syntax/letters'
 
@@ -63,10 +64,6 @@ export interface PenRecognitionEvent {
 
 // 記号の表示名の正本は台帳（ledger.ts）。既存の呼び出し元のために再輸出する
 export { SYMBOL_LABELS, symbolLabel } from '@/lib/pen-syntax/ledger'
-
-interface PendingGroup {
-  strokes: PenStroke[]
-}
 
 interface ChipState {
   candidates: SymbolCandidate[]
@@ -94,8 +91,6 @@ interface PenSyntaxAnnotatorProps {
   /** 診断用「入力の記録」。渡すと接触の受理/拒否と画面の移動を時系列で記録する */
   inputLog?: PenInputLog | null
 }
-
-const GROUP_WAIT_MS = 750
 
 /**
  * 入れ子カッコの深さ別の色（Okabe-Ito の色覚多様性対応パレットから4色）。
@@ -155,10 +150,10 @@ export function PenSyntaxAnnotator({
   // エリア外=指は常時有効・ペンは無効（書く道具に徹する）。詳細は zone-guard.ts
   usePenZoneGuard(policy === 'pen-only' && !disabled, onGuard)
   const drawingRef = useRef<DrawingStroke | null>(null)
+  // 画のまとめ（useStrokeGrouping）。描画から参照するので入れ物を先に用意する
+  const groupingRef = useRef<StrokeGrouping | null>(null)
   // ペンでのタップ（onPointerUp）とその後のクリックの二重発火を防ぐ時刻
   const penTapAtRef = useRef(0)
-  const groupRef = useRef<PendingGroup | null>(null)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [chips, setChips] = useState<ChipState | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [picker, setPicker] = useState<{ kind: 'pos' | 'role'; index: number; viaFallback?: boolean } | null>(null)
@@ -213,7 +208,7 @@ export function PenSyntaxAnnotator({
       for (let i = 1; i < stroke.length; i++) ctx.lineTo(stroke[i].x, stroke[i].y)
       ctx.stroke()
     }
-    for (const s of groupRef.current?.strokes ?? []) paint(s)
+    for (const s of groupingRef.current?.pending() ?? []) paint(s)
     if (chips) {
       ctx.strokeStyle = 'rgba(43, 108, 176, 0.45)'
       for (const s of chips.strokes) paint(s)
@@ -260,40 +255,37 @@ export function PenSyntaxAnnotator({
     [emitAnnotation, onEvent, onOrderEvent, showToast],
   )
 
-  const finalizeGroup = useCallback(() => {
-    const group = groupRef.current
-    groupRef.current = null
-    if (timerRef.current) {
-      clearTimeout(timerRef.current)
-      timerRef.current = null
-    }
-    if (!group || group.strokes.length === 0) return
-    const rec = recognizeGroup(group.strokes, boxes, templateStore)
-    const { result } = rec
-    if (result.best && !result.ambiguous) {
-      applyAndReport(result.best.symbol, group.strokes, rec.boxes, rec.lane, 'auto', result.candidates)
-      redraw()
-      return
-    }
-    // 迷った・拾えなかった: 候補チップを出してワンタップ確定。
-    // 台帳から外れた形（?・ダッシュ・Ø・単語囲みの○）は候補に出さない（記号の台帳）
-    const usable = result.candidates.filter((c) => !deprecatedGuidance(c.symbol))
-    const b = strokesBBox(group.strokes)
-    setChips({
-      candidates: usable,
-      strokes: group.strokes,
-      boxes: rec.boxes,
-      lane: rec.lane,
-      x: b.cx,
-      y: b.top,
-    })
-  }, [applyAndReport, boxes, redraw, templateStore])
+  /**
+   * 記号のまとまりが確定したとき（まとめの判定・待ち時間は useStrokeGrouping が持つ）。
+   * 境界をまたいだ瞬間にも呼ばれるので、書き始めと同時に前の記号が確定する。
+   */
+  const handleCommit = useCallback(
+    (strokes: PenStroke[]) => {
+      const rec = recognizeGroup(strokes, boxes, templateStore)
+      const { result } = rec
+      if (result.best && !result.ambiguous) {
+        applyAndReport(result.best.symbol, strokes, rec.boxes, rec.lane, 'auto', result.candidates)
+        redraw()
+        return
+      }
+      // 迷った・拾えなかった: 候補チップを出してワンタップ確定。
+      // 台帳から外れた形（?・ダッシュ・Ø・単語囲みの○）は候補に出さない（記号の台帳）
+      const usable = result.candidates.filter((c) => !deprecatedGuidance(c.symbol))
+      const b = strokesBBox(strokes)
+      setChips({
+        candidates: usable,
+        strokes,
+        boxes: rec.boxes,
+        lane: rec.lane,
+        x: b.cx,
+        y: b.top,
+      })
+    },
+    [applyAndReport, boxes, redraw, templateStore],
+  )
 
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current)
-    }
-  }, [])
+  const grouping = useStrokeGrouping({ boxes, onCommit: handleCommit, log: inputLog })
+  groupingRef.current = grouping
 
   /* ---------- ポインタ処理（入力・座標・画面固定は useStrokeCanvas が受け持つ） ---------- */
   const handleStroke = (stroke: PenPoint[]) => {
@@ -301,7 +293,7 @@ export function PenSyntaxAnnotator({
     // （キャンバスが全面を覆うため、マスのタップはここで拾う。
     //   書きかけの記号がある間は複数画の記号の2画目として線に数える）
     const duration = (stroke[stroke.length - 1].t ?? 0) - (stroke[0].t ?? 0)
-    if (!groupRef.current && pathLength(stroke) < 7 && duration < 400) {
+    if (!grouping.hasPending() && pathLength(stroke) < 7 && duration < 400) {
       const p = stroke[0]
       const line = pickLine([stroke], groupLines(boxes))
       if (line) {
@@ -326,15 +318,7 @@ export function PenSyntaxAnnotator({
       // 触れただけの点も1画として扱う（複数画の記号の点など）
       stroke.push({ ...stroke[0], x: stroke[0].x + 0.5 })
     }
-    const group = groupRef.current
-    if (group && shouldGroupStrokes(group.strokes, stroke)) {
-      group.strokes.push(stroke)
-    } else {
-      if (group) finalizeGroup()
-      groupRef.current = { strokes: [stroke] }
-    }
-    if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(finalizeGroup, GROUP_WAIT_MS)
+    grouping.addStroke(stroke)
     redraw()
   }
 
@@ -348,12 +332,8 @@ export function PenSyntaxAnnotator({
       if (e.pointerType === 'pen' && !penSeen) setPenSeen(true)
       if (!d.accept && e.pointerType === 'touch') onPalm?.(d.next)
     },
-    onStrokeStart: () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current)
-        timerRef.current = null
-      }
-    },
+    // 触れた瞬間に境界（段・単語・行）をまたいでいれば、待たずに前の記号を確定させる
+    onStrokeStart: (p) => grouping.noteStrokeStart(p),
     onStroke: handleStroke,
     onRedraw: redraw,
   })

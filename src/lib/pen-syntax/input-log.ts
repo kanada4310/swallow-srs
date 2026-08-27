@@ -7,6 +7,8 @@
  * すべて端末内で完結（外部送信なし）。
  */
 
+import type { TokenBox } from './types'
+
 /** 記録1件に添える画面の状態（枠の位置・ページのスクロール・表示域） */
 export interface ScreenSnapshot {
   /** 書き込み枠の画面上の位置（getBoundingClientRect） */
@@ -50,6 +52,24 @@ export type InputLogEntry =
       y: number
     }
   | { kind: 'shift'; at: number; during: 'stroke' | 'idle'; detail: string }
+  /**
+   * 記号として確定した瞬間（2026-08-27）。確定までにどれだけ待たされたかを実機で数える。
+   * waitedMs = 最後の一画を書き終えてから確定するまで。
+   * sinceStartMs = 次の記号を書き始めてから確定するまで（境界で即確定なら 0・待ち時間切れなら null）。
+   */
+  | {
+      kind: 'commit'
+      at: number
+      strokes: number
+      /** 確定のきっかけ（境界をまたいだ/待ち時間切れ/採点などで打ち切り） */
+      trigger: 'boundary-start' | 'boundary-end' | 'timer' | 'flush'
+      /** 境界で切ったときの理由（grouping.ts の GroupBreakReason） */
+      reason?: string
+      waitedMs: number
+      sinceStartMs?: number | null
+    }
+  /** 単語の箱の採寸（再生でまとめ判定をやり直すのに要る） */
+  | { kind: 'boxes'; at: number; boxes: TokenBox[] }
   | { kind: 'note'; at: number; text: string }
 
 export interface InputLogEnv {
@@ -87,6 +107,14 @@ const GUARD_REASON_LABEL: Record<string, string> = {
   finger: '指',
 }
 
+/** 確定のきっかけの日本語表示 */
+const COMMIT_TRIGGER_LABEL: Record<string, string> = {
+  'boundary-start': '次の記号に入った瞬間',
+  'boundary-end': '次の画を書き終えた時点',
+  timer: '待ち時間切れ',
+  flush: '打ち切り',
+}
+
 const ZONE_LABEL: Record<string, string> = {
   write: '書き込みエリア内',
   ui: '操作部品',
@@ -119,6 +147,16 @@ export function formatInputLogEntry(e: InputLogEntry, startAt: number): string {
   if (e.kind === 'shift') {
     const when = e.during === 'stroke' ? '線を描いている最中' : '待機中'
     return `${t} ⚠ 画面移動（${when}）: ${e.detail}`
+  }
+  if (e.kind === 'commit') {
+    const trig = COMMIT_TRIGGER_LABEL[e.trigger] ?? e.trigger
+    const since =
+      e.sinceStartMs == null ? '' : ` 次を書き始めてから=${Math.round(e.sinceStartMs)}ms`
+    const why = e.reason ? `(${e.reason})` : ''
+    return `${t} 確定 ${e.strokes}画 ${trig}${why} 最後の一画から=${Math.round(e.waitedMs)}ms${since}`
+  }
+  if (e.kind === 'boxes') {
+    return `${t} 単語の箱 ${e.boxes.length}個`
   }
   return `${t} メモ: ${e.text}`
 }

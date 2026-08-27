@@ -19,7 +19,6 @@ import { EXCEPTION_KANJI, POS_LETTERS, ROLE_LETTERS } from '@/lib/pen-syntax/typ
 import { ENROLLABLE_SYMBOLS } from '@/lib/pen-syntax/ledger'
 import { recognizeGroup } from '@/lib/pen-syntax/recognize'
 import { snapTargetFor } from '@/lib/pen-syntax/apply'
-import { shouldGroupStrokes } from '@/lib/pen-syntax/snap'
 import { initialPalmState, type InputPolicy, type PalmState } from '@/lib/pen-syntax/palm'
 import type { UserTemplateStore } from '@/lib/pen-syntax/letters'
 import { usePenZoneGuard, type PenGuardEvent } from '@/components/pen-syntax/usePenZoneGuard'
@@ -27,6 +26,11 @@ import { PEN_UI_ATTR, PEN_WRITE_ZONE_ATTR } from '@/lib/pen-syntax/zone-guard'
 import { PenInputLogPanel } from '@/components/pen-syntax/PenInputLogPanel'
 import { useTokenBoxes } from '@/components/pen-syntax/useTokenBoxes'
 import { useStrokeCanvas, type DrawingStroke } from '@/components/pen-syntax/useStrokeCanvas'
+import {
+  useStrokeGrouping,
+  type CommitInfo,
+  type StrokeGrouping,
+} from '@/components/pen-syntax/useStrokeGrouping'
 import { EnrollCanvas } from '@/components/pen-syntax/EnrollCanvas'
 import { createPenInputLog, type PenInputLog } from '@/lib/pen-syntax/input-log'
 import {
@@ -139,7 +143,25 @@ function makeTask(mode: ModeKey): LabTask | null {
   return null
 }
 
-const GROUP_WAIT_MS = 750
+/** 確定までの時間の計測（実機で「書いたのに、まだ確定しない」時間を数える） */
+interface LatencyStats {
+  n: number
+  sumWait: number
+  maxWait: number
+  /** 次の記号を書き始めてから、前の記号が確定するまで */
+  nSince: number
+  sumSince: number
+  maxSince: number
+}
+
+const emptyLatency = (): LatencyStats => ({
+  n: 0,
+  sumWait: 0,
+  maxWait: 0,
+  nSince: 0,
+  sumSince: 0,
+  maxSince: 0,
+})
 
 export default function PenLabPage() {
   const [mode, setMode] = useState<ModeKey>('a')
@@ -192,8 +214,8 @@ export default function PenLabPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const wordRefs = useRef<Array<HTMLElement | null>>([])
   const drawingRef = useRef<DrawingStroke | null>(null)
-  const groupRef = useRef<PenStroke[] | null>(null)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const groupingRef = useRef<StrokeGrouping | null>(null)
+  const [latency, setLatency] = useState<LatencyStats>(emptyLatency)
 
   // 単語の箱の採寸（毎描画後に自動で測り直す・キャンバスの画素数合わせも行う）
   const boxes = useTokenBoxes(containerRef, wordRefs, TOKENS, canvasRef)
@@ -217,7 +239,7 @@ export default function PenLabPage() {
       for (let i = 1; i < stroke.length; i++) ctx.lineTo(stroke[i].x, stroke[i].y)
       ctx.stroke()
     }
-    for (const s of groupRef.current ?? []) paint(s)
+    for (const s of groupingRef.current?.pending() ?? []) paint(s)
     if (chips) for (const s of chips.strokes) paint(s)
     if (drawingRef.current) paint(drawingRef.current.stroke)
   }, [chips])
@@ -265,14 +287,15 @@ export default function PenLabPage() {
     [mode],
   )
 
-  const finalizeGroup = useCallback(() => {
-    const strokes = groupRef.current
-    groupRef.current = null
-    if (timerRef.current) {
-      clearTimeout(timerRef.current)
-      timerRef.current = null
-    }
-    if (!strokes || strokes.length === 0) return
+  const handleCommit = useCallback((strokes: PenStroke[], info: CommitInfo) => {
+    setLatency((s) => ({
+      n: s.n + 1,
+      sumWait: s.sumWait + info.waitedMs,
+      maxWait: Math.max(s.maxWait, info.waitedMs),
+      nSince: s.nSince + (info.sinceStartMs == null ? 0 : 1),
+      sumSince: s.sumSince + (info.sinceStartMs ?? 0),
+      maxSince: Math.max(s.maxSince, info.sinceStartMs ?? 0),
+    }))
     const rec = recognizeGroup(strokes, boxes, store)
     if (mode === 'free') {
       setLastResult(
@@ -303,6 +326,9 @@ export default function PenLabPage() {
       y: minY,
     })
   }, [boxes, mode, record, redraw, store, task])
+
+  const grouping = useStrokeGrouping({ boxes, onCommit: handleCommit, log: inputLog })
+  groupingRef.current = grouping
 
   const resolveChip = (symbol: SymbolId | null) => {
     if (!chips) return
@@ -337,22 +363,11 @@ export default function PenLabPage() {
     active: !chips,
     log: inputLog,
     onDecision: (d) => setPalm(d.next),
-    onStrokeStart: () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current)
-        timerRef.current = null
-      }
-    },
+    // 触れた瞬間に境界（段・単語・行）をまたいでいれば、待たずに前の記号を確定させる
+    onStrokeStart: (p) => grouping.noteStrokeStart(p),
     onStroke: (stroke) => {
       if (stroke.length < 2) stroke.push({ ...stroke[0], x: stroke[0].x + 0.5 })
-      const group = groupRef.current
-      if (group && shouldGroupStrokes(group, stroke)) group.push(stroke)
-      else {
-        if (group) finalizeGroup()
-        groupRef.current = [stroke]
-      }
-      if (timerRef.current) clearTimeout(timerRef.current)
-      timerRef.current = setTimeout(finalizeGroup, GROUP_WAIT_MS)
+      grouping.addStroke(stroke)
       redraw()
     },
     onRedraw: redraw,
@@ -360,6 +375,7 @@ export default function PenLabPage() {
 
   const s = stats[mode] ?? emptyStats()
   const pct = (n: number, dd: number) => (dd === 0 ? '-' : `${((n / dd) * 100).toFixed(1)}%`)
+  const ms = (sum: number, n: number) => (n === 0 ? '-' : `${Math.round(sum / n)}ms`)
 
   const summaryText = MODES.filter((m) => m.key !== 'free')
     .map((m) => {
@@ -373,6 +389,9 @@ export default function PenLabPage() {
     })
     .concat([
       `手のひら・指: 拒否して防いだ接触 ${palm.rejectedTouches} 件 / 線として受理 ${palm.acceptedTouches} 件`,
+      `確定までの時間: n=${latency.n} 書き終えてから 平均 ${ms(latency.sumWait, latency.n)}` +
+        ` 最大 ${Math.round(latency.maxWait)}ms ／ 次を書き始めてから 平均 ${ms(latency.sumSince, latency.nSince)}` +
+        ` 最大 ${Math.round(latency.maxSince)}ms (n=${latency.nSince})`,
     ])
     .join('\n')
 
@@ -494,6 +513,32 @@ export default function PenLabPage() {
         {lastResult && (
           <p className="mb-3 rounded-xl bg-sora-soft p-2.5 text-sm font-bold text-ai">{lastResult}</p>
         )}
+
+        <div className="mb-4 rounded-card border border-gray-200 bg-white p-3 shadow-card">
+          <div className="mb-1 flex items-center justify-between">
+            <p className="text-sm font-bold text-ai">確定までの時間（速さの計測）</p>
+            <button
+              type="button"
+              onClick={() => setLatency(emptyLatency())}
+              className="text-xs font-bold text-again"
+            >
+              リセット
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5 text-sm sm:grid-cols-4">
+            <Stat label="確定した記号" value={`${latency.n}`} />
+            <Stat label="書き終えてから 平均" value={ms(latency.sumWait, latency.n)} />
+            <Stat label="同 最大" value={`${Math.round(latency.maxWait)}ms`} />
+            <Stat
+              label="次を書き始めてから 平均"
+              value={latency.nSince === 0 ? '-' : ms(latency.sumSince, latency.nSince)}
+            />
+          </div>
+          <p className="mt-2 text-xs text-ink-3">
+            「次を書き始めてから」＝もう次の記号を書いているのに、前の記号がまだ確定していない時間。
+            段・単語をまたいだら待たずに確定するので、続けて書くときは 0ms 前後になります。
+          </p>
+        </div>
 
         {mode !== 'free' && (
           <div className="mb-4 rounded-card border border-gray-200 bg-white p-3 shadow-card">

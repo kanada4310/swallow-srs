@@ -174,24 +174,7 @@ export function underlineSegments(
 }
 
 /**
- * 2つの画をひとつの記号としてまとめて判別すべきか（Po・Ø・?・複数画の文字対応）。
- * 「時間が近く、場所も近い」を条件にする。
+ * 画のまとめ判定（shouldGroupStrokes）は grouping.ts へ移した（2026-08-27）。
+ * 場所の比較相手を「まとまり全体の外接箱」から「直前の1画」に変え、
+ * 単語の箱・段の境界も見るようになったため、吸着とは別の関心事として分けている。
  */
-export function shouldGroupStrokes(
-  prev: PenStroke[],
-  next: PenStroke,
-  opts?: { maxGapMs?: number; maxGapPx?: number },
-): boolean {
-  const maxGapMs = opts?.maxGapMs ?? 900
-  const maxGapPx = opts?.maxGapPx ?? 40
-  const prevPts = prev.flat()
-  if (prevPts.length === 0 || next.length === 0) return false
-  const lastT = Math.max(...prevPts.map((p) => p.t ?? 0))
-  const firstT = next[0].t ?? lastT
-  if (firstT - lastT > maxGapMs) return false
-  const a = strokesBBox(prev)
-  const b = strokesBBox([next])
-  const gapX = Math.max(0, Math.max(a.left, b.left) - Math.min(a.right, b.right))
-  const gapY = Math.max(0, Math.max(a.top, b.top) - Math.min(a.bottom, b.bottom))
-  return gapX <= maxGapPx && gapY <= maxGapPx * 1.5
-}

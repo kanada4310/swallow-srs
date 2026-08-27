@@ -62,8 +62,11 @@ export interface StrokeCanvasOptions {
   log?: PenInputLog | null
   /** 接触の受理判定のたびに呼ばれる（受理・拒否の両方。計測カウンタの表示用） */
   onDecision?: (decision: PalmDecision, e: React.PointerEvent) => void
-  /** 受理した接触で線を書き始めた直後（グルーピングの一時停止などに使う） */
-  onStrokeStart?: (e: React.PointerEvent) => void
+  /**
+   * 受理した接触で線を書き始めた直後。枠相対の書き始めの点を渡す
+   * （まとめ判定が「触れた瞬間に別の記号か」を見るのに使う）
+   */
+  onStrokeStart?: (point: PenPoint, e: React.PointerEvent) => void
   /** 1画が確定した（ポインタを離した/中断した）。座標は枠相対・時刻つき */
   onStroke: (stroke: PenPoint[], phase: 'up' | 'cancel') => void
   /** 描画の更新が必要になった（線が伸びた・確定した） */
@@ -147,7 +150,8 @@ export function useStrokeCanvas({
     )
     palmRef.current = decision.next
     onDecision?.(decision, e)
-    logPointer(e, 'down', toLocal(e), decision.accept, decision.reason)
+    const start = toLocal(e)
+    logPointer(e, 'down', start, decision.accept, decision.reason)
     if (!decision.accept) {
       // 拒否した接触はここで既定動作ごと止める（長押しの選択・後続のクリック化を防ぐ）
       e.preventDefault()
@@ -163,8 +167,8 @@ export function useStrokeCanvas({
     unfreezeRef.current = freezeScreenDuringStroke()
     strokeScreenRef.current = logRef.current ? captureScreenSnapshot(containerRef.current) : null
     lastMoveLogRef.current = e.timeStamp
-    onStrokeStart?.(e)
-    drawingRef.current = { pointerId: e.pointerId, stroke: [toLocal(e)] }
+    onStrokeStart?.(start, e)
+    drawingRef.current = { pointerId: e.pointerId, stroke: [start] }
     onRedraw()
   }
 

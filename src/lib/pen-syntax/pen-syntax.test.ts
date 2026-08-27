@@ -11,7 +11,6 @@ import { classifyShape } from './shapes'
 import { evaluatePointer, initialPalmState } from './palm'
 import {
   laneOf,
-  shouldGroupStrokes,
   snapCloseBracket,
   snapEnclosedRange,
   snapHorizontalRange,
@@ -19,6 +18,7 @@ import {
   snapOpenBracket,
   underlineSegments,
 } from './snap'
+import { shouldGroupStrokes } from './grouping'
 import { applySymbol, emptyPenAnnotation } from './apply'
 import { classifyExceptionMark } from './recognize'
 import { classifyPosLetter, classifyRoleLetter } from './letters'
