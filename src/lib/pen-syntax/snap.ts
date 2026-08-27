@@ -151,13 +151,19 @@ export function snapNearestToken(strokes: PenStroke[], boxes: TokenBox[]): SnapP
 export interface UnderlineSegment {
   left: number
   right: number
-  /** 線を引く縦位置（単語の下端の少し下） */
+  /** 線を引く縦位置（文字のベースラインのすぐ下） */
   y: number
 }
 
 /**
  * 下線のまとまり（from〜to）を、単語の間で途切れない連結線分にする（表示用）。
  * 文が折り返して複数行にまたがる場合は行ごとに1本ずつ返す。
+ *
+ * 縦位置は**文字のベースライン基準**（2026-08-27 塾長の希望「下線はもっと
+ * 文字にピッタリ出したい」）。q・y・g・p の下に伸びる部分は下線を突き抜けてよい
+ * ので、突き抜けを避ける処理はあえて入れていない。ベースラインが採寸できない
+ * ときだけ、従来どおり語要素の外枠の下端で代用する。
+ * この y は表示にしか使わない（吸着・採点には無関係）。
  */
 export function underlineSegments(
   span: { from: number; to: number },
@@ -169,8 +175,64 @@ export function underlineSegments(
   return groupLines(covered).map((line) => ({
     left: Math.min(...line.boxes.map((t) => t.left)),
     right: Math.max(...line.boxes.map((t) => t.right)),
-    y: line.bottom + gap,
+    y: Math.max(...line.boxes.map((t) => t.baseline ?? t.bottom)) + gap,
   }))
+}
+
+/* ---------- 括弧の重ね描き（単語の並びから外して置く） ---------- */
+
+/** 同じ深さの括弧が並ぶときの1つぶんの幅（px） */
+export const BRACKET_SLOT_W = 6
+/** 行頭・行末でとなりの単語が無いときに空ける見込み幅（px） */
+export const BRACKET_EDGE_GAP = 8
+
+/** 括弧を重ね描きするときの置き場所（コンテナ相対・中心座標） */
+export interface BracketMark {
+  /** 記号の中心の横位置 */
+  x: number
+  /** 記号の中心の縦位置（本文の行の中央） */
+  y: number
+  /** 開始カッコの真下に置く働きの上端 */
+  roleTop: number
+}
+
+/** 同じ表示行か（groupLines と同じ基準） */
+function onSameLine(a: TokenBox, b: TokenBox): boolean {
+  return Math.abs(a.top - b.top) < (b.bottom - b.top) * 0.6
+}
+
+/**
+ * 括弧を単語の並びに差し込まずに重ね描きするための置き場所を返す（表示用）。
+ *
+ * 括弧を文の流れに入れると、書いた瞬間に後ろの単語が右へ押されて
+ * 書き込もうとしていた場所が動く（2026-08-27 塾長の実機の指摘）。そこで
+ * 下線と同じ重ね描きに寄せ、**単語と単語のすき間の中央**へ置く。
+ * すき間は左右の単語の余白ぶんだけ空いているので、文字とは重ならない。
+ *
+ * @param order 同じ位置に複数の括弧が並ぶときの並び順（0 が一番左）
+ * @param count 同じ位置に並ぶ括弧の数
+ */
+export function bracketMark(
+  box: TokenBox,
+  boxes: TokenBox[],
+  side: 'open' | 'close',
+  order = 0,
+  count = 1,
+): BracketMark {
+  const line = boxes.filter((t) => onSameLine(t, box))
+  let center: number
+  if (side === 'open') {
+    const prev = line.filter((t) => t.right <= box.left).sort((a, b) => b.right - a.right)[0]
+    center = prev ? (prev.right + box.left) / 2 : box.left - BRACKET_EDGE_GAP
+  } else {
+    const next = line.filter((t) => t.left >= box.right).sort((a, b) => a.left - b.left)[0]
+    center = next ? (box.right + next.left) / 2 : box.right + BRACKET_EDGE_GAP
+  }
+  return {
+    x: center + (order - (count - 1) / 2) * BRACKET_SLOT_W,
+    y: (box.top + box.bottom) / 2,
+    roleTop: box.bottom,
+  }
 }
 
 /**

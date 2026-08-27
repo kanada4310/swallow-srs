@@ -34,7 +34,13 @@ import type {
   SymbolId,
   TokenBox,
 } from '@/lib/pen-syntax/types'
-import { applySymbol, emptyPenAnnotation, type PenAnnotation, type PenExtraMark } from '@/lib/pen-syntax/apply'
+import {
+  applySymbol,
+  emptyPenAnnotation,
+  roleCellParts,
+  type PenAnnotation,
+  type PenExtraMark,
+} from '@/lib/pen-syntax/apply'
 import { orderKeyFor, strokeStartTime, type OrderEvent } from '@/lib/pen-syntax/order'
 import { dashesForDepth, depthOfToken } from '@/lib/pen-syntax/dash-notation'
 import { deprecatedGuidance, symbolLabel } from '@/lib/pen-syntax/ledger'
@@ -46,8 +52,8 @@ import { PEN_UI_ATTR, PEN_WRITE_ZONE_ATTR } from '@/lib/pen-syntax/zone-guard'
 import { useChipPlacement, type ChipAnchor } from './useChipPlacement'
 import { useStrokeCanvas, type DrawingStroke } from './useStrokeCanvas'
 import { useStrokeGrouping, type StrokeGrouping } from './useStrokeGrouping'
-import { useTokenBoxes } from './useTokenBoxes'
-import { groupLines, laneOf, pickLine, underlineSegments } from '@/lib/pen-syntax/snap'
+import { BASELINE_PROBE_ATTR, useTokenBoxes } from './useTokenBoxes'
+import { bracketMark, groupLines, laneOf, pickLine, underlineSegments } from '@/lib/pen-syntax/snap'
 import { pathLength, strokesBBox } from '@/lib/pen-syntax/geometry'
 import type { UserTemplateStore } from '@/lib/pen-syntax/letters'
 
@@ -103,8 +109,8 @@ export function bracketColor(depth: number): string {
   return BRACKET_COLORS[depth % BRACKET_COLORS.length]
 }
 
-/** カッコの文字を本文の行の高さの箱に入れて上下中央に置く（字がカッコの中央に来る） */
-const BRACKET_CLASS = 'mb-6 flex h-9 items-center self-end text-2xl font-bold'
+/** 書きかけ（閉じ待ち）の開始カッコの色（薄いグレー） */
+const PENDING_BRACKET_COLOR = '#9ca3af'
 
 export function PenSyntaxAnnotator({
   tokens,
@@ -512,6 +518,81 @@ export function PenSyntaxAnnotator({
     return { opens, closes }
   }, [ann.answer.spans])
 
+  /**
+   * 括弧の重ね描き（2026-08-27）。
+   *
+   * 括弧を単語の並びに差し込むと、書いた瞬間に後ろの単語が右へ押されて
+   * 「書き込もうとしていた領域自体が移動する」（塾長の実機の指摘）。
+   * そこで下線と同じ重ね描きに寄せ、単語のすき間の中央へ置く。
+   * 座標は採寸した単語の箱から求める（snap.ts の bracketMark）。
+   */
+  const bracketOverlay = useMemo(() => {
+    const boxOf = new Map(boxes.map((t) => [t.index, t]))
+    const out: Array<{
+      key: string
+      x: number
+      y: number
+      roleTop: number
+      glyph: string
+      color: string
+      role?: string
+      pending?: boolean
+    }> = []
+    const openIndexes = Array.from(
+      new Set<number>([
+        ...Object.keys(brackets.opens).map(Number),
+        ...ann.pendingOpens.map((p) => p.index),
+      ]),
+    )
+    for (const i of openIndexes) {
+      const box = boxOf.get(i)
+      if (!box) continue
+      // 外側のまとまりほど左に置く。書きかけ（閉じ待ち）は一番内側＝右端
+      const closed = (brackets.opens[i] || [])
+        .slice()
+        .sort((a, b) => b.s.to - b.s.from - (a.s.to - a.s.from))
+      const pending = ann.pendingOpens.filter((p) => p.index === i)
+      const count = closed.length + pending.length
+      closed.forEach(({ s, depth }, n) => {
+        out.push({
+          key: `o${i}-${n}`,
+          ...bracketMark(box, boxes, 'open', n, count),
+          glyph: SPAN_TYPES[s.type].open,
+          color: bracketColor(depth),
+          role: s.role,
+        })
+      })
+      pending.forEach((p, n) => {
+        out.push({
+          key: `p${i}-${n}`,
+          ...bracketMark(box, boxes, 'open', closed.length + n, count),
+          glyph: SPAN_TYPES[p.type].open,
+          color: PENDING_BRACKET_COLOR,
+          role: p.role,
+          pending: true,
+        })
+      })
+    }
+    for (const key of Object.keys(brackets.closes)) {
+      const i = Number(key)
+      const box = boxOf.get(i)
+      if (!box) continue
+      // 内側のまとまりほど単語の近く（左）に置く
+      const list = brackets.closes[i]
+        .slice()
+        .sort((a, b) => a.s.to - a.s.from - (b.s.to - b.s.from))
+      list.forEach(({ s, depth }, n) => {
+        out.push({
+          key: `c${i}-${n}`,
+          ...bracketMark(box, boxes, 'close', n, list.length),
+          glyph: SPAN_TYPES[s.type].close,
+          color: bracketColor(depth),
+        })
+      })
+    }
+    return out
+  }, [brackets, ann.pendingOpens, boxes])
+
   const extraAt = (i: number): PenExtraMark[] => ann.extras.filter((x) => i >= x.from && i <= x.to)
 
   const extraLabel = (x: PenExtraMark) =>
@@ -551,41 +632,10 @@ export function PenSyntaxAnnotator({
         className="relative mb-3 select-none rounded-card border border-gray-200 bg-white p-3 pb-6 pt-5 shadow-card [-webkit-touch-callout:none]"
         {...{ [PEN_WRITE_ZONE_ATTR]: '' }}
       >
+        {/* 括弧は単語の並びに入れない（重ね描き）。ここは単語だけを並べる */}
         <div className="flex flex-wrap items-end gap-x-1 gap-y-7">
           {tokens.map((tok, i) => (
             <div key={i} className="flex items-end">
-              {(brackets.opens[i] || [])
-                .slice()
-                .sort((a, b) => b.s.to - b.s.from - (a.s.to - a.s.from))
-                .map(({ s, depth }, n) => (
-                  // 開始カッコの列。[ ] と { } は真下にまとまり全体の働きを書ける
-                  // （h-9＋h-6 で従来の h-9＋mb-6 と同じ背丈＝レイアウト不変）
-                  <span
-                    key={`o${n}`}
-                    className="flex flex-col items-center self-end"
-                    style={{ color: bracketColor(depth) }}
-                  >
-                    <span className="flex h-9 items-center text-2xl font-bold">
-                      {SPAN_TYPES[s.type].open}
-                    </span>
-                    <span className="flex h-6 items-center text-xs font-bold">{s.role ?? ''}</span>
-                  </span>
-                ))}
-              {ann.pendingOpens
-                .filter((p) => p.index === i)
-                .map((p, n) => (
-                  // 書きかけ（閉じ待ち）の開始カッコ。閉じる前から真下に働きを書けるよう、
-                  // 閉じ済みのカッコと同じ「カッコ＋働き欄」の枠を出す（2026-08-27）
-                  <span key={`p${n}`} className="flex flex-col items-center self-end">
-                    <span className="flex h-9 items-center text-2xl font-bold text-gray-300">
-                      {SPAN_TYPES[p.type].open}
-                    </span>
-                    <span className="flex h-6 items-center text-xs font-bold text-sora-dark">
-                      {p.role ?? ''}
-                    </span>
-                  </span>
-                ))}
-
               <div className="flex flex-col items-center">
                 <Cell
                   value={ann.answer.pos[i] == null ? null : posLetter(ann.answer.pos[i]!)}
@@ -604,22 +654,21 @@ export function PenSyntaxAnnotator({
                   ].join(' ')}
                 >
                   {tok}
-                  {extraAt(i)
-                    .filter((x) => x.from === i && x.kind === 'exception')
-                    .map((x, n) => (
-                      <sup
-                        key={n}
-                        className="ml-0.5 inline-block rounded-full border border-nodo px-0.5 text-[10px] font-bold leading-tight text-nodo-dark"
-                      >
-                        {x.label}
-                      </sup>
-                    ))}
+                  {/* ベースラインの目印（中身なし・下端がベースライン＝下線の高さの基準） */}
+                  <span
+                    aria-hidden
+                    className="inline-block h-0 w-0 overflow-hidden align-baseline"
+                    {...{ [BASELINE_PROBE_ATTR]: '' }}
+                  />
                 </span>
                 {isPunct(tok) ? (
                   <span className="h-6" />
                 ) : (
                   <Cell
+                    // ○で囲んだ例外マークは働きの欄に置く（仮S・真S／強・同は単独）
                     value={ann.answer.role[i]}
+                    before={roleCellParts(ann.answer.role[i], extraAt(i)).before}
+                    after={roleCellParts(ann.answer.role[i], extraAt(i)).alone}
                     mark={roleMarks?.[i]?.mark}
                     // 節・句の深さは書かずに自動判定: 囲んだ括弧と同じ色＋控えめなダッシュ印
                     accent={
@@ -645,22 +694,14 @@ export function PenSyntaxAnnotator({
                   )}
               </div>
 
-              {(brackets.closes[i] || [])
-                .slice()
-                .sort((a, b) => a.s.to - a.s.from - (b.s.to - b.s.from))
-                .map(({ s, depth }, n) => (
-                  <span key={`c${n}`} className={BRACKET_CLASS} style={{ color: bracketColor(depth) }}>
-                    {SPAN_TYPES[s.type].close}
-                  </span>
-                ))}
             </div>
           ))}
         </div>
 
-        {/* 下線オーバーレイ: 単語間で途切れない連結線（実測した単語の箱から行ごとに1本引く） */}
+        {/* 下線オーバーレイ: 単語間で途切れない連結線（文字のベースラインのすぐ下に引く） */}
         {ann.answer.spans.map((s, idx) =>
           s.type === 'ul'
-            ? underlineSegments(s, boxes, -3).map((seg, j) => (
+            ? underlineSegments(s, boxes, 1).map((seg, j) => (
                 <div
                   key={`ul${idx}-${j}`}
                   className="pointer-events-none absolute bg-ink"
@@ -669,6 +710,27 @@ export function PenSyntaxAnnotator({
               ))
             : null,
         )}
+
+        {/* 括弧オーバーレイ: 単語のすき間に重ねて描く（記号を足しても単語が動かない） */}
+        {bracketOverlay.map((b) => (
+          <span key={b.key}>
+            <span
+              className="pointer-events-none absolute select-none text-xl font-bold leading-none"
+              style={{ left: b.x, top: b.y, color: b.color, transform: 'translate(-50%, -50%)' }}
+            >
+              {b.glyph}
+            </span>
+            {b.role ? (
+              // 開始カッコの真下＝そのまとまり全体の働き
+              <span
+                className="pointer-events-none absolute select-none whitespace-nowrap rounded bg-white/80 px-px text-[11px] font-bold leading-tight"
+                style={{ left: b.x, top: b.roleTop, color: b.color, transform: 'translateX(-50%)' }}
+              >
+                {b.role}
+              </span>
+            ) : null}
+          </span>
+        ))}
 
         {/* ペン入力のキャンバス（指はスクロールもさせない＝手のひら対策。誤反応は数える） */}
         <canvas
@@ -835,14 +897,29 @@ export function PenSyntaxAnnotator({
   )
 }
 
+/** ○で囲んだ例外マーク（仮・真・強・同）の1字ぶん */
+function ExceptionBadge({ label }: { label: string }) {
+  return (
+    <span className="mx-px inline-block rounded-full border border-nodo px-[2px] align-middle text-[10px] font-bold leading-tight text-nodo-dark">
+      {label}
+    </span>
+  )
+}
+
 function Cell({
   value,
+  before,
+  after,
   mark,
   accent,
   depthMark,
   onClick,
 }: {
   value: string | null
+  /** 働きの前に付く○囲みの例外マーク（仮・真）＝「仮S」のように1つの値を作る */
+  before?: string[]
+  /** 単独で1マスを占める○囲みの例外マーク（強・同） */
+  after?: string[]
   mark?: Mark
   /** 深さの色（囲んだ括弧と同じ色）。採点マークが付いたらマークの色を優先 */
   accent?: string
@@ -850,6 +927,9 @@ function Cell({
   depthMark?: string
   onClick: () => void
 }) {
+  const marksBefore = before ?? []
+  const marksAfter = after ?? []
+  const filled = Boolean(value) || marksBefore.length > 0 || marksAfter.length > 0
   const tone =
     mark === 'ok'
       ? 'bg-good-bg text-good font-bold'
@@ -857,7 +937,7 @@ function Cell({
         ? 'bg-hard-bg text-hard font-bold'
         : mark === 'bad'
           ? 'bg-again-bg text-again font-bold line-through'
-          : value
+          : filled
             ? 'text-sora-dark'
             : 'text-gray-300'
   return (
@@ -867,10 +947,18 @@ function Cell({
       className={`min-h-6 min-w-[2.2rem] rounded px-1 text-xs ${tone}`}
       style={!mark && value && accent ? { color: accent } : undefined}
     >
-      {value ? (
+      {filled ? (
         <>
+          {marksBefore.map((m) => (
+            <ExceptionBadge key={`b${m}`} label={m} />
+          ))}
           {value}
-          {depthMark ? <span className="ml-px text-[9px] opacity-70">{depthMark}</span> : null}
+          {value && depthMark ? (
+            <span className="ml-px text-[9px] opacity-70">{depthMark}</span>
+          ) : null}
+          {marksAfter.map((m) => (
+            <ExceptionBadge key={`a${m}`} label={m} />
+          ))}
         </>
       ) : (
         '・'

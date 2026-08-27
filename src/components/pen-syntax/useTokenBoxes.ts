@@ -23,6 +23,14 @@ import type { RefObject } from 'react'
 import type { TokenBox } from '@/lib/pen-syntax/types'
 import { isPunct } from '@/lib/reading/syntax'
 
+/**
+ * 単語の中に置くベースライン測定用の目印の属性（2026-08-27）。
+ * 中身の無い inline-block を語の末尾に置くと、その下端が**文字のベースライン**に
+ * そろう（下に伸びる字の分だけ下がる外枠の下端とは別物）。下線をベースラインに
+ * 寄せるために使う。
+ */
+export const BASELINE_PROBE_ATTR = 'data-pen-baseline'
+
 /** 箱の一覧が実質同じか（0.5px 未満の揺れは同じとみなし、無限再描画を防ぐ） */
 export function sameBoxes(a: TokenBox[], b: TokenBox[]): boolean {
   if (a.length !== b.length) return false
@@ -34,7 +42,8 @@ export function sameBoxes(a: TokenBox[], b: TokenBox[]): boolean {
       Math.abs(x.left - y.left) >= 0.5 ||
       Math.abs(x.right - y.right) >= 0.5 ||
       Math.abs(x.top - y.top) >= 0.5 ||
-      Math.abs(x.bottom - y.bottom) >= 0.5
+      Math.abs(x.bottom - y.bottom) >= 0.5 ||
+      Math.abs((x.baseline ?? x.bottom) - (y.baseline ?? y.bottom)) >= 0.5
     ) {
       return false
     }
@@ -61,12 +70,18 @@ export function useTokenBoxes(
       if (!el) return
       if (isPunct(tokens[i])) return // 句読点には吸着させない
       const r = el.getBoundingClientRect()
+      const top = r.top - cRect.top
+      const bottom = r.bottom - cRect.top
+      // ベースラインの目印（語の末尾に置いた中身の無い inline-block）の下端
+      const probe = el.querySelector(`[${BASELINE_PROBE_ATTR}]`)
+      const bl = probe ? probe.getBoundingClientRect().bottom - cRect.top : NaN
       next.push({
         index: i,
         left: r.left - cRect.left,
         right: r.right - cRect.left,
-        top: r.top - cRect.top,
-        bottom: r.bottom - cRect.top,
+        top,
+        bottom,
+        baseline: Number.isFinite(bl) && bl > top && bl <= bottom ? bl : undefined,
       })
     })
     if (!sameBoxes(boxesRef.current, next)) setBoxes(next)

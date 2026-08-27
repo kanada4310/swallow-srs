@@ -4,7 +4,7 @@
  * 使う記号は「記号の台帳」（ledger.ts・2026-08-26 塾長確定版）に限定する:
  * - 括弧4種＋下線＋波線（熟語の印）
  * - 品詞の英字5種（n・v・a・ad・aux）・働きの文字（S・V・O・C・P・Po・▷・＋）
- * - ○で囲んだ漢字の例外マーク（仮・真・強調・同格）
+ * - ○で囲んだ漢字の例外マーク1字（仮・真・強・同）
  * ShapeKind には台帳外の形（?・ダッシュ・Ø・単語囲みの○など）も残るが、
  * これは「書かれたら台帳外と判別して案内する」ための検出用（台帳の DEPRECATED 参照）。
  */
@@ -58,9 +58,11 @@ export type RoleLetter = (typeof ROLE_LETTERS)[number]
 
 /**
  * ○で囲んだ漢字の例外マーク（仮主語・真主語・強調構文・同格）。
- * 第7講の実書き込み（it仮 / to真 / 強調）に基づく。候補は実例で拡張する。
+ * **1字で書く**（2026-08-27 塾長確定。第7講の検収で、実際の書き方は
+ * ○で囲んだ漢字1字＝同・強と分かったため「強調」「同格」の2文字表記をやめた。
+ * 決定記録 20260827-syntax-symbol-clarifications の1）。候補は実例で拡張する。
  */
-export const EXCEPTION_KANJI = ['仮', '真', '強調', '同格'] as const
+export const EXCEPTION_KANJI = ['仮', '真', '強', '同'] as const
 export type ExceptionKanji = (typeof EXCEPTION_KANJI)[number]
 
 export type SymbolId = ShapeKind | PosLetter | RoleLetter | ExceptionKanji
@@ -89,6 +91,12 @@ export interface TokenBox {
   right: number
   top: number
   bottom: number
+  /**
+   * 文字のベースライン（下線を文字にぴったり寄せるための縦位置・コンテナ相対）。
+   * bottom は語要素の外枠の下端（下枠線・下余白を含む）でベースラインではない。
+   * 採寸できないとき（テスト・古い呼び出し）は未設定で、bottom で代用する。
+   */
+  baseline?: number
 }
 
 /** 線がどの帯に書かれたか。above=品詞の行 / band=本文の行 / below=働きの行 */

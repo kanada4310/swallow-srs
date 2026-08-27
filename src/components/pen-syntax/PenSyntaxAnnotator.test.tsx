@@ -1,15 +1,15 @@
 /**
- * ペン入力部品の下線オーバーレイの回帰テスト。
+ * ペン入力部品の重ね描き（下線・カッコ）の回帰テスト。
  *
- * 不具合（2026-08-26 本番で発見）: 同じ行の左側にカッコがあると、右側の単語の
- * 下線がカッコの幅ぶん左にずれる。原因は、単語の箱の採寸（measure）が
+ * 不具合①（2026-08-26 本番で発見）: 単語の箱の採寸（measure）が
  * 「文が変わったとき」「枠の大きさが変わったとき」にしか走らず、
- * カッコ記号の挿入（正解表示・書き込み）で単語が右へ押されても
- * 測り直していなかったこと。
+ * 表示が変わって単語が右へ押されても測り直していなかったため下線がずれた。
+ * 不具合②（2026-08-27 塾長の実機）: カッコを文の流れに差し込んでいたため、
+ * カッコを書いた瞬間に後ろの単語が右へ押され、書き込もうとしていた場所が動いた。
  *
  * jsdom は実レイアウトを持たないため、getBoundingClientRect を
  * 「文書順で前にあるテキスト1文字=10px」の模擬レイアウトに差し替えて、
- * カッコ挿入で単語が右へ押される状況を再現する。
+ * 「前に文字が増えると右へ押される」状況を再現する。
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -42,7 +42,7 @@ function emptyAnswer(n: number): SyntaxAnswer {
 // 例文②「The girl standing by the door is my sister.」
 const TOKENS = ['The', 'girl', 'standing', 'by', 'the', 'door', 'is', 'my', 'sister', '.']
 
-describe('PenSyntaxAnnotator 下線オーバーレイ', () => {
+describe('PenSyntaxAnnotator 重ね描き（下線・カッコ）', () => {
   beforeEach(() => {
     vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (
       this: Element,
@@ -68,20 +68,25 @@ describe('PenSyntaxAnnotator 下線オーバーレイ', () => {
     vi.restoreAllMocks()
   })
 
-  it('カッコ挿入で単語が右へ押されたら、下線も押された後の位置に描かれる（採寸のやり直し）', () => {
+  it('採点マークが出て単語が右へ押されても、下線は押された後の位置に描かれる（採寸のやり直し）', () => {
     const { container, rerender } = render(
       <PenSyntaxAnnotator tokens={TOKENS} answer={emptyAnswer(TOKENS.length)} onChange={() => {}} />,
     )
 
-    // 正解表示に相当: 〈standing by the door〉のカッコと、その範囲の下線を同時に差し込む
+    // 正解表示に相当: 〈standing by the door〉の下線と、単語の下に出る採点の注記を
+    // 同時に差し込む（注記のぶんだけ後ろの単語が右へ押される）
     const model: SyntaxAnswer = {
       ...emptyAnswer(TOKENS.length),
-      spans: [
-        { from: 2, to: 5, type: 'adjm' },
-        { from: 2, to: 5, type: 'ul' },
-      ],
+      spans: [{ from: 2, to: 5, type: 'ul' }],
     }
-    rerender(<PenSyntaxAnnotator tokens={TOKENS} answer={model} onChange={() => {}} />)
+    rerender(
+      <PenSyntaxAnnotator
+        tokens={TOKENS}
+        answer={model}
+        onChange={() => {}}
+        posMarks={{ 2: { mark: 'bad', correct: '分詞' } }}
+      />,
+    )
 
     // 下線の連結線分（bg-ink の絶対配置 div）が描かれている
     const underlines = Array.from(container.querySelectorAll('div.bg-ink')) as HTMLDivElement[]
@@ -98,11 +103,51 @@ describe('PenSyntaxAnnotator 下線オーバーレイ', () => {
     const expectedLeft = standing.getBoundingClientRect().left - cLeft
     const expectedRight = door.getBoundingClientRect().right - cLeft
 
-    // 修正前は初回採寸（カッコ無し）の古い箱から線を引くため、カッコの幅ぶん左にずれていた
+    // 修正前は初回採寸の古い箱から線を引くため、押された幅ぶん左にずれていた
     const left = parseFloat(underlines[0].style.left)
     const width = parseFloat(underlines[0].style.width)
     expect(left).toBeCloseTo(expectedLeft, 5)
     expect(left + width).toBeCloseTo(expectedRight, 5)
+  })
+
+  it('カッコを足しても単語の位置は動かない（文の流れから外して重ね描きする）', () => {
+    const { container, rerender } = render(
+      <PenSyntaxAnnotator tokens={TOKENS} answer={emptyAnswer(TOKENS.length)} onChange={() => {}} />,
+    )
+    const wordLefts = () => {
+      const c = container.querySelector('div.relative') as HTMLElement
+      const cLeft = c.getBoundingClientRect().left
+      return Array.from(c.querySelectorAll('span.font-serif')).map(
+        (el) => el.getBoundingClientRect().left - cLeft,
+      )
+    }
+    const before = wordLefts()
+    expect(before).toHaveLength(TOKENS.length)
+
+    // 入れ子のカッコ（[ ]の中に〈 〉）＋閉じ待ちの書きかけを一度に差し込む
+    const withBrackets: SyntaxAnswer = {
+      ...emptyAnswer(TOKENS.length),
+      spans: [
+        { from: 0, to: 5, type: 'n', role: 'S' },
+        { from: 2, to: 5, type: 'adjm' },
+      ],
+    }
+    rerender(
+      <PenSyntaxAnnotator tokens={TOKENS} answer={withBrackets} onChange={() => {}} />,
+    )
+
+    // 修正前はカッコが単語の直前・直後に差し込まれ、後ろの単語が右へ押されていた
+    expect(wordLefts()).toEqual(before)
+
+    // カッコは絶対配置の重ね描きとして出ている（開き2つ・閉じ2つ＋まとまりの働き）
+    const overlay = Array.from(
+      container.querySelectorAll('div.relative > span > span.absolute'),
+    ).map((el) => el.textContent)
+    expect(overlay).toContain('[')
+    expect(overlay).toContain(']')
+    expect(overlay).toContain('<')
+    expect(overlay).toContain('>')
+    expect(overlay).toContain('S')
   })
 })
 

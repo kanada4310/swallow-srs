@@ -10,6 +10,8 @@ import {
 import { classifyShape } from './shapes'
 import { evaluatePointer, initialPalmState } from './palm'
 import {
+  bracketMark,
+  BRACKET_SLOT_W,
   laneOf,
   snapCloseBracket,
   snapEnclosedRange,
@@ -19,7 +21,7 @@ import {
   underlineSegments,
 } from './snap'
 import { shouldGroupStrokes } from './grouping'
-import { applySymbol, emptyPenAnnotation } from './apply'
+import { applySymbol, emptyPenAnnotation, roleCellParts } from './apply'
 import { classifyExceptionMark } from './recognize'
 import { classifyPosLetter, classifyRoleLetter } from './letters'
 import type { PenStroke, TokenBox } from './types'
@@ -264,6 +266,37 @@ describe('snap（単語への吸着）', () => {
     expect(segs[0].y).toBe(67) // 単語下端(70) - 3
   })
 
+  it('下線は文字のベースラインを基準に引く（外枠の下端ではない）', () => {
+    // 下枠線・下余白ぶん、外枠の下端はベースラインより下にある
+    const withBaseline: TokenBox[] = BOXES.map((t) => ({ ...t, baseline: 64 }))
+    const segs = underlineSegments({ from: 0, to: 1 }, withBaseline, 1)
+    expect(segs[0].y).toBe(65) // ベースライン(64) + 1
+    // ベースラインが測れないときは従来どおり外枠の下端で代用する
+    expect(underlineSegments({ from: 0, to: 1 }, BOXES, 1)[0].y).toBe(71)
+  })
+
+  it('括弧の重ね描きは単語のすき間の中央に置き、入れ子は横へずらす', () => {
+    // 単語1=80〜130・単語2=150〜200 → すき間の中央は 140
+    const box = BOXES[2]
+    const single = bracketMark(box, BOXES, 'open')
+    expect(single.x).toBe(140)
+    expect(single.y).toBe(55) // 本文の行の中央（top40〜bottom70）
+    expect(single.roleTop).toBe(70)
+    // 2つ並ぶときは中央をはさんで左右に振り分ける（0=外側＝左）
+    const outer = bracketMark(box, BOXES, 'open', 0, 2)
+    const inner = bracketMark(box, BOXES, 'open', 1, 2)
+    expect(outer.x).toBe(140 - BRACKET_SLOT_W / 2)
+    expect(inner.x).toBe(140 + BRACKET_SLOT_W / 2)
+    // 閉じ括弧は単語の右のすき間（200〜220 の中央 210）
+    expect(bracketMark(box, BOXES, 'close').x).toBe(210)
+  })
+
+  it('行頭・行末はとなりの単語が無いので見込み幅ぶん外へ置く', () => {
+    expect(bracketMark(BOXES[0], BOXES, 'open').x).toBe(BOXES[0].left - 8)
+    const last = BOXES[BOXES.length - 1]
+    expect(bracketMark(last, BOXES, 'close').x).toBe(last.right + 8)
+  })
+
   it('折り返しで複数行にまたがる下線は行ごとに1本ずつになる', () => {
     const wrapped: TokenBox[] = [
       { index: 0, left: 10, right: 60, top: 40, bottom: 70 },
@@ -421,6 +454,32 @@ describe('applySymbol（解答への反映）', () => {
     expect(r.next.pendingOpens).toEqual([])
   })
 
+  it('折り返しのある文では、別の行のカッコに働きが吸われない（縦位置も見る）', () => {
+    // 1行目=単語0〜2（top40）／2行目=単語3〜5（top140）。吸着に使う箱を
+    // 行で絞らずに渡しても、書いた高さでカッコの行を見分けられること
+    const wrapped: TokenBox[] = [
+      { index: 0, left: 10, right: 60, top: 40, bottom: 70 },
+      { index: 1, left: 70, right: 120, top: 40, bottom: 70 },
+      { index: 2, left: 130, right: 180, top: 40, bottom: 70 },
+      { index: 3, left: 10, right: 60, top: 140, bottom: 170 },
+      { index: 4, left: 70, right: 120, top: 140, bottom: 170 },
+      { index: 5, left: 130, right: 180, top: 140, bottom: 170 },
+    ]
+    const problem2 = SYNTAX_PROBLEMS[1]
+    const base = emptyPenAnnotation(emptyAnswer(problem2))
+    // 1行目の単語1の前に [ を書いた（閉じ待ち）
+    const state = { ...base, pendingOpens: [{ type: 'n' as const, index: 1 }] }
+    // 2行目の下（単語3と4のすき間の真下）に S を書く＝1行目のカッコとは無関係
+    const r = applySymbol(state, 'S', [line([63, 178], [68, 190])], wrapped)
+    expect(r.applied).toBe(true)
+    // 1行目のカッコには付かない（縦位置を見ないと、ここで吸われていた）
+    expect(r.next.pendingOpens).toEqual([{ type: 'n', index: 1 }])
+    // 同じ高さ・同じ横位置でも、2行目のカッコになら付く
+    const state2 = { ...base, pendingOpens: [{ type: 'n' as const, index: 4 }] }
+    const r2 = applySymbol(state2, 'S', [line([63, 178], [68, 190])], wrapped)
+    expect(r2.next.pendingOpens).toEqual([{ type: 'n', index: 4, role: 'S' }])
+  })
+
   it('台帳から外れた形（単語囲みの○・?・ダッシュ・Ø）は反映せず案内を返す', () => {
     for (const symbol of ['circle', 'question', 'tick', 'null-sign', 'slash'] as const) {
       const r = applySymbol(init(), symbol, [arc(105, 55, 35, -90, 266)], BOXES)
@@ -435,5 +494,51 @@ describe('applySymbol（解答への反映）', () => {
     const r = applySymbol(init(), 'hline', [line([85, 20], [120, 21])], BOXES)
     expect(r.applied).toBe(false)
     expect(r.message).toContain('自動で色分け')
+  })
+})
+
+describe('roleCellParts（○で囲んだ例外マークを働きの欄に置く）', () => {
+  const problem = SYNTAX_PROBLEMS[0]
+  const init = () => emptyPenAnnotation(emptyAnswer(problem))
+  /** 2語目を○で囲んだ「仮」／2語目の下の「S」 */
+  const kari: PenStroke[] = [arc(105, 20, 16, -90, 266), line([100, 14], [110, 26])]
+  const roleS: PenStroke[] = [line([85, 80], [115, 95])]
+  const cellOf = (state: ReturnType<typeof init>, i: number) =>
+    roleCellParts(state.answer.role[i], state.extras.filter((x) => i >= x.from && i <= x.to))
+
+  it('「仮」と働きは1つの値（仮S）になり、書く順序を変えても同じ結果になる', () => {
+    // 順序①: ○仮 → S
+    let a = applySymbol(init(), '仮', kari, BOXES).next
+    a = applySymbol(a, 'S', roleS, BOXES).next
+    // 順序②: S → ○仮
+    let b = applySymbol(init(), 'S', roleS, BOXES).next
+    b = applySymbol(b, '仮', kari, BOXES).next
+
+    expect(cellOf(a, 1).text).toBe('仮S')
+    expect(cellOf(b, 1).text).toBe('仮S')
+    expect(cellOf(a, 1)).toEqual(cellOf(b, 1))
+    expect(cellOf(a, 1).before).toEqual(['仮'])
+    expect(cellOf(a, 1).value).toBe('S')
+  })
+
+  it('「強」「同」は単独で1マスを占める（働きが無くても表示される）', () => {
+    const dou = applySymbol(init(), '同', kari, BOXES).next
+    expect(cellOf(dou, 1).text).toBe('同')
+    expect(cellOf(dou, 1).alone).toEqual(['同'])
+    expect(cellOf(dou, 1).empty).toBe(false)
+  })
+
+  it('働きも例外マークも無ければ空のマスになる', () => {
+    expect(cellOf(init(), 1).empty).toBe(true)
+    expect(cellOf(init(), 1).text).toBe('')
+  })
+
+  it('並びは記号の台帳の順で決まる（複数付いても書いた順序に左右されない）', () => {
+    const marks = [
+      { kind: 'exception' as const, label: '同' as const, from: 1, to: 1 },
+      { kind: 'exception' as const, label: '仮' as const, from: 1, to: 1 },
+    ]
+    expect(roleCellParts('S', marks).text).toBe('仮S同')
+    expect(roleCellParts('S', [...marks].reverse()).text).toBe('仮S同')
   })
 })

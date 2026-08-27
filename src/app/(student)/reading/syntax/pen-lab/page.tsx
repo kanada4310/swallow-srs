@@ -26,7 +26,7 @@ import type { UserTemplateStore } from '@/lib/pen-syntax/letters'
 import { usePenZoneGuard, type PenGuardEvent } from '@/components/pen-syntax/usePenZoneGuard'
 import { PEN_UI_ATTR, PEN_WRITE_ZONE_ATTR } from '@/lib/pen-syntax/zone-guard'
 import { PenInputLogPanel } from '@/components/pen-syntax/PenInputLogPanel'
-import { useTokenBoxes } from '@/components/pen-syntax/useTokenBoxes'
+import { BASELINE_PROBE_ATTR, useTokenBoxes } from '@/components/pen-syntax/useTokenBoxes'
 import {
   useChipPlacement,
   type ChipAnchor,
@@ -535,6 +535,12 @@ export default function PenLabPage() {
                 className="whitespace-nowrap px-0.5 font-serif text-xl text-ink"
               >
                 {tok}
+                {/* ベースラインの目印（採寸の一元化・構文の練習と同じ作り） */}
+                <span
+                  aria-hidden
+                  className="inline-block h-0 w-0 overflow-hidden align-baseline"
+                  {...{ [BASELINE_PROBE_ATTR]: '' }}
+                />
               </span>
             ))}
           </div>

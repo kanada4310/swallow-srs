@@ -5,7 +5,8 @@
  * - 下線: 引いた範囲がそのまま ul の span になる
  * - 文字: 上の行=品詞、下の行=働きとして該当単語のマスに入る
  * - 波線（熟語の印）・○で囲んだ漢字（例外マーク）: 採点対象のデータ構造に対応が
- *   無いため extras として保持（画面には表示する。採点には数えない）
+ *   無いため extras として保持（画面には表示する。採点には数えない）。
+ *   例外マークの表示位置は働きの欄（roleCellParts が1マスぶんに組み立てる）
  * - 台帳から外れた形（?・ダッシュ・Ø・単語囲みの○）: 反映せず、書き方の案内を返す
  */
 
@@ -35,7 +36,7 @@ export interface PendingOpen {
 export interface PenExtraMark {
   /** wavy=波線（熟語） / exception=○で囲んだ漢字の例外マーク */
   kind: 'wavy' | 'exception'
-  /** exception のときの漢字（仮・真・強調・同格） */
+  /** exception のときの漢字1字（仮・真・強・同） */
   label?: ExceptionKanji
   from: number
   to: number
@@ -123,6 +124,12 @@ export function snapTargetFor(
  */
 const BRACKET_ROLE_MAX_DX = 40
 const BRACKET_ROLE_SLOP = 6
+/**
+ * 縦の見込み（単語の高さの何倍まで下を「その行の働きの段」とみなすか）。
+ * 文が折り返しているとき、上の行のカッコに吸われないための歯止め
+ * （2026-08-27 の審査の指摘。横位置しか見ていなかった）。
+ */
+const BRACKET_ROLE_MAX_DY_RATIO = 1.5
 
 interface BracketRoleTarget {
   tokenIndex: number
@@ -136,6 +143,7 @@ function findBracketRoleTarget(
   state: PenAnnotation,
   boxes: TokenBox[],
   cx: number,
+  cy: number,
 ): BracketRoleTarget | null {
   const candidates: Array<BracketRoleTarget & { rank: number; width: number }> = []
   state.pendingOpens.forEach((p, i) => {
@@ -150,9 +158,15 @@ function findBracketRoleTarget(
   })
   const usable = candidates.filter((c) => {
     const box = boxes.find((t) => t.index === c.tokenIndex)
-    if (!box || cx >= box.left + BRACKET_ROLE_SLOP) return false
+    if (!box) return false
+    // 縦: そのカッコと同じ行の「働きの段」に書かれていること
+    // （折り返しのある文で、別の行のカッコに吸われないための歯止め）
+    const height = box.bottom - box.top
+    if (cy <= box.top || cy > box.bottom + height * BRACKET_ROLE_MAX_DY_RATIO) return false
+    // 横: その単語の左端より左（＝カッコの列）で、左どなりの単語より右
+    if (cx >= box.left + BRACKET_ROLE_SLOP) return false
     const prev = boxes
-      .filter((t) => t.right <= box.left)
+      .filter((t) => t.right <= box.left && Math.abs(t.top - box.top) < height * 0.6)
       .sort((a, b) => b.right - a.right)[0]
     return prev ? cx >= prev.right - BRACKET_ROLE_SLOP : box.left - cx <= BRACKET_ROLE_MAX_DX
   })
@@ -160,6 +174,47 @@ function findBracketRoleTarget(
   usable.sort((a, b) => a.rank - b.rank || a.width - b.width)
   const best = usable[0]
   return { tokenIndex: best.tokenIndex, pending: best.pending, span: best.span }
+}
+
+/* ---------- 働き欄の表示（働きの文字＋○で囲んだ例外マーク） ---------- */
+
+/**
+ * 働きと組んで1つの値になる例外マーク（「仮S」「真S」のように書く）。
+ * 残り（強・同）は単独で1マスを占める（2026-08-26 塾長裁定）。
+ */
+export const COMBINING_EXCEPTIONS: readonly ExceptionKanji[] = ['仮', '真']
+
+export interface RoleCellParts {
+  /** 働きの前に出す例外マーク（仮・真）。○で囲んで描く */
+  before: ExceptionKanji[]
+  /** 単独で1マスを占める例外マーク（強・同）。○で囲んで描く */
+  alone: ExceptionKanji[]
+  /** 働きの文字（S・V・O…） */
+  value: string | null
+  /** 1マスぶんの表示テキスト（「仮S」「同」など） */
+  text: string
+  /** 何も書かれていない（マスに「・」を出す） */
+  empty: boolean
+}
+
+/**
+ * 働き欄の1マスに出す内容を組み立てる（表示用の純関数）。
+ *
+ * ○で囲んだ例外マークは、単語の右肩ではなく**働きの欄**に置く（2026-08-27 塾長指示）。
+ * 1マスは1値だが、仮・真は働きと組んだ1つの値（仮S）になり、強・同は単独で
+ * 1マスを占めるため衝突しない。
+ * **並びは台帳の順で決めるので、書いた順序が違っても同じ結果になる。**
+ */
+export function roleCellParts(role: string | null, extras: PenExtraMark[]): RoleCellParts {
+  const found = new Set(
+    extras.filter((x) => x.kind === 'exception' && x.label).map((x) => x.label as ExceptionKanji),
+  )
+  // 並びは台帳（EXCEPTION_KANJI）の順で決める＝書いた順序に左右されない
+  const marks = EXCEPTION_KANJI.filter((k) => found.has(k))
+  const before = marks.filter((k) => COMBINING_EXCEPTIONS.includes(k))
+  const alone = marks.filter((k) => !COMBINING_EXCEPTIONS.includes(k))
+  const text = `${before.join('')}${role ?? ''}${alone.join('')}`
+  return { before, alone, value: role, text, empty: text === '' }
 }
 
 /** 判別済みの記号1つを解答へ反映する */
@@ -177,7 +232,7 @@ export function applySymbol(
     return { next: state, applied: false, message: guidance }
   }
 
-  // ○で囲んだ漢字の例外マーク（仮・真・強調・同格）
+  // ○で囲んだ漢字の例外マーク（仮・真・強・同）。表示は働きの欄（roleCellParts）
   if (isExceptionKanji(symbol)) {
     const snap = snapNearestToken(strokes, boxes)
     if (!snap) return { next: state, applied: false, message: '吸着先の単語が見つかりません' }
@@ -211,7 +266,8 @@ export function applySymbol(
     // 決めると、カッコの真下は左どなりの単語のほうが中心に近いことがあり、
     // 黙って単語の働きへ落ちてしまう（2026-08-27 実ブラウザで確認）
     if (lane === 'below') {
-      const hit = findBracketRoleTarget(state, boxes, strokesBBox(strokes).cx)
+      const b = strokesBBox(strokes)
+      const hit = findBracketRoleTarget(state, boxes, b.cx, b.cy)
       if (hit && hit.pending !== undefined) {
         const pendingOpens = state.pendingOpens.map((p, i) =>
           i === hit.pending ? { ...p, role: symbol } : p,
