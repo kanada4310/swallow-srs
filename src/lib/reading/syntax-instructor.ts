@@ -9,7 +9,7 @@
  *   画面に出すかどうかは syntaxProblemsFor() で決める。
  *
  * ★本文の英文は正解表に持たない。語の並びは教材データ（共有事項 C22・
- *   public/reading-data の seg JSON）から文IDで読み合わせる。市販教材の本文を
+ *   private/reading-data の seg JSON）から文IDで読み合わせる。市販教材の本文を
  *   二重に置かないための作りで、語の並びが変わったら分かるように失敗する。
  */
 

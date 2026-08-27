@@ -2,8 +2,13 @@
  * 読解ページの型定義。
  *
  * 教材データ（seg JSON）は工房（quiz_generator）の
- * `subjects/英語/deliver_reading_data.py` が `public/reading-data/` に届ける（契約 C22）。
+ * `subjects/英語/deliver_reading_data.py` が届ける（契約 C22）。
  * ここでは「届いた形をそのまま読む」ことに徹し、演習室側で形を変えない。
+ *
+ * ★置き場は 2026-08-27 に `public/reading-data/` から `private/reading-data/` へ移した
+ *   （市販教材の本文なので、ログインした人だけが読めるようにするため）。
+ *   工房側の書き出し先はまだ古いままで、別の作業で直す。
+ *   古い置き場にファイルが現れたら警告が出る（scripts/legacy-reading-data.mjs）。
  */
 
 /** 関係記号（8種＋TS）。工房の logic_tree と同じ表記をそのまま使う。 */
