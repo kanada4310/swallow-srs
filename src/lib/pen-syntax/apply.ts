@@ -9,7 +9,7 @@
  * - 台帳から外れた形（?・ダッシュ・Ø・単語囲みの○）: 反映せず、書き方の案内を返す
  */
 
-import type { SpanType, SyntaxAnswer } from '@/lib/reading/syntax'
+import type { SpanType, StudentSpan, SyntaxAnswer } from '@/lib/reading/syntax'
 import type { ExceptionKanji, Lane, PenStroke, PosLetter, RoleLetter, SymbolId, TokenBox } from './types'
 import { EXCEPTION_KANJI, POS_LETTERS, ROLE_LETTERS } from './types'
 import { deprecatedGuidance } from './ledger'
@@ -25,6 +25,11 @@ import {
 export interface PendingOpen {
   type: SpanType
   index: number
+  /**
+   * 開始カッコの真下に**閉じる前から**書けるまとまり全体の働き（2026-08-27）。
+   * 閉じ括弧が来たときに span へ引き継ぐので、先に書いた働きは失われない。
+   */
+  role?: RoleLetter
 }
 
 export interface PenExtraMark {
@@ -154,6 +159,25 @@ export function applySymbol(
       const b = strokesBBox(strokes)
       const tokenBox = boxes.find((t) => t.index === snap.index)
       if (tokenBox && b.cx < tokenBox.left) {
+        // まだ閉じていない開き括弧（書きかけ）を先に見る（2026-08-27）。
+        // 「開いてすぐ下に働きを書く」書き順では、いま働きを付けたい相手は
+        // 直前に書いた開き括弧であり、閉じ済みのまとまりではない。
+        // 同じ位置に書きかけが複数あるときは最後に書いたもの＝内側に付ける。
+        const pendingIdx = state.pendingOpens
+          .map((p, i) => ({ p, i }))
+          .filter(({ p }) => p.index === snap.index && (p.type === 'n' || p.type === 'comp'))
+          .map(({ i }) => i)
+          .pop()
+        if (pendingIdx !== undefined) {
+          const pendingOpens = state.pendingOpens.map((p, i) =>
+            i === pendingIdx ? { ...p, role: symbol } : p,
+          )
+          return {
+            next: { ...state, pendingOpens },
+            applied: true,
+            target: { from: snap.index, to: snap.index },
+          }
+        }
         const starts = state.answer.spans
           .map((s, i) => ({ s, i }))
           .filter(({ s }) => s.from === snap.index && (s.type === 'n' || s.type === 'comp'))
@@ -213,17 +237,26 @@ export function applySymbol(
     }
     const open = state.pendingOpens[idx]
     const pendingOpens = state.pendingOpens.filter((_, i) => i !== idx)
-    const span = { from: open.index, to: snap.index, type: closeType }
+    // 開き括弧の下に先に書いた働きを、そのままこのまとまりへ引き継ぐ（失わない）
+    const span: StudentSpan = open.role
+      ? { from: open.index, to: snap.index, type: closeType, role: open.role }
+      : { from: open.index, to: snap.index, type: closeType }
     const exists = state.answer.spans.some(
       (s) => s.from === span.from && s.to === span.to && s.type === span.type,
     )
+    const spans = exists
+      ? // 同じまとまりが既にあるときも、先に書いた働きは載せ替える
+        state.answer.spans.map((s) =>
+          open.role && s.from === span.from && s.to === span.to && s.type === span.type
+            ? { ...s, role: open.role }
+            : s,
+        )
+      : [...state.answer.spans, span]
     return {
       next: {
         ...state,
         pendingOpens,
-        answer: exists
-          ? state.answer
-          : { ...state.answer, spans: [...state.answer.spans, span] },
+        answer: { ...state.answer, spans },
       },
       applied: true,
       message: exists ? '同じまとまりが既にあります' : undefined,

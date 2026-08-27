@@ -371,6 +371,46 @@ describe('applySymbol（解答への反映）', () => {
     expect(onWord.next.answer.spans[0].role).toBeUndefined()
   })
 
+  it('閉じる前の開始カッコの真下にも働きを書ける（閉じたあとも失われない）', () => {
+    // 3語目（left=150）の前に [ を書く（まだ閉じない）
+    let state = init()
+    const open = applySymbol(state, 'square-open', [line([142, 42], [136, 55], [142, 68])], BOXES)
+    expect(open.applied).toBe(true)
+    state = open.next
+    expect(state.pendingOpens).toEqual([{ type: 'n', index: 2 }])
+    // 開いてすぐ、そのカッコの真下に O を書く
+    const role = applySymbol(state, 'O', [line([138, 80], [146, 95])], BOXES)
+    expect(role.applied).toBe(true)
+    state = role.next
+    expect(state.pendingOpens).toEqual([{ type: 'n', index: 2, role: 'O' }])
+    // 単語のマスには入らない（まとまり全体の働き）
+    expect(state.answer.role[2]).toBeNull()
+    // あとから閉じ括弧を書いても、先に書いた働きは引き継がれる
+    const close = applySymbol(state, 'square-close', [line([274, 42], [280, 55], [274, 68])], BOXES)
+    expect(close.applied).toBe(true)
+    expect(close.next.answer.spans).toEqual([{ from: 2, to: 3, type: 'n', role: 'O' }])
+    expect(close.next.pendingOpens).toEqual([])
+  })
+
+  it('閉じ待ちのカッコが複数あるときは、あとに書いたほう（内側）に働きが付く', () => {
+    let state = init()
+    state = applySymbol(state, 'square-open', [line([142, 42], [136, 55], [142, 68])], BOXES).next
+    state = applySymbol(state, 'brace-open', [line([142, 42], [136, 55], [142, 68])], BOXES).next
+    const role = applySymbol(state, 'C', [line([138, 80], [146, 95])], BOXES)
+    expect(role.next.pendingOpens).toEqual([
+      { type: 'n', index: 2 },
+      { type: 'comp', index: 2, role: 'C' },
+    ])
+  })
+
+  it('閉じ待ちのカッコが無ければ、従来どおり単語の働きに入る', () => {
+    // 開き括弧を書いていない場所の真下（単語の左端より左）に書いた場合
+    const r = applySymbol(init(), 'S', [line([138, 80], [146, 95])], BOXES)
+    expect(r.applied).toBe(true)
+    expect(r.next.answer.role[2]).toBe('S')
+    expect(r.next.pendingOpens).toEqual([])
+  })
+
   it('台帳から外れた形（単語囲みの○・?・ダッシュ・Ø）は反映せず案内を返す', () => {
     for (const symbol of ['circle', 'question', 'tick', 'null-sign', 'slash'] as const) {
       const r = applySymbol(init(), symbol, [arc(105, 55, 35, -90, 266)], BOXES)

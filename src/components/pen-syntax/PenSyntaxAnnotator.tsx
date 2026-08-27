@@ -564,8 +564,15 @@ export function PenSyntaxAnnotator({
               {ann.pendingOpens
                 .filter((p) => p.index === i)
                 .map((p, n) => (
-                  <span key={`p${n}`} className={`${BRACKET_CLASS} text-gray-300`}>
-                    {SPAN_TYPES[p.type].open}
+                  // 書きかけ（閉じ待ち）の開始カッコ。閉じる前から真下に働きを書けるよう、
+                  // 閉じ済みのカッコと同じ「カッコ＋働き欄」の枠を出す（2026-08-27）
+                  <span key={`p${n}`} className="flex flex-col items-center self-end">
+                    <span className="flex h-9 items-center text-2xl font-bold text-gray-300">
+                      {SPAN_TYPES[p.type].open}
+                    </span>
+                    <span className="flex h-6 items-center text-xs font-bold text-sora-dark">
+                      {p.role ?? ''}
+                    </span>
                   </span>
                 ))}
 
@@ -740,7 +747,8 @@ export function PenSyntaxAnnotator({
               key={`po${idx}`}
               className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-gray-400 bg-white px-2.5 py-1 text-xs text-ink-3"
             >
-              {SPAN_TYPES[p.type].open} {tokens[p.index]} …（閉じ待ち）
+              {SPAN_TYPES[p.type].open}
+              {p.role ? <b>＝{p.role}</b> : null} {tokens[p.index]} …（閉じ待ち）
               <button type="button" onClick={() => removePendingOpen(idx)} aria-label="書きかけを消す">
                 ×
               </button>
