@@ -19,6 +19,10 @@
   型検査は既知の1件のみ・Lint は無関係の既存の警告1件・本番用ビルド成功。
   開発サーバーの実ブラウザ（iPad Mini 相当・テスト生徒）でペンの接触を再現し、
   働きの高さ・入れ子4段の色・採点前後の単語の座標を実測して確認。
+  **本番反映済み（2026-08-27・決定記録 `20260827-scoped-push-exception` の4条件をすべて満たすため
+  個別の承認なしに push・デプロイ成功 Ready・本番の「構文の練習」をテスト生徒の実操作で
+  3観点とも確認＝カッコの真下の働きが単語の下の欄と同じ帯（中心93対92）／入れ子4段の色が
+  濃い青→濃い橙→明るい青→明るい橙／採点前後で動いた単語0語。JSエラーなし）**。
   詳細は
   [handoff-2026-08-27-pen-alignment-and-colors](progress/handoff-2026-08-27-pen-alignment-and-colors.md)
 - 前フェーズ: **記号を付けても書く場所が動かないようにする＋記号の約束をそろえる**（2026-08-27・
@@ -256,7 +260,7 @@
 - 注意: **Supabase CLI は再ログイン済みで `db push` 運用に復旧**（020〜023 を `migration repair` で履歴記録済み）。将来 login が切れたら SQLエディタ貼り付けで代替可（手順はハンドオフ 2026-07-08 参照）
 
 ## 最新ハンドオフ
-- [handoff-2026-08-27-pen-alignment-and-colors](progress/handoff-2026-08-27-pen-alignment-and-colors.md) — 働きの高さをそろえる／階層の色を交互に補色へ／採点の指摘を重ね描きに
+- [handoff-2026-08-27-pen-alignment-and-colors](progress/handoff-2026-08-27-pen-alignment-and-colors.md) — 働きの高さをそろえる／階層の色を交互に補色へ／採点の指摘を重ね描きに。**本番反映済み**
 
 ## 過去ハンドオフ
 - [handoff-2026-08-27-pen-symbol-layout](progress/handoff-2026-08-27-pen-symbol-layout.md) — 記号を付けても書く場所が動かないようにする（カッコの重ね描き・下線のベースライン・例外マークを働き欄の1字へ）。**本番反映済み**
