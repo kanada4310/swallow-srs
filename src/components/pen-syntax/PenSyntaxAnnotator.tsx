@@ -595,6 +595,9 @@ export function PenSyntaxAnnotator({
 
   const extraAt = (i: number): PenExtraMark[] => ann.extras.filter((x) => i >= x.from && i <= x.to)
 
+  /** 働きの欄の1マスぶん（働きの文字＋○で囲んだ例外マーク） */
+  const roleCellAt = (i: number) => roleCellParts(ann.answer.role[i], extraAt(i))
+
   const extraLabel = (x: PenExtraMark) =>
     x.kind === 'wavy' ? '波線（熟語）' : `○${x.label ?? ''}`
 
@@ -667,8 +670,8 @@ export function PenSyntaxAnnotator({
                   <Cell
                     // ○で囲んだ例外マークは働きの欄に置く（仮S・真S／強・同は単独）
                     value={ann.answer.role[i]}
-                    before={roleCellParts(ann.answer.role[i], extraAt(i)).before}
-                    after={roleCellParts(ann.answer.role[i], extraAt(i)).alone}
+                    before={roleCellAt(i).before}
+                    after={roleCellAt(i).alone}
                     mark={roleMarks?.[i]?.mark}
                     // 節・句の深さは書かずに自動判定: 囲んだ括弧と同じ色＋控えめなダッシュ印
                     accent={
