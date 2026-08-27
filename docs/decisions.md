@@ -18,6 +18,7 @@
 
 ### 2026-08-27
 - [20260827-pen-commit-latency](decisions/20260827-pen-commit-latency.md) `#pen-syntax` `#reading` `#input` `#recognition` `#performance` `#testing` _(Phase 構文分析のペン入力)_ — 続けて書いた記号が1つにまとまる問題の解消（境界で即確定・まとめ判定の一本化）
+- [20260827-pen-chip-interrupt](decisions/20260827-pen-chip-interrupt.md) `#pen-syntax` `#reading` `#input` `#recognition` `#testing` _(Phase 構文分析のペン入力)_ — 候補が出ている最中でも書き始めを受け付ける（線を失わない）
 
 ### 2026-08-26
 - [20260826-pen-order-hints](decisions/20260826-pen-order-hints.md) `#pen-syntax` `#reading` `#order` `#hints` `#teacher` _(Phase 構文分析のペン入力)_ — 分析の順序の記録と検討順ヒント（筆画の時刻から・規則ベース0円）
