@@ -105,13 +105,7 @@ export async function POST(request: NextRequest) {
   const source =
     typeof body.source === 'string' && body.source.length <= 200 ? body.source : lessonId
 
-  const verified = await verifySentenceTokens(
-    request.nextUrl.origin,
-    request.headers.get('cookie') ?? '',
-    lessonId,
-    sentenceKey,
-    tokens as string[]
-  )
+  const verified = verifySentenceTokens(lessonId, sentenceKey, tokens as string[])
   if (!verified) {
     return NextResponse.json({ error: '教材の文と一致しません' }, { status: 400 })
   }

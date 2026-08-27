@@ -1,19 +1,23 @@
 /**
- * 教材データ（契約 C22）の読み込み。
+ * 教材データ（契約 C22）の読み込み（画面側）。
  *
- * 置き場所は `public/reading-data/`。一覧は `index.json`、中身は `<教材>_<講>_seg.json`。
- * ファイル名・置き場所・index.json の形は工房と共有の約束なので、ここで変えない。
+ * 実物は `private/reading-data/`（配信されない場所）にあり、
+ * **ログインした人だけが読める入口** `/api/reading/material/...` を通して取りに行く
+ * （2026-08-27 に `public/reading-data/` から移した。市販教材の本文のため）。
+ * 一覧は `index.json`、中身は `<教材>_<講>_seg.json`。
+ * ファイル名と index.json の形は工房と共有の約束なので、ここで変えない。
  *
- * ★ログイン切れの逃がし方（工房からの申し送り）
- * 演習室の見張り（middleware）は画像以外の全パスを見ているため、ログインが切れた状態で
- * この JSON を取りにいくと、JSON ではなく**ログイン画面の HTML** が返る（307 でリダイレクト）。
- * そのままだと JSON.parse が謎のエラーになるので、ここで見分けて
- * 「ログインし直してください」という意味の専用エラーにする。
+ * ★ログイン切れの逃がし方
+ * 入口はログインが切れていると 401 を返す。
+ * 画面のほうの見張り（middleware）に当たった場合は、JSON ではなく
+ * **ログイン画面の HTML** が返ることもある。どちらも
+ * 「ログインし直してください」という意味の専用エラーにそろえる。
  */
 
 import type { ReadingLessonData, ReadingLessonIndex, ReadingLessonIndexEntry } from './types'
 
-export const READING_DATA_DIR = '/reading-data'
+/** 教材データを取りに行く入口（ログインした人だけが読める） */
+export const READING_DATA_DIR = '/api/reading/material'
 
 /** ログインが切れている（JSON ではなくログイン画面が返った） */
 export class ReadingAuthError extends Error {
@@ -47,7 +51,7 @@ async function fetchJson<T>(path: string): Promise<T> {
     throw new ReadingOfflineError()
   }
 
-  // 未ログイン時はログイン画面へリダイレクトされる（本文は HTML）
+  // 未ログイン時はログイン画面へリダイレクトされることがある（本文は HTML）
   if (res.redirected || new URL(res.url, location.origin).pathname !== path) {
     throw new ReadingAuthError()
   }

@@ -9,7 +9,7 @@
  *
  * ★本文の英文は出力に入れない。
  *   同じ35文の語の並びは、すでに届いている教材データ
- *   public/reading-data/英語長文最前線_第7講_seg.json（共有事項 C22）に入っている。
+ *   private/reading-data/英語長文最前線_第7講_seg.json（共有事項 C22）に入っている。
  *   出力には文ID・語数・正解表（品詞／働き／まとまり）・注記だけを入れ、
  *   英文そのものは画面を開くときに教材データから読み合わせる。
  *   市販教材の本文を二重に置かないための作りで、語の並びが変わったときは
@@ -24,6 +24,7 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { warnIfLegacyReadingData } from '../scripts/legacy-reading-data.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const QUIZ = 'C:/Users/gaimo/source/repos/quiz_generator'
@@ -32,7 +33,7 @@ const SOURCE = join(
   QUIZ,
   'subjects/英語/模範分析集/export/構文の練習_英語長文最前線_第7講.json'
 )
-const MATERIAL = join(here, '../public/reading-data/英語長文最前線_第7講_seg.json')
+const MATERIAL = join(here, '../private/reading-data/英語長文最前線_第7講_seg.json')
 const OUT = join(here, '../src/lib/reading/syntax-instructor-data.ts')
 
 /** 取り込みを止める（黙って0問にしない） */
@@ -54,6 +55,10 @@ function readJson(path, what) {
     fail(`${what}の形が読み取れません（${path}）。${e.message}`)
   }
 }
+
+// 古い置き場（public/reading-data）に教材データが現れていたら、黙って見過ごさず警告する。
+// 教材を書き出す側（quiz_generator）は別の作業で直すまで古い置き場へ書くため。
+warnIfLegacyReadingData(join(here, '..'))
 
 const src = readJson(SOURCE, '書き出しファイル')
 const material = readJson(MATERIAL, '教材データ')
@@ -171,7 +176,7 @@ const out = `/**
  * 取り込み直しは data/sync-syntax-problems.mjs を参照（取り込み日: ${today}）。
  *
  * ★本文の英文はここに持たない。語の並びは教材データ（共有事項 C22・
- *   public/reading-data/英語長文最前線_第7講_seg.json）から文IDで読み合わせる。
+ *   private/reading-data/英語長文最前線_第7講_seg.json）から文IDで読み合わせる。
  * ★この35問は講師用。記号の一部が落ちており許容解も無いので、生徒には出さない。
  */
 

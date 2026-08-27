@@ -12,7 +12,7 @@ import { judgeCuts } from './judge'
 import { cutKey, studentSegments } from './segments'
 import type { ReadingLessonData, ReadingLessonIndex } from './types'
 
-const DATA_DIR = path.join(process.cwd(), 'public', 'reading-data')
+const DATA_DIR = path.join(process.cwd(), 'private', 'reading-data')
 
 function readJson<T>(file: string): T {
   return JSON.parse(fs.readFileSync(path.join(DATA_DIR, file), 'utf-8')) as T

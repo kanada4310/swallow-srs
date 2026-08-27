@@ -20,7 +20,7 @@ import type { ReadingLessonData } from './types'
 
 const lesson = JSON.parse(
   fs.readFileSync(
-    path.join(process.cwd(), 'public', 'reading-data', '英語長文最前線_第7講_seg.json'),
+    path.join(process.cwd(), 'private', 'reading-data', '英語長文最前線_第7講_seg.json'),
     'utf-8'
   )
 ) as ReadingLessonData

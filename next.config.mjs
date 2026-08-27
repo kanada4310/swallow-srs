@@ -1,19 +1,36 @@
 import withPWA from '@ducanh2912/next-pwa'
+import { warnIfLegacyReadingData } from './scripts/legacy-reading-data.mjs'
+
+// 開発サーバーの起動時・本番用ビルドの開始時に、古い置き場（public/reading-data）へ
+// 教材データが戻っていないかを見る。教材を書き出す側（quiz_generator）は別の作業で
+// 直すまで古い置き場へ書くため、黙って見過ごさずここで警告を出す。
+warnIfLegacyReadingData()
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {}
+const nextConfig = {
+  experimental: {
+    // 教材データ（private/reading-data・共有事項 C22）はサーバー側で読む。
+    // 名前を組み立てて読むので自動では見つけてもらえない。本番へ載せる荷物に
+    // 必ず含めるよう、使うところを名指しで指定する。
+    outputFileTracingIncludes: {
+      '/api/reading/material/[file]': ['./private/reading-data/**'],
+      '/api/reading/syntax-ai/judge': ['./private/reading-data/**'],
+      '/api/reading/syntax-ai/dialogue': ['./private/reading-data/**'],
+      '/api/reading/syntax-card': ['./private/reading-data/**'],
+    },
+  },
+}
 
 const config = withPWA({
   dest: 'public',
   disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
-  // 読解の教材データ（public/reading-data）は先読みの対象から外す。
-  // 理由は2つ:
-  //  1. ログインが切れた状態で先読みすると、教材の代わりにログイン画面が
-  //     キャッシュに焼き付いてしまう（見張りが未ログインをログイン画面へ回すため）
-  //  2. 工房で教材を作り直したとき、古い内容が端末に残るのを避ける
-  publicExcludes: ['!noprecache/**/*', '!reading-data/**/*'],
+  // 読解の教材データは public から出した（private/reading-data・2026-08-27）ので、
+  // 先読みの対象から外す指定はもう要らない。取りに行く先は
+  // ログインした人だけが読める入口（/api/reading/material/...）で、
+  // 下の runtimeCaching のどの決まりにも当てはまらない＝端末に残さない。
+  publicExcludes: ['!noprecache/**/*'],
   fallbacks: {
     document: '/offline',
   },

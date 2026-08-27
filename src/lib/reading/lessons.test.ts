@@ -31,7 +31,7 @@ function makeResponse(
     status: init.status ?? 200,
     headers: { 'content-type': init.contentType ?? 'application/json' },
   })
-  Object.defineProperty(res, 'url', { value: init.url ?? `${origin}/reading-data/index.json` })
+  Object.defineProperty(res, 'url', { value: init.url ?? `${origin}/api/reading/material/index.json` })
   Object.defineProperty(res, 'redirected', { value: init.redirected ?? false })
   return res
 }
@@ -62,7 +62,7 @@ describe('教材データの読み込み', () => {
     mockFetch(() =>
       makeResponse('  <!DOCTYPE html><html></html>', {
         contentType: 'text/html',
-        url: `${origin}/reading-data/index.json`,
+        url: `${origin}/api/reading/material/index.json`,
       })
     )
     await expect(loadLessonIndex()).rejects.toBeInstanceOf(ReadingAuthError)

@@ -21,6 +21,7 @@ import {
   type TokenUsage,
 } from './pricing'
 import type { SystemBlock } from './prompt'
+import { INDEX_FILE, readMaterialFile } from '@/lib/reading/material-store'
 
 export function createAdminClient(): SupabaseClient | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -106,27 +107,23 @@ export async function checkGate(
 
 /**
  * 送られてきた文が本当に教材の文かを確かめる（外部のAIへ教材以外の文を送らせない）。
- * 教材データは自サイトの静的ファイル（public/reading-data・契約C22）から読む。
- * ミドルウェアが未ログインの取得をログイン画面へ転送するため、
- * 呼び出し元リクエストのクッキーをそのまま引き継いで取得する。
+ *
+ * 教材データ（契約C22）は 2026-08-27 に `private/reading-data/`（配信されない場所）へ移した。
+ * サーバー側からはそのまま読めるので、以前のように自サイトへ取りに行かない
+ * （クッキーを引き継いで取りに行く必要も無くなった）。
  */
-export async function verifySentenceTokens(
-  origin: string,
-  cookieHeader: string,
+export function verifySentenceTokens(
   lessonId: string,
   sentenceKey: string,
   tokens: string[]
-): Promise<boolean> {
-  const init: RequestInit = { headers: { cookie: cookieHeader }, redirect: 'manual' }
+): boolean {
   try {
-    const idxRes = await fetch(`${origin}/reading-data/index.json`, init)
-    if (!idxRes.ok) return false
-    const idx = (await idxRes.json()) as { lessons?: Array<{ id: string; file: string }> }
+    const idx = JSON.parse(readMaterialFile(INDEX_FILE)) as {
+      lessons?: Array<{ id: string; file: string }>
+    }
     const entry = (idx.lessons ?? []).find((l) => l.id === lessonId)
     if (!entry) return false
-    const dataRes = await fetch(`${origin}/reading-data/${encodeURIComponent(entry.file)}`, init)
-    if (!dataRes.ok) return false
-    const data = (await dataRes.json()) as {
+    const data = JSON.parse(readMaterialFile(entry.file)) as {
       paragraphs?: Array<{ sentences?: Array<{ tokens?: string[] }> }>
     }
     const [p, s] = sentenceKey.split(':').map(Number)
