@@ -43,6 +43,7 @@ import type { InputPolicy, PalmState } from '@/lib/pen-syntax/palm'
 import type { PenInputLog } from '@/lib/pen-syntax/input-log'
 import { usePenZoneGuard, type PenGuardEvent } from './usePenZoneGuard'
 import { PEN_UI_ATTR, PEN_WRITE_ZONE_ATTR } from '@/lib/pen-syntax/zone-guard'
+import { useChipPlacement, type ChipAnchor } from './useChipPlacement'
 import { useStrokeCanvas, type DrawingStroke } from './useStrokeCanvas'
 import { useStrokeGrouping, type StrokeGrouping } from './useStrokeGrouping'
 import { useTokenBoxes } from './useTokenBoxes'
@@ -70,8 +71,8 @@ interface ChipState {
   strokes: PenStroke[]
   boxes: TokenBox[]
   lane: Lane
-  x: number
-  y: number
+  /** 置き場所の手がかり（書いた線の箱・書いた行の本文の上下・段） */
+  anchor: ChipAnchor
 }
 
 interface PenSyntaxAnnotatorProps {
@@ -161,6 +162,9 @@ export function PenSyntaxAnnotator({
     chipsRef.current = next
     setChipsState(next)
   }, [])
+  // 候補の枠は、いま書いた場所を避けて置く（実寸を測ってから位置を決める）
+  const chipRef = useRef<HTMLDivElement>(null)
+  const chipPos = useChipPlacement(containerRef, chipRef, chips?.anchor ?? null)
   // この接触で候補を閉じたか（閉じただけのタップで一覧まで開かないようにする）
   const dismissedByStrokeRef = useRef(false)
   const [toast, setToast] = useState<string | null>(null)
@@ -307,13 +311,19 @@ export function PenSyntaxAnnotator({
       // 台帳から外れた形（?・ダッシュ・Ø・単語囲みの○）は候補に出さない（記号の台帳）
       const usable = result.candidates.filter((c) => !deprecatedGuidance(c.symbol))
       const b = strokesBBox(strokes)
+      // 置き場所は「書いた線」と「その行の本文」を避けて決める（chip-place.ts）
+      const row = rec.boxes.length
+        ? {
+            top: Math.min(...rec.boxes.map((t) => t.top)),
+            bottom: Math.max(...rec.boxes.map((t) => t.bottom)),
+          }
+        : null
       setChips({
         candidates: usable,
         strokes,
         boxes: rec.boxes,
         lane: rec.lane,
-        x: b.cx,
-        y: b.top,
+        anchor: { stroke: { left: b.left, right: b.right, top: b.top, bottom: b.bottom }, row, lane: rec.lane },
       })
     },
     [applyAndReport, boxes, redraw, setChips, templateStore],
@@ -668,11 +678,16 @@ export function PenSyntaxAnnotator({
           {...handlers}
         />
 
-        {/* 迷ったときの候補チップ */}
+        {/* 迷ったときの候補チップ（いま書いた場所を避けて出す） */}
         {chips && (
           <div
-            className="absolute z-20 -translate-x-1/2 rounded-xl border border-sora bg-white p-2 shadow-card"
-            style={{ left: Math.max(80, chips.x), top: Math.max(0, chips.y - 58) }}
+            ref={chipRef}
+            className="absolute z-20 whitespace-nowrap rounded-xl border border-sora bg-white p-2 shadow-card"
+            style={
+              chipPos
+                ? { left: chipPos.left, top: chipPos.top }
+                : { left: 0, top: 0, visibility: 'hidden' }
+            }
             {...{ [PEN_UI_ATTR]: '' }}
           >
             <p className="mb-1 text-[10px] font-bold text-ink-3">どの記号ですか？</p>

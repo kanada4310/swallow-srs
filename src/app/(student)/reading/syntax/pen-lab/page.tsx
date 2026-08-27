@@ -27,6 +27,10 @@ import { usePenZoneGuard, type PenGuardEvent } from '@/components/pen-syntax/use
 import { PEN_UI_ATTR, PEN_WRITE_ZONE_ATTR } from '@/lib/pen-syntax/zone-guard'
 import { PenInputLogPanel } from '@/components/pen-syntax/PenInputLogPanel'
 import { useTokenBoxes } from '@/components/pen-syntax/useTokenBoxes'
+import {
+  useChipPlacement,
+  type ChipAnchor,
+} from '@/components/pen-syntax/useChipPlacement'
 import { useStrokeCanvas, type DrawingStroke } from '@/components/pen-syntax/useStrokeCanvas'
 import {
   useStrokeGrouping,
@@ -206,8 +210,8 @@ export default function PenLabPage() {
     candidates: Array<{ symbol: SymbolId; score: number }>
     strokes: PenStroke[]
     boxes: TokenBox[]
-    x: number
-    y: number
+    /** 置き場所の手がかり（書き込み部品と同じ扱い） */
+    anchor: ChipAnchor
   }
   const [chips, setChipsState] = useState<ChipState | null>(null)
   // 書き始めた瞬間に候補を閉じるので、描画前の値を参照でも持つ
@@ -325,23 +329,35 @@ export default function PenLabPage() {
       redraw()
       return
     }
-    // 迷ったとき: 候補チップから「書いたつもりの記号」をタップしてもらう
+    // 迷ったとき: 候補チップから「書いたつもりの記号」をタップしてもらう。
+    // 枠はいま書いた場所を避けて出す（書き込み部品と同じ chip-place.ts）
     const xs = strokes.flat()
-    const minX = Math.min(...xs.map((p) => p.x))
-    const maxX = Math.max(...xs.map((p) => p.x))
-    const minY = Math.min(...xs.map((p) => p.y))
+    const stroke = {
+      left: Math.min(...xs.map((p) => p.x)),
+      right: Math.max(...xs.map((p) => p.x)),
+      top: Math.min(...xs.map((p) => p.y)),
+      bottom: Math.max(...xs.map((p) => p.y)),
+    }
+    const row = rec.boxes.length
+      ? {
+          top: Math.min(...rec.boxes.map((t) => t.top)),
+          bottom: Math.max(...rec.boxes.map((t) => t.bottom)),
+        }
+      : null
     setChips({
       candidates: rec.result.candidates,
       strokes,
       boxes: rec.boxes,
-      x: (minX + maxX) / 2,
-      y: minY,
+      anchor: { stroke, row, lane: rec.lane },
     })
   }, [boxes, mode, record, redraw, setChips, store, task])
 
   const grouping = useStrokeGrouping({ boxes, onCommit: handleCommit, log: inputLog })
   groupingRef.current = grouping
 
+  // 候補の枠は、いま書いた場所を避けて置く（実寸を測ってから位置を決める）
+  const chipRef = useRef<HTMLDivElement>(null)
+  const chipPos = useChipPlacement(containerRef, chipRef, chips?.anchor ?? null)
   // この接触で候補を閉じたか（閉じただけのタップを線にしないため）
   const dismissedByStrokeRef = useRef(false)
 
@@ -530,8 +546,13 @@ export default function PenLabPage() {
           />
           {chips && (
             <div
-              className="absolute z-20 -translate-x-1/2 rounded-xl border border-sora bg-white p-2 shadow-card"
-              style={{ left: Math.max(90, chips.x), top: Math.max(0, chips.y - 58) }}
+              ref={chipRef}
+              className="absolute z-20 whitespace-nowrap rounded-xl border border-sora bg-white p-2 shadow-card"
+              style={
+                chipPos
+                  ? { left: chipPos.left, top: chipPos.top }
+                  : { left: 0, top: 0, visibility: 'hidden' }
+              }
               {...{ [PEN_UI_ATTR]: '' }}
             >
               <p className="mb-1 text-[10px] font-bold text-ink-3">どの記号を書きましたか？</p>
