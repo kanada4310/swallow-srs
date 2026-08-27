@@ -1,0 +1,450 @@
+{
+ "note": "実機の症状（2026-08-27 塾長のフィードバック）: 品詞の段に n・v・a・ad とテンポよく続けて書くと、すべてが1つの記号としてまとめられ、0.75秒静止するまで何も確定しなかった。旧方式は場所の比較相手が「まとまり全体の外接箱」で、隣の単語に書いた文字どうしのすき間（30〜37px）がしきい値40pxを下回るため次々と吸い込まれた。正しくは、隣の単語のマスに入った時点で別の記号として確定する。※この記録は症状を再現できる形に書き起こしたもので、実機からコピーした生の記録ではない。",
+ "env": {
+  "userAgent": "Mozilla/5.0 (Linux; Android 14; Lenovo TB-X6C6F) AppleWebKit/537.36 Chrome/126 Mobile Safari/537.36",
+  "devicePixelRatio": 2,
+  "visualViewportSupported": true
+ },
+ "entries": [
+  {
+   "kind": "boxes",
+   "at": 1000,
+   "boxes": [
+    {
+     "index": 0,
+     "left": 16,
+     "right": 50,
+     "top": 40,
+     "bottom": 68
+    },
+    {
+     "index": 1,
+     "left": 62,
+     "right": 98,
+     "top": 40,
+     "bottom": 68
+    },
+    {
+     "index": 2,
+     "left": 110,
+     "right": 134,
+     "top": 40,
+     "bottom": 68
+    },
+    {
+     "index": 3,
+     "left": 146,
+     "right": 180,
+     "top": 40,
+     "bottom": 68
+    },
+    {
+     "index": 4,
+     "left": 192,
+     "right": 212,
+     "top": 40,
+     "bottom": 68
+    },
+    {
+     "index": 5,
+     "left": 224,
+     "right": 248,
+     "top": 40,
+     "bottom": 68
+    }
+   ]
+  },
+  {
+   "kind": "pointer",
+   "at": 1200,
+   "phase": "down",
+   "pointerType": "pen",
+   "pointerId": 3,
+   "client": {
+    "x": 52.0,
+    "y": 320.0
+   },
+   "local": {
+    "x": 28.0,
+    "y": 20
+   },
+   "offset": {
+    "x": 28.0,
+    "y": 20
+   },
+   "contact": {
+    "w": 1,
+    "h": 1
+   },
+   "accepted": true,
+   "reason": "pen",
+   "screen": {
+    "rectLeft": 24.0,
+    "rectTop": 300.0,
+    "scrollX": 0,
+    "scrollY": 0,
+    "vvOffsetLeft": 0,
+    "vvOffsetTop": 0,
+    "vvScale": 1
+   }
+  },
+  {
+   "kind": "pointer",
+   "at": 1270,
+   "phase": "move",
+   "pointerType": "pen",
+   "pointerId": 3,
+   "client": {
+    "x": 62.0,
+    "y": 330.0
+   },
+   "local": {
+    "x": 38.0,
+    "y": 30
+   },
+   "offset": {
+    "x": 38.0,
+    "y": 30
+   },
+   "contact": {
+    "w": 1,
+    "h": 1
+   },
+   "screen": {
+    "rectLeft": 24.0,
+    "rectTop": 300.0,
+    "scrollX": 0,
+    "scrollY": 0,
+    "vvOffsetLeft": 0,
+    "vvOffsetTop": 0,
+    "vvScale": 1
+   }
+  },
+  {
+   "kind": "pointer",
+   "at": 1340,
+   "phase": "up",
+   "pointerType": "pen",
+   "pointerId": 3,
+   "client": {
+    "x": 57.0,
+    "y": 336.0
+   },
+   "local": {
+    "x": 33.0,
+    "y": 36
+   },
+   "offset": {
+    "x": 33.0,
+    "y": 36
+   },
+   "contact": {
+    "w": 1,
+    "h": 1
+   },
+   "screen": {
+    "rectLeft": 24.0,
+    "rectTop": 300.0,
+    "scrollX": 0,
+    "scrollY": 0,
+    "vvOffsetLeft": 0,
+    "vvOffsetTop": 0,
+    "vvScale": 1
+   }
+  },
+  {
+   "kind": "pointer",
+   "at": 1560,
+   "phase": "down",
+   "pointerType": "pen",
+   "pointerId": 3,
+   "client": {
+    "x": 99.0,
+    "y": 320.0
+   },
+   "local": {
+    "x": 75.0,
+    "y": 20
+   },
+   "offset": {
+    "x": 75.0,
+    "y": 20
+   },
+   "contact": {
+    "w": 1,
+    "h": 1
+   },
+   "accepted": true,
+   "reason": "pen",
+   "screen": {
+    "rectLeft": 24.0,
+    "rectTop": 300.0,
+    "scrollX": 0,
+    "scrollY": 0,
+    "vvOffsetLeft": 0,
+    "vvOffsetTop": 0,
+    "vvScale": 1
+   }
+  },
+  {
+   "kind": "pointer",
+   "at": 1630,
+   "phase": "move",
+   "pointerType": "pen",
+   "pointerId": 3,
+   "client": {
+    "x": 109.0,
+    "y": 330.0
+   },
+   "local": {
+    "x": 85.0,
+    "y": 30
+   },
+   "offset": {
+    "x": 85.0,
+    "y": 30
+   },
+   "contact": {
+    "w": 1,
+    "h": 1
+   },
+   "screen": {
+    "rectLeft": 24.0,
+    "rectTop": 300.0,
+    "scrollX": 0,
+    "scrollY": 0,
+    "vvOffsetLeft": 0,
+    "vvOffsetTop": 0,
+    "vvScale": 1
+   }
+  },
+  {
+   "kind": "pointer",
+   "at": 1700,
+   "phase": "up",
+   "pointerType": "pen",
+   "pointerId": 3,
+   "client": {
+    "x": 104.0,
+    "y": 336.0
+   },
+   "local": {
+    "x": 80.0,
+    "y": 36
+   },
+   "offset": {
+    "x": 80.0,
+    "y": 36
+   },
+   "contact": {
+    "w": 1,
+    "h": 1
+   },
+   "screen": {
+    "rectLeft": 24.0,
+    "rectTop": 300.0,
+    "scrollX": 0,
+    "scrollY": 0,
+    "vvOffsetLeft": 0,
+    "vvOffsetTop": 0,
+    "vvScale": 1
+   }
+  },
+  {
+   "kind": "pointer",
+   "at": 1920,
+   "phase": "down",
+   "pointerType": "pen",
+   "pointerId": 3,
+   "client": {
+    "x": 141.0,
+    "y": 320.0
+   },
+   "local": {
+    "x": 117.0,
+    "y": 20
+   },
+   "offset": {
+    "x": 117.0,
+    "y": 20
+   },
+   "contact": {
+    "w": 1,
+    "h": 1
+   },
+   "accepted": true,
+   "reason": "pen",
+   "screen": {
+    "rectLeft": 24.0,
+    "rectTop": 300.0,
+    "scrollX": 0,
+    "scrollY": 0,
+    "vvOffsetLeft": 0,
+    "vvOffsetTop": 0,
+    "vvScale": 1
+   }
+  },
+  {
+   "kind": "pointer",
+   "at": 1990,
+   "phase": "move",
+   "pointerType": "pen",
+   "pointerId": 3,
+   "client": {
+    "x": 151.0,
+    "y": 330.0
+   },
+   "local": {
+    "x": 127.0,
+    "y": 30
+   },
+   "offset": {
+    "x": 127.0,
+    "y": 30
+   },
+   "contact": {
+    "w": 1,
+    "h": 1
+   },
+   "screen": {
+    "rectLeft": 24.0,
+    "rectTop": 300.0,
+    "scrollX": 0,
+    "scrollY": 0,
+    "vvOffsetLeft": 0,
+    "vvOffsetTop": 0,
+    "vvScale": 1
+   }
+  },
+  {
+   "kind": "pointer",
+   "at": 2060,
+   "phase": "up",
+   "pointerType": "pen",
+   "pointerId": 3,
+   "client": {
+    "x": 146.0,
+    "y": 336.0
+   },
+   "local": {
+    "x": 122.0,
+    "y": 36
+   },
+   "offset": {
+    "x": 122.0,
+    "y": 36
+   },
+   "contact": {
+    "w": 1,
+    "h": 1
+   },
+   "screen": {
+    "rectLeft": 24.0,
+    "rectTop": 300.0,
+    "scrollX": 0,
+    "scrollY": 0,
+    "vvOffsetLeft": 0,
+    "vvOffsetTop": 0,
+    "vvScale": 1
+   }
+  },
+  {
+   "kind": "pointer",
+   "at": 2280,
+   "phase": "down",
+   "pointerType": "pen",
+   "pointerId": 3,
+   "client": {
+    "x": 182.0,
+    "y": 320.0
+   },
+   "local": {
+    "x": 158.0,
+    "y": 20
+   },
+   "offset": {
+    "x": 158.0,
+    "y": 20
+   },
+   "contact": {
+    "w": 1,
+    "h": 1
+   },
+   "accepted": true,
+   "reason": "pen",
+   "screen": {
+    "rectLeft": 24.0,
+    "rectTop": 300.0,
+    "scrollX": 0,
+    "scrollY": 0,
+    "vvOffsetLeft": 0,
+    "vvOffsetTop": 0,
+    "vvScale": 1
+   }
+  },
+  {
+   "kind": "pointer",
+   "at": 2350,
+   "phase": "move",
+   "pointerType": "pen",
+   "pointerId": 3,
+   "client": {
+    "x": 192.0,
+    "y": 330.0
+   },
+   "local": {
+    "x": 168.0,
+    "y": 30
+   },
+   "offset": {
+    "x": 168.0,
+    "y": 30
+   },
+   "contact": {
+    "w": 1,
+    "h": 1
+   },
+   "screen": {
+    "rectLeft": 24.0,
+    "rectTop": 300.0,
+    "scrollX": 0,
+    "scrollY": 0,
+    "vvOffsetLeft": 0,
+    "vvOffsetTop": 0,
+    "vvScale": 1
+   }
+  },
+  {
+   "kind": "pointer",
+   "at": 2420,
+   "phase": "up",
+   "pointerType": "pen",
+   "pointerId": 3,
+   "client": {
+    "x": 187.0,
+    "y": 336.0
+   },
+   "local": {
+    "x": 163.0,
+    "y": 36
+   },
+   "offset": {
+    "x": 163.0,
+    "y": 36
+   },
+   "contact": {
+    "w": 1,
+    "h": 1
+   },
+   "screen": {
+    "rectLeft": 24.0,
+    "rectTop": 300.0,
+    "scrollX": 0,
+    "scrollY": 0,
+    "vvOffsetLeft": 0,
+    "vvOffsetTop": 0,
+    "vvScale": 1
+   }
+  }
+ ]
+}

@@ -9,10 +9,18 @@
 
 import { describe, expect, it } from 'vitest'
 import type { InputLogDump } from './replay'
-import { dumpInputLog, parseInputLogDump, replayGuard, replayLocalPoints, strokeShifts } from './replay'
+import {
+  dumpInputLog,
+  parseInputLogDump,
+  replayGrouping,
+  replayGuard,
+  replayLocalPoints,
+  strokeShifts,
+} from './replay'
 import penUnresponsive from './replays/2026-08-26-pen-unresponsive.json'
 import strokeDrift from './replays/2026-08-26-stroke-drift.json'
 import fingerScrollBlocked from './replays/2026-08-26-finger-scroll-blocked.json'
+import fastWritingMerge from './replays/2026-08-27-fast-writing-merge.json'
 
 const asDump = (x: unknown): InputLogDump => x as InputLogDump
 
@@ -59,6 +67,30 @@ describe('実機不具合③: ペンを離した直後に指でスクロール�
     expect(rows[1].recorded).toBe('blocked')
     expect(rows[1].replayed).toBe('allowed')
     expect(rows[1].reason).toBe('free-finger')
+  })
+})
+
+describe('実機不具合④: 続けて書いた記号が全部ひとまとめになる（2026-08-27）', () => {
+  it('隣の単語に書いた文字は、それぞれ別の記号として確定する（旧方式は1つにまとめていた）', () => {
+    const dump = asDump(fastWritingMerge)
+    const r = replayGrouping(dump.entries)
+    expect(r.strokes).toHaveLength(4)
+    expect(r.boxes.length).toBeGreaterThan(0)
+    // 当時（旧方式）: 4画すべてが1つのまとまりに吸い込まれていた
+    expect(r.legacyCommits.map((c) => c.strokes)).toEqual([4])
+    // いまの方式: 4つの記号に分かれる
+    expect(r.commits.map((c) => c.strokes)).toEqual([1, 1, 1, 1])
+    expect(r.commits.every((c) => c.reason === 'boundary-start' || c.reason === 'timer')).toBe(true)
+  })
+
+  it('次を書き始めた瞬間に前の記号が確定する（待たされない）', () => {
+    const dump = asDump(fastWritingMerge)
+    const r = replayGrouping(dump.entries)
+    // 最後の1つ以外は、次の記号を書き始めた時点で確定している
+    const waits = r.commits.slice(0, -1).map((c) => c.waitAfterNextStartMs)
+    expect(waits).toEqual([0, 0, 0])
+    // 旧方式では、まとまりが確定するまで最後の一画から待ち時間ぶん待たされた
+    expect(r.legacyCommits[0].afterLastStrokeMs).toBe(750)
   })
 })
 

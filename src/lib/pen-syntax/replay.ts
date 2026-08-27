@@ -10,6 +10,8 @@
  *
  * 再生できるもの:
  * - 画面ガードの判定（ゾーン方式 zone-guard）: 接触ごとに通す/止めるをやり直す
+ * - 画のまとめ判定（grouping）: 記録した接触から線を組み立て直し、
+ *   「いくつの記号に分かれ、いつ確定するか」を新旧の方式で計算し直す（2026-08-27 追加）
  * - 座標変換（resolveLocalPoint）: 記録した座標から局所座標を計算し直し、
  *   記録された座標とのずれ（drift）を出す（線ずれの検証）
  * - 描画中の画面移動（shift）の抽出
@@ -19,6 +21,8 @@
  */
 
 import type { InputLogEntry, InputLogEnv } from './input-log'
+import type { PenStroke, TokenBox } from './types'
+import { simulateCommits, type CommitEvent } from './grouping'
 import { resolveLocalPoint } from './local-point'
 import {
   createZoneGuardState,
@@ -150,4 +154,64 @@ export function strokeShifts(entries: InputLogEntry[]): string[] {
     .filter((e): e is Extract<InputLogEntry, { kind: 'shift' }> => e.kind === 'shift')
     .filter((e) => e.during === 'stroke')
     .map((e) => e.detail)
+}
+
+/* ---------- 画のまとめ判定の再生（記号が1つにまとまってしまう不具合の検証） ---------- */
+
+/** 記録した接触（down→move→up）から線を組み立て直す */
+export function replayStrokes(entries: InputLogEntry[]): PenStroke[] {
+  const strokes: PenStroke[] = []
+  let current: { id: number; pts: PenStroke } | null = null
+  for (const e of entries) {
+    if (e.kind !== 'pointer') continue
+    if (e.phase === 'down') {
+      // 拒否された接触（手のひら等）は線にならない
+      if (e.accepted === false) {
+        current = null
+        continue
+      }
+      current = { id: e.pointerId, pts: [{ x: e.local.x, y: e.local.y, t: e.at }] }
+      continue
+    }
+    if (!current || current.id !== e.pointerId) continue
+    current.pts.push({ x: e.local.x, y: e.local.y, t: e.at })
+    if (e.phase === 'up' || e.phase === 'cancel') {
+      strokes.push(current.pts)
+      current = null
+    }
+  }
+  if (current) strokes.push(current.pts)
+  return strokes
+}
+
+export interface GroupingReplay {
+  strokes: PenStroke[]
+  boxes: TokenBox[]
+  /** いまの方式（境界で即確定）で数え直した確定 */
+  commits: CommitEvent[]
+  /** 旧方式（2026-08-26 まで・まとまり全体の外接箱で比べる）で数え直した確定 */
+  legacyCommits: CommitEvent[]
+  /** 記録に残っていた実機での確定（新しい記録にだけ入っている） */
+  recorded: Array<Extract<InputLogEntry, { kind: 'commit' }>>
+}
+
+/**
+ * 記録から線と単語の箱を取り出し、まとめ判定をやり直す。
+ * 記録の move は間引かれているため、線の形は粗い（まとめ判定には十分）。
+ */
+export function replayGrouping(entries: InputLogEntry[]): GroupingReplay {
+  const boxesEntry = entries.find(
+    (e): e is Extract<InputLogEntry, { kind: 'boxes' }> => e.kind === 'boxes',
+  )
+  const boxes = boxesEntry?.boxes ?? []
+  const strokes = replayStrokes(entries)
+  return {
+    strokes,
+    boxes,
+    commits: simulateCommits(strokes, boxes, { early: true }),
+    legacyCommits: simulateCommits(strokes, boxes, { legacy: true }),
+    recorded: entries.filter(
+      (e): e is Extract<InputLogEntry, { kind: 'commit' }> => e.kind === 'commit',
+    ),
+  }
 }

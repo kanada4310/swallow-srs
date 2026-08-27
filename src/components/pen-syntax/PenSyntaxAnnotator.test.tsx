@@ -13,8 +13,9 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render } from '@testing-library/react'
+import { fireEvent, render } from '@testing-library/react'
 import { PenSyntaxAnnotator } from './PenSyntaxAnnotator'
+import { createPenInputLog } from '@/lib/pen-syntax/input-log'
 import type { SyntaxAnswer } from '@/lib/reading/syntax'
 
 const CHAR_W = 10
@@ -116,5 +117,73 @@ describe('PenSyntaxAnnotator バッジのレイアウト（2026-08-26 実機不�
     )
     expect(badge).toBeTruthy()
     expect(badge!.className).toContain('invisible')
+  })
+})
+
+
+/**
+ * 続けて書いた記号が1つにまとめられてしまう不具合（2026-08-27 塾長の実機フィードバック）の
+ * 配線テスト。ペンが触れた瞬間に、前の記号が確定していることを確かめる。
+ * jsdom は実レイアウトを持たないので、単語の箱を固定の座標に差し替える。
+ */
+describe('PenSyntaxAnnotator 続けて書いたときの確定（2026-08-27）', () => {
+  const WORDS = ['aa', 'bb', 'cc', 'dd']
+  // 単語の箱: 幅40・間隔20・本文の帯 y=40〜68。品詞の段はその上
+  const boxOf = (i: number) => ({ left: 16 + i * 60, right: 56 + i * 60, top: 40, bottom: 68 })
+
+  beforeEach(() => {
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: Element,
+    ) {
+      const text = this.textContent ?? ''
+      const i = WORDS.indexOf(text)
+      const isWord = i >= 0 && (this as HTMLElement).className?.includes('font-serif')
+      const r = isWord ? boxOf(i) : { left: 0, right: 400, top: 0, bottom: 140 }
+      return {
+        ...r,
+        width: r.right - r.left,
+        height: r.bottom - r.top,
+        x: r.left,
+        y: r.top,
+        toJSON: () => ({}),
+      } as DOMRect
+    })
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  /** 品詞の段（単語の上）に1画書く */
+  function writeLetterAbove(canvas: Element, i: number) {
+    const cx = (boxOf(i).left + boxOf(i).right) / 2
+    fireEvent.pointerDown(canvas, { pointerId: 1, pointerType: 'pen', clientX: cx - 5, clientY: 20 })
+    fireEvent.pointerMove(canvas, { pointerId: 1, pointerType: 'pen', clientX: cx + 5, clientY: 30 })
+    fireEvent.pointerUp(canvas, { pointerId: 1, pointerType: 'pen', clientX: cx + 4, clientY: 36 })
+  }
+
+  it('隣の単語に書き始めた瞬間、前の記号が確定する（0.75秒待たない）', () => {
+    const log = createPenInputLog()
+    const { container } = render(
+      <PenSyntaxAnnotator
+        tokens={WORDS}
+        answer={emptyAnswer(WORDS.length)}
+        onChange={() => {}}
+        inputLog={log}
+      />,
+    )
+    const canvas = container.querySelector('canvas') as HTMLCanvasElement
+    expect(canvas).toBeTruthy()
+
+    writeLetterAbove(canvas, 0)
+    // まだ確定していない（同じ記号の続きを待っている）
+    expect(log.entries().filter((e) => e.kind === 'commit')).toHaveLength(0)
+
+    // 隣の単語の上に書き始める → その瞬間に前の記号が確定する
+    const cx = (boxOf(1).left + boxOf(1).right) / 2
+    fireEvent.pointerDown(canvas, { pointerId: 2, pointerType: 'pen', clientX: cx - 5, clientY: 20 })
+    const commits = log.entries().filter((e) => e.kind === 'commit')
+    expect(commits).toHaveLength(1)
+    expect(commits[0]).toMatchObject({ trigger: 'boundary-start', strokes: 1 })
   })
 })
