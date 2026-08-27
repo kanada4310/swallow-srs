@@ -53,7 +53,15 @@ import { useChipPlacement, type ChipAnchor } from './useChipPlacement'
 import { useStrokeCanvas, type DrawingStroke } from './useStrokeCanvas'
 import { useStrokeGrouping, type StrokeGrouping } from './useStrokeGrouping'
 import { BASELINE_PROBE_ATTR, useTokenBoxes } from './useTokenBoxes'
-import { bracketMark, groupLines, laneOf, pickLine, underlineSegments } from '@/lib/pen-syntax/snap'
+import {
+  bracketMark,
+  groupLines,
+  laneOf,
+  noteMark,
+  pickLine,
+  ROLE_ROW_H,
+  underlineSegments,
+} from '@/lib/pen-syntax/snap'
 import { pathLength, strokesBBox } from '@/lib/pen-syntax/geometry'
 import type { UserTemplateStore } from '@/lib/pen-syntax/letters'
 
@@ -100,10 +108,16 @@ interface PenSyntaxAnnotatorProps {
 }
 
 /**
- * 入れ子カッコの深さ別の色（Okabe-Ito の色覚多様性対応パレットから4色）。
- * 深さ 0=青 / 1=朱 / 2=緑 / 3=赤紫 で循環する。
+ * 入れ子カッコの深さ別の色（2026-08-27 塾長の指摘で入れ替え）。
+ *
+ * 「隣り合う階層の色が近いと区別が難しい。交互に補色になるように」との指示。
+ * 青と橙は色相環のほぼ反対側（補色）で、しかも**赤と緑の見分けに頼らない**
+ * 組み合わせなので、色覚の型によらず差が残る。
+ * - 隣り合う深さ = 青 ↔ 橙（色相差 141〜165°＝ほぼ補色）
+ * - 2つ違いの深さ（同じ側の色）= 濃い ↔ 明るい（明度 L* の差 25 以上）
+ * 深さ 0=濃い青 / 1=濃い橙 / 2=明るい青 / 3=明るい橙 で循環する。
  */
-const BRACKET_COLORS = ['#0072B2', '#D55E00', '#009E73', '#CC79A7']
+const BRACKET_COLORS = ['#00427A', '#7A3800', '#3E8ED0', '#B87200']
 
 export function bracketColor(depth: number): string {
   return BRACKET_COLORS[depth % BRACKET_COLORS.length]
@@ -593,6 +607,27 @@ export function PenSyntaxAnnotator({
     return out
   }, [brackets, ann.pendingOpens, boxes])
 
+  /**
+   * 採点の注記の重ね描き（2026-08-27）。
+   *
+   * 注記を単語の下に流し込むと、採点した瞬間に注記の幅ぶん単語が右へ押されて
+   * 並びがガタつく（塾長の実機の指摘）。括弧と同じ考え方で単語の並びから外し、
+   * 働きの欄のすぐ下へ重ねて置く。1マスに収まるよう「品詞 n」の形に短くする。
+   */
+  const noteOverlay = useMemo(() => {
+    if (!posMarks && !roleMarks) return []
+    const out: Array<{ key: string; x: number; top: number; lines: string[] }> = []
+    for (const box of boxes) {
+      const i = box.index
+      const lines: string[] = []
+      if (posMarks?.[i]?.mark === 'bad' && posMarks[i].correct) lines.push(`品詞 ${posMarks[i].correct}`)
+      if (roleMarks?.[i]?.mark === 'bad' && roleMarks[i].correct) lines.push(`働き ${roleMarks[i].correct}`)
+      if (lines.length === 0) continue
+      out.push({ key: `n${i}`, ...noteMark(box), lines })
+    }
+    return out
+  }, [boxes, posMarks, roleMarks])
+
   const extraAt = (i: number): PenExtraMark[] => ann.extras.filter((x) => i >= x.from && i <= x.to)
 
   /** 働きの欄の1マスぶん（働きの文字＋○で囲んだ例外マーク） */
@@ -632,7 +667,9 @@ export function PenSyntaxAnnotator({
 
       <div
         ref={containerRef}
-        className="relative mb-3 select-none rounded-card border border-gray-200 bg-white p-3 pb-6 pt-5 shadow-card [-webkit-touch-callout:none]"
+        /* pb-7＝採点の注記（重ね描き・2行ぶん24px）の置き場所を常に確保する。
+           採点の有無で余白を変えないので、採点しても枠の高さが動かない */
+        className="relative mb-3 select-none rounded-card border border-gray-200 bg-white p-3 pb-7 pt-5 shadow-card [-webkit-touch-callout:none]"
         {...{ [PEN_WRITE_ZONE_ATTR]: '' }}
       >
         {/* 括弧は単語の並びに入れない（重ね描き）。ここは単語だけを並べる */}
@@ -683,18 +720,7 @@ export function PenSyntaxAnnotator({
                     onClick={() => !disabled && setPicker({ kind: 'role', index: i })}
                   />
                 )}
-                {(posMarks || roleMarks) &&
-                  (posMarks?.[i]?.mark === 'bad' || roleMarks?.[i]?.mark === 'bad') && (
-                    <span className="mt-0.5 whitespace-nowrap text-[10px] text-again">
-                      →{' '}
-                      {[
-                        posMarks?.[i]?.mark === 'bad' ? `品詞:${posMarks[i]?.correct}` : null,
-                        roleMarks?.[i]?.mark === 'bad' ? `働き:${roleMarks[i]?.correct}` : null,
-                      ]
-                        .filter(Boolean)
-                        .join(' / ')}
-                    </span>
-                  )}
+                {/* 採点の注記は単語の並びに入れない（下の「注記オーバーレイ」で重ねて描く） */}
               </div>
 
             </div>
@@ -724,14 +750,37 @@ export function PenSyntaxAnnotator({
               {b.glyph}
             </span>
             {b.role ? (
-              // 開始カッコの真下＝そのまとまり全体の働き
+              // 開始カッコの真下＝そのまとまり全体の働き。
+              // 単語の下の働きのマス（Cell の min-h-6＝ROLE_ROW_H）と
+              // 同じ高さの帯に、同じ文字の大きさで中央そろえにする（高さがズレないように）
               <span
-                className="pointer-events-none absolute select-none whitespace-nowrap rounded bg-white/80 px-px text-[11px] font-bold leading-tight"
-                style={{ left: b.x, top: b.roleTop, color: b.color, transform: 'translateX(-50%)' }}
+                className="pointer-events-none absolute flex select-none items-center justify-center whitespace-nowrap rounded bg-white/80 px-px text-xs font-bold"
+                style={{
+                  left: b.x,
+                  top: b.roleTop,
+                  height: ROLE_ROW_H,
+                  color: b.color,
+                  transform: 'translateX(-50%)',
+                }}
               >
                 {b.role}
               </span>
             ) : null}
+          </span>
+        ))}
+
+        {/* 注記オーバーレイ: 採点の指摘（正しい品詞・働き）を単語の並びに入れず重ねて描く */}
+        {noteOverlay.map((n) => (
+          <span
+            key={n.key}
+            className="pointer-events-none absolute select-none whitespace-nowrap text-center text-[10px] font-bold leading-3 text-again"
+            style={{ left: n.x, top: n.top, transform: 'translateX(-50%)' }}
+          >
+            {n.lines.map((t) => (
+              <span key={t} className="block">
+                {t}
+              </span>
+            ))}
           </span>
         ))}
 

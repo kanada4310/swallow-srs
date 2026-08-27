@@ -17,6 +17,7 @@ import { act, fireEvent, render } from '@testing-library/react'
 import { PenSyntaxAnnotator } from './PenSyntaxAnnotator'
 import { createPenInputLog } from '@/lib/pen-syntax/input-log'
 import { GROUP_WAIT_MS } from './useStrokeGrouping'
+import { ROLE_ROW_H } from '@/lib/pen-syntax/snap'
 import type { SyntaxAnswer } from '@/lib/reading/syntax'
 
 const CHAR_W = 10
@@ -148,6 +149,86 @@ describe('PenSyntaxAnnotator 重ね描き（下線・カッコ）', () => {
     expect(overlay).toContain('<')
     expect(overlay).toContain('>')
     expect(overlay).toContain('S')
+  })
+
+  it('採点しても単語の位置は1画素も動かない（指摘を文の流れから外して重ね描きする）', () => {
+    // 塾長の実機の指摘（2026-08-27）: 採点の指摘が単語の下に流し込まれ、
+    // 指摘の幅ぶん後ろの単語が右へ押されて並びがガタついていた
+    const { container, rerender } = render(
+      <PenSyntaxAnnotator tokens={TOKENS} answer={emptyAnswer(TOKENS.length)} onChange={() => {}} />,
+    )
+    const wordGeom = () => {
+      const c = container.querySelector('div.relative') as HTMLElement
+      const cRect = c.getBoundingClientRect()
+      return Array.from(c.querySelectorAll('span.font-serif')).map((el) => {
+        const r = el.getBoundingClientRect()
+        return { left: r.left - cRect.left, top: r.top - cRect.top }
+      })
+    }
+    const before = wordGeom()
+
+    // 採点: 複数の単語で品詞・働きの両方が誤りだった状態
+    rerender(
+      <PenSyntaxAnnotator
+        tokens={TOKENS}
+        answer={emptyAnswer(TOKENS.length)}
+        onChange={() => {}}
+        posMarks={{
+          0: { mark: 'bad', correct: 'a' },
+          2: { mark: 'bad', correct: 'v' },
+          6: { mark: 'bad', correct: 'v' },
+        }}
+        roleMarks={{
+          1: { mark: 'bad', correct: 'S' },
+          6: { mark: 'bad', correct: 'V' },
+          8: { mark: 'bad', correct: 'C' },
+        }}
+      />,
+    )
+
+    // 修正前は指摘が文の流れの中にあり、後ろの単語が右へ押されていた
+    expect(wordGeom()).toEqual(before)
+
+    // 指摘は重ね描き（絶対配置）として、正しい品詞・働きを短く出す
+    const notes = Array.from(container.querySelectorAll('span.text-again.absolute')).map(
+      (el) => el.textContent,
+    )
+    expect(notes).toContain('品詞 a')
+    expect(notes).toContain('働き S')
+    expect(notes).toContain('品詞 v働き V')
+  })
+
+  it('カッコの真下の働きは、単語の下の働きの欄と同じ高さの帯に置く', () => {
+    // 塾長の実機の指摘（2026-08-27）: カッコに書いた働きだけ高さがズレていた
+    const { container } = render(
+      <PenSyntaxAnnotator
+        tokens={TOKENS}
+        onChange={() => {}}
+        answer={{
+          ...emptyAnswer(TOKENS.length),
+          role: emptyAnswer(TOKENS.length).role.map((_, i) => (i === 1 ? 'S' : null)),
+          spans: [{ from: 0, to: 5, type: 'n', role: 'C' }],
+        }}
+      />,
+    )
+    const c = container.querySelector('div.relative') as HTMLElement
+    // 単語の下の働きのマス（Cell）は単語の外枠の下端から高さ ROLE_ROW_H（min-h-6）
+    // 深さの印（自動ダッシュ）が付くので前方一致で探す
+    const cell = Array.from(c.querySelectorAll('button')).find((el) =>
+      el.textContent?.startsWith('S'),
+    )
+    expect(cell?.className).toContain('min-h-6')
+    expect(cell?.className).toContain('text-xs')
+    // カッコの真下の働きも同じ上端・同じ高さ・同じ文字の大きさ（中央そろえ）
+    const bracketRole = Array.from(c.querySelectorAll('span.absolute')).find(
+      (el) => el.textContent === 'C',
+    ) as HTMLElement
+    const word = c.querySelector('span.font-serif') as HTMLElement
+    const cRect = c.getBoundingClientRect()
+    expect(bracketRole.style.top).toBe(`${word.getBoundingClientRect().bottom - cRect.top}px`)
+    expect(bracketRole.style.height).toBe(`${ROLE_ROW_H}px`)
+    expect(bracketRole.className).toContain('text-xs')
+    expect(bracketRole.className).toContain('items-center')
   })
 })
 

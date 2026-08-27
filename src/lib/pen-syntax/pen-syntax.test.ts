@@ -13,6 +13,8 @@ import {
   bracketMark,
   BRACKET_SLOT_W,
   laneOf,
+  noteMark,
+  ROLE_ROW_H,
   snapCloseBracket,
   snapEnclosedRange,
   snapHorizontalRange,
@@ -289,6 +291,19 @@ describe('snap（単語への吸着）', () => {
     expect(inner.x).toBe(140 + BRACKET_SLOT_W / 2)
     // 閉じ括弧は単語の右のすき間（200〜220 の中央 210）
     expect(bracketMark(box, BOXES, 'close').x).toBe(210)
+  })
+
+  it('カッコの真下の働きは、単語の下の働きの欄と同じ帯（高さ ROLE_ROW_H）に置く', () => {
+    // 単語の下の働きのマスは単語の外枠の下端から始まり、高さは ROLE_ROW_H。
+    // カッコの真下の働きも同じ上端・同じ高さの帯に置き、中央そろえで高さをそろえる
+    const box = BOXES[2]
+    expect(bracketMark(box, BOXES, 'open').roleTop).toBe(box.bottom)
+    expect(ROLE_ROW_H).toBe(24)
+  })
+
+  it('採点の注記は単語の中央・働きの欄のすぐ下に重ねて置く', () => {
+    const box = BOXES[2] // left 150 / right 200 / bottom 70
+    expect(noteMark(box)).toEqual({ x: 175, top: 70 + ROLE_ROW_H })
   })
 
   it('行頭・行末はとなりの単語が無いので見込み幅ぶん外へ置く', () => {

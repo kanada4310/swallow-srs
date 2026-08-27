@@ -186,6 +186,14 @@ export const BRACKET_SLOT_W = 6
 /** 行頭・行末でとなりの単語が無いときに空ける見込み幅（px） */
 export const BRACKET_EDGE_GAP = 8
 
+/**
+ * 働きの欄1マスの高さ（px）。単語の下に置く働きのマス（Cell の min-h-6＝24px）と
+ * 同じ値をここに持ち、**同じ行の働きはすべてこの帯の中央にそろえる**。
+ * 2026-08-27 に括弧を重ね描きへ変えたとき、括弧の真下に書いた働きだけが
+ * 別の計算（上端そろえ・小さい文字）になり、単語の下の働きと高さがズレていた。
+ */
+export const ROLE_ROW_H = 24
+
 /** 括弧を重ね描きするときの置き場所（コンテナ相対・中心座標） */
 export interface BracketMark {
   /** 記号の中心の横位置 */
@@ -233,6 +241,28 @@ export function bracketMark(
     y: (box.top + box.bottom) / 2,
     roleTop: box.bottom,
   }
+}
+
+/* ---------- 採点の注記の重ね描き（単語の並びから外して置く） ---------- */
+
+/** 採点の注記（正しい品詞・働き）の置き場所（コンテナ相対） */
+export interface NoteMark {
+  /** 注記の中心の横位置 */
+  x: number
+  /** 注記の上端（働きの欄のすぐ下） */
+  top: number
+}
+
+/**
+ * 採点の注記を単語の並びに差し込まずに重ね描きするための置き場所を返す（表示用）。
+ *
+ * 注記を文の流れに入れると、採点した瞬間に注記の幅ぶん単語が右へ押されて
+ * 並びがガタつく（2026-08-27 塾長の実機の指摘）。括弧と同じ重ね描きに寄せ、
+ * **その単語の働きの欄のすぐ下**へ置く。注記は「品詞 n」のように短くするので、
+ * 1マスの幅（最小 2.2rem）に収まり、となりの単語の注記とぶつからない。
+ */
+export function noteMark(box: TokenBox): NoteMark {
+  return { x: (box.left + box.right) / 2, top: box.bottom + ROLE_ROW_H }
 }
 
 /**
