@@ -539,7 +539,7 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
   `src/lib/reading/syntax-instructor-data.ts` を生成（C23 と同じ向き・quiz_generator には書き込まない）。
   取り込み元が無い／数が申告と食い違う／語の並びが教材データと合わない／まとまりの種類に受け皿が無い／
   講師用の目印が無い、のいずれでも**止まる**（黙って0問にしない）
-- **本文の英文は正解表に持たない**: 35文とも語の並びが教材データ（C22・`public/reading-data/
+- **本文の英文は正解表に持たない**: 35文とも語の並びが教材データ（C22・`private/reading-data/
   英語長文最前線_第7講_seg.json`）と完全一致することを実測。生成ファイルは**文ID・語数・正解表・注記**だけを持ち、
   英文は画面を開くときに文IDで読み合わせる（`buildInstructorProblems`）。市販教材の本文を二重に置かず、
   語の並びが変わったら**語数の食い違いとして失敗**する
@@ -599,6 +599,26 @@ L2語彙論（高頻度語はコロケーション/フレーズで覚える、�
   避ける範囲は「書いた線＋その行の本文」、左右のはみ出しを抑え、上下どちらも
   枠に収まらないときは枠の外（下）へ逃がす。書き込み部品と計測ページの両方）。
   DB変更なし・追加費用0円。実機（タブレット＋ペン）の確認は塾長待ち
+
+## 教材の本文はログインした人だけが読める（2026-08-27）✅ 実装済み（**本番反映は承認待ち**）
+
+市販教材『英語長文最前線』の本文（第2〜7講・共有事項 C22）が `public/reading-data/` に置かれていた。
+public は認証をかけずに配信するための場所で、守りが見張り（middleware）の除外の1行だけに頼っていた。
+塾長の選択に従い置き場ごと移した。ADR `20260827-reading-data-behind-login`。
+- **置き場**: `private/reading-data/`（public の外）。**ファイル名と `index.json` の形は不変**＝C22 の約束は保つ。
+  本番の荷物に含めるため `next.config.mjs` の `experimental.outputFileTracingIncludes` で4つの入口を名指し
+- **入口**: `GET /api/reading/material/<ファイル名>`（`src/app/api/reading/material/[file]/route.ts`）。
+  ログイン必須（401）・**役割の出し分けはしない**・一覧に載っているファイルだけ・置き場の外は404・
+  `cache-control: private, no-store` ＋ `x-robots-tag: noindex`。読み込みの窓口は `src/lib/reading/material-store.ts`
+- **画面側**: `lessons.ts` の `READING_DATA_DIR` が `/api/reading/material` に変わっただけ（手順・見た目は不変）
+- **サーバー側**: 構文AIの文の照合 `verifySentenceTokens(lessonId, sentenceKey, tokens)` は
+  自サイトへ取りに行くのをやめ、`material-store` からそのまま読む（クッキー引き継ぎが不要になった）
+- **古い置き場の見張り**: `scripts/legacy-reading-data.mjs` を3か所で使う
+  （`next.config.mjs`＝起動時・ビルド開始時／`data/sync-syntax-problems.mjs`＝取り込み時／
+  `material-access.test.ts`＝自動テストが赤くなる）。**quiz_generator の書き出し先はまだ古い場所**（別の作業で直す）
+- **検索よけ**: `src/app/robots.ts` でサイト全体を対象外。`robots.txt` は見張りの通過する道に足した
+- **テスト**: `src/lib/reading/material-access.test.ts` 12件（ログイン無しで中身が取れない・public に教材が無い・
+  置き場の外を指す名前を通さない）
 
 ## 現在の進捗
 

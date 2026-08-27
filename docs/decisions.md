@@ -17,6 +17,7 @@
 ## ADR 一覧 (新しい順)
 
 ### 2026-08-27
+- [20260827-reading-data-behind-login](decisions/20260827-reading-data-behind-login.md) `#reading` `#data` `#security` `#contracts` `#copyright` _(Phase 読解アプリ)_ — 教材の本文を、ログインした人だけが読める場所へ移す
 - [20260827-pen-write-as-on-paper](decisions/20260827-pen-write-as-on-paper.md) `#pen-syntax` `#reading` `#input` `#recognition` `#ui-ux` `#testing` _(Phase 構文分析のペン入力)_ — 紙のとおりに書けるようにする3点（カッコの下の働き・お手本の持ち主・候補の置き場所）
 - [20260827-pen-symbol-layout](decisions/20260827-pen-symbol-layout.md) `#pen` `#syntax` `#reading` `#ux` `#symbols` _(Phase 読解アプリ)_ — 記号を付けても書く場所が動かないようにする（カッコの重ね描き・下線のベースライン・例外マークの置き場所）
 - [20260827-pen-role-band-and-colors](decisions/20260827-pen-role-band-and-colors.md) `#pen` `#syntax` `#reading` `#ux` `#accessibility` `#symbols` _(Phase 読解アプリ)_ — 働きの高さをそろえる・階層の色を交互に補色へ・採点の指摘を重ね描きに
