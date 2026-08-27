@@ -8,6 +8,8 @@
  * 「問題を追加」タブも移していない（教材づくりは工房の仕事）。
  */
 
+import { parseDashedRole } from '@/lib/pen-syntax/dash-notation'
+
 export const POS_OPTIONS = [
   '名詞', '代名詞', '動詞', '助動詞', '形容詞', '副詞', '前置詞', '接続詞', '冠詞', '分詞', '不定詞',
 ]
@@ -242,6 +244,14 @@ export function bracketDepths(spans: StudentSpan[]): number[] {
 
 /* ===================== 採点 ===================== */
 
+/**
+ * 働きの採点で見るところ。ダッシュ（深さの印）を落として比べる。
+ * 例: 'S′' ≡ 'S'（深さは囲んだ括弧から自動で判定できるので採点同値）。
+ */
+export function roleBase(value: string): string {
+  return parseDashedRole(value).role
+}
+
 export type Mark = 'ok' | 'alt' | 'bad'
 
 export interface MarkResult {
@@ -307,7 +317,9 @@ export function gradeSyntax(problem: SyntaxProblem, answer: SyntaxAnswer): Synta
     }
     const roleSlot = k.role?.[i]
     if (!isPunct(w) && roleSlot) {
-      const m = judgeSlot(answer.role[i] ?? null, roleSlot)!
+      // 働きはダッシュ（S′ ″ ‴＝節・句の深さの印）を除いて同値として採点する。
+      // 深さは囲んだ括弧から自動で判定できるため、書いても書かなくても同じ（記号の台帳 2026-08-26）
+      const m = judgeSlot(answer.role[i] ?? null, roleSlot, roleBase)!
       roleMark[i] = m
       total++
       if (m.mark !== 'bad') got++

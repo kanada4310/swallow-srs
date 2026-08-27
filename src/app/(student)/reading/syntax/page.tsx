@@ -46,14 +46,30 @@ import {
   SYNTAX_PROBLEMS,
   type SyntaxAnswer,
   type SyntaxGrade,
+  type SyntaxProblem,
 } from '@/lib/reading/syntax'
 import { checkContradictions } from '@/lib/reading/syntax-check'
+import {
+  INSTRUCTOR_SET,
+  isInstructorProblem,
+  loadInstructorSyntaxProblems,
+  syntaxProblemsFor,
+} from '@/lib/reading/syntax-instructor'
+import { describeReadingError } from '@/lib/reading/lessons'
 
 export default function SyntaxDrillPage() {
   const { userId, profile, isLoading: authLoading } = useAuth()
   const isTeacher = profile?.role === 'teacher' || profile?.role === 'admin'
   const [problemIdx, setProblemIdx] = useState(0)
-  const problem = SYNTAX_PROBLEMS[problemIdx]
+  /**
+   * 模範分析集（第7講）から取り込んだ講師用の問題（共有事項 C24）。
+   * **生徒には出さない**（記号の一部が落ちており許容解も無いため）。
+   * 語の並びは教材データから読み合わせるので、講師のときだけ取りに行く。
+   */
+  const [instructorProblems, setInstructorProblems] = useState<SyntaxProblem[]>([])
+  const [instructorError, setInstructorError] = useState<string | null>(null)
+  const problems = syntaxProblemsFor(SYNTAX_PROBLEMS, instructorProblems, isTeacher)
+  const problem = problems[problemIdx] ?? problems[0]
   const [answer, setAnswer] = useState<SyntaxAnswer>(() => emptyAnswer(SYNTAX_PROBLEMS[0]))
   const [grade, setGrade] = useState<SyntaxGrade | null>(null)
   const [inputMode, setInputMode] = useState<'pen' | 'tap'>('pen')
@@ -67,6 +83,24 @@ export default function SyntaxDrillPage() {
   const [modelSaved, setModelSaved] = useState(false)
   useEffect(() => {
     if (isTeacher) setModelOrders(loadModelOrders())
+  }, [isTeacher])
+  useEffect(() => {
+    if (!isTeacher) {
+      setInstructorProblems([])
+      setInstructorError(null)
+      return
+    }
+    let alive = true
+    loadInstructorSyntaxProblems()
+      .then((list) => {
+        if (alive) setInstructorProblems(list)
+      })
+      .catch((err) => {
+        if (alive) setInstructorError(describeReadingError(err).message)
+      })
+    return () => {
+      alive = false
+    }
   }, [isTeacher])
   // 既定は「ペンのみ」（手のひら対策）。ペンが反応しない端末向けの逃げ道として切り替え可
   const [penPolicy, setPenPolicy] = useState<InputPolicy>('pen-only')
@@ -91,7 +125,7 @@ export default function SyntaxDrillPage() {
 
   const load = (idx: number) => {
     setProblemIdx(idx)
-    setAnswer(emptyAnswer(SYNTAX_PROBLEMS[idx]))
+    setAnswer(emptyAnswer(problems[idx]))
     setGrade(null)
     orderEventsRef.current = []
     setOrderSteps([])
@@ -203,14 +237,51 @@ export default function SyntaxDrillPage() {
             onChange={(e) => load(Number(e.target.value))}
             className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm"
           >
-            {SYNTAX_PROBLEMS.map((p, i) => (
-              <option key={p.id} value={i}>
-                {p.title}
-              </option>
-            ))}
+            <optgroup label="練習">
+              {SYNTAX_PROBLEMS.map((p, i) => (
+                <option key={p.id} value={i}>
+                  {p.title}
+                </option>
+              ))}
+            </optgroup>
+            {instructorProblems.length > 0 && (
+              <optgroup
+                label={`模範分析集 ${INSTRUCTOR_SET.lesson}（講師用 ${instructorProblems.length}問・生徒には出しません）`}
+              >
+                {instructorProblems.map((p, i) => (
+                  <option key={p.id} value={SYNTAX_PROBLEMS.length + i}>
+                    {p.title}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
           <p className="mt-1.5 text-xs text-ink-3">{problem.source}</p>
+          {instructorError && (
+            <p className="mt-1.5 rounded-lg bg-again-bg p-2 text-xs text-again">
+              模範分析集の問題を読み込めませんでした: {instructorError}
+            </p>
+          )}
         </div>
+
+        {isInstructorProblem(problem) && (
+          /* 講師用の問題は、開いた時点で「何が落ちているか」を読めるようにする。
+             記号の一部に受け皿が無く、許容解も無いまま取り込んでいるため */
+          <div className="mb-3 rounded-card border border-hard/40 bg-hard-bg p-3 text-sm text-ai">
+            <p className="font-bold text-hard">
+              ⚠ 講師用の問題です（生徒には出ません）
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-ink-2">
+              {INSTRUCTOR_SET.notReadyNote}
+            </p>
+            <p className="mt-2 text-xs font-bold text-ai">この文の分析ポイント・落とした記号</p>
+            <ul className="mt-0.5 space-y-0.5 text-xs leading-relaxed text-ink-2">
+              {problem.key.notes.slice(1).map((n, i) => (
+                <li key={i}>・{n}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {showOnboarding && (
           <PenOnboarding

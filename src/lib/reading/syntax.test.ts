@@ -48,6 +48,15 @@ describe('構文の練習', () => {
     expect(g.percent).toBe(100)
   })
 
+  it('働きのダッシュ（深さの印）は付けても付けなくても同じ扱いになる', () => {
+    const p = byId('ex1')
+    const answer = modelAnswer(p)
+    answer.role[1] = 'S′' // 正解表は S。深さの印は括弧から自動判定できるので同値
+    expect(gradeSyntax(p, answer).roleMark[1].mark).toBe('ok')
+    answer.role[1] = 'O′'
+    expect(gradeSyntax(p, answer).roleMark[1].mark).toBe('bad')
+  })
+
   it('英字は動詞と分詞を区別しない（どちらも v で正解）', () => {
     const p = byId('ex2')
     const answer = modelAnswer(p)
