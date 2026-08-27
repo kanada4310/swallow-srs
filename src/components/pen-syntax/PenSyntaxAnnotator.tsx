@@ -154,7 +154,15 @@ export function PenSyntaxAnnotator({
   const groupingRef = useRef<StrokeGrouping | null>(null)
   // ペンでのタップ（onPointerUp）とその後のクリックの二重発火を防ぐ時刻
   const penTapAtRef = useRef(0)
-  const [chips, setChips] = useState<ChipState | null>(null)
+  const [chips, setChipsState] = useState<ChipState | null>(null)
+  // いまの候補を参照でも持つ（同じ書き始めで二重に閉じないため。描画前の値が要る）
+  const chipsRef = useRef<ChipState | null>(null)
+  const setChips = useCallback((next: ChipState | null) => {
+    chipsRef.current = next
+    setChipsState(next)
+  }, [])
+  // この接触で候補を閉じたか（閉じただけのタップで一覧まで開かないようにする）
+  const dismissedByStrokeRef = useRef(false)
   const [toast, setToast] = useState<string | null>(null)
   const [picker, setPicker] = useState<{ kind: 'pos' | 'role'; index: number; viaFallback?: boolean } | null>(null)
 
@@ -167,7 +175,7 @@ export function PenSyntaxAnnotator({
       setChips(null)
       forceRender((n) => n + 1)
     }
-  }, [answer])
+  }, [answer, setChips])
 
   const emitAnnotation = useCallback(
     (next: PenAnnotation) => {
@@ -256,6 +264,33 @@ export function PenSyntaxAnnotator({
   )
 
   /**
+   * 書き続けたら候補は黙って引っ込める（2026-08-27）。
+   *
+   * 候補が出ている間に書き込みを止めていると、テンポよく書いたときに次の記号の
+   * 1画目が黙って消え、「ペンが反応しない」のと同じ体験になる。そこで
+   * 「新しい線を書き始めた」＝「この候補は選ばない」とみなし、候補を閉じてから
+   * その1画目をそのまま描く（線を失わない）。閉じた候補は取り消し（✕）と同じ扱い。
+   *
+   * 「候補を押す操作」と「書き始め」は**当たり判定で分かれる**: 候補の枠は
+   * キャンバス（z-10）より上（z-20）に重ねてあるため、候補を押した接触は
+   * キャンバスに届かない。ここへ来るのは候補の枠の外に触れたときだけである。
+   *
+   * @returns 候補を閉じたら true（この接触は「候補を閉じる操作」だった）
+   */
+  const dismissChips = useCallback((): boolean => {
+    const c = chipsRef.current
+    if (!c) return false
+    setChips(null)
+    logRef.current?.push({
+      kind: 'note',
+      at: performance.now(),
+      text: '候補を出したまま書き始めたので候補を閉じた（この線は破棄）',
+    })
+    onEvent?.({ kind: 'failed', symbol: null, candidates: c.candidates, lane: c.lane, applied: false })
+    return true
+  }, [onEvent, setChips])
+
+  /**
    * 記号のまとまりが確定したとき（まとめの判定・待ち時間は useStrokeGrouping が持つ）。
    * 境界をまたいだ瞬間にも呼ばれるので、書き始めと同時に前の記号が確定する。
    */
@@ -281,7 +316,7 @@ export function PenSyntaxAnnotator({
         y: b.top,
       })
     },
-    [applyAndReport, boxes, redraw, templateStore],
+    [applyAndReport, boxes, redraw, setChips, templateStore],
   )
 
   const grouping = useStrokeGrouping({ boxes, onCommit: handleCommit, log: inputLog })
@@ -293,7 +328,15 @@ export function PenSyntaxAnnotator({
     // （キャンバスが全面を覆うため、マスのタップはここで拾う。
     //   書きかけの記号がある間は複数画の記号の2画目として線に数える）
     const duration = (stroke[stroke.length - 1].t ?? 0) - (stroke[0].t ?? 0)
-    if (!grouping.hasPending() && pathLength(stroke) < 7 && duration < 400) {
+    const dismissed = dismissedByStrokeRef.current
+    dismissedByStrokeRef.current = false
+    const tap = pathLength(stroke) < 7 && duration < 400
+    if (dismissed && tap) {
+      // 候補の枠の外を軽くタップしただけ＝「候補を閉じる」操作。一覧までは開かない
+      redraw()
+      return
+    }
+    if (!grouping.hasPending() && tap) {
       const p = stroke[0]
       const line = pickLine([stroke], groupLines(boxes))
       if (line) {
@@ -326,14 +369,20 @@ export function PenSyntaxAnnotator({
     containerRef,
     drawingRef,
     policy,
-    active: !disabled && !chips,
+    // 候補が出ていても書き込みは受け付ける（受け付けたうえで候補を閉じる）。
+    // 止めてしまうと、テンポよく書いたときに次の1画目が黙って消える
+    active: !disabled,
     log: inputLog,
     onDecision: (d, e) => {
       if (e.pointerType === 'pen' && !penSeen) setPenSeen(true)
       if (!d.accept && e.pointerType === 'touch') onPalm?.(d.next)
     },
-    // 触れた瞬間に境界（段・単語・行）をまたいでいれば、待たずに前の記号を確定させる
-    onStrokeStart: (p) => grouping.noteStrokeStart(p),
+    onStrokeStart: (p) => {
+      // 書き始めたら候補は引っ込める（この線は失わない）
+      dismissedByStrokeRef.current = dismissChips()
+      // 触れた瞬間に境界（段・単語・行）をまたいでいれば、待たずに前の記号を確定させる
+      grouping.noteStrokeStart(p)
+    },
     onStroke: handleStroke,
     onRedraw: redraw,
   })

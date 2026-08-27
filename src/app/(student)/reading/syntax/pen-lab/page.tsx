@@ -19,6 +19,7 @@ import { EXCEPTION_KANJI, POS_LETTERS, ROLE_LETTERS } from '@/lib/pen-syntax/typ
 import { ENROLLABLE_SYMBOLS } from '@/lib/pen-syntax/ledger'
 import { recognizeGroup } from '@/lib/pen-syntax/recognize'
 import { snapTargetFor } from '@/lib/pen-syntax/apply'
+import { pathLength } from '@/lib/pen-syntax/geometry'
 import { initialPalmState, type InputPolicy, type PalmState } from '@/lib/pen-syntax/palm'
 import type { UserTemplateStore } from '@/lib/pen-syntax/letters'
 import { usePenZoneGuard, type PenGuardEvent } from '@/components/pen-syntax/usePenZoneGuard'
@@ -198,13 +199,20 @@ export default function PenLabPage() {
   usePenZoneGuard(policy === 'pen-only', onGuard)
   const [store, setStore] = useState<UserTemplateStore>({})
   const [lastResult, setLastResult] = useState<string | null>(null)
-  const [chips, setChips] = useState<{
+  type ChipState = {
     candidates: Array<{ symbol: SymbolId; score: number }>
     strokes: PenStroke[]
     boxes: TokenBox[]
     x: number
     y: number
-  } | null>(null)
+  }
+  const [chips, setChipsState] = useState<ChipState | null>(null)
+  // 書き始めた瞬間に候補を閉じるので、描画前の値を参照でも持つ
+  const chipsRef = useRef<ChipState | null>(null)
+  const setChips = useCallback((next: ChipState | null) => {
+    chipsRef.current = next
+    setChipsState(next)
+  }, [])
 
   useEffect(() => {
     setStore(loadUserTemplates())
@@ -325,10 +333,32 @@ export default function PenLabPage() {
       x: (minX + maxX) / 2,
       y: minY,
     })
-  }, [boxes, mode, record, redraw, store, task])
+  }, [boxes, mode, record, redraw, setChips, store, task])
 
   const grouping = useStrokeGrouping({ boxes, onCommit: handleCommit, log: inputLog })
   groupingRef.current = grouping
+
+  // この接触で候補を閉じたか（閉じただけのタップを線にしないため）
+  const dismissedByStrokeRef = useRef(false)
+
+  /**
+   * 書き続けたら候補は黙って引っ込める（2026-08-27・書き込み部品と同じ扱い）。
+   * 候補を押す操作とは当たり判定で分かれる（候補の枠はキャンバスより上に重ねてある）。
+   * 計測の数字を歪めないよう、**この線は数えない**（書いたつもりの記号を
+   * 答えてもらっていないので、拾えた／拾えなかったの判定材料がない）。お題は据え置き、
+   * 同じお題をもう一度書き直せる。
+   */
+  const dismissChips = useCallback((): boolean => {
+    if (!chipsRef.current) return false
+    setChips(null)
+    inputLog.push({
+      kind: 'note',
+      at: performance.now(),
+      text: '候補を出したまま書き始めたので候補を閉じた（この線は破棄・計測には数えない）',
+    })
+    setLastResult('候補を出したまま書き始めたので、前の線は捨てました（数えていません）')
+    return true
+  }, [inputLog, setChips])
 
   const resolveChip = (symbol: SymbolId | null) => {
     if (!chips) return
@@ -360,12 +390,26 @@ export default function PenLabPage() {
     containerRef,
     drawingRef,
     policy,
-    active: !chips,
+    // 候補が出ていても書き込みは受け付ける（書き込み部品と同じ扱い）。
+    // 止めると、続けて書いたときに次の1画目が黙って消える
+    active: true,
     log: inputLog,
     onDecision: (d) => setPalm(d.next),
-    // 触れた瞬間に境界（段・単語・行）をまたいでいれば、待たずに前の記号を確定させる
-    onStrokeStart: (p) => grouping.noteStrokeStart(p),
+    onStrokeStart: (p) => {
+      // 書き始めたら候補は引っ込める（この線は失わない）
+      dismissedByStrokeRef.current = dismissChips()
+      // 触れた瞬間に境界（段・単語・行）をまたいでいれば、待たずに前の記号を確定させる
+      grouping.noteStrokeStart(p)
+    },
     onStroke: (stroke) => {
+      const dismissed = dismissedByStrokeRef.current
+      dismissedByStrokeRef.current = false
+      // 候補の枠の外を軽くタップしただけなら「候補を閉じる」操作として線にしない
+      const duration = (stroke[stroke.length - 1].t ?? 0) - (stroke[0].t ?? 0)
+      if (dismissed && pathLength(stroke) < 7 && duration < 400) {
+        redraw()
+        return
+      }
       if (stroke.length < 2) stroke.push({ ...stroke[0], x: stroke[0].x + 0.5 })
       grouping.addStroke(stroke)
       redraw()

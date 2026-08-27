@@ -13,9 +13,10 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render } from '@testing-library/react'
+import { act, fireEvent, render } from '@testing-library/react'
 import { PenSyntaxAnnotator } from './PenSyntaxAnnotator'
 import { createPenInputLog } from '@/lib/pen-syntax/input-log'
+import { GROUP_WAIT_MS } from './useStrokeGrouping'
 import type { SyntaxAnswer } from '@/lib/reading/syntax'
 
 const CHAR_W = 10
@@ -185,5 +186,169 @@ describe('PenSyntaxAnnotator 続けて書いたときの確定（2026-08-27）',
     const commits = log.entries().filter((e) => e.kind === 'commit')
     expect(commits).toHaveLength(1)
     expect(commits[0]).toMatchObject({ trigger: 'boundary-start', strokes: 1 })
+  })
+})
+
+/**
+ * 候補が出ている最中に書き始めても線を失わないこと（2026-08-27）。
+ *
+ * 直前の改修で「隣に書き始めた瞬間に確定する」ようになった副作用として、
+ * 判別に迷ったときの候補が**書いている最中に**出るようになった。候補が出ている間
+ * 書き込みを止めていると、テンポよく書いたときに次の記号の1画目が黙って消え、
+ * 「ペンが反応しない」のと同じ体験になる。この経路にはテストが無かった。
+ */
+describe('PenSyntaxAnnotator 候補が出ている最中の書き始め（2026-08-27）', () => {
+  const WORDS2 = ['aa', 'bb', 'cc', 'dd']
+  const boxOf2 = (i: number) => ({ left: 16 + i * 60, right: 56 + i * 60, top: 40, bottom: 68 })
+
+  beforeEach(() => {
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: Element,
+    ) {
+      const text = this.textContent ?? ''
+      const i = WORDS2.indexOf(text)
+      const isWord = i >= 0 && (this as HTMLElement).className?.includes('font-serif')
+      const r = isWord ? boxOf2(i) : { left: 0, right: 400, top: 0, bottom: 140 }
+      return {
+        ...r,
+        width: r.right - r.left,
+        height: r.bottom - r.top,
+        x: r.left,
+        y: r.top,
+        toJSON: () => ({}),
+      } as DOMRect
+    })
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.useRealTimers()
+  })
+
+  /** 判別に迷う（候補チップが出る）ぐらい崩れた線を、単語 i の上の段に書く */
+  function scribbleAbove(canvas: Element, i: number, pointerId: number) {
+    const cx = (boxOf2(i).left + boxOf2(i).right) / 2
+    const pts = [
+      [cx - 8, 14],
+      [cx + 6, 26],
+      [cx - 7, 22],
+      [cx + 8, 12],
+      [cx - 3, 30],
+      [cx + 2, 16],
+    ]
+    fireEvent.pointerDown(canvas, {
+      pointerId,
+      pointerType: 'pen',
+      clientX: pts[0][0],
+      clientY: pts[0][1],
+    })
+    for (const [x, y] of pts.slice(1)) {
+      fireEvent.pointerMove(canvas, { pointerId, pointerType: 'pen', clientX: x, clientY: y })
+    }
+    const last = pts[pts.length - 1]
+    fireEvent.pointerUp(canvas, {
+      pointerId,
+      pointerType: 'pen',
+      clientX: last[0],
+      clientY: last[1],
+    })
+  }
+
+  const chipsShown = (container: HTMLElement) =>
+    (container.textContent ?? '').includes('どの記号ですか？')
+
+  it('候補が出ている最中に書き始めても、その線は受け付けられ候補は引っ込む', () => {
+    vi.useFakeTimers()
+    const log = createPenInputLog()
+    const { container } = render(
+      <PenSyntaxAnnotator
+        tokens={WORDS2}
+        answer={emptyAnswer(WORDS2.length)}
+        onChange={() => {}}
+        inputLog={log}
+      />,
+    )
+    const canvas = container.querySelector('canvas') as HTMLCanvasElement
+
+    // 迷う線を1つ書き、待ち時間切れで確定させる → 候補チップが出る
+    scribbleAbove(canvas, 0, 1)
+    act(() => {
+      vi.advanceTimersByTime(GROUP_WAIT_MS + 50)
+    })
+    expect(chipsShown(container)).toBe(true)
+
+    // 候補が出たまま、次の記号を書き始める
+    const before = log.entries().filter((e) => e.kind === 'commit').length
+    scribbleAbove(canvas, 2, 2)
+
+    // 1画目から受け付けられている（接触が受理され、線が確定まで進む）
+    const downs = log
+      .entries()
+      .filter((e) => e.kind === 'pointer' && e.phase === 'down' && e.pointerId === 2)
+    expect(downs).toHaveLength(1)
+    expect(downs[0]).toMatchObject({ accepted: true })
+    // 候補は引っ込んでいる
+    expect(chipsShown(container)).toBe(false)
+
+    act(() => {
+      vi.advanceTimersByTime(GROUP_WAIT_MS + 50)
+    })
+    const commits = log.entries().filter((e) => e.kind === 'commit')
+    expect(commits.length).toBe(before + 1)
+    expect(commits[commits.length - 1]).toMatchObject({ strokes: 1 })
+  })
+
+  it('候補を押す操作は従来どおり効く（押した接触はキャンバスに届かない）', () => {
+    vi.useFakeTimers()
+    const changes: SyntaxAnswer[] = []
+    const { container } = render(
+      <PenSyntaxAnnotator
+        tokens={WORDS2}
+        answer={emptyAnswer(WORDS2.length)}
+        onChange={(next) => changes.push(next)}
+      />,
+    )
+    const canvas = container.querySelector('canvas') as HTMLCanvasElement
+    scribbleAbove(canvas, 0, 1)
+    act(() => {
+      vi.advanceTimersByTime(GROUP_WAIT_MS + 50)
+    })
+    const panel = container.querySelector('div.z-20') as HTMLElement
+    expect(panel).toBeTruthy()
+    // 候補の枠はキャンバス（z-10）より上（z-20）にあり、押した接触はキャンバスに届かない
+    expect(canvas.className).toContain('z-10')
+    const first = panel.querySelector('button') as HTMLButtonElement
+    act(() => {
+      fireEvent.click(first)
+    })
+    // 候補は閉じ、選んだ記号が解答に入っている
+    expect(chipsShown(container)).toBe(false)
+    expect(changes.length).toBeGreaterThan(0)
+    expect(changes[changes.length - 1].pos.some((v) => v != null)).toBe(true)
+  })
+
+  it('候補の枠の外を軽くタップしたら、候補が閉じるだけ（一覧は開かない）', () => {
+    vi.useFakeTimers()
+    const { container } = render(
+      <PenSyntaxAnnotator tokens={WORDS2} answer={emptyAnswer(WORDS2.length)} onChange={() => {}} />,
+    )
+    const canvas = container.querySelector('canvas') as HTMLCanvasElement
+    scribbleAbove(canvas, 0, 1)
+    act(() => {
+      vi.advanceTimersByTime(GROUP_WAIT_MS + 50)
+    })
+    expect(chipsShown(container)).toBe(true)
+
+    // 単語の上の段を軽くタップ（ふだんは品詞の一覧が開く場所）
+    const cx = (boxOf2(2).left + boxOf2(2).right) / 2
+    act(() => {
+      fireEvent.pointerDown(canvas, { pointerId: 9, pointerType: 'pen', clientX: cx, clientY: 20 })
+      fireEvent.pointerUp(canvas, { pointerId: 9, pointerType: 'pen', clientX: cx, clientY: 20 })
+    })
+    expect(chipsShown(container)).toBe(false)
+    const pickerOpen = Array.from(container.querySelectorAll('div')).some((d) =>
+      d.className.includes('z-[60]'),
+    )
+    expect(pickerOpen).toBe(false)
   })
 })
