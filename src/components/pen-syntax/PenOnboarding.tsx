@@ -5,7 +5,7 @@
  *
  * ペン方式の画面（構文の練習。将来の1文画面でも共用できる部品）を初めて使うとき、
  * 必須の記号（括弧8種＋品詞6種＋働き7種）のお手本を1つずつ登録してもらう。
- * - 利用者ごとに初回の1回だけ（完了の印は onboarding.ts が localStorage に持つ）
+ * - 利用者ごとに初回の1回だけ（登録済みかどうかは本人のお手本の有無で決まる）
  * - 途中でやめても登録済みの字は残り、次回は続きから再開する
  * - 登録し直し（mode='redo'）は同じ流れを任意スキップ付きでもう一度通す
  */
@@ -19,12 +19,7 @@ import {
   ROLE_STROKE_SOURCES,
   SHAPE_STROKE_SOURCES,
 } from '@/lib/pen-syntax/templates'
-import {
-  missingRequired,
-  REQUIRED_SYMBOLS,
-  samplesFor,
-  saveOnboardingDone,
-} from '@/lib/pen-syntax/onboarding'
+import { missingRequired, REQUIRED_SYMBOLS, samplesFor } from '@/lib/pen-syntax/onboarding'
 import { clearUserTemplates, saveUserTemplate } from '@/lib/pen-syntax/user-templates'
 import { PEN_UI_ATTR } from '@/lib/pen-syntax/zone-guard'
 import { pathLength } from '@/lib/pen-syntax/geometry'
@@ -93,13 +88,14 @@ interface QueueItem {
 }
 
 interface PenOnboardingProps {
+  /** お手本の保存先（利用者ごとの鍵）。共有端末で他人の字を引き継がないため必須 */
   userId: string | null | undefined
   store: UserTemplateStore
   onStoreChange: (next: UserTemplateStore) => void
   policy: InputPolicy
   /** first=初回（未登録分だけ） / redo=登録し直し（全種・スキップ可） */
   mode: 'first' | 'redo'
-  /** 必須の登録が終わり「はじめる」を押したとき（完了の印は保存済み） */
+  /** 必須の登録が終わり「はじめる」を押したとき */
   onFinish: () => void
   /** 途中でやめたとき（登録済み分は残る・次回は続きから） */
   onExit: () => void
@@ -156,9 +152,9 @@ export function PenOnboarding({
     }
     if (mode === 'redo' && !replacedRef.current.has(current.symbol)) {
       replacedRef.current.add(current.symbol)
-      clearUserTemplates(current.symbol)
+      clearUserTemplates(userId, current.symbol)
     }
-    onStoreChange(saveUserTemplate(current.symbol, strokes))
+    onStoreChange(saveUserTemplate(userId, current.symbol, strokes))
     advance()
   }
 
@@ -173,10 +169,7 @@ export function PenOnboarding({
         </p>
         <button
           type="button"
-          onClick={() => {
-            saveOnboardingDone(userId)
-            onFinish()
-          }}
+          onClick={onFinish}
           className="rounded-xl bg-nodo px-4 py-3 text-base font-bold text-white"
         >
           ペンで書きはじめる

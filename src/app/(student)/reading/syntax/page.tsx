@@ -22,11 +22,7 @@ import { createPenInputLog, type PenInputLog } from '@/lib/pen-syntax/input-log'
 import { initialPalmState, type InputPolicy, type PalmState } from '@/lib/pen-syntax/palm'
 import type { UserTemplateStore } from '@/lib/pen-syntax/letters'
 import { loadUserTemplates } from '@/lib/pen-syntax/user-templates'
-import {
-  isEnrollmentComplete,
-  loadOnboardingDone,
-  saveOnboardingDone,
-} from '@/lib/pen-syntax/onboarding'
+import { missingRequired, needsEnrollment, REQUIRED_SYMBOLS } from '@/lib/pen-syntax/onboarding'
 import {
   appendOrderHistory,
   describeStep,
@@ -85,17 +81,11 @@ export default function SyntaxDrillPage() {
   const [redoOnboarding, setRedoOnboarding] = useState(false)
   useEffect(() => {
     if (authLoading) return
-    const s = loadUserTemplates()
+    // お手本は利用者ごとに読む。共有端末で他人の登録を「本人の登録済み」と
+    // 取り違えないよう、判定は本人のお手本がそろっているかだけで行う（2026-08-27）
+    const s = loadUserTemplates(userId)
     setTemplateStore(s)
-    if (loadOnboardingDone(userId)) {
-      setNeedOnboarding(false)
-    } else if (isEnrollmentComplete(s)) {
-      // 計測ページなどで既に全種登録済みなら、案内は出さず完了扱いにする
-      saveOnboardingDone(userId)
-      setNeedOnboarding(false)
-    } else {
-      setNeedOnboarding(true)
-    }
+    setNeedOnboarding(needsEnrollment(s))
   }, [authLoading, userId])
   const showOnboarding = inputMode === 'pen' && (needOnboarding === true || redoOnboarding)
 
@@ -467,6 +457,9 @@ export default function SyntaxDrillPage() {
 
         {inputMode === 'pen' && needOnboarding === false && !redoOnboarding && (
           <p className="mt-3 text-xs text-ink-3">
+            お手本の登録: {REQUIRED_SYMBOLS.length - missingRequired(templateStore).length} /{' '}
+            {REQUIRED_SYMBOLS.length} 種（この端末に、いまログインしている人のぶんだけ保存されています）。
+            <br />
             記号の判別が合いにくいときは、
             <button
               type="button"

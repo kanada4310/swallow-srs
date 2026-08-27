@@ -17,6 +17,7 @@ import { isPunct } from '@/lib/reading/syntax'
 import type { PenPoint, PenStroke, SymbolId, TokenBox } from '@/lib/pen-syntax/types'
 import { EXCEPTION_KANJI, POS_LETTERS, ROLE_LETTERS } from '@/lib/pen-syntax/types'
 import { ENROLLABLE_SYMBOLS } from '@/lib/pen-syntax/ledger'
+import { useAuth } from '@/contexts/AuthContext'
 import { recognizeGroup } from '@/lib/pen-syntax/recognize'
 import { snapTargetFor } from '@/lib/pen-syntax/apply'
 import { pathLength } from '@/lib/pen-syntax/geometry'
@@ -165,6 +166,8 @@ const emptyLatency = (): LatencyStats => ({
 })
 
 export default function PenLabPage() {
+  // お手本は利用者ごとに保存する（共有端末で他人の字を引き継がない・2026-08-27）
+  const { userId, isLoading: authLoading } = useAuth()
   const [mode, setMode] = useState<ModeKey>('a')
   // 既定は「ペンのみ」（実運用と同じ・手のひら対策）
   const [policy, setPolicy] = useState<InputPolicy>('pen-only')
@@ -215,8 +218,9 @@ export default function PenLabPage() {
   }, [])
 
   useEffect(() => {
-    setStore(loadUserTemplates())
-  }, [])
+    if (authLoading) return
+    setStore(loadUserTemplates(userId))
+  }, [authLoading, userId])
 
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -638,7 +642,12 @@ export default function PenLabPage() {
           <PenInputLogPanel log={inputLog} />
         </div>
 
-        <EnrollmentSection store={store} onStoreChange={setStore} policy={policy} />
+        <EnrollmentSection
+          userId={userId}
+          store={store}
+          onStoreChange={setStore}
+          policy={policy}
+        />
       </div>
     </AppLayout>
   )
@@ -659,10 +668,12 @@ function Stat({ label, value }: { label: string; value: string }) {
 const ENROLLABLE: SymbolId[] = ENROLLABLE_SYMBOLS
 
 function EnrollmentSection({
+  userId,
   store,
   onStoreChange,
   policy,
 }: {
+  userId: string | null | undefined
   store: UserTemplateStore
   onStoreChange: (s: UserTemplateStore) => void
   policy: InputPolicy
@@ -677,7 +688,8 @@ function EnrollmentSection({
       <p className="mb-2 text-xs text-ink-3">
         判別に迷いが多い記号・文字は、自分の字で1〜3回登録すると当たりやすくなります
         （括弧は同じ向きの4種をそろえて登録すると閉じ括弧の見分けに効きます）。
-        登録した字はこの端末の中だけに保存されます。
+        登録した字は、この端末の中の「いまログインしている人」のぶんにだけ保存されます
+        （同じ端末を別の人が使っても混ざりません）。
       </p>
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <select
@@ -695,7 +707,7 @@ function EnrollmentSection({
           type="button"
           onClick={() => {
             if (strokesRef.current.length === 0) return
-            onStoreChange(saveUserTemplate(symbol, strokesRef.current))
+            onStoreChange(saveUserTemplate(userId, symbol, strokesRef.current))
             setResetToken((n) => n + 1)
           }}
           className="rounded-xl bg-sora px-3 py-2 text-sm font-bold text-white"
@@ -711,7 +723,7 @@ function EnrollmentSection({
         </button>
         <button
           type="button"
-          onClick={() => onStoreChange(clearUserTemplates(symbol))}
+          onClick={() => onStoreChange(clearUserTemplates(userId, symbol))}
           className="rounded-xl border border-again bg-white px-3 py-2 text-sm font-bold text-again"
         >
           この字の登録を消す
