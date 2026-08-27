@@ -69,17 +69,28 @@ describe('候補の枠の置き場所', () => {
     expect(left.left).toBeGreaterThanOrEqual(0)
   })
 
-  it('枠より候補が広い狭い画面では左端に寄せる（下端もはみ出さない）', () => {
+  it('枠より候補が広い狭い画面では左端に寄せる', () => {
     const p = placeChipBox({
       ...base,
-      container: { width: 180, height: 90 },
+      container: { width: 180, height: 300 },
       chip: { width: 220, height: 60 },
-      row: { top: 30, bottom: 55 },
-      stroke: { left: 60, right: 80, top: 57, bottom: 75 },
     })
     expect(p.left).toBe(0)
-    expect(p.top).toBeGreaterThanOrEqual(0)
-    expect(p.top + 60).toBeLessThanOrEqual(90)
+  })
+
+  it('枠に余白が無いとき（1行だけの短い文）は、枠の外（下）へはみ出させる', () => {
+    // 書いた場所や本文を隠すくらいなら、枠からはみ出して見せるほうがよい
+    const input: ChipPlaceInput = {
+      ...base,
+      lane: 'above',
+      container: { width: 400, height: 129 },
+      row: { top: 45, bottom: 80 },
+      stroke: { left: 150, right: 180, top: 21, bottom: 34 },
+      chip: { width: 220, height: 69 },
+    }
+    const p = placeChipBox(input)
+    expect(p.top).toBeGreaterThanOrEqual(input.row!.bottom)
+    expect(p.top + input.chip.height).toBeGreaterThan(input.container.height)
   })
 
   it('行が分からないときは書いた線だけを避ける', () => {

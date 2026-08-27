@@ -110,6 +110,58 @@ export function snapTargetFor(
   return s ? { from: s.index, to: s.index } : null
 }
 
+/**
+ * 単語の左のすき間（＝開始カッコの列）に書かれた働きの、付け先を探す。
+ *
+ * 対象は [ ] と ｛ ｝ の開始位置（閉じ待ち・閉じ済みの両方）。
+ * 「その単語の左端より左」かつ「左どなりの単語の右端より右」＝カッコの列に
+ * 書いた、と判定する（実測でカッコの列は12画素ほどしかないため、狙いのぶれを
+ * 見込んで前後に BRACKET_ROLE_SLOP を足す）。折り返しの行頭など左どなりが
+ * 無い場合は、括弧1文字ぶんの見込み（BRACKET_ROLE_MAX_DX）までを認める。
+ * 選び方: 書きかけ（閉じ待ち）を先に、そのうち後に書いたものを先に。
+ * 閉じ済み同士は内側（短いまとまり）を先に。
+ */
+const BRACKET_ROLE_MAX_DX = 40
+const BRACKET_ROLE_SLOP = 6
+
+interface BracketRoleTarget {
+  tokenIndex: number
+  /** state.pendingOpens の位置（閉じ待ちに付けるとき） */
+  pending?: number
+  /** state.answer.spans の位置（閉じ済みに付けるとき） */
+  span?: number
+}
+
+function findBracketRoleTarget(
+  state: PenAnnotation,
+  boxes: TokenBox[],
+  cx: number,
+): BracketRoleTarget | null {
+  const candidates: Array<BracketRoleTarget & { rank: number; width: number }> = []
+  state.pendingOpens.forEach((p, i) => {
+    if (p.type === 'n' || p.type === 'comp') {
+      candidates.push({ tokenIndex: p.index, pending: i, rank: 0, width: -i })
+    }
+  })
+  state.answer.spans.forEach((sp, i) => {
+    if (sp.type === 'n' || sp.type === 'comp') {
+      candidates.push({ tokenIndex: sp.from, span: i, rank: 1, width: sp.to - sp.from })
+    }
+  })
+  const usable = candidates.filter((c) => {
+    const box = boxes.find((t) => t.index === c.tokenIndex)
+    if (!box || cx >= box.left + BRACKET_ROLE_SLOP) return false
+    const prev = boxes
+      .filter((t) => t.right <= box.left)
+      .sort((a, b) => b.right - a.right)[0]
+    return prev ? cx >= prev.right - BRACKET_ROLE_SLOP : box.left - cx <= BRACKET_ROLE_MAX_DX
+  })
+  if (usable.length === 0) return null
+  usable.sort((a, b) => a.rank - b.rank || a.width - b.width)
+  const best = usable[0]
+  return { tokenIndex: best.tokenIndex, pending: best.pending, span: best.span }
+}
+
 /** 判別済みの記号1つを解答へ反映する */
 export function applySymbol(
   state: PenAnnotation,
@@ -154,45 +206,29 @@ export function applySymbol(
       }
     }
     // 開始カッコ（[・｛）の真下に書いた働きは、そのまとまり全体の働きとして付ける
-    // （第7講 P8-S3 ほか「開始｛の下に C」の書き方・記号の台帳・確定版）
+    // （第7講 P8-S3 ほか「開始｛の下に C」の書き方・記号の台帳・確定版）。
+    // 判定は「単語のすき間（＝カッコの列）に書いたか」で行う。吸着した単語で
+    // 決めると、カッコの真下は左どなりの単語のほうが中心に近いことがあり、
+    // 黙って単語の働きへ落ちてしまう（2026-08-27 実ブラウザで確認）
     if (lane === 'below') {
-      const b = strokesBBox(strokes)
-      const tokenBox = boxes.find((t) => t.index === snap.index)
-      if (tokenBox && b.cx < tokenBox.left) {
-        // まだ閉じていない開き括弧（書きかけ）を先に見る（2026-08-27）。
-        // 「開いてすぐ下に働きを書く」書き順では、いま働きを付けたい相手は
-        // 直前に書いた開き括弧であり、閉じ済みのまとまりではない。
-        // 同じ位置に書きかけが複数あるときは最後に書いたもの＝内側に付ける。
-        const pendingIdx = state.pendingOpens
-          .map((p, i) => ({ p, i }))
-          .filter(({ p }) => p.index === snap.index && (p.type === 'n' || p.type === 'comp'))
-          .map(({ i }) => i)
-          .pop()
-        if (pendingIdx !== undefined) {
-          const pendingOpens = state.pendingOpens.map((p, i) =>
-            i === pendingIdx ? { ...p, role: symbol } : p,
-          )
-          return {
-            next: { ...state, pendingOpens },
-            applied: true,
-            target: { from: snap.index, to: snap.index },
-          }
+      const hit = findBracketRoleTarget(state, boxes, strokesBBox(strokes).cx)
+      if (hit && hit.pending !== undefined) {
+        const pendingOpens = state.pendingOpens.map((p, i) =>
+          i === hit.pending ? { ...p, role: symbol } : p,
+        )
+        return {
+          next: { ...state, pendingOpens },
+          applied: true,
+          target: { from: hit.tokenIndex, to: hit.tokenIndex },
         }
-        const starts = state.answer.spans
-          .map((s, i) => ({ s, i }))
-          .filter(({ s }) => s.from === snap.index && (s.type === 'n' || s.type === 'comp'))
-        if (starts.length > 0) {
-          // 同じ位置から始まるまとまりが複数あるときは内側（短いほう）に付ける
-          starts.sort((a, c) => a.s.to - a.s.from - (c.s.to - c.s.from))
-          const target = starts[0]
-          const spans = state.answer.spans.map((s, i) =>
-            i === target.i ? { ...s, role: symbol } : s,
-          )
-          return {
-            next: { ...state, answer: { ...state.answer, spans } },
-            applied: true,
-            target: { from: target.s.from, to: target.s.to },
-          }
+      }
+      if (hit && hit.span !== undefined) {
+        const target = state.answer.spans[hit.span]
+        const spans = state.answer.spans.map((s, i) => (i === hit.span ? { ...s, role: symbol } : s))
+        return {
+          next: { ...state, answer: { ...state.answer, spans } },
+          applied: true,
+          target: { from: target.from, to: target.to },
         }
       }
     }

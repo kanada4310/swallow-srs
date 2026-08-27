@@ -392,6 +392,16 @@ describe('applySymbol（解答への反映）', () => {
     expect(close.next.pendingOpens).toEqual([])
   })
 
+  it('カッコの真下なら、左どなりの単語のほうが近くてもまとまりの働きになる', () => {
+    // 単語1=80〜130・単語2=150〜200。すき間(130〜150)に書くと中心は単語1に近い
+    let state = init()
+    state = applySymbol(state, 'square-open', [line([142, 42], [136, 55], [142, 68])], BOXES).next
+    const r = applySymbol(state, 'O', [line([131, 80], [136, 95])], BOXES)
+    expect(r.applied).toBe(true)
+    expect(r.next.pendingOpens).toEqual([{ type: 'n', index: 2, role: 'O' }])
+    expect(r.next.answer.role[1]).toBeNull()
+  })
+
   it('閉じ待ちのカッコが複数あるときは、あとに書いたほう（内側）に働きが付く', () => {
     let state = init()
     state = applySymbol(state, 'square-open', [line([142, 42], [136, 55], [142, 68])], BOXES).next
