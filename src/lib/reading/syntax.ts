@@ -69,11 +69,21 @@ export const ROLE_LETTER_OPTIONS = ['S', 'V', 'O', 'C', 'P', 'Po', '▷', '＋',
 
 export type SpanType = 'ul' | 'adv' | 'n' | 'adjm' | 'comp'
 
+/**
+ * まとまりの種類。
+ *
+ * `open`/`close` は**画面に描く字**（2026-08-28 に幅をそろえた。丸括弧だけ全角で、
+ * 角括弧・波括弧と幅が食い違っていた。山括弧の半角は数学用の ⟨ ⟩（U+27E8 / U+27E9））。
+ * まとまりの見分けは種類の名前（`adv` など）で行っており、描く字は表示にしか使わない
+ * ので、過去に保存した書き込み・採点は影響を受けない。
+ * `label`/`short` は説明の文（採点の指摘やAIへ渡す文面に使う）で、
+ * ルールブックの書き方に合わせて全角のままにしてある。
+ */
 export const SPAN_TYPES: Record<SpanType, { label: string; short: string; open: string; close: string }> = {
   ul: { label: '下線＝前置修飾のまとまり', short: '下線', open: '', close: '' },
-  adv: { label: '（ ）＝副詞句・副詞節', short: '（ ）', open: '（', close: '）' },
+  adv: { label: '（ ）＝副詞句・副詞節', short: '（ ）', open: '(', close: ')' },
   n: { label: '[ ]＝名詞句・名詞節', short: '[ ]', open: '[', close: ']' },
-  adjm: { label: '< >＝後置修飾の形容詞句・節', short: '< >', open: '<', close: '>' },
+  adjm: { label: '< >＝後置修飾の形容詞句・節', short: '< >', open: '⟨', close: '⟩' },
   comp: { label: '{ }＝補語の形容詞句・節', short: '{ }', open: '{', close: '}' },
 }
 

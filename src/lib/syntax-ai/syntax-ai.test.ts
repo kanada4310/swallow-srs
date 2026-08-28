@@ -203,8 +203,9 @@ describe('renderAnalysisHtml / buildCardFields', () => {
     expect(html).toContain('syn-row')
     expect(html).toContain('<span class="syn-pos">代名詞</span>')
     expect(html).toContain('syn-word syn-ul')
-    expect(html).toContain('<span class="syn-br">（</span>')
-    expect(html).toContain('<span class="syn-br">）</span>')
+    // カッコの字は半角にそろえた（2026-08-28。まとまりの見分けは種類の名前で行う）
+    expect(html).toContain('<span class="syn-br">(</span>')
+    expect(html).toContain('<span class="syn-br">)</span>')
     // 句読点には働きを出さない
     expect(html).not.toContain('>.</span><span class="syn-role">M')
   })

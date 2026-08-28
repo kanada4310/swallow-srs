@@ -30,14 +30,14 @@ import { EnrollCanvas } from './EnrollCanvas'
 /** 記号の説明（どこに・何のために書く記号か） */
 function symbolHint(symbol: SymbolId): string {
   const bracket: Record<string, string> = {
-    'paren-open': '（ ）＝副詞句・副詞節のまとまり（開き）',
-    'paren-close': '（ ）＝副詞句・副詞節のまとまり（閉じ）',
+    'paren-open': '( )＝副詞句・副詞節のまとまり（開き）',
+    'paren-close': '( )＝副詞句・副詞節のまとまり（閉じ）',
     'square-open': '[ ]＝名詞句・名詞節のまとまり（開き）',
     'square-close': '[ ]＝名詞句・名詞節のまとまり（閉じ）',
-    'angle-open': '〈 〉＝後置修飾のまとまり（開き）',
-    'angle-close': '〈 〉＝後置修飾のまとまり（閉じ）',
-    'brace-open': '｛ ｝＝補語のまとまり（開き）',
-    'brace-close': '｛ ｝＝補語のまとまり（閉じ）',
+    'angle-open': '⟨ ⟩＝後置修飾のまとまり（開き）',
+    'angle-close': '⟨ ⟩＝後置修飾のまとまり（閉じ）',
+    'brace-open': '{ }＝補語のまとまり（開き）',
+    'brace-close': '{ }＝補語のまとまり（閉じ）',
   }
   if (bracket[symbol]) return `本文に書く括弧: ${bracket[symbol]}`
   if (POS_LETTER_LEGEND[symbol]) return `単語の上に書く品詞: ${symbol}＝${POS_LETTER_LEGEND[symbol]}`

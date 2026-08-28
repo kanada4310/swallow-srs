@@ -146,8 +146,9 @@ describe('PenSyntaxAnnotator 重ね描き（下線・カッコ）', () => {
     ).map((el) => el.textContent)
     expect(overlay).toContain('[')
     expect(overlay).toContain(']')
-    expect(overlay).toContain('<')
-    expect(overlay).toContain('>')
+    // 山括弧は半角の ⟨ ⟩（U+27E8 / U+27E9・2026-08-28 に幅をそろえた）
+    expect(overlay).toContain('⟨')
+    expect(overlay).toContain('⟩')
     expect(overlay).toContain('S')
   })
 

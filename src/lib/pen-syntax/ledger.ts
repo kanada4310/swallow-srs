@@ -9,7 +9,11 @@
  * - 働き（単語の下の段）: S・V・O・C・P・Po・▷・＋（等位接続詞）・同
  *   ※ 節・句の深さ（S′ などのダッシュ）は生徒は書かない。囲んだ括弧から自動判定して
  *     色で表示し、印刷・照合ではダッシュ表記に自動変換する（dash-notation.ts）
- * - 囲み・線: 下線・（ ）・〈 〉・[ ]・｛ ｝・波線（＝熟語・慣用表現の印）
+ * - 囲み・線: 下線・( )・⟨ ⟩・[ ]・{ }・波線（＝熟語・慣用表現の印）
+ *   ※ 記号の見た目は幅をそろえる（2026-08-28。丸括弧と山括弧だけ全角で、角括弧・
+ *     波括弧が半角だったため、並べたときに幅が食い違っていた）。山括弧の半角は
+ *     数学用の ⟨ ⟩（U+27E8 / U+27E9）を使う。**記号の見分けは ID（paren-open など）で
+ *     行っており、ここは表示に使う字だけ**なので、過去に保存した記録は影響を受けない
  * - ○で囲んだ漢字の例外マーク（1字）: 仮・真・強・同（EXCEPTION_KANJI）
  *
  * ## 使わない・無視する（DEPRECATED_SHAPES）
@@ -25,12 +29,12 @@ import { EXCEPTION_KANJI, POS_LETTERS, ROLE_LETTERS } from './types'
 /* ---------- 表示名 ---------- */
 
 export const SYMBOL_LABELS: Record<string, string> = {
-  'paren-open': '（',
-  'paren-close': '）',
+  'paren-open': '(',
+  'paren-close': ')',
   'square-open': '[',
   'square-close': ']',
-  'angle-open': '〈',
-  'angle-close': '〉',
+  'angle-open': '⟨',
+  'angle-close': '⟩',
   'brace-open': '{',
   'brace-close': '}',
   hline: '下線',
