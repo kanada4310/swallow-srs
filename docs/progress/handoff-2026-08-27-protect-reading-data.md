@@ -48,10 +48,27 @@
 - 35文の取り込み: **35問**のまま。生成ファイルの差は説明の1行だけ（置き場の名前）
 - 本番用ビルドの荷物に教材データが入っている（4つの入口とも `.nft.json` に14件）／静的配信の側には1件も入っていない
 
-## 次にやること
+## 本番反映（2026-08-28）✅ 済み
 
-- **本番反映（push）は塾長の承認待ち**（この作業に「承認なし公開」の例外は当てはまらない）
-- 承認後: push → デプロイ成功の確認 → 本番でログイン無しの取得が 401 になること、
-  ログインした状態で読解ページが従来どおり読めることを確認
+塾長承認（回答A）のうえ3件を push。デプロイ成功。本番で確認した実測は次のとおり。
+
+```
+ログインしていない状態
+/api/reading/material/index.json           status=401  本文 {"error":"Unauthorized"}
+/reading-data/index.json                   status=307（ログイン画面へ）
+/reading-data/英語長文最前線_第2講_seg.json   status=307（ログイン画面へ）
+/robots.txt                                status=200  User-Agent: * / Disallow: /
+
+ログインした状態（テスト生徒（確認用）・iPad Mini 相当）
+/api/reading/material/index.json           status=200  一覧 6 件
+/api/reading/material/…第2講_seg.json       status=200  段落 8 件
+/reading-data/index.json                   status=404 ＝古い道には実物が無い
+/reading-data/…第2講_seg.json               status=404 ＝古い道には実物が無い
+```
+
+画面でも、読解の一覧に第2〜7講の6講が従来どおり並び、第2講は本文が最後まで表示され
+「8 段落 / 必須の切れ目 84 か所 / 目安 30 分」と6つの段が従来どおりだった。
+
+## 次にやること
 - 別の作業: quiz_generator の書き出し先を `private/reading-data/` へ変える（秘書が起案）。
   それまでは書き出しを走らせると古い置き場に置かれ、警告が出る

@@ -316,7 +316,7 @@
 - 注意: **Supabase CLI は再ログイン済みで `db push` 運用に復旧**（020〜023 を `migration repair` で履歴記録済み）。将来 login が切れたら SQLエディタ貼り付けで代替可（手順はハンドオフ 2026-07-08 参照）
 
 ## 最新ハンドオフ
-- [handoff-2026-08-27-protect-reading-data](progress/handoff-2026-08-27-protect-reading-data.md) — 教材の本文を `private/reading-data/` へ移し、ログインした人だけが読める入口を新設。**本番反映は承認待ち**
+- [handoff-2026-08-27-protect-reading-data](progress/handoff-2026-08-27-protect-reading-data.md) — 教材の本文を `private/reading-data/` へ移し、ログインした人だけが読める入口を新設。**本番反映済み**
 
 ## 過去ハンドオフ
 - [handoff-2026-08-27-instructor-syntax-problems](progress/handoff-2026-08-27-instructor-syntax-problems.md) — 模範分析集 第7講の35文を構文の練習に取り込む（講師限定・本文の英文は教材データから読み合わせ）。**本番反映済み**
