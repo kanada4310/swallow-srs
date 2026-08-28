@@ -63,7 +63,8 @@ export default function SyntaxDrillPage() {
   /**
    * 模範分析集（第7講）から取り込んだ講師用の問題（共有事項 C24）。
    * **生徒には出さない**（記号の一部が落ちており許容解も無いため）。
-   * 語の並びは教材データから読み合わせるので、講師のときだけ取りに行く。
+   * 語の並びは教材データから読み合わせる。正解表そのものは画面のコードに同梱せず、
+   * 講師・管理者だけが読める入口（/api/reading/syntax-problems）から取りに行く。
    */
   const [instructorProblems, setInstructorProblems] = useState<SyntaxProblem[]>([])
   const [instructorSet, setInstructorSet] = useState<InstructorSyntaxSet | null>(null)
@@ -92,7 +93,9 @@ export default function SyntaxDrillPage() {
       return
     }
     let alive = true
-    // 講師用の正解表（35文ぶん）は重いので、講師のときだけ後から読み込む
+    // 講師用の正解表（35文ぶん）は、講師・管理者だけが読める入口から取りに行く。
+    // 誰が読めるかを決めているのは入口（サーバー側で役割を確かめる）で、
+    // ここの判定は見せ方だけの役割（2026-08-28）
     import('@/lib/reading/syntax-instructor-load')
       .then((m) => m.loadInstructorSyntax())
       .then(({ set, problems: list }) => {

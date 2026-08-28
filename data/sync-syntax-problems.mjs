@@ -5,7 +5,10 @@
  * - 書き出し元: quiz_generator/subjects/英語/模範分析集/export/構文の練習_英語長文最前線_第7講.json
  *   （quiz_generator の export_syntax_problems.py が作る。**このスクリプトは読むだけ**）
  *
- * 出力: src/lib/reading/syntax-instructor-data.ts（生成物。手で編集しない）
+ * 出力: private/syntax-problems/英語長文最前線_第7講.json（生成物。手で編集しない）
+ *   **配信されない場所**に置く。この正解表は講師用で、生徒には見せない。
+ *   画面へ渡すのは /api/reading/syntax-problems だけで、そこで役割を確かめる
+ *   （2026-08-28。それまでは画面のコードに同梱しており、誰でも取りに行けた）。
  *
  * ★本文の英文は出力に入れない。
  *   同じ35文の語の並びは、すでに届いている教材データ
@@ -21,7 +24,7 @@
  * 実行: node data/sync-syntax-problems.mjs
  */
 
-import { readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { warnIfLegacyReadingData } from '../scripts/legacy-reading-data.mjs'
@@ -34,7 +37,8 @@ const SOURCE = join(
   'subjects/英語/模範分析集/export/構文の練習_英語長文最前線_第7講.json'
 )
 const MATERIAL = join(here, '../private/reading-data/英語長文最前線_第7講_seg.json')
-const OUT = join(here, '../src/lib/reading/syntax-instructor-data.ts')
+const OUT_DIR = join(here, '../private/syntax-problems')
+const OUT = join(OUT_DIR, '英語長文最前線_第7講.json')
 
 /** 取り込みを止める（黙って0問にしない） */
 function fail(message) {
@@ -169,23 +173,8 @@ const set = {
   entries,
 }
 
-const out = `/**
- * 模範分析集 第7講の正解表（講師用）— 自動生成ファイル。手で編集しない。
- *
- * 正本は quiz_generator（模範分析集の書き出し・共有事項 C24）。
- * 取り込み直しは data/sync-syntax-problems.mjs を参照（取り込み日: ${today}）。
- *
- * ★本文の英文はここに持たない。語の並びは教材データ（共有事項 C22・
- *   private/reading-data/英語長文最前線_第7講_seg.json）から文IDで読み合わせる。
- * ★この35問は講師用。記号の一部が落ちており許容解も無いので、生徒には出さない。
- */
-
-import type { InstructorSyntaxSet } from './syntax-instructor'
-
-export const INSTRUCTOR_SYNTAX_SET: InstructorSyntaxSet = ${JSON.stringify(set, null, 2)}
-`
-
-writeFileSync(OUT, out)
+mkdirSync(OUT_DIR, { recursive: true })
+writeFileSync(OUT, JSON.stringify(set, null, 2) + '\n')
 console.log(`取り込んだ問題数: ${entries.length}`)
 console.log(`書き出し元: ${SOURCE}`)
 console.log(`語の並びの読み合わせ元（教材データ）: ${MATERIAL}`)

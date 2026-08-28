@@ -14,6 +14,8 @@ const nextConfig = {
     // 必ず含めるよう、使うところを名指しで指定する。
     outputFileTracingIncludes: {
       '/api/reading/material/[file]': ['./private/reading-data/**'],
+      // 講師用の正解表（private/syntax-problems・共有事項 C24）も同じ扱い
+      '/api/reading/syntax-problems': ['./private/syntax-problems/**'],
       '/api/reading/syntax-ai/judge': ['./private/reading-data/**'],
       '/api/reading/syntax-ai/dialogue': ['./private/reading-data/**'],
       '/api/reading/syntax-card': ['./private/reading-data/**'],

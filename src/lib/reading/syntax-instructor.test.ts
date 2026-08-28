@@ -14,7 +14,8 @@ import {
   isInstructorProblem,
   syntaxProblemsFor,
 } from './syntax-instructor'
-import { INSTRUCTOR_SET, loadInstructorSyntax } from './syntax-instructor-load'
+import { loadInstructorSyntax } from './syntax-instructor-load'
+import { readSyntaxProblemSets } from './syntax-problem-store'
 import { gradeSyntax, modelAnswer, SYNTAX_PROBLEMS } from './syntax'
 import type { ReadingLessonData } from './types'
 
@@ -24,6 +25,12 @@ const lesson = JSON.parse(
     'utf-8'
   )
 ) as ReadingLessonData
+
+/**
+ * 正解表は画面のコードに同梱せず、配信されない場所（private/syntax-problems）に置く
+ * （2026-08-28）。テストではサーバー側と同じ読み方でそこから読む。
+ */
+const INSTRUCTOR_SET = readSyntaxProblemSets()[0]
 
 const built = buildInstructorProblems(INSTRUCTOR_SET, lesson)
 
@@ -124,22 +131,59 @@ describe('講師用の問題を誰に見せるか', () => {
   })
 })
 
-describe('教材データを取りに行く経路', () => {
-  it('一覧に元の講が無ければ、分かるように知らせる', async () => {
+describe('正解表と教材データを取りに行く経路', () => {
+  /** 入口（/api/reading/syntax-problems と /api/reading/material）の代わり */
+  function stubFetch(options: { sets?: unknown; lessons?: unknown[] }) {
     const original = global.fetch
     global.fetch = (async (input: RequestInfo | URL) => {
       const url = String(input)
-      const body = url.includes('index.json')
-        ? JSON.stringify({ contract: 'C22', lessons: [] })
-        : JSON.stringify(lesson)
+      let body: string
+      if (url.includes('syntax-problems')) {
+        body = JSON.stringify({ contract: 'C24', sets: options.sets ?? [INSTRUCTOR_SET] })
+      } else if (url.includes('index.json')) {
+        body = JSON.stringify({ contract: 'C22', lessons: options.lessons ?? [] })
+      } else {
+        body = JSON.stringify(lesson)
+      }
       const res = new Response(body, { headers: { 'content-type': 'application/json' } })
       Object.defineProperty(res, 'url', { value: `http://localhost${url}` })
       return res
     }) as typeof fetch
+    return () => {
+      global.fetch = original
+    }
+  }
+
+  it('正解表を入口から取りに行き、教材データと読み合わせて問題を作る', async () => {
+    const restore = stubFetch({
+      lessons: [
+        { textbook: '英語長文最前線', lesson: '第7講', file: '英語長文最前線_第7講_seg.json' },
+      ],
+    })
+    try {
+      const { set, problems } = await loadInstructorSyntax()
+      expect(set.lesson).toBe('第7講')
+      expect(problems).toHaveLength(35)
+    } finally {
+      restore()
+    }
+  })
+
+  it('一覧に元の講が無ければ、分かるように知らせる', async () => {
+    const restore = stubFetch({ lessons: [] })
     try {
       await expect(loadInstructorSyntax()).rejects.toThrow(/一覧にありません/)
     } finally {
-      global.fetch = original
+      restore()
+    }
+  })
+
+  it('入口が正解表を1問も返さなければ、黙って0問にせず知らせる', async () => {
+    const restore = stubFetch({ sets: [] })
+    try {
+      await expect(loadInstructorSyntax()).rejects.toThrow(/1問も入っていません/)
+    } finally {
+      restore()
     }
   })
 })
