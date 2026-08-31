@@ -2,10 +2,11 @@
  * 画のまとまり（グループ）1つを判別する入口。
  *
  * 書かれた場所で判別器を切り替える:
- * - ○で囲んだ漢字（例外マーク1字: 仮・真・強・同）はどの行でも先に見る
  * - 本文の行（band）: 形の記号（括弧・下線・波線など）
  * - 上の行（above）: 品詞の文字。下の行（below）: 働きの文字
  *   ただし幅の広い横線・波線は文字の行でも形として扱う
+ * ※ ○で囲んだ漢字の例外マーク（仮・真・強・同）の手書き認識は 2026-08-31 に廃止
+ *   （タッチ選択式へ置き換え）。classifyExceptionMark は残すが入口からは呼ばない
  * 台帳から外れた形（?・ダッシュ・Ø・単語囲みの○）も検出はする（呼び出し側が
  * 台帳＝ledger.ts を見て「反映せず案内」に落とす）。
  */
@@ -89,11 +90,8 @@ export function recognizeGroup(
   const boxes = line ? line.boxes : allBoxes
   const lane = laneOf(strokes, boxes)
 
-  // ○で囲んだ漢字（例外マーク）はどの行でも先に見る
-  const exception = classifyExceptionMark(strokes, store)
-  if (exception) {
-    return { result: exception, lane, boxes }
-  }
+  // ○で囲んだ漢字（例外マーク）の手書き認識は呼ばない（2026-08-31 選択式化・入口を閉じる）。
+  // ○囲みを書くと形の判別で circle（台帳外）になり、タッチで付ける案内が出る
 
   const shape = classifyShape(strokes, store)
 

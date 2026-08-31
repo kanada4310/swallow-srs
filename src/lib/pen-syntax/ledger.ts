@@ -14,7 +14,10 @@
  *     波括弧が半角だったため、並べたときに幅が食い違っていた）。山括弧の半角は
  *     数学用の ⟨ ⟩（U+27E8 / U+27E9）を使う。**記号の見分けは ID（paren-open など）で
  *     行っており、ここは表示に使う字だけ**なので、過去に保存した記録は影響を受けない
- * - ○で囲んだ漢字の例外マーク（1字）: 仮・真・強・同（EXCEPTION_KANJI）
+ * - 例外の印（1字）: 仮・真・強・同（EXCEPTION_KANJI）。
+ *   **2026-08-31 から手書きの○囲みでは書かず、マスをタッチして付ける**
+ *   （仮・真は判定済みの S / O のマスから・強は働きのマスの選択肢から・
+ *   同は働きの一覧の「同」）。表示は従来どおり○囲みの1字
  *
  * ## 使わない・無視する（DEPRECATED_SHAPES）
  * - M（第7講で未使用）・？（分析不能の印・無視）・英単語を丸ごと囲む○（＋記法へ置換）
@@ -24,7 +27,7 @@
  */
 
 import type { ShapeKind, SymbolId } from './types'
-import { EXCEPTION_KANJI, POS_LETTERS, ROLE_LETTERS } from './types'
+import { POS_LETTERS, ROLE_LETTERS } from './types'
 
 /* ---------- 表示名 ---------- */
 
@@ -61,7 +64,7 @@ export function symbolLabel(symbol: SymbolId | string): string {
 
 export const DEPRECATED_SHAPES: Partial<Record<ShapeKind, string>> = {
   circle:
-    '英単語を○で囲む書き方は使いません。等位接続詞は単語の下に「＋」を書きます（仮・真などの例外の印は漢字を○で囲みます）',
+    '○で囲む書き方は使いません。等位接続詞は単語の下に「＋」を書き、仮・真・強・同の印は働きのマスをタッチして付けます',
   question: '「?」の印は使いません（記録しません）',
   tick: 'ダッシュ（′）は書かなくてよくなりました。節・句の深さは括弧から自動で色分けされます',
   slash: 'この記号は使いません',
@@ -100,8 +103,12 @@ export const REQUIRED_SYMBOLS: SymbolId[] = [
   ...ONBOARD_ROLE_LETTERS,
 ]
 
-/** 任意のお手本: 下線・波線・＋・○で囲む漢字（例外マーク） */
-export const OPTIONAL_SYMBOLS: SymbolId[] = ['hline', 'wavy', '＋', ...EXCEPTION_KANJI]
+/**
+ * 任意のお手本: 下線・波線・＋。
+ * 例外の印（仮・真・強・同）は 2026-08-31 に手書き認識を廃止（タッチ選択式へ）した
+ * ため、お手本の登録対象から外した（登録済みの字が残っていても使われないだけ）。
+ */
+export const OPTIONAL_SYMBOLS: SymbolId[] = ['hline', 'wavy', '＋']
 
 /** お手本登録の画面で選べる全記号 */
 export const ENROLLABLE_SYMBOLS: SymbolId[] = [

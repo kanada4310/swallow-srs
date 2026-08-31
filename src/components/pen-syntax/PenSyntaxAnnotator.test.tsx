@@ -233,6 +233,103 @@ describe('PenSyntaxAnnotator 重ね描き（下線・カッコ）', () => {
   })
 })
 
+describe('PenSyntaxAnnotator 例外の印のタッチ選択（2026-08-31 ○囲みの手書き認識の廃止）', () => {
+  function answerWithRole(i: number, role: string): SyntaxAnswer {
+    const a = emptyAnswer(TOKENS.length)
+    a.role[i] = role
+    return a
+  }
+
+  /** 働きのマス（Cell）を探してタップし、一覧（picker）を開く */
+  function openRolePicker(container: HTMLElement, text: string) {
+    const cell = Array.from(container.querySelectorAll('button')).find(
+      (el) => el.className.includes('min-h-6') && (el.textContent ?? '').startsWith(text),
+    ) as HTMLButtonElement
+    expect(cell).toBeTruthy()
+    fireEvent.click(cell)
+  }
+
+  it('S のマスをタッチすると「○仮」を付けられ、働きの欄に「仮S」と出る（採点データは不変）', () => {
+    const changes: SyntaxAnswer[] = []
+    const { container } = render(
+      <PenSyntaxAnnotator
+        tokens={TOKENS}
+        answer={answerWithRole(1, 'S')}
+        onChange={(next) => changes.push(next)}
+      />,
+    )
+    openRolePicker(container, 'S')
+    const kari = Array.from(container.querySelectorAll('button')).find(
+      (el) => el.textContent === '○仮',
+    ) as HTMLButtonElement
+    expect(kari).toBeTruthy()
+    expect(kari.disabled).toBe(false)
+    act(() => {
+      fireEvent.click(kari)
+    })
+    // 印は extras（採点対象外）に入り、answer.role は 'S' のまま＝採点は変わらない
+    expect(changes[changes.length - 1].role[1]).toBe('S')
+    const cell = Array.from(container.querySelectorAll('button')).find((el) =>
+      (el.textContent ?? '').startsWith('仮S'),
+    )
+    expect(cell).toBeTruthy()
+  })
+
+  it('働きが S / O でない単語では仮・真は押せない（強は押せる）', () => {
+    const { container } = render(
+      <PenSyntaxAnnotator
+        tokens={TOKENS}
+        answer={answerWithRole(6, 'V')}
+        onChange={() => {}}
+      />,
+    )
+    openRolePicker(container, 'V')
+    const btn = (label: string) =>
+      Array.from(container.querySelectorAll('button')).find(
+        (el) => el.textContent === label,
+      ) as HTMLButtonElement
+    expect(btn('○仮').disabled).toBe(true)
+    expect(btn('○真').disabled).toBe(true)
+    expect(btn('○強').disabled).toBe(false)
+  })
+
+  it('働きを S から V に変えると、付けてあった仮の印も一緒に外れる', () => {
+    const { container } = render(
+      <PenSyntaxAnnotator
+        tokens={TOKENS}
+        answer={answerWithRole(1, 'S')}
+        onChange={() => {}}
+      />,
+    )
+    openRolePicker(container, 'S')
+    act(() => {
+      fireEvent.click(
+        Array.from(container.querySelectorAll('button')).find(
+          (el) => el.textContent === '○仮',
+        ) as HTMLButtonElement,
+      )
+    })
+    expect(
+      Array.from(container.querySelectorAll('button')).some((el) =>
+        (el.textContent ?? '').startsWith('仮S'),
+      ),
+    ).toBe(true)
+    // もう一度マスを開き、働きを V に変える
+    openRolePicker(container, '仮S')
+    act(() => {
+      const options = Array.from(container.querySelectorAll('button')).filter(
+        (el) => el.textContent === 'V',
+      )
+      fireEvent.click(options[options.length - 1])
+    })
+    expect(
+      Array.from(container.querySelectorAll('button')).some((el) =>
+        (el.textContent ?? '').includes('仮'),
+      ),
+    ).toBe(false)
+  })
+})
+
 describe('PenSyntaxAnnotator バッジのレイアウト（2026-08-26 実機不具合の再発防止）', () => {
   it('「手のひらOK」バッジはペン接触前から場所を確保している（初回接触の瞬間に画面が動かない）', () => {
     // 不具合: ペンの初回接触でバッジが出現し、書いている最中に画面レイアウトが

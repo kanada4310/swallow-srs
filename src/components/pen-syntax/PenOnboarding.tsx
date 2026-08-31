@@ -164,7 +164,7 @@ export function PenOnboarding({
         <p className="mb-1 text-base font-extrabold text-ai">✅ お手本の登録が終わりました</p>
         <p className="mb-3 text-sm leading-relaxed text-ink-2">
           これで、あなたの字に合わせて記号を判別できます。
-          下線・波線・＋・○で囲む漢字（仮・真・強・同）のお手本は任意です。
+          下線・波線・＋のお手本は任意です（仮・真・強・同の印は手書きせず、働きのマスをタッチして付けます）。
           登録し直し・追加は、いつでも「ペン判別の計測」ページ下部の「お手本登録」からできます。
         </p>
         <button

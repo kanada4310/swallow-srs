@@ -31,7 +31,8 @@ import {
   roleCellParts,
   toggleExceptionMark,
 } from './apply'
-import { classifyExceptionMark } from './recognize'
+import { classifyExceptionMark, recognizeGroup } from './recognize'
+import { EXCEPTION_KANJI } from './types'
 import { classifyPosLetter, classifyRoleLetter } from './letters'
 import type { PenStroke, TokenBox } from './types'
 import { emptyAnswer, gradeSyntax, SYNTAX_PROBLEMS, type SyntaxProblem } from '@/lib/reading/syntax'
@@ -194,6 +195,16 @@ describe('classifyExceptionMark（○で囲んだ漢字の例外マーク）', (
     const store = { 仮: [kanji] }
     const r = classifyExceptionMark(circled, store)
     expect(r!.best?.symbol).toBe('仮')
+  })
+
+  it('判別の入口（recognizeGroup）は○囲みの漢字を例外マークとして返さない（2026-08-31 選択式化）', () => {
+    // classifyExceptionMark 自体は残すが、入口からは呼ばない。
+    // ○囲みは形の判別（circle=台帳外）に落ち、タッチで付ける案内につながる
+    const r = recognizeGroup(circled, BOXES, null)
+    expect(
+      r.result.candidates.every((c) => !(EXCEPTION_KANJI as readonly string[]).includes(c.symbol)),
+    ).toBe(true)
+    expect(r.result.best == null || !(EXCEPTION_KANJI as readonly string[]).includes(r.result.best.symbol)).toBe(true)
   })
 
   it('英字の a（丸＋縦棒）や Po の小さな丸は例外マークに誤検出しない', () => {

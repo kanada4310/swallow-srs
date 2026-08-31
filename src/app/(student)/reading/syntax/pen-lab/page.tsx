@@ -15,7 +15,7 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { symbolLabel } from '@/components/pen-syntax/PenSyntaxAnnotator'
 import { isPunct } from '@/lib/reading/syntax'
 import type { PenPoint, PenStroke, SymbolId, TokenBox } from '@/lib/pen-syntax/types'
-import { EXCEPTION_KANJI, POS_LETTERS, ROLE_LETTERS } from '@/lib/pen-syntax/types'
+import { POS_LETTERS, ROLE_LETTERS } from '@/lib/pen-syntax/types'
 import { ENROLLABLE_SYMBOLS } from '@/lib/pen-syntax/ledger'
 import { useAuth } from '@/contexts/AuthContext'
 import { recognizeGroup } from '@/lib/pen-syntax/recognize'
@@ -51,7 +51,8 @@ type ModeKey = 'a' | 'b' | 'c-pos' | 'c-role' | 'free'
 
 const MODES: Array<{ key: ModeKey; label: string }> = [
   { key: 'a', label: '群A: 括弧4種＋下線' },
-  { key: 'b', label: '群B: 波線・○で囲む漢字' },
+  // ○で囲む漢字（例外の印）は 2026-08-31 に手書き認識を廃止（タッチ選択式）したため、お題から外した
+  { key: 'b', label: '群B: 波線（熟語の印）' },
   { key: 'c-pos', label: '群C: 品詞の英字（上の行）' },
   { key: 'c-role', label: '群C: 働きの文字（下の行）' },
   { key: 'free', label: '自由練習（数えない）' },
@@ -123,12 +124,11 @@ function makeTask(mode: ModeKey): LabTask | null {
     }
   }
   if (mode === 'b') {
-    const symbol = randOf(['wavy', ...EXCEPTION_KANJI] as SymbolId[])
-    const where =
-      symbol === 'wavy'
-        ? 'の下に波線（熟語の印）を書く'
-        : `の近くに「${symbol}」と書いて○で囲む`
-    return { symbol, target: { from: i, to: i }, description: `${word(i)}${where}` }
+    return {
+      symbol: 'wavy',
+      target: { from: i, to: i },
+      description: `${word(i)}の下に波線（熟語の印）を書く`,
+    }
   }
   if (mode === 'c-pos') {
     const symbol = randOf([...POS_LETTERS]) as SymbolId

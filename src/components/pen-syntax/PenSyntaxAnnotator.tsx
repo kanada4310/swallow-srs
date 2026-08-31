@@ -36,8 +36,12 @@ import type {
 } from '@/lib/pen-syntax/types'
 import {
   applySymbol,
+  canMarkKariShin,
   emptyPenAnnotation,
+  pruneExceptionMarks,
   roleCellParts,
+  TOGGLE_EXCEPTIONS,
+  toggleExceptionMark,
   type PenAnnotation,
   type PenExtraMark,
 } from '@/lib/pen-syntax/apply'
@@ -522,7 +526,27 @@ export function PenSyntaxAnnotator({
     else {
       onOrderEvent?.({ kind: 'apply', key, symbol: value, from: index, to: index, at: performance.now(), via: 'list' })
     }
-    emitAnnotation({ ...a, answer: next })
+    // 仮・真は S / O に付ける印なので、働きが S / O でなくなったら一緒に外す
+    const extras = kind === 'role' ? pruneExceptionMarks(a.extras, index, value) : a.extras
+    emitAnnotation({ ...a, answer: next, extras })
+  }
+
+  /**
+   * 例外の印（仮・真・強）の付け外し（タッチ選択式・2026-08-31）。
+   * ○囲みの手書き認識は廃止し、働きのマスをタッチして付ける。
+   * データは extras（採点対象外）＝ペン時代と同じ入れ物で、入力経路によらず同じ扱い。
+   */
+  const toggleMark = (index: number, label: (typeof TOGGLE_EXCEPTIONS)[number]) => {
+    const a = annotationRef.current
+    const had = a.extras.some(
+      (x) => x.kind === 'exception' && x.label === label && x.from === index && x.to === index,
+    )
+    const key = `extra:${label}:${index}-${index}`
+    if (had) onOrderEvent?.({ kind: 'remove', key, at: performance.now() })
+    else {
+      onOrderEvent?.({ kind: 'apply', key, symbol: label, from: index, to: index, at: performance.now(), via: 'list' })
+    }
+    emitAnnotation(toggleExceptionMark(a, label, index))
   }
 
   /* ---------- 表示の下ごしらえ ---------- */
@@ -949,6 +973,52 @@ export function PenSyntaxAnnotator({
                 消す
               </button>
             </div>
+            {picker.kind === 'role' && (
+              // 例外の印はタッチで付け外しする（○囲みの手書き認識は 2026-08-31 に廃止）。
+              // 仮・真は判定済みの S / O にだけ付けられる（確定仕様1）
+              <div className="mt-3 border-t border-gray-200 pt-2">
+                <p className="mb-1.5 text-xs font-bold text-ink-3">
+                  例外の印（タッチで付け外し）
+                  {!canMarkKariShin(ann.answer.role[picker.index]) && (
+                    <span className="ml-1 font-normal">— 仮・真は S / O を書いた単語にだけ付けられます</span>
+                  )}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {TOGGLE_EXCEPTIONS.map((k) => {
+                    const on = ann.extras.some(
+                      (x) =>
+                        x.kind === 'exception' &&
+                        x.label === k &&
+                        x.from === picker.index &&
+                        x.to === picker.index,
+                    )
+                    const allowed = k === '強' || canMarkKariShin(ann.answer.role[picker.index])
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        disabled={!allowed}
+                        {...penTap(() => {
+                          if (!allowed) return
+                          toggleMark(picker.index, k)
+                          setPicker(null)
+                        })}
+                        className={`rounded-xl border px-3 py-2 text-sm font-bold ${
+                          on
+                            ? 'border-sora bg-sora text-white'
+                            : allowed
+                              ? 'border-sora bg-white text-sora-dark'
+                              : 'border-gray-200 bg-paper text-gray-300'
+                        }`}
+                      >
+                        ○{k}
+                        {on ? ' ✓' : ''}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
