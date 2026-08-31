@@ -14,12 +14,13 @@
  * - 台帳から外れた形（?・ダッシュ・Ø・単語囲みの○）: 反映せず、書き方の案内を返す
  */
 
-import type { SpanType, StudentSpan, SyntaxAnswer } from '@/lib/reading/syntax'
+import { isPunct, type SpanType, type StudentSpan, type SyntaxAnswer } from '@/lib/reading/syntax'
 import type { ExceptionKanji, Lane, PenStroke, PosLetter, RoleLetter, SymbolId, TokenBox } from './types'
 import { EXCEPTION_KANJI, POS_LETTERS, ROLE_LETTERS } from './types'
 import { deprecatedGuidance } from './ledger'
 import { strokesBBox } from './geometry'
 import {
+  groupLines,
   laneOf,
   snapCloseBracket,
   snapHorizontalRange,
@@ -278,12 +279,94 @@ export function pruneExceptionMarks(
   )
 }
 
+/** applySymbol の追加情報（無くても動く。あると付け替え・連結が効く） */
+export interface ApplyOptions {
+  /** 単語の文字列（句読点の見分けに使う。省略時は句読点を考慮しない） */
+  tokens?: string[]
+  /** 文全体（全行ぶん）の単語箱。行またぎ下線の連結に使う（省略時は連結しない） */
+  allBoxes?: TokenBox[]
+}
+
+/**
+ * 働きの記号の付け先。吸着した単語が既存の下線の塊の中なら、
+ * **塊の最後の単語**（末尾の句読点は除く）に付け替える（2026-08-31 確定仕様2。
+ * 下線の塊＝1つのまとまりなので、どの単語の下に書いても働きは塊に付く）。
+ * 塊が複数重なるときは、最後の単語がいちばん後ろのものを塊とみなす。
+ */
+export function roleTargetIndex(
+  state: PenAnnotation,
+  index: number,
+  tokens?: string[],
+): number {
+  const uls = state.answer.spans.filter((s) => s.type === 'ul' && s.from <= index && index <= s.to)
+  if (uls.length === 0) return index
+  const span = uls.reduce((a, b) => (b.to > a.to ? b : a))
+  let to = span.to
+  while (to > span.from && tokens && isPunct(tokens[to] ?? '')) to--
+  return to
+}
+
+/**
+ * 行をまたぐ下線の連結（2026-08-31 確定仕様4）。
+ *
+ * 次の3条件がそろったときだけ、書いたばかりの下線を前の行の下線とひとつながりの
+ * 塊にする（別々の塊をうっかりつなげないための条件・塾長確定）:
+ * 1. 前の行の末尾まで下線が達している（末尾の句読点は無視）
+ * 2. その下線にまだ働きが書かれていない（塊の最後の単語の働きの欄が空）
+ * 3. 新しい下線がその行の行頭から始まっている（行頭の句読点は無視）
+ *
+ * 行末・行頭の許容誤差は**語単位**（句読点のみ無視）。ペンの横位置のぶれは
+ * 吸着（snapHorizontalRange の35%重なり）が先に吸収しているので、
+ * 画素単位のしきい値は持たない。合わなければ従来どおり別の下線になる。
+ * 連結の判定は書いた順（前の行→次の行）のみ（逆順の書き方は連結しない）。
+ */
+function mergeWithPreviousLineUnderline(
+  state: PenAnnotation,
+  range: { from: number; to: number },
+  opts: ApplyOptions,
+): ApplyOutcome | null {
+  const { allBoxes, tokens } = opts
+  if (!allBoxes || allBoxes.length === 0) return null
+  const lines = groupLines(allBoxes)
+  const li = lines.findIndex((l) => l.boxes.some((b) => b.index === range.from))
+  if (li <= 0) return null
+  const cur = lines[li]
+  const prev = lines[li - 1]
+  const isP = (i: number) => (tokens ? isPunct(tokens[i] ?? '') : false)
+  // 条件3: 行頭から始まっている
+  if (cur.boxes.some((b) => b.index < range.from && !isP(b.index))) return null
+  // 条件1: 前の行の末尾まで達している下線
+  const prevIdx = new Set(prev.boxes.map((b) => b.index))
+  const candidates = state.answer.spans
+    .map((s, i) => ({ s, i }))
+    .filter(
+      ({ s }) =>
+        s.type === 'ul' &&
+        prevIdx.has(s.to) &&
+        prev.boxes.every((b) => b.index <= s.to || isP(b.index)),
+    )
+  if (candidates.length === 0) return null
+  const target = candidates.reduce((a, b) => (b.s.to > a.s.to ? b : a))
+  // 条件2: その下線にまだ働きが書かれていない
+  let roleAt = target.s.to
+  while (roleAt > target.s.from && isP(roleAt)) roleAt--
+  if (state.answer.role[roleAt] != null) return null
+  const spans = state.answer.spans.map((s, i) => (i === target.i ? { ...s, to: range.to } : s))
+  return {
+    next: { ...state, answer: { ...state.answer, spans } },
+    applied: true,
+    message: '前の行の下線とつなげて、ひとつながりの塊にしました',
+    target: { from: target.s.from, to: range.to },
+  }
+}
+
 /** 判別済みの記号1つを解答へ反映する */
 export function applySymbol(
   state: PenAnnotation,
   symbol: SymbolId,
   strokes: PenStroke[],
   boxes: TokenBox[],
+  opts: ApplyOptions = {},
 ): ApplyOutcome {
   const lane: Lane = laneOf(strokes, boxes)
 
@@ -351,12 +434,14 @@ export function applySymbol(
       }
     }
     const role = [...state.answer.role]
+    // 下線の塊の中に書いた働きは、塊の最後の単語に付け替える（2026-08-31 確定仕様2）
+    const at = roleTargetIndex(state, snap.index, opts.tokens)
     // 塾長の実書き込みの表記のまま保存する（Po・▷・P を言い換えない）
-    role[snap.index] = symbol
+    role[at] = symbol
     return {
       next: { ...state, answer: { ...state.answer, role } },
       applied: true,
-      target: { from: snap.index, to: snap.index },
+      target: { from: at, to: at },
     }
   }
 
@@ -429,6 +514,9 @@ export function applySymbol(
         message: 'ダッシュ（′）は書かなくてよくなりました。節・句の深さは括弧から自動で色分けされます',
       }
     }
+    // 行またぎの連結（3条件がそろったときだけ・確定仕様4）
+    const merged = mergeWithPreviousLineUnderline(state, range, opts)
+    if (merged) return merged
     const span = { from: range.from, to: range.to, type: 'ul' as SpanType }
     const exists = state.answer.spans.some(
       (s) => s.from === span.from && s.to === span.to && s.type === span.type,
@@ -459,11 +547,13 @@ export function applySymbol(
     const snap = snapNearestToken(strokes, boxes)
     if (!snap) return { next: state, applied: false, message: '吸着先の単語が見つかりません' }
     const role = [...state.answer.role]
-    role[snap.index] = '▷'
+    // 働きの記号なので、下線の塊の中なら塊の最後の単語に付く（確定仕様2）
+    const at = roleTargetIndex(state, snap.index, opts.tokens)
+    role[at] = '▷'
     return {
       next: { ...state, answer: { ...state.answer, role } },
       applied: true,
-      target: { from: snap.index, to: snap.index },
+      target: { from: at, to: at },
     }
   }
 

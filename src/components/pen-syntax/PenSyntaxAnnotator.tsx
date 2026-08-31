@@ -277,7 +277,11 @@ export function PenSyntaxAnnotator({
       candidates: SymbolCandidate[],
     ) => {
       historyRef.current = [...historyRef.current.slice(-29), annotationRef.current]
-      const out = applySymbol(annotationRef.current, symbol, strokes, lineBoxes)
+      // tokens=句読点の見分け（働きの付け先）／allBoxes=全行の単語箱（行またぎ下線の連結）
+      const out = applySymbol(annotationRef.current, symbol, strokes, lineBoxes, {
+        tokens,
+        allBoxes: boxes,
+      })
       if (out.message) showToast(out.message)
       if (out.applied) emitAnnotation(out.next)
       else historyRef.current.pop()
@@ -298,7 +302,7 @@ export function PenSyntaxAnnotator({
       }
       onEvent?.({ kind, symbol, candidates, lane, target: out.target, applied: out.applied })
     },
-    [emitAnnotation, onEvent, onOrderEvent, showToast],
+    [boxes, emitAnnotation, onEvent, onOrderEvent, showToast, tokens],
   )
 
   /**

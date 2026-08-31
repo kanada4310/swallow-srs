@@ -35,7 +35,13 @@ import { classifyExceptionMark, recognizeGroup } from './recognize'
 import { EXCEPTION_KANJI } from './types'
 import { classifyPosLetter, classifyRoleLetter } from './letters'
 import type { PenStroke, TokenBox } from './types'
-import { emptyAnswer, gradeSyntax, SYNTAX_PROBLEMS, type SyntaxProblem } from '@/lib/reading/syntax'
+import {
+  emptyAnswer,
+  gradeSyntax,
+  SYNTAX_PROBLEMS,
+  type StudentSpan,
+  type SyntaxProblem,
+} from '@/lib/reading/syntax'
 
 function line(...pts: Array<[number, number]>): PenStroke {
   return pts.map(([x, y]) => ({ x, y }))
@@ -522,6 +528,31 @@ describe('applySymbol（解答への反映）', () => {
     expect(r2.next.pendingOpens).toEqual([{ type: 'n', index: 4, role: 'S' }])
   })
 
+  it('下線の塊の中のどの単語の下に書いても、働きは塊の最後の単語に付く（2026-08-31）', () => {
+    // My brother に下線（塊）。S を My（1語目）の下に書く
+    let state = init()
+    state = { ...state, answer: { ...state.answer, spans: [{ from: 0, to: 1, type: 'ul' as const }] } }
+    const r = applySymbol(state, 'S', [line([25, 80], [45, 95])], BOXES, { tokens: problem.tokens })
+    expect(r.applied).toBe(true)
+    expect(r.next.answer.role[1]).toBe('S') // 塊の最後の単語（brother）
+    expect(r.next.answer.role[0]).toBeNull()
+    expect(r.target).toEqual({ from: 1, to: 1 })
+  })
+
+  it('塊の末尾が句読点なら、その手前の単語に働きが付く', () => {
+    // very well .（5〜7語目）に下線。O を very（5語目）の下に書く
+    let state = init()
+    state = { ...state, answer: { ...state.answer, spans: [{ from: 4, to: 6, type: 'ul' as const }] } }
+    const r = applySymbol(state, 'O', [line([295, 80], [320, 95])], BOXES, { tokens: problem.tokens })
+    expect(r.next.answer.role[5]).toBe('O') // 「.」を飛ばして well に付く
+    expect(r.next.answer.role[6]).toBeNull()
+  })
+
+  it('下線の塊が無い単語では、従来どおり書いた単語に働きが付く', () => {
+    const r = applySymbol(init(), 'S', [line([25, 80], [45, 95])], BOXES, { tokens: problem.tokens })
+    expect(r.next.answer.role[0]).toBe('S')
+  })
+
   it('台帳から外れた形（単語囲みの○・?・ダッシュ・Ø）は反映せず案内を返す', () => {
     for (const symbol of ['circle', 'question', 'tick', 'null-sign', 'slash'] as const) {
       const r = applySymbol(init(), symbol, [arc(105, 55, 35, -90, 266)], BOXES)
@@ -536,6 +567,94 @@ describe('applySymbol（解答への反映）', () => {
     const r = applySymbol(init(), 'hline', [line([85, 20], [120, 21])], BOXES)
     expect(r.applied).toBe(false)
     expect(r.message).toContain('自動で色分け')
+  })
+})
+
+describe('行をまたぐ下線の連結（2026-08-31 確定仕様4）', () => {
+  // 折り返した2行の文。1行目=0〜2語目／2行目=3〜5語目
+  const LINE1: TokenBox[] = [
+    { index: 0, left: 10, right: 60, top: 40, bottom: 70 },
+    { index: 1, left: 70, right: 120, top: 40, bottom: 70 },
+    { index: 2, left: 130, right: 180, top: 40, bottom: 70 },
+  ]
+  const LINE2: TokenBox[] = [
+    { index: 3, left: 10, right: 60, top: 140, bottom: 170 },
+    { index: 4, left: 70, right: 120, top: 140, bottom: 170 },
+    { index: 5, left: 130, right: 180, top: 140, bottom: 170 },
+  ]
+  const ALL = [...LINE1, ...LINE2]
+  const TOKENS6 = ['The', 'tall', 'kind', 'young', 'teacher', '.']
+  const problem = SYNTAX_PROBLEMS[0]
+  const init = (spans: StudentSpan[], roles: Array<[number, string]> = []) => {
+    const base = emptyPenAnnotation(emptyAnswer(problem))
+    const role = [...base.answer.role]
+    for (const [i, v] of roles) role[i] = v
+    return { ...base, answer: { ...base.answer, spans, role } }
+  }
+  /** 2行目の行頭（3語目）から4語目までの下線 */
+  const strokeLine2Head = [line([12, 175], [118, 176])]
+
+  it('前の行の末尾まで達した働き未記入の下線があり、次の行の行頭から書けば連結する', () => {
+    const state = init([{ from: 0, to: 2, type: 'ul' }])
+    const r = applySymbol(state, 'hline', strokeLine2Head, LINE2, {
+      tokens: TOKENS6,
+      allBoxes: ALL,
+    })
+    expect(r.applied).toBe(true)
+    expect(r.next.answer.spans).toEqual([{ from: 0, to: 4, type: 'ul' }])
+    expect(r.message).toContain('つなげて')
+    expect(r.target).toEqual({ from: 0, to: 4 })
+  })
+
+  it('前の行の下線に働きが書いてあれば連結しない（別々の塊のまま）', () => {
+    const state = init([{ from: 0, to: 2, type: 'ul' }], [[2, 'S']])
+    const r = applySymbol(state, 'hline', strokeLine2Head, LINE2, {
+      tokens: TOKENS6,
+      allBoxes: ALL,
+    })
+    expect(r.next.answer.spans).toEqual([
+      { from: 0, to: 2, type: 'ul' },
+      { from: 3, to: 4, type: 'ul' },
+    ])
+  })
+
+  it('前の行の下線が行末に達していなければ連結しない', () => {
+    const state = init([{ from: 0, to: 1, type: 'ul' }])
+    const r = applySymbol(state, 'hline', strokeLine2Head, LINE2, {
+      tokens: TOKENS6,
+      allBoxes: ALL,
+    })
+    expect(r.next.answer.spans).toHaveLength(2)
+  })
+
+  it('新しい下線が行頭から始まっていなければ連結しない', () => {
+    const state = init([{ from: 0, to: 2, type: 'ul' }])
+    // 2行目の2語目（4語目）から引いた下線
+    const r = applySymbol(state, 'hline', [line([72, 175], [118, 176])], LINE2, {
+      tokens: TOKENS6,
+      allBoxes: ALL,
+    })
+    expect(r.next.answer.spans).toEqual([
+      { from: 0, to: 2, type: 'ul' },
+      { from: 4, to: 4, type: 'ul' },
+    ])
+  })
+
+  it('行末・行頭の句読点は無視して判定する（許容誤差は語単位）', () => {
+    // 前の行の末尾（2語目）が読点なら、その手前まで達した下線でも「行末まで」とみなす
+    const withComma = ['The', 'tall', ',', 'young', 'teacher', '.']
+    const state = init([{ from: 0, to: 1, type: 'ul' }])
+    const r = applySymbol(state, 'hline', strokeLine2Head, LINE2, {
+      tokens: withComma,
+      allBoxes: ALL,
+    })
+    expect(r.next.answer.spans).toEqual([{ from: 0, to: 4, type: 'ul' }])
+  })
+
+  it('全行の単語箱が無ければ連結しない（従来どおり別の下線になる）', () => {
+    const state = init([{ from: 0, to: 2, type: 'ul' }])
+    const r = applySymbol(state, 'hline', strokeLine2Head, LINE2, { tokens: TOKENS6 })
+    expect(r.next.answer.spans).toHaveLength(2)
   })
 })
 
