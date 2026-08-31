@@ -23,11 +23,18 @@ import {
   underlineSegments,
 } from './snap'
 import { shouldGroupStrokes } from './grouping'
-import { applySymbol, emptyPenAnnotation, roleCellParts } from './apply'
+import {
+  applySymbol,
+  canMarkKariShin,
+  emptyPenAnnotation,
+  pruneExceptionMarks,
+  roleCellParts,
+  toggleExceptionMark,
+} from './apply'
 import { classifyExceptionMark } from './recognize'
 import { classifyPosLetter, classifyRoleLetter } from './letters'
 import type { PenStroke, TokenBox } from './types'
-import { emptyAnswer, SYNTAX_PROBLEMS } from '@/lib/reading/syntax'
+import { emptyAnswer, gradeSyntax, SYNTAX_PROBLEMS, type SyntaxProblem } from '@/lib/reading/syntax'
 
 function line(...pts: Array<[number, number]>): PenStroke {
   return pts.map(([x, y]) => ({ x, y }))
@@ -388,10 +395,19 @@ describe('applySymbol（解答への反映）', () => {
     expect(wavy.next.answer.spans).toEqual([])
   })
 
-  it('○で囲んだ漢字の例外マーク（仮・真など）は extras として近くの単語に付く', () => {
+  it('例外の印のうち仮・真・強は extras（採点対象外）として近くの単語に付く', () => {
     const r = applySymbol(init(), '仮', [arc(105, 20, 16, -90, 266), line([100, 14], [110, 26])], BOXES)
     expect(r.applied).toBe(true)
     expect(r.next.extras).toEqual([{ kind: 'exception', label: '仮', from: 1, to: 1 }])
+    expect(r.next.answer.role[1]).toBeNull()
+  })
+
+  it('例外の印のうち「同」は働きの値として answer.role に入る（採点される・一本化）', () => {
+    // 入力経路（手書き・タッチ）によらず、同は role・仮真強は extras に入る（2026-08-31）
+    const r = applySymbol(init(), '同', [line([85, 80], [115, 95])], BOXES)
+    expect(r.applied).toBe(true)
+    expect(r.next.answer.role[1]).toBe('同')
+    expect(r.next.extras).toEqual([])
   })
 
   it('働きの＋（等位接続詞）はそのまま働きに入る', () => {
@@ -536,11 +552,18 @@ describe('roleCellParts（○で囲んだ例外マークを働きの欄に置く
     expect(cellOf(a, 1).value).toBe('S')
   })
 
-  it('「強」「同」は単独で1マスを占める（働きが無くても表示される）', () => {
+  it('「強」は単独の印として1マスに出る（働きが無くても表示される）', () => {
+    const kyo = applySymbol(init(), '強', kari, BOXES).next
+    expect(cellOf(kyo, 1).text).toBe('強')
+    expect(cellOf(kyo, 1).alone).toEqual(['強'])
+    expect(cellOf(kyo, 1).empty).toBe(false)
+  })
+
+  it('「同」は働きの値としてマスに出る（extras ではなく role）', () => {
     const dou = applySymbol(init(), '同', kari, BOXES).next
     expect(cellOf(dou, 1).text).toBe('同')
-    expect(cellOf(dou, 1).alone).toEqual(['同'])
-    expect(cellOf(dou, 1).empty).toBe(false)
+    expect(cellOf(dou, 1).value).toBe('同')
+    expect(cellOf(dou, 1).alone).toEqual([])
   })
 
   it('働きも例外マークも無ければ空のマスになる', () => {
@@ -550,10 +573,91 @@ describe('roleCellParts（○で囲んだ例外マークを働きの欄に置く
 
   it('並びは記号の台帳の順で決まる（複数付いても書いた順序に左右されない）', () => {
     const marks = [
-      { kind: 'exception' as const, label: '同' as const, from: 1, to: 1 },
+      { kind: 'exception' as const, label: '強' as const, from: 1, to: 1 },
       { kind: 'exception' as const, label: '仮' as const, from: 1, to: 1 },
     ]
-    expect(roleCellParts('S', marks).text).toBe('仮S同')
-    expect(roleCellParts('S', [...marks].reverse()).text).toBe('仮S同')
+    expect(roleCellParts('S', marks).text).toBe('仮S強')
+    expect(roleCellParts('S', [...marks].reverse()).text).toBe('仮S強')
+  })
+})
+
+describe('例外の印の一本化と採点の整合（2026-08-31）', () => {
+  const problem = SYNTAX_PROBLEMS[0] // 正解表に仮・真・同・強の定義は無い
+  const init = () => emptyPenAnnotation(emptyAnswer(problem))
+
+  it('仮・強の印（extras）を付けても採点は1点も変わらない', () => {
+    // 正解どおりの解答（働き: brother=S / plays=V / tennis=O ほか）
+    const base = emptyAnswer(problem)
+    base.role[1] = 'S'
+    base.role[2] = 'V'
+    base.role[3] = 'O'
+    const before = gradeSyntax(problem, base)
+    // 印は extras に入り SyntaxAnswer には含まれないため、採点の入力が変わらない
+    let state = { ...init(), answer: base }
+    state = toggleExceptionMark(state, '仮', 1)
+    state = toggleExceptionMark(state, '強', 2)
+    const after = gradeSyntax(problem, state.answer)
+    expect(after.got).toBe(before.got)
+    expect(after.total).toBe(before.total)
+    expect(after.roleMark[1]?.mark).toBe('ok')
+  })
+
+  it('正解表に定義の無い単語へ「同」を書いても減点されない（採点対象外のマス）', () => {
+    const a = emptyAnswer(problem)
+    a.role[1] = 'S'
+    a.role[2] = 'V'
+    a.role[3] = 'O'
+    const before = gradeSyntax(problem, a)
+    a.role[4] = '同' // very には働きの正解定義が無い
+    const after = gradeSyntax(problem, a)
+    expect(after.got).toBe(before.got)
+    expect(after.total).toBe(before.total)
+  })
+
+  it('正解表に「同格」がある単語では、働き「同」が正解になる（roleBase の別名）', () => {
+    // 模範分析集の転記には「同格」の2字が残っている（第7講の実データと同じ形）
+    const p: SyntaxProblem = {
+      id: 'apposition',
+      title: 'test',
+      source: 'test',
+      tokens: ['Graham', ',', 'inventor', '.'],
+      key: { pos: {}, role: { 2: { ok: ['同格'] } }, spans: [], notes: [] },
+    }
+    const a = { pos: [null, null, null, null], role: [null, null, '同', null], spans: [] }
+    const g = gradeSyntax(p, a)
+    expect(g.roleMark[2]?.mark).toBe('ok')
+  })
+
+  it('toggleExceptionMark: 付け外しがトグルで、仮と真は同じ単語に同時に付かない', () => {
+    let state = init()
+    state = toggleExceptionMark(state, '仮', 1)
+    expect(state.extras).toEqual([{ kind: 'exception', label: '仮', from: 1, to: 1 }])
+    // 真を付けると仮が外れる（仮主語と真主語は別の単語）
+    state = toggleExceptionMark(state, '真', 1)
+    expect(state.extras).toEqual([{ kind: 'exception', label: '真', from: 1, to: 1 }])
+    // もう一度押すと外れる
+    state = toggleExceptionMark(state, '真', 1)
+    expect(state.extras).toEqual([])
+    // 強は仮・真と共存できる
+    state = toggleExceptionMark(state, '仮', 1)
+    state = toggleExceptionMark(state, '強', 1)
+    expect(state.extras).toHaveLength(2)
+  })
+
+  it('pruneExceptionMarks: 働きが S / O でなくなったら仮・真は外れる（強は残る）', () => {
+    const marks = [
+      { kind: 'exception' as const, label: '仮' as const, from: 1, to: 1 },
+      { kind: 'exception' as const, label: '強' as const, from: 1, to: 1 },
+    ]
+    expect(canMarkKariShin('S')).toBe(true)
+    expect(canMarkKariShin('O')).toBe(true)
+    expect(canMarkKariShin('V')).toBe(false)
+    expect(canMarkKariShin(null)).toBe(false)
+    // S のままなら何も外れない
+    expect(pruneExceptionMarks(marks, 1, 'S')).toEqual(marks)
+    // V に変えると仮だけ外れる
+    expect(pruneExceptionMarks(marks, 1, 'V')).toEqual([marks[1]])
+    // 別の単語の印には触れない
+    expect(pruneExceptionMarks(marks, 2, null)).toEqual(marks)
   })
 })

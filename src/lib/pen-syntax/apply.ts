@@ -4,9 +4,13 @@
  * - 括弧: 開き→閉じの2画でまとまり（span）になる。開きだけの間は pendingOpens に保持
  * - 下線: 引いた範囲がそのまま ul の span になる
  * - 文字: 上の行=品詞、下の行=働きとして該当単語のマスに入る
- * - 波線（熟語の印）・○で囲んだ漢字（例外マーク）: 採点対象のデータ構造に対応が
- *   無いため extras として保持（画面には表示する。採点には数えない）。
- *   例外マークの表示位置は働きの欄（roleCellParts が1マスぶんに組み立てる）
+ * - 波線（熟語の印）と例外の印のうち仮・真・強: 正解表に定義が無い（模範分析集の
+ *   取り込みでも全て「落とした印」）ため extras として保持（画面には表示する。
+ *   採点には数えない）。表示位置は働きの欄（roleCellParts が1マスぶんに組み立てる）
+ * - 例外の印のうち「同」（同格）: 働きの値として answer.role に入る＝**採点される**
+ *   （正解表に働き「同格」の定義が実在し、roleBase の別名で「同」と同値。
+ *   2026-08-31 に入力経路による扱いの割れを一本化した。仮・真・強を extras に
+ *   寄せるのは、強が V などの働きと同じ単語に共存するため働きの欄を奪えないから）
  * - 台帳から外れた形（?・ダッシュ・Ø・単語囲みの○）: 反映せず、書き方の案内を返す
  */
 
@@ -29,8 +33,9 @@ export interface PendingOpen {
   /**
    * 開始カッコの真下に**閉じる前から**書けるまとまり全体の働き（2026-08-27）。
    * 閉じ括弧が来たときに span へ引き継ぐので、先に書いた働きは失われない。
+   * 働きの文字のほか「同」（同格のまとまり）も入る（2026-08-31）。
    */
-  role?: RoleLetter
+  role?: string
 }
 
 export interface PenExtraMark {
@@ -217,6 +222,62 @@ export function roleCellParts(role: string | null, extras: PenExtraMark[]): Role
   return { before, alone, value: role, text, empty: text === '' }
 }
 
+/* ---------- 例外の印の選択式の付け外し（2026-08-31・○囲みの手書き認識の廃止） ---------- */
+
+/**
+ * タッチで付け外しできる例外の印。「同」は働きの値（answer.role）なのでここに無い。
+ * 入力経路によらずこの3つは extras（採点対象外）、「同」は role（採点対象）に入る。
+ */
+export const TOGGLE_EXCEPTIONS: readonly ExceptionKanji[] = ['仮', '真', '強']
+
+/** 仮・真を付けられる働きか（判定済みの S / O にだけ後から付ける・2026-08-31 確定仕様） */
+export function canMarkKariShin(role: string | null): boolean {
+  return role === 'S' || role === 'O'
+}
+
+/**
+ * 例外の印（仮・真・強）をその単語に付ける・外す（トグル）。
+ * 仮と真は同じ単語に同時に付かない（仮主語と真主語は別の単語）ので、
+ * 仮を付けると真が外れる（逆も同じ）。
+ */
+export function toggleExceptionMark(
+  state: PenAnnotation,
+  label: ExceptionKanji,
+  index: number,
+): PenAnnotation {
+  const at = (x: PenExtraMark) => x.kind === 'exception' && x.from === index && x.to === index
+  const had = state.extras.some((x) => at(x) && x.label === label)
+  const rival = COMBINING_EXCEPTIONS.includes(label)
+    ? COMBINING_EXCEPTIONS.find((k) => k !== label)
+    : undefined
+  const extras = state.extras.filter(
+    (x) => !(at(x) && (x.label === label || (!had && x.label === rival))),
+  )
+  if (!had) extras.push({ kind: 'exception', label, from: index, to: index })
+  return { ...state, extras }
+}
+
+/**
+ * 働きの値が変わったあとの例外の印の整合。仮・真は S / O に付ける印なので、
+ * その単語の働きが S / O でなくなったら外す（強はどの働きとも共存できるので残す）。
+ */
+export function pruneExceptionMarks(
+  extras: PenExtraMark[],
+  index: number,
+  role: string | null,
+): PenExtraMark[] {
+  if (canMarkKariShin(role)) return extras
+  return extras.filter(
+    (x) =>
+      !(
+        x.kind === 'exception' &&
+        x.from === index &&
+        x.to === index &&
+        COMBINING_EXCEPTIONS.includes(x.label as ExceptionKanji)
+      ),
+  )
+}
+
 /** 判別済みの記号1つを解答へ反映する */
 export function applySymbol(
   state: PenAnnotation,
@@ -232,8 +293,9 @@ export function applySymbol(
     return { next: state, applied: false, message: guidance }
   }
 
-  // ○で囲んだ漢字の例外マーク（仮・真・強・同）。表示は働きの欄（roleCellParts）
-  if (isExceptionKanji(symbol)) {
+  // 例外の印のうち仮・真・強（採点対象外）。表示は働きの欄（roleCellParts）。
+  // 「同」はここを通らない（働きの値として下の文字の枝で answer.role に入る＝採点される）
+  if (isExceptionKanji(symbol) && symbol !== '同') {
     const snap = snapNearestToken(strokes, boxes)
     if (!snap) return { next: state, applied: false, message: '吸着先の単語が見つかりません' }
     return {
@@ -246,8 +308,8 @@ export function applySymbol(
     }
   }
 
-  // 文字（群C）
-  if (isPosLetter(symbol) || isRoleLetter(symbol)) {
+  // 文字（群C）＋「同」（同格＝働きの値）
+  if (isPosLetter(symbol) || isRoleLetter(symbol) || symbol === '同') {
     const snap = snapNearestToken(strokes, boxes)
     if (!snap) return { next: state, applied: false, message: '吸着先の単語が見つかりません' }
     if (isPosLetter(symbol)) {
