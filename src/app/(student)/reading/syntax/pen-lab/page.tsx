@@ -362,23 +362,53 @@ export default function PenLabPage() {
   const dismissedByStrokeRef = useRef(false)
 
   /**
-   * 書き続けたら候補は黙って引っ込める（2026-08-27・書き込み部品と同じ扱い）。
+   * 書き始めたら候補の枠を引っ込め、線の行方が分かるまで取り置く
+   * （2026-08-31・書き込み部品と同じ扱い）。後始末は settleStash:
+   * - 続けて書いた → **最有力候補で自動確定**し、救済（候補）として数える
+   * - 枠の外の軽いタップ → 閉じるだけ（数えない・お題は据え置き）
    * 候補を押す操作とは当たり判定で分かれる（候補の枠はキャンバスより上に重ねてある）。
-   * 計測の数字を歪めないよう、**この線は数えない**（書いたつもりの記号を
-   * 答えてもらっていないので、拾えた／拾えなかったの判定材料がない）。お題は据え置き、
-   * 同じお題をもう一度書き直せる。
    */
-  const dismissChips = useCallback((): boolean => {
+  const pendingChipRef = useRef<ChipState | null>(null)
+  const stashChips = useCallback((): boolean => {
     if (!chipsRef.current) return false
+    pendingChipRef.current = chipsRef.current
     setChips(null)
-    inputLog.push({
-      kind: 'note',
-      at: performance.now(),
-      text: '候補を出したまま書き始めたので候補を閉じた（この線は破棄・計測には数えない）',
-    })
-    setLastResult('候補を出したまま書き始めたので、前の線は捨てました（数えていません）')
     return true
-  }, [inputLog, setChips])
+  }, [setChips])
+
+  const settleStash = useCallback(
+    (how: 'auto' | 'discard') => {
+      const c = pendingChipRef.current
+      if (!c) return
+      pendingChipRef.current = null
+      const best = how === 'auto' ? c.candidates[0] : undefined
+      if (best) {
+        inputLog.push({
+          kind: 'note',
+          at: performance.now(),
+          text: `候補が未確定のまま次を書き始めたので、最有力候補「${symbolLabel(best.symbol)}」で自動確定`,
+        })
+        if (mode === 'free') {
+          setLastResult(`自動確定: ${symbolLabel(best.symbol)}（候補の最有力）`)
+        } else if (task) {
+          // 救済（候補）として数える。お題は据え置き＝いま書いている線は
+          // 同じお題の書き直しとして従来どおり判定される
+          record(task.symbol, best.symbol, 'candidate', c.strokes, c.boxes, task.target)
+        }
+        return
+      }
+      inputLog.push({
+        kind: 'note',
+        at: performance.now(),
+        text:
+          how === 'auto'
+            ? '候補が1つも無いまま次を書き始めたので、前の線は破棄（計測には数えない）'
+            : '候補の枠の外をタップしたので候補を閉じた（前の線は破棄・計測には数えない）',
+      })
+      setLastResult('前の線は捨てました（数えていません）')
+    },
+    [inputLog, mode, record, task],
+  )
 
   const resolveChip = (symbol: SymbolId | null) => {
     if (!chips) return
@@ -416,8 +446,8 @@ export default function PenLabPage() {
     log: inputLog,
     onDecision: (d) => setPalm(d.next),
     onStrokeStart: (p) => {
-      // 書き始めたら候補は引っ込める（この線は失わない）
-      dismissedByStrokeRef.current = dismissChips()
+      // 書き始めたら候補は引っ込めて取り置く（この線は失わない）
+      dismissedByStrokeRef.current = stashChips()
       // 触れた瞬間に境界（段・単語・行）をまたいでいれば、待たずに前の記号を確定させる
       grouping.noteStrokeStart(p)
     },
@@ -427,9 +457,12 @@ export default function PenLabPage() {
       // 候補の枠の外を軽くタップしただけなら「候補を閉じる」操作として線にしない
       const duration = (stroke[stroke.length - 1].t ?? 0) - (stroke[0].t ?? 0)
       if (dismissed && pathLength(stroke) < 7 && duration < 400) {
+        settleStash('discard')
         redraw()
         return
       }
+      // 候補が未確定のまま続けて書いた: 前の字を最有力候補で自動確定（救済として数える）
+      settleStash('auto')
       if (stroke.length < 2) stroke.push({ ...stroke[0], x: stroke[0].x + 0.5 })
       grouping.addStroke(stroke)
       redraw()

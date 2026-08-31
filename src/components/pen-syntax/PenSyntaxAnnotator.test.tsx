@@ -522,6 +522,41 @@ describe('PenSyntaxAnnotator 候補が出ている最中の書き始め（2026-0
     expect(commits[commits.length - 1]).toMatchObject({ strokes: 1 })
   })
 
+  it('候補が未確定のまま次の字を書き始めたら、前の字は最有力候補で自動確定する（2026-08-31）', () => {
+    // 従来は破棄され、書いた判定が黙って失われた（確定仕様3）
+    vi.useFakeTimers()
+    const log = createPenInputLog()
+    const changes: SyntaxAnswer[] = []
+    const { container } = render(
+      <PenSyntaxAnnotator
+        tokens={WORDS2}
+        answer={emptyAnswer(WORDS2.length)}
+        onChange={(next) => changes.push(next)}
+        inputLog={log}
+      />,
+    )
+    const canvas = container.querySelector('canvas') as HTMLCanvasElement
+    scribbleAbove(canvas, 0, 1)
+    act(() => {
+      vi.advanceTimersByTime(GROUP_WAIT_MS + 50)
+    })
+    expect(chipsShown(container)).toBe(true)
+    // 候補の枠には最有力候補のボタンが出ている（＝候補が1つ以上ある）
+    const panel = container.querySelector('div.z-20') as HTMLElement
+    expect(panel.querySelectorAll('button').length).toBeGreaterThan(1)
+
+    // 候補が出たまま、別の単語に次の字を書き始める
+    scribbleAbove(canvas, 2, 2)
+    expect(chipsShown(container)).toBe(false)
+    // 前の字が最有力候補で確定し、解答（1語目の品詞）に入っている
+    expect(changes.length).toBeGreaterThan(0)
+    expect(changes[changes.length - 1].pos[0]).not.toBeNull()
+    // 自動確定した事実は入力の記録に残る
+    expect(
+      log.entries().some((e) => e.kind === 'note' && e.text.includes('自動確定')),
+    ).toBe(true)
+  })
+
   it('候補を押す操作は従来どおり効く（押した接触はキャンバスに届かない）', () => {
     vi.useFakeTimers()
     const changes: SyntaxAnswer[] = []

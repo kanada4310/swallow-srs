@@ -189,6 +189,8 @@ export function PenSyntaxAnnotator({
   const [chips, setChipsState] = useState<ChipState | null>(null)
   // いまの候補を参照でも持つ（同じ書き始めで二重に閉じないため。描画前の値が要る）
   const chipsRef = useRef<ChipState | null>(null)
+  // 書き始めで引っ込めた候補の取り置き（後始末＝自動確定/破棄は settleStash が行う）
+  const pendingChipRef = useRef<ChipState | null>(null)
   const setChips = useCallback((next: ChipState | null) => {
     chipsRef.current = next
     setChipsState(next)
@@ -208,6 +210,7 @@ export function PenSyntaxAnnotator({
       lastEmittedAnswer.current = answer
       historyRef.current = []
       setChips(null)
+      pendingChipRef.current = null
       forceRender((n) => n + 1)
     }
   }, [answer, setChips])
@@ -299,31 +302,57 @@ export function PenSyntaxAnnotator({
   )
 
   /**
-   * 書き続けたら候補は黙って引っ込める（2026-08-27）。
+   * 書き始めたら候補の枠を引っ込め、線の行方が分かるまで取り置く（2026-08-31）。
    *
-   * 候補が出ている間に書き込みを止めていると、テンポよく書いたときに次の記号の
-   * 1画目が黙って消え、「ペンが反応しない」のと同じ体験になる。そこで
-   * 「新しい線を書き始めた」＝「この候補は選ばない」とみなし、候補を閉じてから
-   * その1画目をそのまま描く（線を失わない）。閉じた候補は取り消し（✕）と同じ扱い。
+   * 候補が出ている間も書き込みの受付は止めない（2026-08-27・決定記録
+   * pen-chip-interrupt。止めると次の1画目が黙って消える）。従来は引っ込めた候補を
+   * その場で破棄していたため、テンポよく書くと**前の字の判定が失われた**。
+   * いまは線の行方で後始末を分ける（settleStash）:
+   * - 続けて書いた → **最有力候補で自動確定**（誤りは判定欄のタッチで直せる）
+   * - 枠の外の軽いタップ → 閉じるだけ（従来どおり。✕と同じ破棄）
    *
    * 「候補を押す操作」と「書き始め」は**当たり判定で分かれる**: 候補の枠は
    * キャンバス（z-10）より上（z-20）に重ねてあるため、候補を押した接触は
    * キャンバスに届かない。ここへ来るのは候補の枠の外に触れたときだけである。
    *
-   * @returns 候補を閉じたら true（この接触は「候補を閉じる操作」だった）
+   * @returns 候補を引っ込めたら true（後始末は settleStash が行う）
    */
-  const dismissChips = useCallback((): boolean => {
+  const stashChips = useCallback((): boolean => {
     const c = chipsRef.current
     if (!c) return false
+    pendingChipRef.current = c
     setChips(null)
-    logRef.current?.push({
-      kind: 'note',
-      at: performance.now(),
-      text: '候補を出したまま書き始めたので候補を閉じた（この線は破棄）',
-    })
-    onEvent?.({ kind: 'failed', symbol: null, candidates: c.candidates, lane: c.lane, applied: false })
     return true
-  }, [onEvent, setChips])
+  }, [setChips])
+
+  /** 取り置いた候補の後始末（auto=最有力候補で自動確定 / discard=破棄） */
+  const settleStash = useCallback(
+    (how: 'auto' | 'discard') => {
+      const c = pendingChipRef.current
+      if (!c) return
+      pendingChipRef.current = null
+      const best = how === 'auto' ? c.candidates[0] : undefined
+      if (best) {
+        logRef.current?.push({
+          kind: 'note',
+          at: performance.now(),
+          text: `候補が未確定のまま次を書き始めたので、最有力候補「${symbolLabel(best.symbol)}」で自動確定`,
+        })
+        applyAndReport(best.symbol, c.strokes, c.boxes, c.lane, 'candidate', c.candidates)
+        return
+      }
+      logRef.current?.push({
+        kind: 'note',
+        at: performance.now(),
+        text:
+          how === 'auto'
+            ? '候補が1つも無いまま次を書き始めたので、前の線は破棄'
+            : '候補の枠の外をタップしたので候補を閉じた（前の線は破棄）',
+      })
+      onEvent?.({ kind: 'failed', symbol: null, candidates: c.candidates, lane: c.lane, applied: false })
+    },
+    [applyAndReport, onEvent],
+  )
 
   /**
    * 記号のまとまりが確定したとき（まとめの判定・待ち時間は useStrokeGrouping が持つ）。
@@ -374,9 +403,13 @@ export function PenSyntaxAnnotator({
     const tap = pathLength(stroke) < 7 && duration < 400
     if (dismissed && tap) {
       // 候補の枠の外を軽くタップしただけ＝「候補を閉じる」操作。一覧までは開かない
+      settleStash('discard')
       redraw()
       return
     }
+    // 候補が未確定のまま続けて書いた: 前の字を最有力候補で自動確定してから、この線を進める
+    // （2026-08-31 確定仕様3。従来はここで破棄され、書いた判定が失われた）
+    settleStash('auto')
     if (!grouping.hasPending() && tap) {
       const p = stroke[0]
       const line = pickLine([stroke], groupLines(boxes))
@@ -419,8 +452,8 @@ export function PenSyntaxAnnotator({
       if (!d.accept && e.pointerType === 'touch') onPalm?.(d.next)
     },
     onStrokeStart: (p) => {
-      // 書き始めたら候補は引っ込める（この線は失わない）
-      dismissedByStrokeRef.current = dismissChips()
+      // 書き始めたら候補は引っ込めて取り置く（この線は失わない。後始末は線の行方で決める）
+      dismissedByStrokeRef.current = stashChips()
       // 触れた瞬間に境界（段・単語・行）をまたいでいれば、待たずに前の記号を確定させる
       grouping.noteStrokeStart(p)
     },
