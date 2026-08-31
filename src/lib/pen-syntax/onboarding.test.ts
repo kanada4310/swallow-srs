@@ -29,8 +29,8 @@ describe('初回お手本登録（義務化）', () => {
     expect(REQUIRED_SYMBOLS.indexOf('▷')).toBeGreaterThan(REQUIRED_SYMBOLS.indexOf('aux'))
   })
 
-  it('任意は下線・波線・＋・○で囲む漢字（必須と重複しない・台帳外の記号は無い）', () => {
-    expect(OPTIONAL_SYMBOLS).toEqual(['hline', 'wavy', '＋', '仮', '真', '強', '同'])
+  it('任意は下線・波線・＋（必須と重複しない・○で囲む漢字は 2026-08-31 に選択式化で除外）', () => {
+    expect(OPTIONAL_SYMBOLS).toEqual(['hline', 'wavy', '＋'])
     for (const s of OPTIONAL_SYMBOLS) expect(REQUIRED_SYMBOLS).not.toContain(s)
   })
 
