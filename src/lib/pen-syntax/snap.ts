@@ -183,6 +183,12 @@ export function underlineSegments(
 
 /** 同じ深さの括弧が並ぶときの1つぶんの幅（px） */
 export const BRACKET_SLOT_W = 6
+/**
+ * 同じすき間に並ぶ括弧1つぶんの縦のずらし（px・2026-08-31）。
+ * すき間は実測12〜19画素しかなく、横に6pxずつずらすだけでは字（約8〜10px幅）が
+ * 重なって読めなかった。横と合わせて斜めに離す。値は見た目の調整用。
+ */
+export const BRACKET_SLOT_H = 8
 /** 行頭・行末でとなりの単語が無いときに空ける見込み幅（px） */
 export const BRACKET_EDGE_GAP = 8
 
@@ -217,6 +223,12 @@ function onSameLine(a: TokenBox, b: TokenBox): boolean {
  * 下線と同じ重ね描きに寄せ、**単語と単語のすき間の中央**へ置く。
  * すき間は左右の単語の余白ぶんだけ空いているので、文字とは重ならない。
  *
+ * 同じすき間に複数の括弧が並ぶときは、横（BRACKET_SLOT_W）に加えて
+ * **縦（BRACKET_SLOT_H）にもずらして斜めに離す**（2026-08-31・確定仕様5。
+ * 横だけでは、いちばんせまいすき間で入れ子の字が重なって読めなかった）。
+ * 縦の並びは開き・閉じとも**外側のまとまりほど上**（同じまとまりの開きと閉じが
+ * 同じ高さにそろう向き）。深さ別の4色の色分けはそのまま。
+ *
  * @param order 同じ位置に複数の括弧が並ぶときの並び順（0 が一番左）
  * @param count 同じ位置に並ぶ括弧の数
  */
@@ -236,9 +248,12 @@ export function bracketMark(
     const next = line.filter((t) => t.left >= box.right).sort((a, b) => a.left - b.left)[0]
     center = next ? (box.right + next.left) / 2 : box.right + BRACKET_EDGE_GAP
   }
+  // 開き側は order 0 が外側（左）、閉じ側は order 0 が内側（左）なので、
+  // 「外側ほど上」にそろえるため閉じ側は縦の並びを反転する
+  const vOrder = side === 'open' ? order : count - 1 - order
   return {
     x: center + (order - (count - 1) / 2) * BRACKET_SLOT_W,
-    y: (box.top + box.bottom) / 2,
+    y: (box.top + box.bottom) / 2 + (vOrder - (count - 1) / 2) * BRACKET_SLOT_H,
     roleTop: box.bottom,
   }
 }

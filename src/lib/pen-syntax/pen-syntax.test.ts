@@ -11,6 +11,7 @@ import { classifyShape } from './shapes'
 import { evaluatePointer, initialPalmState } from './palm'
 import {
   bracketMark,
+  BRACKET_SLOT_H,
   BRACKET_SLOT_W,
   laneOf,
   noteMark,
@@ -315,6 +316,22 @@ describe('snap（単語への吸着）', () => {
     expect(inner.x).toBe(140 + BRACKET_SLOT_W / 2)
     // 閉じ括弧は単語の右のすき間（200〜220 の中央 210）
     expect(bracketMark(box, BOXES, 'close').x).toBe(210)
+  })
+
+  it('同じすき間に並ぶ入れ子カッコは縦にもずらして重ならないようにする（2026-08-31）', () => {
+    const box = BOXES[2] // 本文の行の中央は y=55
+    // 1つだけなら中央のまま
+    expect(bracketMark(box, BOXES, 'open').y).toBe(55)
+    // 開き側: 0=外側が上・1=内側が下（横と合わせて斜めに離れる）
+    expect(bracketMark(box, BOXES, 'open', 0, 2).y).toBe(55 - BRACKET_SLOT_H / 2)
+    expect(bracketMark(box, BOXES, 'open', 1, 2).y).toBe(55 + BRACKET_SLOT_H / 2)
+    // 閉じ側: 0=内側（単語寄り）が下・1=外側が上＝同じまとまりの開きと閉じが同じ高さになる
+    expect(bracketMark(box, BOXES, 'close', 0, 2).y).toBe(55 + BRACKET_SLOT_H / 2)
+    expect(bracketMark(box, BOXES, 'close', 1, 2).y).toBe(55 - BRACKET_SLOT_H / 2)
+    // 3つ並んでも中央をはさんで等間隔（外→内で上→下）
+    expect(bracketMark(box, BOXES, 'open', 0, 3).y).toBe(55 - BRACKET_SLOT_H)
+    expect(bracketMark(box, BOXES, 'open', 1, 3).y).toBe(55)
+    expect(bracketMark(box, BOXES, 'open', 2, 3).y).toBe(55 + BRACKET_SLOT_H)
   })
 
   it('カッコの真下の働きは、単語の下の働きの欄と同じ帯（高さ ROLE_ROW_H）に置く', () => {
