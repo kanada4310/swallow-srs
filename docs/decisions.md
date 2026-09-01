@@ -18,6 +18,7 @@
 
 ### 2026-09-01
 - [20260901-syntax-grading-modes](decisions/20260901-syntax-grading-modes.md) `#reading` `#syntax` `#grading` `#pen-syntax` `#onboarding` _(Phase 構文分析のペン入力)_ — 採点ルールの拡張（任意のまとまり）と通常/MAXモードの新設
+- [20260901-pen-stroke-accumulation](decisions/20260901-pen-stroke-accumulation.md) `#pen-syntax` `#recognition` `#database` `#accuracy` _(Phase 構文分析のペン入力)_ — 手書き判定の精度向上: 実書き蓄積（データベース保存）＋見分け強化＋取り違えゼロ側調整
 
 ### 2026-08-31
 - [20260831-pen-ux-refinements](decisions/20260831-pen-ux-refinements.md) `#pen-syntax` `#reading` `#input` `#ux` `#grading` _(Phase 構文分析のペン入力)_ — 書き味と画面の改修5件（○囲みの選択式化・自動確定・働きの付け替え・行またぎ下線・入れ子カッコの縦ずらし）

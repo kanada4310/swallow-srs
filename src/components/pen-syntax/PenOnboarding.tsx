@@ -190,7 +190,8 @@ export function PenOnboarding({
       </p>
       <p className="mb-2 text-xs leading-relaxed text-ink-3">
         あなたの字を登録すると、ペンで書いた記号の判別が当たりやすくなります。
-        登録した字はこの端末の中だけに保存され、外には送られません。
+        登録した字は「いまログインしている人」のぶんとしてこの端末とアプリの中に保存され、
+        端末をまたいで引き継がれます（判別のためだけに使われ、それ以外の場所には送られません）。
       </p>
       <p className="mb-2 text-xs font-bold text-ink-3">
         登録済み {doneCount} / {REQUIRED_SYMBOLS.length} 種
