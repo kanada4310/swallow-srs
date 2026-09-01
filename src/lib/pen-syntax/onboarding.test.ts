@@ -16,21 +16,27 @@ const stroke: PenStroke = [
 ]
 
 describe('初回お手本登録（義務化）', () => {
-  it('必須は括弧8種＋品詞5種＋働き7種の20種（M・p は含まない・記号の台帳）', () => {
-    expect(REQUIRED_SYMBOLS).toHaveLength(20)
+  it('必須は括弧8種＋働き7種の15種（品詞は 2026-08-31 に任意へ・M・p は含まない）', () => {
+    expect(REQUIRED_SYMBOLS).toHaveLength(15)
     expect(REQUIRED_SYMBOLS.map(String)).not.toContain('M')
     expect(REQUIRED_SYMBOLS.map(String)).not.toContain('p') // 前置詞は働きの段の P
+    // 品詞の英字5種は必須に含まれない（通常モードでは品詞を求めないため・確定仕様4）
+    for (const pos of ['n', 'v', 'a', 'ad', 'aux'] as const) {
+      expect(REQUIRED_SYMBOLS.map(String)).not.toContain(pos)
+    }
     for (const b of BRACKET_SYMBOLS) expect(REQUIRED_SYMBOLS).toContain(b)
-    for (const r of ['P', 'Po', '▷'] as const) expect(REQUIRED_SYMBOLS).toContain(r)
+    for (const r of ['S', 'V', 'O', 'C', 'P', 'Po', '▷'] as const) {
+      expect(REQUIRED_SYMBOLS).toContain(r)
+    }
   })
 
-  it('P・▷ は働きの並び（品詞の英字の後）に置かれる', () => {
-    expect(REQUIRED_SYMBOLS.indexOf('P')).toBeGreaterThan(REQUIRED_SYMBOLS.indexOf('aux'))
-    expect(REQUIRED_SYMBOLS.indexOf('▷')).toBeGreaterThan(REQUIRED_SYMBOLS.indexOf('aux'))
+  it('P・▷ は働きの並び（括弧の後）に置かれる', () => {
+    expect(REQUIRED_SYMBOLS.indexOf('P')).toBeGreaterThan(REQUIRED_SYMBOLS.indexOf('brace-close'))
+    expect(REQUIRED_SYMBOLS.indexOf('▷')).toBeGreaterThan(REQUIRED_SYMBOLS.indexOf('brace-close'))
   })
 
-  it('任意は下線・波線・＋（必須と重複しない・○で囲む漢字は 2026-08-31 に選択式化で除外）', () => {
-    expect(OPTIONAL_SYMBOLS).toEqual(['hline', 'wavy', '＋'])
+  it('任意は品詞5種＋下線・波線・＋（必須と重複しない・○で囲む漢字は 2026-08-31 に選択式化で除外）', () => {
+    expect(OPTIONAL_SYMBOLS).toEqual(['n', 'v', 'a', 'ad', 'aux', 'hline', 'wavy', '＋'])
     for (const s of OPTIONAL_SYMBOLS) expect(REQUIRED_SYMBOLS).not.toContain(s)
   })
 
@@ -59,5 +65,34 @@ describe('初回お手本登録（義務化）', () => {
     }
     expect(isEnrollmentComplete(store)).toBe(true)
     expect(missingRequired(store)).toEqual([])
+  })
+
+  it('★品詞のお手本が1つも無くても、登録は「完了」になる（2026-08-31 確定仕様4）', () => {
+    // 期待する一覧はあえて手書きする（REQUIRED_SYMBOLS から作ると、
+    // 一覧の定数の誤りごとテストが通ってしまう。教訓 benchmark-self-reference）
+    const store: UserTemplateStore = {
+      'paren-open': [[stroke], [stroke]],
+      'paren-close': [[stroke], [stroke]],
+      'square-open': [[stroke], [stroke]],
+      'square-close': [[stroke], [stroke]],
+      'angle-open': [[stroke], [stroke]],
+      'angle-close': [[stroke], [stroke]],
+      'brace-open': [[stroke], [stroke]],
+      'brace-close': [[stroke], [stroke]],
+      S: [[stroke]],
+      V: [[stroke]],
+      O: [[stroke]],
+      C: [[stroke]],
+      P: [[stroke]],
+      Po: [[stroke]],
+      '▷': [[stroke]],
+    }
+    expect(isEnrollmentComplete(store)).toBe(true)
+    expect(missingRequired(store)).toEqual([])
+    // 逆に、働きが1つでも欠けていれば未完了のまま
+    const withoutS: UserTemplateStore = { ...store }
+    delete withoutS.S
+    expect(isEnrollmentComplete(withoutS)).toBe(false)
+    expect(missingRequired(withoutS)).toEqual(['S'])
   })
 })
