@@ -61,6 +61,37 @@ export function isInstructorProblem(
   return problem.id.startsWith(`${set.textbook}_${set.lesson}_`)
 }
 
+/**
+ * 「very well」型（副詞が副詞を前置修飾する塊に、下線＋丸カッコを重ねる流儀）の
+ * 任意のまとまり（2026-08-31 塾長確定仕様1）。**書いても書かなくても減点しない**。
+ *
+ * 生成ファイル（private/syntax-problems）は取り込み直し（data/sync-syntax-problems.mjs）で
+ * 作り直されるため、手で書き足すと消える。ここ（コード側の表）に持たせて、
+ * 読み込み時に正解表へ合流させる。鍵は問題の番号（instructorProblemId と同じ形）。
+ *
+ * 第7講の同型箇所の洗い出し（2026-09-01・全35文の副詞連続を機械抽出→1件ずつ判定）:
+ * - P3-S1「ever more」(8-9): ever が more を前置修飾 → 下線・（ ）とも任意
+ * - P4-S4「so much」(5-6): so が much を前置修飾。（ ）は塾長の正解表に必須で
+ *   あるため、任意で足すのは塊への下線だけ
+ * - P8-S2「not simply」(6-7): not が simply を前置修飾 → 下線・（ ）とも任意
+ * - 除外: P4-S6「most commercially」= most は「commercially successful」全体に掛かる
+ *   読みが自然で、副詞が副詞を修飾する型とは言えない ／
+ *   P6-S3「up less」= made up の up は句動詞の一部で、less との修飾関係が無い
+ */
+const OPTIONAL_INSTRUCTOR_SPANS: Record<string, Array<Omit<KeySpan, 'label'>>> = {
+  '英語長文最前線_第7講_P3-S1': [
+    { from: 8, to: 9, ok: ['ul'], optional: true, note: 'ever が more を前置修飾する塊。下線は書いても書かなくても正解。' },
+    { from: 8, to: 9, ok: ['adv'], optional: true, note: 'ever more の塊を（ ）で囲む流儀も正しい（任意）。' },
+  ],
+  '英語長文最前線_第7講_P4-S4': [
+    { from: 5, to: 6, ok: ['ul'], optional: true, note: 'so が much を前置修飾する塊。（ ）の中の下線は書いても書かなくても正解。' },
+  ],
+  '英語長文最前線_第7講_P8-S2': [
+    { from: 6, to: 7, ok: ['ul'], optional: true, note: 'not が simply を前置修飾する塊。下線は書いても書かなくても正解。' },
+    { from: 6, to: 7, ok: ['adv'], optional: true, note: 'not simply の塊を（ ）で囲む流儀も正しい（任意）。' },
+  ],
+}
+
 /** 見出し（英文の頭だけ）。長い文は途中で切る */
 function makeTitle(set: InstructorSyntaxSet, sentenceId: string, tokens: string[]): string {
   const head = tokens.slice(0, 6).join(' ')
@@ -93,12 +124,17 @@ export function buildInstructorProblems(
         `模範分析集の文「${e.sentenceId}」の語数が教材データと食い違います（教材 ${tokens.length}語 / 正解表 ${e.tokenCount}語）。取り込み直しが必要です。`
       )
     }
-    const spans: KeySpan[] = e.key.spans.map((s) => ({
+    const id = instructorProblemId(set, e.sentenceId)
+    const spans: KeySpan[] = [
+      ...e.key.spans,
+      // 任意のまとまり（very well 型）をコード側の表から合流させる
+      ...(OPTIONAL_INSTRUCTOR_SPANS[id] ?? []),
+    ].map((s) => ({
       ...s,
       label: tokens.slice(s.from, s.to + 1).join(' '),
     }))
     return {
-      id: instructorProblemId(set, e.sentenceId),
+      id,
       title: makeTitle(set, e.sentenceId, tokens),
       source: `${set.textbook} ${set.lesson}（模範分析集・講師用／生徒には出しません）`,
       tokens,

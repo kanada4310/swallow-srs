@@ -99,6 +99,50 @@ describe('模範分析集の取り込み（C24）', () => {
       expect(g.percent, p.id).toBe(100)
     })
   })
+
+  describe('「very well」型の任意のまとまり（2026-08-31 塾長確定仕様1）', () => {
+    // 期待値はあえて手書き（一覧の定数を参照して見比べると、定数の誤りごと通ってしまう）
+    const expected: Record<string, Array<{ from: number; to: number; types: string[] }>> = {
+      '英語長文最前線_第7講_P3-S1': [{ from: 8, to: 9, types: ['ul', 'adv'] }], // ever more
+      '英語長文最前線_第7講_P4-S4': [{ from: 5, to: 6, types: ['ul'] }], // so much（（ ）は必須のまま）
+      '英語長文最前線_第7講_P8-S2': [{ from: 6, to: 7, types: ['ul', 'adv'] }], // not simply
+    }
+
+    it('同型3文に登録されており、ほかの文には無い', () => {
+      built.forEach((p) => {
+        const opt = p.key.spans.filter((s) => s.optional)
+        const want = expected[p.id]
+        if (!want) {
+          expect(opt, p.id).toHaveLength(0)
+          return
+        }
+        want.forEach((w) => {
+          const found = opt.filter((s) => s.from === w.from && s.to === w.to)
+          expect(found.map((s) => s.ok[0]).sort(), p.id).toEqual([...w.types].sort())
+        })
+        expect(opt, p.id).toHaveLength(want.reduce((n, w) => n + w.types.length, 0))
+      })
+    })
+
+    it('任意の下線を書き足しても得点が変わらない（P4-S4 の so much）', () => {
+      const p = built.find((x) => x.id === '英語長文最前線_第7講_P4-S4')!
+      const base = gradeSyntax(p, modelAnswer(p))
+      const answer = modelAnswer(p)
+      answer.spans.push({ from: 5, to: 6, type: 'ul' })
+      const g = gradeSyntax(p, answer)
+      expect(g.percent).toBe(100)
+      expect(g.total).toBe(base.total)
+    })
+
+    it('下線と（ ）を両方書いても減点されない（P8-S2 の not simply）', () => {
+      const p = built.find((x) => x.id === '英語長文最前線_第7講_P8-S2')!
+      const answer = modelAnswer(p)
+      answer.spans.push({ from: 6, to: 7, type: 'ul' }, { from: 6, to: 7, type: 'adv' })
+      const g = gradeSyntax(p, answer)
+      expect(g.percent).toBe(100)
+      expect(g.feedback.filter((f) => f.tone === 'bad')).toHaveLength(0)
+    })
+  })
 })
 
 describe('講師用の問題を誰に見せるか', () => {
