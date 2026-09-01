@@ -101,6 +101,13 @@ export interface KeySpan {
   to: number
   ok: SpanType[]
   alt?: Array<{ v: SpanType; note: string }>
+  /**
+   * 任意のまとまり: **書いても書かなくても減点しない**（2026-08-31 塾長確定）。
+   * 例: 「very well」型＝副詞が副詞を前置修飾する塊に、下線＋丸カッコを重ねる流儀。
+   * 書かれたら種類を確かめ（ok/alt なら受理・得点は動かさない）、
+   * 書かれなくても「見落とし」にしない。種類が正解表に無いものは従来どおり誤り。
+   */
+  optional?: boolean
   label?: string
   note?: string
 }
@@ -157,9 +164,14 @@ export const SYNTAX_PROBLEMS: SyntaxProblem[] = [
           from: 4, to: 5, ok: ['adv'], label: 'very well',
           note: 'very well は動詞 plays を修飾する副詞のまとまり。（ ）で囲む。',
         },
+        {
+          // 「very well」型（副詞が副詞を前置修飾）: 塊への下線は書いても書かなくても減点しない
+          from: 4, to: 5, ok: ['ul'], optional: true, label: 'very well',
+          note: 'very が well を前置修飾するので、（ ）の中の塊に下線を引く流儀も正しい（任意）。',
+        },
       ],
       notes: [
-        'very は well を前置修飾し、そのまとまり全体が動詞を修飾する。（ ）の中の前置修飾に下線を引く流儀も可（この練習では省略）。',
+        'very は well を前置修飾し、そのまとまり全体が動詞を修飾する。（ ）の中の前置修飾の塊に下線を引く流儀も可（書いても書かなくても正解）。',
       ],
     },
   },
@@ -345,9 +357,26 @@ export function gradeSyntax(problem: SyntaxProblem, answer: SyntaxAnswer): Synta
   })
 
   const keySpans = (k.spans || []).map((s) => ({ ...s, matched: false }))
+  /**
+   * 生徒のまとまりに対応する正解表の行を探す。同じ範囲に複数の行があるとき
+   * （例: 必須の（ ）＋任意の下線が同じ塊に重なる）は、
+   * 種類の合う行 → 必須の行 → 任意の行、の順で対応づける。
+   * 範囲だけで先着順に対応づけると、（ ）が任意の下線の行に吸われて誤り扱いになる。
+   */
+  const findKeySpan = (s: StudentSpan) => {
+    const sameRange = keySpans.filter((x) => x.from === s.from && x.to === s.to && !x.matched)
+    const typeMatches = (x: (typeof sameRange)[number]) =>
+      x.ok.includes(s.type) || (x.alt || []).some((a) => a.v === s.type)
+    return (
+      sameRange.find((x) => !x.optional && typeMatches(x)) ??
+      sameRange.find((x) => x.optional && typeMatches(x)) ??
+      sameRange.find((x) => !x.optional) ??
+      sameRange[0]
+    )
+  }
   answer.spans.forEach((s, idx) => {
     const text = problem.tokens.slice(s.from, s.to + 1).join(' ')
-    const ks = keySpans.find((x) => x.from === s.from && x.to === s.to && !x.matched)
+    const ks = findKeySpan(s)
     if (!ks) {
       spanMark[idx] = 'bad'
       total++
@@ -358,19 +387,23 @@ export function gradeSyntax(problem: SyntaxProblem, answer: SyntaxAnswer): Synta
       return
     }
     ks.matched = true
-    total++
+    // 任意のまとまりは「書いても書かなくても減点しない」= 正しく書けても得点(total/got)を動かさない
+    const scored = !ks.optional
+    if (scored) total++
     if (ks.ok.includes(s.type)) {
-      got++
+      if (scored) got++
       spanMark[idx] = 'ok'
       if (ks.ok.length > 1 && ks.note) feedback.push({ tone: 'alt', text: `◎「${text}」: ${ks.note}` })
       return
     }
     const a = (ks.alt || []).find((x) => x.v === s.type)
     if (a) {
-      got++
+      if (scored) got++
       spanMark[idx] = 'alt'
       feedback.push({ tone: 'alt', text: `△「${text}」を ${SPAN_TYPES[s.type].short} と分析: ${a.note}` })
     } else {
+      // 任意のまとまりでも、種類を誤って書いたら従来どおり誤りとして数える
+      if (!scored) total++
       spanMark[idx] = 'bad'
       feedback.push({
         tone: 'bad',
@@ -384,6 +417,8 @@ export function gradeSyntax(problem: SyntaxProblem, answer: SyntaxAnswer): Synta
 
   keySpans.forEach((ks) => {
     if (ks.matched) return
+    // 任意のまとまりは書かれなくても「見落とし」にしない（減点なし・指摘もしない）
+    if (ks.optional) return
     total++
     const text = problem.tokens.slice(ks.from, ks.to + 1).join(' ')
     feedback.push({
@@ -414,12 +449,14 @@ export function emptyAnswer(problem: SyntaxProblem): SyntaxAnswer {
   }
 }
 
-/** 正解を書き込んだ状態（第一解を採用） */
+/** 正解を書き込んだ状態（第一解を採用。任意のまとまりは第一解に含めない） */
 export function modelAnswer(problem: SyntaxProblem): SyntaxAnswer {
   const k = problem.key
   return {
     pos: problem.tokens.map((_, i) => (k.pos?.[i] ? k.pos[i].ok[0] : null)),
     role: problem.tokens.map((w, i) => (!isPunct(w) && k.role?.[i] ? k.role[i].ok[0] : null)),
-    spans: (k.spans || []).map((s) => ({ from: s.from, to: s.to, type: s.ok[0] })),
+    spans: (k.spans || [])
+      .filter((s) => !s.optional)
+      .map((s) => ({ from: s.from, to: s.to, type: s.ok[0] })),
   }
 }

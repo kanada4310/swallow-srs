@@ -124,6 +124,61 @@ describe('構文の練習', () => {
     ).toEqual([0, 1, 0])
   })
 
+  describe('任意のまとまり（書いても書かなくても減点しない・2026-08-31 塾長確定）', () => {
+    // ex1 の very well: 必須の（ ）に加えて、塊への前置修飾の下線が任意で登録されている
+    it('ex1 に「very well」型の任意の下線が登録されている', () => {
+      const p = byId('ex1')
+      const opt = p.key.spans.filter((s) => s.optional)
+      expect(opt).toEqual([
+        expect.objectContaining({ from: 4, to: 5, ok: ['ul'], optional: true }),
+      ])
+    })
+
+    it('書かなくても見落としにならない（正解表示にも含めない）', () => {
+      const p = byId('ex1')
+      const answer = modelAnswer(p)
+      // 第一解に任意の下線は含まれない
+      expect(answer.spans.filter((s) => s.from === 4)).toHaveLength(1)
+      const g = gradeSyntax(p, answer)
+      expect(g.percent).toBe(100)
+      expect(g.feedback.filter((f) => f.tone === 'bad')).toHaveLength(0)
+    })
+
+    it('書けば受理され、得点（分母・分子）は書かないときと変わらない', () => {
+      const p = byId('ex1')
+      const base = gradeSyntax(p, modelAnswer(p))
+      const answer = modelAnswer(p)
+      answer.spans.push({ from: 4, to: 5, type: 'ul' })
+      const g = gradeSyntax(p, answer)
+      expect(g.percent).toBe(100)
+      expect(g.total).toBe(base.total)
+      expect(g.got).toBe(base.got)
+      expect(g.spanMark[answer.spans.length - 1]).toBe('ok')
+    })
+
+    it('同じ範囲に必須と任意があっても、書いた順によらず正しく対応づく', () => {
+      const p = byId('ex1')
+      const answer = modelAnswer(p)
+      // 下線→（ ）の順で書いても、（ ）が任意の下線の行に吸われて誤りにならない
+      answer.spans = [
+        { from: 4, to: 5, type: 'ul' },
+        ...answer.spans,
+      ]
+      const g = gradeSyntax(p, answer)
+      expect(g.percent).toBe(100)
+      expect(g.feedback.filter((f) => f.tone === 'bad')).toHaveLength(0)
+    })
+
+    it('任意のまとまりでも、種類を誤って書けば従来どおり誤り', () => {
+      const p = byId('ex1')
+      const answer = modelAnswer(p)
+      answer.spans.push({ from: 4, to: 5, type: 'n' }) // [ ] は very well に付けられない
+      const g = gradeSyntax(p, answer)
+      expect(g.percent).toBeLessThan(100)
+      expect(g.spanMark[answer.spans.length - 1]).toBe('bad')
+    })
+  })
+
   it('まとまりの種類が違えば正解を示す', () => {
     const p = byId('ex1')
     const answer = modelAnswer(p)
