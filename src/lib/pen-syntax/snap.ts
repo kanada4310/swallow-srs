@@ -66,28 +66,35 @@ export interface SnapPoint {
   distance: number
 }
 
-/** 開き括弧: 線の位置に一番近い「単語の左端」へ吸着（その単語の前に付く） */
+/**
+ * 括弧の吸着は「単語の中央」を境界にして決める（2026-09-01 項目4）。
+ *
+ * 従来は「一番近い単語の端」へ吸着していたため、同じすき間に閉じ括弧を重ねて
+ * 書いたり、すき間が狭くて次の単語に少し食い込んで書いたりすると、
+ * 付く位置が1語ぶん前後した（検討会・論点1の症状3）。
+ * 「中心が単語の真ん中を越えるまでは前のすき間の括弧」と決めれば、
+ * 同じすき間に書いた括弧は何個でも・多少食い込んでも同じ単語に付く。
+ */
+
+const centerOf = (t: TokenBox) => (t.left + t.right) / 2
+
+/** 開き括弧: 中心より右に真ん中がある最初の単語の**前**に付く */
 export function snapOpenBracket(strokes: PenStroke[], boxes: TokenBox[]): SnapPoint | null {
   if (boxes.length === 0) return null
   const b = strokesBBox(strokes)
-  let best: SnapPoint | null = null
-  for (const t of boxes) {
-    const d = Math.abs(t.left - b.cx)
-    if (!best || d < best.distance) best = { index: t.index, distance: d }
-  }
-  return best
+  const sorted = [...boxes].sort((x, y) => x.left - y.left)
+  const next = sorted.find((t) => centerOf(t) >= b.cx) ?? sorted[sorted.length - 1]
+  return { index: next.index, distance: Math.abs(next.left - b.cx) }
 }
 
-/** 閉じ括弧: 一番近い「単語の右端」へ吸着（その単語の後ろに付く） */
+/** 閉じ括弧: 中心より左に真ん中がある最後の単語の**後ろ**に付く */
 export function snapCloseBracket(strokes: PenStroke[], boxes: TokenBox[]): SnapPoint | null {
   if (boxes.length === 0) return null
   const b = strokesBBox(strokes)
-  let best: SnapPoint | null = null
-  for (const t of boxes) {
-    const d = Math.abs(t.right - b.cx)
-    if (!best || d < best.distance) best = { index: t.index, distance: d }
-  }
-  return best
+  const sorted = [...boxes].sort((x, y) => x.left - y.left)
+  const prevs = sorted.filter((t) => centerOf(t) <= b.cx)
+  const prev = prevs.length > 0 ? prevs[prevs.length - 1] : sorted[0]
+  return { index: prev.index, distance: Math.abs(prev.right - b.cx) }
 }
 
 export interface SnapRange {

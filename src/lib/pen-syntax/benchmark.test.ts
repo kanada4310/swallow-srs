@@ -313,6 +313,25 @@ describe('吸着精度の機械計測', () => {
     expect(ok / total).toBeGreaterThanOrEqual(0.95)
   })
 
+  it('同じすき間に重ねた閉じ括弧・狭くて食い込んだ括弧も、同じ単語に付く（2026-09-01 項目4）', () => {
+    // 検討会・論点1の症状3「閉じカッコが重なると付く位置が前後する」の回帰テスト。
+    // 従来の「一番近い単語の端」だと、すき間を越えて次の単語に食い込んだ線が
+    // 1語ぶんずれて付くことがあった。境界を単語の中央にして解消
+    const boxes = makeBoxes(mulberry32(20260916))
+    const t = boxes[3]
+    const next = boxes[4]
+    const mkClose = (x: number) => [line([x - 5, 42], [x, 54], [x - 5, 66])]
+    // 内側: すき間の左寄り / 外側: すき間を越えて次の単語の左端に少し食い込む
+    const innerX = t.right + 3
+    const outerX = next.left + Math.min(10, (next.right - next.left) * 0.3)
+    expect(snapCloseBracket(mkClose(innerX), boxes)?.index).toBe(3)
+    expect(snapCloseBracket(mkClose(outerX), boxes)?.index).toBe(3)
+    // 開き括弧も同様: 前の単語の末尾に食い込んで書いても、右どなりの単語の前に付く
+    const mkOpen = (x: number) => [line([x + 5, 42], [x, 54], [x + 5, 66])]
+    const openX = t.right - Math.min(10, (t.right - t.left) * 0.3)
+    expect(snapOpenBracket(mkOpen(openX), boxes)?.index).toBe(4)
+  })
+
   it('下線の吸着（狙った範囲に一致するか）: 90% 以上', () => {
     const rng = mulberry32(20260830)
     let total = 0
