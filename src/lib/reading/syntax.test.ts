@@ -30,9 +30,9 @@ describe('構文の練習', () => {
     })
   })
 
-  it('未記入は0点で、正解を添えて返す', () => {
+  it('未記入は0点で、正解を添えて返す（MAX＝品詞まで採点）', () => {
     const p = byId('ex1')
-    const g = gradeSyntax(p, emptyAnswer(p))
+    const g = gradeSyntax(p, emptyAnswer(p), 'max')
     expect(g.got).toBe(0)
     expect(g.percent).toBe(0)
     expect(g.posMark[1].correct).toBe('n') // 正解は英字略記で示す
@@ -45,7 +45,7 @@ describe('構文の練習', () => {
     const answer = modelAnswer(p)
     // 正解表は漢字名（代名詞・名詞・動詞・副詞…）だが、英字で答えても同値として採点する
     answer.pos = ['n', 'n', 'v', 'n', 'ad', 'ad', null]
-    const g = gradeSyntax(p, answer)
+    const g = gradeSyntax(p, answer, 'max')
     expect(g.percent).toBe(100)
   })
 
@@ -72,9 +72,63 @@ describe('構文の練習', () => {
     const p = byId('ex2')
     const answer = modelAnswer(p)
     answer.pos[2] = 'v' // 正解表は「分詞」（別解: 動詞）
-    const g = gradeSyntax(p, answer)
+    const g = gradeSyntax(p, answer, 'max')
     expect(g.posMark[2].mark).toBe('ok')
     expect(g.percent).toBe(100)
+  })
+
+  describe('採点のモード（通常/MAX・2026-08-31 塾長確定仕様2・3）', () => {
+    it('通常モードでは品詞が未記入でも減点されない', () => {
+      const p = byId('ex2')
+      const answer = modelAnswer(p)
+      answer.pos = answer.pos.map(() => null)
+      const g = gradeSyntax(p, answer, 'normal')
+      expect(g.percent).toBe(100)
+      expect(Object.keys(g.posMark)).toHaveLength(0)
+      expect(g.feedback.some((f) => f.text.includes('品詞'))).toBe(false)
+    })
+
+    it('通常モードでも前置詞・接続詞の働きの記号（P・Po）は従来どおり採点される', () => {
+      const p = byId('ex2') // by=P / door=Po が働きの正解表にある
+      const answer = modelAnswer(p)
+      answer.pos = answer.pos.map(() => null)
+      answer.role[3] = null // by の P を未記入に
+      const g = gradeSyntax(p, answer, 'normal')
+      expect(g.percent).toBeLessThan(100)
+      expect(g.roleMark[3].mark).toBe('bad')
+      expect(g.feedback.some((f) => f.text.includes('働き「by」'))).toBe(true)
+    })
+
+    it('通常モードで品詞を書いた場合は、誤りを指摘するが得点は動かさない', () => {
+      const p = byId('ex1')
+      const blank = modelAnswer(p)
+      blank.pos = blank.pos.map(() => null)
+      const base = gradeSyntax(p, blank, 'normal')
+      const withPos = modelAnswer(p)
+      withPos.pos = withPos.pos.map(() => null)
+      withPos.pos[4] = 'n' // very（副詞）を n と誤記
+      const g = gradeSyntax(p, withPos, 'normal')
+      expect(g.posMark[4].mark).toBe('bad')
+      expect(g.total).toBe(base.total)
+      expect(g.got).toBe(base.got)
+      expect(g.percent).toBe(base.percent)
+    })
+
+    it('MAXモードでは従来どおり品詞の未記入が減点される', () => {
+      const p = byId('ex1')
+      const answer = modelAnswer(p)
+      answer.pos = answer.pos.map(() => null)
+      const g = gradeSyntax(p, answer, 'max')
+      expect(g.percent).toBeLessThan(100)
+      expect(g.posMark[1].mark).toBe('bad')
+    })
+
+    it('モードを省略したときの既定は通常', () => {
+      const p = byId('ex1')
+      const answer = modelAnswer(p)
+      answer.pos = answer.pos.map(() => null)
+      expect(gradeSyntax(p, answer).percent).toBe(100)
+    })
   })
 
   it('英字でも誤りは誤りとして指摘し、正解を英字で示す', () => {

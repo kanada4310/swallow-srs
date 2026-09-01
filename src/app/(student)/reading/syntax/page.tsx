@@ -46,6 +46,7 @@ import {
   SYNTAX_PROBLEMS,
   type SyntaxAnswer,
   type SyntaxGrade,
+  type SyntaxGradeMode,
   type SyntaxProblem,
 } from '@/lib/reading/syntax'
 import { checkContradictions } from '@/lib/reading/syntax-check'
@@ -74,6 +75,12 @@ export default function SyntaxDrillPage() {
   const [answer, setAnswer] = useState<SyntaxAnswer>(() => emptyAnswer(SYNTAX_PROBLEMS[0]))
   const [grade, setGrade] = useState<SyntaxGrade | null>(null)
   const [inputMode, setInputMode] = useState<'pen' | 'tap'>('pen')
+  /**
+   * 採点のモード（2026-08-31 塾長確定仕様2・3。既定は通常）。
+   * 通常=品詞は求めない（書けば指摘だけ返す）／MAX=従来どおり品詞まで採点。
+   * 前置詞・接続詞の記号（P・Po・▷・＋）は働きの欄なので、通常でも従来どおり採点される。
+   */
+  const [gradeMode, setGradeMode] = useState<SyntaxGradeMode>('normal')
   // 分析の順序の記録（ペン方式のみ）: 記入・取り消し・削除を時系列でため、採点時に並びへ畳む
   const orderEventsRef = useRef<OrderEvent[]>([])
   const [orderSteps, setOrderSteps] = useState<AnalysisStep[]>([])
@@ -142,7 +149,7 @@ export default function SyntaxDrillPage() {
   }
 
   const gradeNow = () => {
-    const g = gradeSyntax(problem, answer)
+    const g = gradeSyntax(problem, answer, gradeMode)
     setGrade(g)
     setModelSaved(false)
     // 確定した分析に「どの記号をどの順で書いたか」を付帯情報として持つ（ペン方式のみ）
@@ -190,6 +197,9 @@ export default function SyntaxDrillPage() {
               <b>{o}</b>={POS_LETTER_LEGEND[o]}
             </span>
           ))}
+          <br />
+          ※ 通常モードでは品詞は書かなくても減点されません（書けば指摘だけ返します）。
+          品詞まで採点してほしいときは、採点のモードを MAX にします
         </p>
         <p className="mb-3 rounded-xl bg-paper p-2.5 text-xs leading-relaxed text-ink-2">
           働きの書き方: <b>S</b>・<b>V</b>・<b>O</b>・<b>C</b> ／ <b>P</b>=前置詞 ／{' '}
@@ -226,6 +236,34 @@ export default function SyntaxDrillPage() {
           >
             ペン判別の計測 →
           </Link>
+        </div>
+
+        <div className="mb-3 flex items-center gap-1.5">
+          <span className="text-xs font-bold text-ink-3">採点:</span>
+          <button
+            type="button"
+            onClick={() => {
+              setGradeMode('normal')
+              if (grade) setGrade(gradeSyntax(problem, answer, 'normal'))
+            }}
+            className={`rounded-full px-3 py-1.5 text-xs font-bold ${
+              gradeMode === 'normal' ? 'bg-ai text-white' : 'border border-gray-300 bg-white text-ai'
+            }`}
+          >
+            通常（働きまで）
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setGradeMode('max')
+              if (grade) setGrade(gradeSyntax(problem, answer, 'max'))
+            }}
+            className={`rounded-full px-3 py-1.5 text-xs font-bold ${
+              gradeMode === 'max' ? 'bg-ai text-white' : 'border border-gray-300 bg-white text-ai'
+            }`}
+          >
+            MAX（品詞まで）
+          </button>
         </div>
 
         {inputMode === 'pen' && (
@@ -407,7 +445,7 @@ export default function SyntaxDrillPage() {
               // 正解表は漢字の品詞名なので、表示用に英字略記へそろえる
               const m = { ...raw, pos: raw.pos.map((v) => (v == null ? null : posLetter(v))) }
               setAnswer(m)
-              setGrade(gradeSyntax(problem, m))
+              setGrade(gradeSyntax(problem, m, gradeMode))
               // 表示した正解は自分で書いた並びではないので、順序の表示は消す
               setOrderSteps([])
               setModelSaved(false)

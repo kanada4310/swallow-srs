@@ -317,7 +317,20 @@ export interface SyntaxGrade {
   feedback: SyntaxFeedback[]
 }
 
-export function gradeSyntax(problem: SyntaxProblem, answer: SyntaxAnswer): SyntaxGrade {
+/**
+ * 採点のモード（2026-08-31 塾長確定仕様2・3）。
+ * - normal（通常・既定）: 品詞（n/v/a/ad/aux）の書き込みは求めない。未記入でも減点せず、
+ *   書いた場合は確かめて指摘だけ返す（得点には入れない）。働き・まとまりは従来どおり。
+ *   前置詞・接続詞の専用記号（P・Po・▷・＋）は働きの欄の値なので、通常でも従来どおり採点される
+ * - max（MAX）: 従来どおり品詞まで採点する
+ */
+export type SyntaxGradeMode = 'normal' | 'max'
+
+export function gradeSyntax(
+  problem: SyntaxProblem,
+  answer: SyntaxAnswer,
+  mode: SyntaxGradeMode = 'normal',
+): SyntaxGrade {
   const k = problem.key
   const posMark: Record<number, MarkResult> = {}
   const roleMark: Record<number, MarkResult> = {}
@@ -328,18 +341,22 @@ export function gradeSyntax(problem: SyntaxProblem, answer: SyntaxAnswer): Synta
 
   problem.tokens.forEach((w, i) => {
     const posSlot = k.pos?.[i]
-    if (posSlot) {
+    // 通常モードでは品詞を求めない: 未記入は素通し、書かれたときだけ確かめて指摘する（得点外）
+    if (posSlot && (mode === 'max' || answer.pos[i] != null)) {
       // 品詞は英字略記（n/v/a/ad/aux/p）で書かれても漢字名の正解表と同値として採点する
       const m = judgeSlot(answer.pos[i] ?? null, posSlot, posLetter)!
       posMark[i] = m
-      total++
-      if (m.mark !== 'bad') got++
+      if (mode === 'max') {
+        total++
+        if (m.mark !== 'bad') got++
+      }
+      const refNote = mode === 'max' ? '' : '（参考: 通常モードでは品詞は得点に入れません）'
       if (m.mark === 'alt')
         feedback.push({ tone: 'alt', text: `△ 品詞「${w}」= ${posLetter(answer.pos[i] ?? '')}: ${m.note}` })
       else if (m.mark === 'bad')
         feedback.push({
           tone: 'bad',
-          text: `× 品詞「${w}」: ${answer.pos[i] ? posLetter(answer.pos[i]!) : '未記入'} → 正解は ${m.correct}`,
+          text: `× 品詞「${w}」: ${answer.pos[i] ? posLetter(answer.pos[i]!) : '未記入'} → 正解は ${m.correct}${refNote}`,
         })
     }
     const roleSlot = k.role?.[i]
