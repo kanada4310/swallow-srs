@@ -38,6 +38,7 @@ import {
   applySymbol,
   canMarkKariShin,
   emptyPenAnnotation,
+  OPEN_TO_SPAN,
   pruneExceptionMarks,
   roleCellParts,
   TOGGLE_EXCEPTIONS,
@@ -46,6 +47,8 @@ import {
   type PenExtraMark,
 } from '@/lib/pen-syntax/apply'
 import { orderKeyFor, strokeStartTime, type OrderEvent } from '@/lib/pen-syntax/order'
+import { isAccumulatable } from '@/lib/pen-syntax/sample-store'
+import type { PenSampleUpload } from './usePenTemplates'
 import { dashesForDepth, depthOfToken } from '@/lib/pen-syntax/dash-notation'
 import { deprecatedGuidance, symbolLabel } from '@/lib/pen-syntax/ledger'
 import { recognizeGroup } from '@/lib/pen-syntax/recognize'
@@ -109,6 +112,13 @@ interface PenSyntaxAnnotatorProps {
   onPalm?: (state: PalmState) => void
   /** 診断用「入力の記録」。渡すと接触の受理/拒否と画面の移動を時系列で記録する */
   inputLog?: PenInputLog | null
+  /**
+   * 実書き蓄積の受け取り口（2026-09-01）。ref に「たまった線を取り出して空にする」
+   * 関数を差し込む。親（練習ページ）が採点のタイミングで呼ぶ。
+   * 関所: たまるのは判別が確定して反映された線だけ。取り消し・削除・値の変更で
+   * 訂正された線は、その場でため込みから外す（誤判定の線をお手本にしない）。
+   */
+  sampleTakerRef?: React.MutableRefObject<(() => PenSampleUpload[]) | null>
 }
 
 /**
@@ -151,6 +161,7 @@ export function PenSyntaxAnnotator({
   onOrderEvent,
   onPalm,
   inputLog = null,
+  sampleTakerRef,
 }: PenSyntaxAnnotatorProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -161,6 +172,25 @@ export function PenSyntaxAnnotator({
   const [, forceRender] = useState(0)
   const lastEmittedAnswer = useRef<SyntaxAnswer>(answer)
   const historyRef = useRef<PenAnnotation[]>([])
+
+  // 実書き蓄積のため込み（2026-09-01・関所つき）。判別が確定して反映された線だけがたまり、
+  // 取り消し・削除・値の変更で訂正されたらその場で外す。親が採点時に取り出して送る
+  const collectedRef = useRef<Array<PenSampleUpload & { key: string | null }>>([])
+  const dropSamples = useCallback((keys: string[]) => {
+    collectedRef.current = collectedRef.current.filter((c) => !c.key || !keys.includes(c.key))
+  }, [])
+  useEffect(() => {
+    if (!sampleTakerRef) return
+    const ref = sampleTakerRef
+    ref.current = () => {
+      const out = collectedRef.current.map(({ key: _key, ...s }) => s)
+      collectedRef.current = []
+      return out
+    }
+    return () => {
+      ref.current = null
+    }
+  }, [sampleTakerRef])
 
   // 「手のひらOK」バッジの表示切替用
   const [penSeen, setPenSeen] = useState(false)
@@ -209,6 +239,7 @@ export function PenSyntaxAnnotator({
       annotationRef.current = { ...annotationRef.current, answer, pendingOpens: [] }
       lastEmittedAnswer.current = answer
       historyRef.current = []
+      collectedRef.current = []
       setChips(null)
       pendingChipRef.current = null
       forceRender((n) => n + 1)
@@ -285,6 +316,18 @@ export function PenSyntaxAnnotator({
       if (out.message) showToast(out.message)
       if (out.applied) emitAnnotation(out.next)
       else historyRef.current.pop()
+      if (out.applied && out.target && isAccumulatable(symbol)) {
+        // 実書き蓄積へのため込み。候補から選んだ線（chip）は正解確定済みの最良のお手本
+        collectedRef.current = [
+          ...collectedRef.current,
+          {
+            key: orderKeyFor(symbol, out.target),
+            symbol,
+            strokes,
+            source: kind === 'candidate' ? 'chip' : 'confirmed',
+          },
+        ]
+      }
       if (out.applied && out.target) {
         // 分析の順序の記録: 筆画の開始時刻を並びの根拠にする（order.ts）
         const key = orderKeyFor(symbol, out.target)
@@ -522,6 +565,8 @@ export function PenSyntaxAnnotator({
       showToast('戻せる操作がありません')
       return
     }
+    // ペンの反映1回＝ため込み1件なので、取り消しでは最後の1件を外す（誤判定を採らない関所）
+    collectedRef.current = collectedRef.current.slice(0, -1)
     onOrderEvent?.({ kind: 'undo', at: performance.now() })
     emitAnnotation(prev)
   }
@@ -530,7 +575,11 @@ export function PenSyntaxAnnotator({
     if (disabled) return
     const a = annotationRef.current
     const s = a.answer.spans[idx]
-    if (s) onOrderEvent?.({ kind: 'remove', key: `span:${s.type}:${s.from}-${s.to}`, at: performance.now() })
+    if (s) {
+      onOrderEvent?.({ kind: 'remove', key: `span:${s.type}:${s.from}-${s.to}`, at: performance.now() })
+      // 消したまとまりの線（閉じ括弧・下線と、組になった開き括弧）は蓄積から外す
+      dropSamples([`span:${s.type}:${s.from}-${s.to}`, `open:${s.type}:${s.from}`])
+    }
     emitAnnotation({ ...a, answer: { ...a.answer, spans: a.answer.spans.filter((_, i) => i !== idx) } })
   }
 
@@ -538,11 +587,9 @@ export function PenSyntaxAnnotator({
     const a = annotationRef.current
     const x = a.extras[idx]
     if (x) {
-      onOrderEvent?.({
-        kind: 'remove',
-        key: `extra:${x.kind === 'wavy' ? 'wavy' : x.label}:${x.from}-${x.to}`,
-        at: performance.now(),
-      })
+      const key = `extra:${x.kind === 'wavy' ? 'wavy' : x.label}:${x.from}-${x.to}`
+      onOrderEvent?.({ kind: 'remove', key, at: performance.now() })
+      dropSamples([key])
     }
     emitAnnotation({ ...a, extras: a.extras.filter((_, i) => i !== idx) })
   }
@@ -550,13 +597,20 @@ export function PenSyntaxAnnotator({
   const removePendingOpen = (idx: number) => {
     const a = annotationRef.current
     const p = a.pendingOpens[idx]
-    if (p) onOrderEvent?.({ kind: 'remove', key: `open:${p.type}:${p.index}`, at: performance.now() })
+    if (p) {
+      onOrderEvent?.({ kind: 'remove', key: `open:${p.type}:${p.index}`, at: performance.now() })
+      dropSamples([`open:${p.type}:${p.index}`])
+    }
     emitAnnotation({ ...a, pendingOpens: a.pendingOpens.filter((_, i) => i !== idx) })
   }
 
   const setSlot = (kind: 'pos' | 'role', index: number, value: string | null) => {
     const a = annotationRef.current
     const next = { ...a.answer, [kind]: [...a.answer[kind]] } as SyntaxAnswer
+    // 値を書き換えた（＝ペンの判別を訂正した）ときは、その単語の線を蓄積から外す
+    if (a.answer[kind][index] !== value) {
+      dropSamples([kind === 'pos' ? `pos:${index}` : `role:${index}-${index}`])
+    }
     next[kind][index] = value
     const key = kind === 'pos' ? `pos:${index}` : `role:${index}-${index}`
     if (value == null) onOrderEvent?.({ kind: 'remove', key, at: performance.now() })

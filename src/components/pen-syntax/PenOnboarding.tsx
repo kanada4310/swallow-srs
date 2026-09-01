@@ -21,7 +21,6 @@ import {
   SHAPE_STROKE_SOURCES,
 } from '@/lib/pen-syntax/templates'
 import { missingRequired, REQUIRED_SYMBOLS, samplesFor } from '@/lib/pen-syntax/onboarding'
-import { clearUserTemplates, saveUserTemplate } from '@/lib/pen-syntax/user-templates'
 import { PEN_UI_ATTR } from '@/lib/pen-syntax/zone-guard'
 import { pathLength } from '@/lib/pen-syntax/geometry'
 import { POS_LETTER_LEGEND } from '@/lib/reading/syntax'
@@ -89,10 +88,12 @@ interface QueueItem {
 }
 
 interface PenOnboardingProps {
-  /** お手本の保存先（利用者ごとの鍵）。共有端末で他人の字を引き継がないため必須 */
-  userId: string | null | undefined
+  /** 本人のお手本（進み具合の表示と「未登録分だけ」の判定に使う） */
   store: UserTemplateStore
-  onStoreChange: (next: UserTemplateStore) => void
+  /** 1つ登録したとき（保存の実体は親が持つ＝端末内＋DBの両方へ書く） */
+  onRegister: (symbol: SymbolId, strokes: PenStroke[]) => void
+  /** その記号の古い登録を消すとき（登録し直しの置き換え用） */
+  onClearSymbol: (symbol: SymbolId) => void
   policy: InputPolicy
   /** first=初回（未登録分だけ） / redo=登録し直し（全種・スキップ可） */
   mode: 'first' | 'redo'
@@ -103,9 +104,9 @@ interface PenOnboardingProps {
 }
 
 export function PenOnboarding({
-  userId,
   store,
-  onStoreChange,
+  onRegister,
+  onClearSymbol,
   policy,
   mode,
   onFinish,
@@ -153,9 +154,9 @@ export function PenOnboarding({
     }
     if (mode === 'redo' && !replacedRef.current.has(current.symbol)) {
       replacedRef.current.add(current.symbol)
-      clearUserTemplates(userId, current.symbol)
+      onClearSymbol(current.symbol)
     }
-    onStoreChange(saveUserTemplate(userId, current.symbol, strokes))
+    onRegister(current.symbol, strokes)
     advance()
   }
 

@@ -20,9 +20,8 @@ import { PenOnboarding } from '@/components/pen-syntax/PenOnboarding'
 import { PenInputLogPanel } from '@/components/pen-syntax/PenInputLogPanel'
 import { createPenInputLog, type PenInputLog } from '@/lib/pen-syntax/input-log'
 import { initialPalmState, type InputPolicy, type PalmState } from '@/lib/pen-syntax/palm'
-import type { UserTemplateStore } from '@/lib/pen-syntax/letters'
-import { loadUserTemplates } from '@/lib/pen-syntax/user-templates'
 import { missingRequired, needsEnrollment, REQUIRED_SYMBOLS } from '@/lib/pen-syntax/onboarding'
+import { usePenTemplates, type PenSampleUpload } from '@/components/pen-syntax/usePenTemplates'
 import {
   appendOrderHistory,
   describeStep,
@@ -124,18 +123,23 @@ export default function SyntaxDrillPage() {
   if (!inputLogRef.current) inputLogRef.current = createPenInputLog()
   const [palm, setPalm] = useState<PalmState>(initialPalmState())
 
-  // 初回お手本登録（義務化）: 利用者ごとに1回だけ必ず通す。登録済みの字は判別に使う
-  const [templateStore, setTemplateStore] = useState<UserTemplateStore>({})
+  // お手本と実書き蓄積（2026-09-01）: 共通お手本集＋本人の蓄積（DB）＋端末内のお手本の三段重ね。
+  // 判定は従来どおり端末内・書いた瞬間（通信は読み書きだけ）
+  const templates = usePenTemplates(userId, authLoading)
+  // 実書き蓄積の受け取り口: 採点したときに、確定して訂正されなかった線を取り出して送る
+  const sampleTakerRef = useRef<(() => PenSampleUpload[]) | null>(null)
+  // 初回お手本登録（義務化）: 利用者ごとに1回だけ必ず通す。
+  // 要否は**本人のお手本**（端末内＋DBの蓄積）で決める。DBに引き継ぎがあれば
+  // 新しい端末でも登録し直しは要らない。共通お手本集では免除しない
   const [needOnboarding, setNeedOnboarding] = useState<boolean | null>(null)
   const [redoOnboarding, setRedoOnboarding] = useState(false)
   useEffect(() => {
-    if (authLoading) return
-    // お手本は利用者ごとに読む。共有端末で他人の登録を「本人の登録済み」と
-    // 取り違えないよう、判定は本人のお手本がそろっているかだけで行う（2026-08-27）
-    const s = loadUserTemplates(userId)
-    setTemplateStore(s)
-    setNeedOnboarding(needsEnrollment(s))
-  }, [authLoading, userId])
+    setNeedOnboarding(null)
+  }, [userId])
+  useEffect(() => {
+    if (!templates.synced || needOnboarding !== null) return
+    setNeedOnboarding(needsEnrollment(templates.personalStore))
+  }, [templates.synced, templates.personalStore, needOnboarding])
   const showOnboarding = inputMode === 'pen' && (needOnboarding === true || redoOnboarding)
 
   const load = (idx: number) => {
@@ -152,6 +156,10 @@ export default function SyntaxDrillPage() {
     const g = gradeSyntax(problem, answer, gradeMode)
     setGrade(g)
     setModelSaved(false)
+    // 実書き蓄積: 採点＝本人の確定。確定して訂正されなかった線をまとめて送る（裏で・失敗しても続行）
+    if (inputMode === 'pen') {
+      templates.uploadSamples(sampleTakerRef.current?.() ?? [])
+    }
     // 確定した分析に「どの記号をどの順で書いたか」を付帯情報として持つ（ペン方式のみ）
     const steps = inputMode === 'pen' ? reduceOrderEvents(orderEventsRef.current) : []
     setOrderSteps(steps)
@@ -332,9 +340,9 @@ export default function SyntaxDrillPage() {
 
         {showOnboarding && (
           <PenOnboarding
-            userId={userId}
-            store={templateStore}
-            onStoreChange={setTemplateStore}
+            store={templates.personalStore}
+            onRegister={templates.saveEnrollment}
+            onClearSymbol={templates.clearEnrollment}
             policy={penPolicy}
             mode={redoOnboarding ? 'redo' : 'first'}
             onFinish={() => {
@@ -393,7 +401,8 @@ export default function SyntaxDrillPage() {
               roleMarks={grade?.roleMark}
               spanMarks={grade?.spanMark}
               policy={penPolicy}
-              templateStore={templateStore}
+              templateStore={templates.store}
+              sampleTakerRef={sampleTakerRef}
               inputLog={inputLogRef.current}
               onOrderEvent={(ev) => orderEventsRef.current.push(ev)}
               onPalm={setPalm}
@@ -578,8 +587,9 @@ export default function SyntaxDrillPage() {
 
         {inputMode === 'pen' && needOnboarding === false && !redoOnboarding && (
           <p className="mt-3 text-xs text-ink-3">
-            お手本の登録: {REQUIRED_SYMBOLS.length - missingRequired(templateStore).length} /{' '}
-            {REQUIRED_SYMBOLS.length} 種（この端末に、いまログインしている人のぶんだけ保存されています）。
+            お手本の登録: {REQUIRED_SYMBOLS.length - missingRequired(templates.personalStore).length} /{' '}
+            {REQUIRED_SYMBOLS.length} 種（いまログインしている人のぶん。実際に書いて確定した線も
+            自動でたまり、使うほど判別が本人の字に合っていきます）。
             <br />
             記号の判別が合いにくいときは、
             <button

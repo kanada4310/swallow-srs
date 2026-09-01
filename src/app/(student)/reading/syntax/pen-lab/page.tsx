@@ -22,7 +22,6 @@ import { recognizeGroup } from '@/lib/pen-syntax/recognize'
 import { snapTargetFor } from '@/lib/pen-syntax/apply'
 import { pathLength } from '@/lib/pen-syntax/geometry'
 import { initialPalmState, type InputPolicy, type PalmState } from '@/lib/pen-syntax/palm'
-import type { UserTemplateStore } from '@/lib/pen-syntax/letters'
 import { usePenZoneGuard, type PenGuardEvent } from '@/components/pen-syntax/usePenZoneGuard'
 import { PEN_UI_ATTR, PEN_WRITE_ZONE_ATTR } from '@/lib/pen-syntax/zone-guard'
 import { PenInputLogPanel } from '@/components/pen-syntax/PenInputLogPanel'
@@ -40,11 +39,7 @@ import {
 import { EnrollCanvas } from '@/components/pen-syntax/EnrollCanvas'
 import { createPenInputLog, type PenInputLog } from '@/lib/pen-syntax/input-log'
 import type { LabeledSample, SampleSet } from '@/lib/pen-syntax/metrics'
-import {
-  clearUserTemplates,
-  loadUserTemplates,
-  saveUserTemplate,
-} from '@/lib/pen-syntax/user-templates'
+import { usePenTemplates, type PenTemplates } from '@/components/pen-syntax/usePenTemplates'
 
 const TOKENS = ['The', 'girl', 'standing', 'by', 'the', 'door', 'is', 'my', 'sister', '.']
 
@@ -222,7 +217,11 @@ export default function PenLabPage() {
   )
   // ゾーン方式の画面ガード（書き込みエリア内=ペン専用／エリア外=指のみ）
   usePenZoneGuard(policy === 'pen-only', onGuard)
-  const [store, setStore] = useState<UserTemplateStore>({})
+  // お手本と実書き蓄積（共通お手本集＋本人の蓄積＋端末内。判別は実運用と同じ照合対象で行う）
+  const templates = usePenTemplates(userId, authLoading)
+  const store = templates.store
+  const templatesRef = useRef(templates)
+  templatesRef.current = templates
   const [lastResult, setLastResult] = useState<string | null>(null)
   type ChipState = {
     candidates: Array<{ symbol: SymbolId; score: number }>
@@ -238,11 +237,6 @@ export default function PenLabPage() {
     chipsRef.current = next
     setChipsState(next)
   }, [])
-
-  useEffect(() => {
-    if (authLoading) return
-    setStore(loadUserTemplates(userId))
-  }, [authLoading, userId])
 
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -302,6 +296,12 @@ export default function PenLabPage() {
           -MAX_COLLECTED,
         ),
       )
+      // お題と一致した線は正解が確定しているお手本＝実書き蓄積へ送る（候補タップは最良の教師）
+      if (symbolOk && recognized) {
+        templatesRef.current.uploadSamples([
+          { symbol: intended, strokes, source: kind === 'candidate' ? 'chip' : 'confirmed' },
+        ])
+      }
       setStats((prev) => {
         const s = { ...(prev[mode] ?? emptyStats()) }
         s.attempts++
@@ -728,12 +728,7 @@ export default function PenLabPage() {
           <PenInputLogPanel log={inputLog} />
         </div>
 
-        <EnrollmentSection
-          userId={userId}
-          store={store}
-          onStoreChange={setStore}
-          policy={policy}
-        />
+        <EnrollmentSection templates={templates} policy={policy} />
       </div>
     </AppLayout>
   )
@@ -817,19 +812,16 @@ function Stat({ label, value }: { label: string; value: string }) {
 const ENROLLABLE: SymbolId[] = ENROLLABLE_SYMBOLS
 
 function EnrollmentSection({
-  userId,
-  store,
-  onStoreChange,
+  templates,
   policy,
 }: {
-  userId: string | null | undefined
-  store: UserTemplateStore
-  onStoreChange: (s: UserTemplateStore) => void
+  templates: PenTemplates
   policy: InputPolicy
 }) {
   const [symbol, setSymbol] = useState<SymbolId>('n')
   const strokesRef = useRef<PenStroke[]>([])
   const [resetToken, setResetToken] = useState(0)
+  const store = templates.personalStore
 
   return (
     <div className="rounded-card border border-gray-200 bg-white p-3 shadow-card" {...{ [PEN_UI_ATTR]: '' }}>
@@ -837,8 +829,8 @@ function EnrollmentSection({
       <p className="mb-2 text-xs text-ink-3">
         判別に迷いが多い記号・文字は、自分の字で1〜3回登録すると当たりやすくなります
         （括弧は同じ向きの4種をそろえて登録すると閉じ括弧の見分けに効きます）。
-        登録した字は、この端末の中の「いまログインしている人」のぶんにだけ保存されます
-        （同じ端末を別の人が使っても混ざりません）。
+        登録した字は「いまログインしている人」のぶんとして保存され、実際に書いて
+        確定した線も自動でたまります（別の人のぶんとは混ざりません）。
       </p>
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <select
@@ -856,7 +848,7 @@ function EnrollmentSection({
           type="button"
           onClick={() => {
             if (strokesRef.current.length === 0) return
-            onStoreChange(saveUserTemplate(userId, symbol, strokesRef.current))
+            templates.saveEnrollment(symbol, strokesRef.current)
             setResetToken((n) => n + 1)
           }}
           className="rounded-xl bg-sora px-3 py-2 text-sm font-bold text-white"
@@ -872,7 +864,7 @@ function EnrollmentSection({
         </button>
         <button
           type="button"
-          onClick={() => onStoreChange(clearUserTemplates(userId, symbol))}
+          onClick={() => templates.clearEnrollment(symbol)}
           className="rounded-xl border border-again bg-white px-3 py-2 text-sm font-bold text-again"
         >
           この字の登録を消す
