@@ -30,11 +30,12 @@ import {
 import { matchClouds, type CloudTemplate } from './pdollar'
 import { SHAPE_STROKE_SOURCES, SHAPE_TEMPLATES } from './templates'
 import { userTemplatesFor, type UserTemplateStore } from './letters'
+import { DEFAULT_TUNING, type RecognizerTuning } from './tuning'
 
-/** 確信の差がこれ未満なら「迷った」として候補チップを出す */
-export const AMBIGUOUS_MARGIN = 0.12
-/** 最有力候補の確信がこれ未満なら判別失敗（ボタン方式へ逃がす） */
-export const MIN_SCORE = 0.35
+/** 確信の差がこれ未満なら「迷った」として候補チップを出す（正本は tuning.ts） */
+export const AMBIGUOUS_MARGIN = DEFAULT_TUNING.marginShape
+/** 最有力候補の確信がこれ未満なら判別失敗（ボタン方式へ逃がす。正本は tuning.ts） */
+export const MIN_SCORE = DEFAULT_TUNING.minScoreShape
 /** 括弧とみなす最小の大きさ（px）。これより小さい線はダッシュなどの小記号 */
 const BRACKET_MIN_SIZE = 26
 
@@ -44,7 +45,10 @@ function median(xs: number[]): number {
   return s[Math.floor(s.length / 2)]
 }
 
-function ruleScores(strokes: PenStroke[]): Partial<Record<ShapeKind, number>> {
+function ruleScores(
+  strokes: PenStroke[],
+  tuning: RecognizerTuning = DEFAULT_TUNING,
+): Partial<Record<ShapeKind, number>> {
   const scores: Partial<Record<ShapeKind, number>> = {}
   const put = (k: ShapeKind, v: number) => {
     scores[k] = Math.max(scores[k] ?? 0, v)
@@ -107,6 +111,19 @@ function ruleScores(strokes: PenStroke[]): Partial<Record<ShapeKind, number>> {
 
   // 波線: 横方向に進みつつ上下に3回以上折り返す
   if (b.width > b.height * 1.2 && straight < 0.95 && countYAlternations(s) >= 3) put('wavy', 0.9)
+  // 波線の緩和（2026-09-01 項目2）: 実機の波線は山が浅く・少なくなりがちで、
+  // 「振幅25%以上の反転3回」に届かず候補にすら挙がらなかった。
+  // 反転2回＋十分曲がっている（straight < 0.9）線も波線として拾う。
+  // 下線（hline）は straight > 0.92 で拾われるので食い合わない。
+  if (
+    tuning.wavyRelaxed &&
+    b.width > b.height &&
+    straight < 0.9 &&
+    size >= BRACKET_MIN_SIZE &&
+    countYAlternations(s, Math.max(3, b.height * 0.18)) >= 2
+  ) {
+    put('wavy', 0.8)
+  }
 
   // ?（1画で書いたもの）: 縦長・閉じていない・上へ膨らんでから下りる・終点が下側
   if (
@@ -246,8 +263,9 @@ function symbolOpenish(symbol: ShapeKind): boolean | null {
 export function classifyShape(
   strokes: PenStroke[],
   store: UserTemplateStore | null = null,
+  tuning: RecognizerTuning = DEFAULT_TUNING,
 ): RecognitionResult {
-  const rules = ruleScores(strokes)
+  const rules = ruleScores(strokes, tuning)
   const pMatches = matchClouds(strokes, SHAPE_TEMPLATES)
   const pScore = new Map<ShapeKind, number>()
   for (const m of pMatches) pScore.set(m.symbol, m.score)
@@ -317,9 +335,12 @@ export function classifyShape(
     }
   }
 
-  if (ranked.length === 0 || ranked[0].score < MIN_SCORE) {
+  if (ranked.length === 0 || ranked[0].score < tuning.minScoreShape) {
     return { best: null, candidates: ranked, ambiguous: true }
   }
-  const ambiguous = ranked.length > 1 && ranked[0].score - ranked[1].score < AMBIGUOUS_MARGIN
+  const ambiguous =
+    (ranked.length > 1 && ranked[0].score - ranked[1].score < tuning.marginShape) ||
+    // 取り違えゼロ側の安全弁: 確信が下限未満なら、差が開いていても自動確定させない
+    ranked[0].score < tuning.confirmMinShape
   return { best: ranked[0], candidates: ranked, ambiguous }
 }

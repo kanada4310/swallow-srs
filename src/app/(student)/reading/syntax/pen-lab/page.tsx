@@ -39,6 +39,7 @@ import {
 } from '@/components/pen-syntax/useStrokeGrouping'
 import { EnrollCanvas } from '@/components/pen-syntax/EnrollCanvas'
 import { createPenInputLog, type PenInputLog } from '@/lib/pen-syntax/input-log'
+import type { LabeledSample, SampleSet } from '@/lib/pen-syntax/metrics'
 import {
   clearUserTemplates,
   loadUserTemplates,
@@ -169,6 +170,21 @@ const emptyLatency = (): LatencyStats => ({
   maxSince: 0,
 })
 
+/** お題の車線（実書きデータのラベルに残す。判別器の振り分けと同じ区分） */
+function laneForMode(mode: ModeKey): 'above' | 'band' | 'below' {
+  if (mode === 'c-pos') return 'above'
+  if (mode === 'c-role') return 'below'
+  return 'band'
+}
+
+/** 実書きデータとして保存する形（座標を丸め・時刻は残さない） */
+function compactStrokes(strokes: PenStroke[]): PenStroke[] {
+  return strokes.map((s) => s.map((p) => ({ x: Math.round(p.x * 10) / 10, y: Math.round(p.y * 10) / 10 })))
+}
+
+/** 実書きデータの保存上限（それ以上は古いものから消す） */
+const MAX_COLLECTED = 600
+
 export default function PenLabPage() {
   // お手本は利用者ごとに保存する（共有端末で他人の字を引き継がない・2026-08-27）
   const { userId, isLoading: authLoading } = useAuth()
@@ -182,6 +198,8 @@ export default function PenLabPage() {
   }, [])
   const [stats, setStats] = useState<Record<string, Stats>>({})
   const [attempts, setAttempts] = useState<Attempt[]>([])
+  // 実書きデータ（ラベル付きの線）。精度計測と実書き蓄積の評価に使う（端末内のみ・コピーで書き出す）
+  const [collected, setCollected] = useState<LabeledSample[]>([])
   const [palm, setPalm] = useState<PalmState>(initialPalmState())
   // 入力の記録（実機不具合の報告用）。受理/拒否・座標・画面の移動を時系列で残す
   const inputLogRef = useRef<PenInputLog | null>(null)
@@ -278,6 +296,12 @@ export default function PenLabPage() {
         snapOk = snapped !== null && snapped.from === target.from && snapped.to === target.to
       }
       setAttempts((xs) => [{ intended, recognized, kind, symbolOk, snapOk }, ...xs].slice(0, 30))
+      // 実書きデータ: お題（正解ラベル）と線をそのまま残す（判別の正誤に関係なく全部）
+      setCollected((xs) =>
+        [...xs, { symbol: intended, strokes: compactStrokes(strokes), lane: laneForMode(mode) }].slice(
+          -MAX_COLLECTED,
+        ),
+      )
       setStats((prev) => {
         const s = { ...(prev[mode] ?? emptyStats()) }
         s.attempts++
@@ -698,6 +722,8 @@ export default function PenLabPage() {
           />
         </div>
 
+        <CollectedSamplesPanel collected={collected} onClear={() => setCollected([])} />
+
         <div className="mb-4">
           <PenInputLogPanel log={inputLog} />
         </div>
@@ -710,6 +736,69 @@ export default function PenLabPage() {
         />
       </div>
     </AppLayout>
+  )
+}
+
+/**
+ * 実書きデータ（ラベル付きの線）の書き出し（2026-09-01・精度計測用）。
+ *
+ * お題方式で書いた線を「お題＝正解ラベル」付きでため、JSON としてコピーできる。
+ * 貼り付け先は報告（swallow-srs の `src/lib/pen-syntax/samples/*.json` に保存すると
+ * 自動テストの精度計測が同じ線で着手前/改修後を前後比較する）。端末の外へは
+ * 自動では送られない（コピーして貼るだけ）。個人を特定できる情報は含めない
+ * （線の座標とお題の記号名・端末の種類だけ）。
+ */
+function CollectedSamplesPanel({
+  collected,
+  onClear,
+}: {
+  collected: LabeledSample[]
+  onClear: () => void
+}) {
+  const [copied, setCopied] = useState(false)
+  if (collected.length === 0) return null
+  const build = (): string => {
+    const set: SampleSet = {
+      note: 'pen-lab の実書き計測（お題＝正解ラベル）',
+      device: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+      collectedAt: new Date().toISOString(),
+      samples: collected,
+    }
+    return JSON.stringify(set)
+  }
+  return (
+    <div className="mb-4 rounded-card border border-gray-200 bg-white p-3 shadow-card" {...{ [PEN_UI_ATTR]: '' }}>
+      <div className="mb-1 flex items-center justify-between">
+        <p className="text-sm font-bold text-ai">実書きデータ（{collected.length}本・精度計測用）</p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              const text = build()
+              const done = () => {
+                setCopied(true)
+                setTimeout(() => setCopied(false), 2000)
+              }
+              navigator.clipboard?.writeText(text).then(done, () => {
+                // クリップボードが使えない環境: 下の欄を出して手でコピーしてもらう
+                window.prompt('この内容をコピーして報告に貼ってください', text)
+              })
+            }}
+            className="rounded-lg bg-sora px-3 py-1.5 text-xs font-bold text-white"
+          >
+            {copied ? 'コピーしました' : '実書きデータをコピー'}
+          </button>
+          <button type="button" onClick={onClear} className="rounded-lg px-2 py-1.5 text-xs font-bold text-again">
+            クリア
+          </button>
+        </div>
+      </div>
+      <p className="text-xs leading-relaxed text-ink-3">
+        お題どおりに書いた線を、お題（正解ラベル）付きでためています。
+        「実書きデータをコピー」で JSON になります。報告に貼ると、同じ線で
+        改修前後の判別を数え直せます。線の座標とお題の記号名だけで、名前などは含まれません。
+      </p>
+    </div>
   )
 }
 

@@ -19,6 +19,7 @@ import { classifyShape } from './shapes'
 import { groupLines, laneOf, pickLine } from './snap'
 import { bbox, closedness, resample, smooth, strokesBBox } from './geometry'
 import { matchClouds } from './pdollar'
+import { DEFAULT_TUNING, type RecognizerTuning } from './tuning'
 
 export interface GroupRecognition {
   result: RecognitionResult
@@ -85,6 +86,7 @@ export function recognizeGroup(
   strokes: PenStroke[],
   allBoxes: TokenBox[],
   store: UserTemplateStore | null = null,
+  tuning: RecognizerTuning = DEFAULT_TUNING,
 ): GroupRecognition {
   const line = pickLine(strokes, groupLines(allBoxes))
   const boxes = line ? line.boxes : allBoxes
@@ -93,7 +95,7 @@ export function recognizeGroup(
   // ○で囲んだ漢字（例外マーク）の手書き認識は呼ばない（2026-08-31 選択式化・入口を閉じる）。
   // ○囲みを書くと形の判別で circle（台帳外）になり、タッチで付ける案内が出る
 
-  const shape = classifyShape(strokes, store)
+  const shape = classifyShape(strokes, store, tuning)
 
   if (lane === 'band') {
     return { result: shape, lane, boxes }
@@ -110,13 +112,26 @@ export function recognizeGroup(
   ) {
     return { result: shape, lane, boxes }
   }
+  // 波線は1語ぶんの短い幅で書かれることもある（熟語の印）。従来は上の幅の条件に
+  // 届かないと文字の判別へ落ち、波線が候補にすら挙がらなかった（2026-09-01 項目2）。
+  // 幾何特徴が波線を強く指しているときは、幅が単語1語ぶんでも波線として扱う
+  if (
+    tuning.wavyInLetterLane &&
+    shape.best?.symbol === 'wavy' &&
+    shape.best.score >= 0.55 &&
+    b.width > b.height * 1.5
+  ) {
+    return { result: shape, lane, boxes }
+  }
 
-  const letter = classifyLetter(strokes, lane, store)
+  const letter = classifyLetter(strokes, lane, store, tuning)
   const merged: SymbolCandidate[] = letter.candidates.slice(0, 3)
 
-  if (merged.length === 0 || merged[0].score < 0.3) {
+  if (merged.length === 0 || merged[0].score < tuning.minScoreLetter) {
     return { result: { best: null, candidates: merged, ambiguous: true }, lane, boxes }
   }
-  const ambiguous = merged.length > 1 && merged[0].score - merged[1].score < 0.08
+  const ambiguous =
+    (merged.length > 1 && merged[0].score - merged[1].score < tuning.marginLetter) ||
+    merged[0].score < tuning.confirmMinLetter
   return { result: { best: merged[0], candidates: merged, ambiguous }, lane, boxes }
 }
