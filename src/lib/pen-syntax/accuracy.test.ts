@@ -88,6 +88,41 @@ function quirkSamples(): LabeledSample[] {
   return samples
 }
 
+/**
+ * 標準的な書き手のお手本（括弧8種×2本・初回お手本登録どおり）。
+ * 本番はお手本登録が必須なので、計測も「お手本あり」を標準の条件にする。
+ * お手本と評価データは別の種＝出どころを分ける。
+ */
+function standardBracketStore(): UserTemplateStore {
+  const rng = mulberry32(20260950)
+  const store: UserTemplateStore = {}
+  const brackets: ShapeKind[] = [
+    'paren-open', 'paren-close', 'square-open', 'square-close',
+    'angle-open', 'angle-close', 'brace-open', 'brace-close',
+  ]
+  for (const kind of brackets) {
+    store[kind] = [drawShape(kind, rng), drawShape(kind, rng)]
+  }
+  return store
+}
+
+/**
+ * 実書き蓄積が育った状態の模擬（1記号あたり10件・お手本と評価は別の種）。
+ * 項目1の本命「使うほど当たる」の効果を数えるための想定。
+ */
+function grownQuirkStore(): UserTemplateStore {
+  const rng = mulberry32(20260914)
+  const store: UserTemplateStore = {}
+  for (const kind of QUIRK_KINDS) {
+    store[kind] = Array.from({ length: 10 }, () => quirkClose(kind, rng))
+  }
+  const others: ShapeKind[] = ['paren-open', 'paren-close', 'square-open', 'angle-open', 'brace-open']
+  for (const kind of others) {
+    store[kind] = Array.from({ length: 6 }, () => drawShape(kind, rng))
+  }
+  return store
+}
+
 function report(
   label: string,
   samples: LabeledSample[],
@@ -102,14 +137,25 @@ function report(
 describe('精度計測: 合成データ（種固定・実機の実測ではない）', () => {
   it('着手前（LEGACY）と現行（DEFAULT）の3つの数字を記号種別に出す', { timeout: 120_000 }, () => {
     const samples = syntheticSamples()
-    const before = report('着手前 合成', samples, null, LEGACY_TUNING)
+    const std = standardBracketStore()
+    const before = report('着手前 合成・標準（お手本8種あり）', samples, std, LEGACY_TUNING)
     const beforeQuirk = report('着手前 合成・癖のある閉じ括弧（お手本8種あり）', quirkSamples(), quirkStore(), LEGACY_TUNING)
-    const after = report('現行 合成', samples, null, DEFAULT_TUNING)
+    const beforeGrown = report('着手前 合成・癖のある閉じ括弧（蓄積10件）', quirkSamples(), grownQuirkStore(), LEGACY_TUNING)
+    const after = report('現行 合成・標準（お手本8種あり）', samples, std, DEFAULT_TUNING)
     const afterQuirk = report('現行 合成・癖のある閉じ括弧（お手本8種あり）', quirkSamples(), quirkStore(), DEFAULT_TUNING)
+    const afterGrown = report('現行 合成・癖のある閉じ括弧（蓄積10件）', quirkSamples(), grownQuirkStore(), DEFAULT_TUNING)
     console.log(formatTallyLine('着手前 合成 総合計', mergeAll(before, beforeQuirk)))
     console.log(formatTallyLine('現行 合成 総合計', mergeAll(after, afterQuirk)))
-    expect(before.total).toBeGreaterThan(0)
     expect(after.total).toBe(before.total)
+    // 取り違え（誤ったまま確定）は改修で確実に減ること（最優先の目標）
+    expect(after.misfire).toBeLessThan(before.misfire)
+    expect(afterQuirk.misfire).toBeLessThanOrEqual(beforeQuirk.misfire)
+    expect(afterGrown.misfire).toBeLessThan(beforeGrown.misfire)
+    // 標準的な書き手（お手本8種）: 一発確定は下げず、取り違えは 1.5% 以下へ
+    expect(after.autoOk / after.total).toBeGreaterThanOrEqual(before.autoOk / before.total)
+    expect(after.misfire / after.total).toBeLessThanOrEqual(0.015)
+    // 癖のある書き手も、候補（上位3）からタップ1回で拾える割合が高いこと
+    expect((afterQuirk.autoOk + afterQuirk.chipRescued) / afterQuirk.total).toBeGreaterThanOrEqual(0.9)
   })
 })
 

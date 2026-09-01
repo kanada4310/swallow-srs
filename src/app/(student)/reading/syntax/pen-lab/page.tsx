@@ -40,6 +40,7 @@ import { EnrollCanvas } from '@/components/pen-syntax/EnrollCanvas'
 import { createPenInputLog, type PenInputLog } from '@/lib/pen-syntax/input-log'
 import type { LabeledSample, SampleSet } from '@/lib/pen-syntax/metrics'
 import { usePenTemplates, type PenTemplates } from '@/components/pen-syntax/usePenTemplates'
+import { autoConfirmFloor } from '@/lib/pen-syntax/tuning'
 
 const TOKENS = ['The', 'girl', 'standing', 'by', 'the', 'door', 'is', 'my', 'sister', '.']
 
@@ -227,6 +228,8 @@ export default function PenLabPage() {
     candidates: Array<{ symbol: SymbolId; score: number }>
     strokes: PenStroke[]
     boxes: TokenBox[]
+    /** 書かれた段（自動確定の確信の下限が形と文字で違うため持つ） */
+    lane: 'above' | 'band' | 'below'
     /** 置き場所の手がかり（書き込み部品と同じ扱い） */
     anchor: ChipAnchor
   }
@@ -372,6 +375,7 @@ export default function PenLabPage() {
       candidates: rec.result.candidates,
       strokes,
       boxes: rec.boxes,
+      lane: rec.lane,
       anchor: { stroke, row, lane: rec.lane },
     })
   }, [boxes, mode, record, redraw, setChips, store, task])
@@ -405,7 +409,12 @@ export default function PenLabPage() {
       const c = pendingChipRef.current
       if (!c) return
       pendingChipRef.current = null
-      const best = how === 'auto' ? c.candidates[0] : undefined
+      // 自動確定には確信の下限を適用する（書き込み部品と同じ・項目3）。
+      // 計測ページでは下限未満の線は数えず捨てる（お題は据え置き＝書き直しとして扱う）
+      const best =
+        how === 'auto' && c.candidates[0] && c.candidates[0].score >= autoConfirmFloor(c.lane)
+          ? c.candidates[0]
+          : undefined
       if (best) {
         inputLog.push({
           kind: 'note',
@@ -426,7 +435,7 @@ export default function PenLabPage() {
         at: performance.now(),
         text:
           how === 'auto'
-            ? '候補が1つも無いまま次を書き始めたので、前の線は破棄（計測には数えない）'
+            ? '候補が無い・または確信が下限未満のまま次を書き始めたので、前の線は破棄（計測には数えない）'
             : '候補の枠の外をタップしたので候補を閉じた（前の線は破棄・計測には数えない）',
       })
       setLastResult('前の線は捨てました（数えていません）')

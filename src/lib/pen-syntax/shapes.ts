@@ -178,7 +178,38 @@ function ruleScores(
     const vertexLeft = apex.x < (first.x + last.x) / 2
     const endsX = (first.x + last.x) / 2
 
-    if (cornersLenient <= 2) {
+    // 「違いの出る部分」（2026-09-01 項目2・旗 bracketDetail）:
+    // 弦からの離れ具合の分布で、輪郭全体の当てはめでは拾えない差を直接見る。
+    // 理論値（プロファイルから計算）と合成の癖字での実測を突き合わせて調整した。
+    // - plateau（最大の離れの7割以上の区間の割合）: 角括弧はへりが平ら＝約0.8。
+    //   丸括弧は弧＝約0.48・山括弧は峰＝約0.3。角を丸めて書く癖の [ ] が
+    //   円弧当てはめに吸われて ( ) と取り違えられるのを、ここで見分ける
+    // - spike（真ん中の突き ÷ 1/4地点）: 角括弧≈1.0〜1.25・丸括弧≈1.41・波括弧≈1.3以上
+    // - hornRatio（0.4/0.6地点 ÷ 最大）: 波括弧のツノは幅が狭い＝約0.75。丸括弧は約0.93
+    const chordLen = Math.max(1, Math.hypot(last.x - first.x, last.y - first.y))
+    const devs = s.map(
+      (p) =>
+        Math.abs((last.x - first.x) * (p.y - first.y) - (last.y - first.y) * (p.x - first.x)) /
+        chordLen,
+    )
+    const maxDev = Math.max(...devs)
+    const plateau =
+      maxDev > 2 ? devs.filter((d) => d >= maxDev * 0.7).length / devs.length : 0
+    const quarterDev = Math.max(devs[Math.floor(devs.length * 0.25)], devs[Math.floor(devs.length * 0.75)])
+    const spike = maxDev / Math.max(1e-6, quarterDev)
+    const hornRatio =
+      Math.max(devs[Math.floor(devs.length * 0.4)], devs[Math.floor(devs.length * 0.6)]) /
+      Math.max(1e-6, maxDev)
+    const detail = tuning.bracketDetail
+    const deepEnough = maxDev > size * 0.12
+    // 平らなへり＝角括弧の強い証拠。円弧・2本線の当てはめより優先する。
+    // ただし円弧にきれいに当てはまる線（＝本物の丸括弧）は吸い込まない
+    const flatSquare = detail && deepEnough && plateau >= 0.62 && spike < 1.3 && arcErr > 0.032
+    // 平らさが「強い証拠」に届かない重なり地帯（丸めた角括弧と浅い丸括弧が紛れる範囲）。
+    // ここは無理に決めず、両方の候補を近い点数で出して候補選びに倒す（取り違え最優先）
+    const flatLeaning = detail && deepEnough && !flatSquare && plateau >= 0.56 && spike < 1.28
+
+    if (cornersLenient <= 2 && !flatSquare) {
       // 丸括弧（ ）: 円弧としての当てはまりが2本線より良い
       if (arcErr < 0.035 && arcErr < polyErr - 0.01) put(openish ? 'paren-open' : 'paren-close', 0.9)
       else if (arcErr < polyErr && arcErr < 0.05) put(openish ? 'paren-open' : 'paren-close', 0.7)
@@ -197,13 +228,38 @@ function ruleScores(
     } else if (cornersLenient === 2 && minFitErr > 0.03) {
       put(endsX > b.cx ? 'square-open' : 'square-close', 0.6)
     }
+    // 角を丸めて書く癖の [ ]: 折れは検出されないが、へりの平らさが証拠になる
+    if (flatSquare && cornersLenient <= 3) {
+      put(endsX > b.cx ? 'square-open' : 'square-close', 0.85)
+    }
+    // 重なり地帯: 角括弧の候補も近い点数で立て、確信の差を縮めて候補選びへ倒す。
+    // どちらかに決めて外す（取り違え）より、1タップの候補選びのほうが軽い。
+    // 本人の蓄積が育てば、お手本の相対比較（override）が正しい側を先頭にする
+    if (flatLeaning && cornersLenient <= 3) {
+      put(endsX > b.cx ? 'square-open' : 'square-close', 0.8)
+    }
 
     // 波括弧 { }: 折れが3つ以上。中央のツノの向きで開閉を決める
     const midX = s[Math.floor(s.length / 2)].x
-    if ((cornersStrict >= 3 || cornersLenient >= 4) && minFitErr > 0.04) {
+    // 平らなへり（角括弧の証拠）があるときは波括弧の弱い判定を出さない
+    if ((cornersStrict >= 3 || cornersLenient >= 4) && minFitErr > 0.04 && !flatSquare) {
       put(midX < endsX ? 'brace-open' : 'brace-close', 0.9)
-    } else if (cornersLenient === 3 && minFitErr > 0.03) {
+    } else if (cornersLenient === 3 && minFitErr > 0.03 && !flatSquare) {
       put(midX < endsX ? 'brace-open' : 'brace-close', 0.65)
+    }
+    // ツノを浅く書く癖の { }: 折れの数は足りないが、幅の狭い真ん中の突きが証拠になる。
+    // 円弧・2本線によく当てはまる線（丸括弧・山括弧）を吸い込まないよう、
+    // 当てはめ誤差（minFitErr）が大きいことも要求する
+    if (
+      detail &&
+      deepEnough &&
+      !flatSquare &&
+      spike >= 1.3 &&
+      hornRatio <= 0.85 &&
+      cornersLenient >= 1 &&
+      minFitErr > 0.03
+    ) {
+      put(midX < endsX ? 'brace-open' : 'brace-close', 0.8)
     }
   }
 
@@ -288,6 +344,12 @@ export function classifyShape(
   // 同じ向きの4種がすべて登録済みで、かつ2位と明確な差があるときだけ採用する
   // （未登録の種類があると、書いた記号のお手本が無いせいで別の種類に吸われるため）。
   let override: { symbol: ShapeKind; margin: number } | null = null
+  /**
+   * 本人のお手本4種の中で一番近い括弧（override に届かないときの「意見」として保持）。
+   * 幾何特徴の先頭と食い違えば候補選びへ倒す材料になる（取り違え最優先）。
+   * 差がほぼゼロ（完全な同点）のときだけ意見なしとする
+   */
+  let famBest: ShapeKind | null = null
   if (openish !== null && store) {
     const family = openish ? OPEN_BRACKETS : CLOSE_BRACKETS
     if (family.every((k) => (store[k] ?? []).length > 0)) {
@@ -295,6 +357,7 @@ export function classifyShape(
         .map((k) => ({ symbol: k, score: uScore.get(k) ?? 0 }))
         .sort((a, b) => b.score - a.score)
       const margin = fam[0].score - fam[1].score
+      if (fam[0].score > 0 && margin >= 0.008) famBest = fam[0].symbol
       if (fam[0].score > 0 && margin >= USER_MARGIN) {
         override = { symbol: fam[0].symbol, margin }
       }
@@ -338,8 +401,31 @@ export function classifyShape(
   if (ranked.length === 0 || ranked[0].score < tuning.minScoreShape) {
     return { best: null, candidates: ranked, ambiguous: true }
   }
+
+  // 本人のお手本の中では**別の括弧**が一番近いのに、差が小さくて先頭を覆すには
+  // 足りない（override 不成立）とき: 幾何特徴とお手本で意見が割れている＝
+  // 決め打ちせず候補選びへ倒す（取り違え最優先・2026-09-01 項目3）。
+  // お手本の指す括弧が候補に無ければ3番目に差し込む（タップ1回で選べるように）
+  let famConflict = false
+  if (
+    tuning.bracketDetail &&
+    famBest &&
+    ranked[0] &&
+    symbolOpenish(ranked[0].symbol as ShapeKind) !== null &&
+    famBest !== ranked[0].symbol
+  ) {
+    famConflict = true
+    if (!ranked.some((c) => c.symbol === famBest)) {
+      ranked = [
+        ...ranked.slice(0, 2),
+        { symbol: famBest, score: Math.max(0, ranked[0].score - 0.1) },
+      ]
+    }
+  }
+
   const ambiguous =
     (ranked.length > 1 && ranked[0].score - ranked[1].score < tuning.marginShape) ||
+    famConflict ||
     // 取り違えゼロ側の安全弁: 確信が下限未満なら、差が開いていても自動確定させない
     ranked[0].score < tuning.confirmMinShape
   return { best: ranked[0], candidates: ranked, ambiguous }

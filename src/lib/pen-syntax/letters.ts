@@ -174,6 +174,23 @@ export function roleRuleScores(strokes: PenStroke[]): Partial<Record<RoleLetter,
 
 /* ---------- 判別の入口 ---------- */
 
+/**
+ * 品詞の文字の幾何特徴（項目2）。a と ad は輪郭が似るが**画数と横幅**が違う:
+ * a=1〜2画・縦長 / ad=3〜4画・横長（a＋背の高い d） / aux=5画以上。
+ */
+export function posRuleScores(strokes: PenStroke[]): Partial<Record<PosLetter, number>> {
+  const scores: Partial<Record<PosLetter, number>> = {}
+  const all = strokes.flat()
+  if (all.length === 0) return scores
+  const b = bbox(all)
+  if (strokes.length >= 5) scores.aux = 0.85
+  else if (strokes.length >= 3 && b.width > b.height * 0.9) scores.ad = 0.8
+  else if (strokes.length <= 2 && b.width < b.height * 1.1) {
+    // 縦長の1〜2画は a / n / v の側（ad・aux ではない）。個別の字は $P に任せる
+  }
+  return scores
+}
+
 /** 品詞（上の行）の文字判別 */
 export function classifyPosLetter(
   strokes: PenStroke[],
@@ -181,7 +198,16 @@ export function classifyPosLetter(
   tuning: RecognizerTuning = DEFAULT_TUNING,
 ): RecognitionResult {
   const templates = [...POS_TEMPLATES, ...(userTemplatesFor(store, POS_LETTERS) as Array<CloudTemplate<PosLetter>>)]
-  return toResult(matchClouds(strokes, templates), tuning)
+  const matches = matchClouds(strokes, templates)
+  if (!tuning.roleGeometry) return toResult(matches, tuning)
+  const rules = posRuleScores(strokes)
+  const merged = matches
+    .map((m) => {
+      const r = rules[m.symbol as PosLetter]
+      return { symbol: m.symbol, score: r !== undefined ? Math.min(0.98, m.score + 0.3 * r) : m.score }
+    })
+    .sort((a, b) => b.score - a.score)
+  return toResult(merged, tuning)
 }
 
 /** 働き（下の行）の文字判別 */

@@ -52,6 +52,7 @@ import type { PenSampleUpload } from './usePenTemplates'
 import { dashesForDepth, depthOfToken } from '@/lib/pen-syntax/dash-notation'
 import { deprecatedGuidance, symbolLabel } from '@/lib/pen-syntax/ledger'
 import { recognizeGroup } from '@/lib/pen-syntax/recognize'
+import { autoConfirmFloor } from '@/lib/pen-syntax/tuning'
 import type { InputPolicy, PalmState } from '@/lib/pen-syntax/palm'
 import type { PenInputLog } from '@/lib/pen-syntax/input-log'
 import { usePenZoneGuard, type PenGuardEvent } from './usePenZoneGuard'
@@ -221,6 +222,8 @@ export function PenSyntaxAnnotator({
   const chipsRef = useRef<ChipState | null>(null)
   // 書き始めで引っ込めた候補の取り置き（後始末＝自動確定/破棄は settleStash が行う）
   const pendingChipRef = useRef<ChipState | null>(null)
+  // 確信が下限に届かず自動確定できなかった候補の保留列（破棄しない・後から選べる）
+  const heldChipsRef = useRef<ChipState[]>([])
   const setChips = useCallback((next: ChipState | null) => {
     chipsRef.current = next
     setChipsState(next)
@@ -242,6 +245,7 @@ export function PenSyntaxAnnotator({
       collectedRef.current = []
       setChips(null)
       pendingChipRef.current = null
+      heldChipsRef.current = []
       forceRender((n) => n + 1)
     }
   }, [answer, setChips])
@@ -372,20 +376,43 @@ export function PenSyntaxAnnotator({
     return true
   }, [setChips])
 
-  /** 取り置いた候補の後始末（auto=最有力候補で自動確定 / discard=破棄） */
+  /** 保留列の先頭の候補を（表示中の候補が無ければ）画面に出し直す */
+  const showNextHeld = useCallback(() => {
+    if (chipsRef.current || pendingChipRef.current) return
+    const next = heldChipsRef.current.shift()
+    if (next) setChips(next)
+  }, [setChips])
+
+  /**
+   * 取り置いた候補の後始末（auto=最有力候補で自動確定 / discard=破棄）。
+   *
+   * 自動確定には**確信の下限**を適用する（2026-09-01 項目3・取り違えゼロ側）:
+   * 最有力候補の確信が下限（判別の確定と同じ値）に届かないときは、
+   * **破棄せず候補を保留したまま**次の字を受け付け、手が空いたら選び直せるようにする。
+   */
   const settleStash = useCallback(
     (how: 'auto' | 'discard') => {
       const c = pendingChipRef.current
       if (!c) return
       pendingChipRef.current = null
       const best = how === 'auto' ? c.candidates[0] : undefined
-      if (best) {
+      if (best && best.score >= autoConfirmFloor(c.lane)) {
         logRef.current?.push({
           kind: 'note',
           at: performance.now(),
           text: `候補が未確定のまま次を書き始めたので、最有力候補「${symbolLabel(best.symbol)}」で自動確定`,
         })
         applyAndReport(best.symbol, c.strokes, c.boxes, c.lane, 'candidate', c.candidates)
+        return
+      }
+      if (how === 'auto' && c.candidates.length > 0) {
+        // 確信が下限未満: 誤ったまま確定させない。候補は保留列に残し、あとから選べる
+        heldChipsRef.current = [...heldChipsRef.current, c]
+        logRef.current?.push({
+          kind: 'note',
+          at: performance.now(),
+          text: '候補の確信が下限に届かないので自動確定せず、候補を保留しました（次の字はそのまま受付）',
+        })
         return
       }
       logRef.current?.push({
@@ -412,6 +439,8 @@ export function PenSyntaxAnnotator({
       if (result.best && !result.ambiguous) {
         applyAndReport(result.best.symbol, strokes, rec.boxes, rec.lane, 'auto', result.candidates)
         redraw()
+        // 手が空いたので、保留しておいた候補（確信の下限に届かなかった線）を出し直す
+        showNextHeld()
         return
       }
       // 迷った・拾えなかった: 候補チップを出してワンタップ確定。
@@ -433,7 +462,7 @@ export function PenSyntaxAnnotator({
         anchor: { stroke: { left: b.left, right: b.right, top: b.top, bottom: b.bottom }, row, lane: rec.lane },
       })
     },
-    [applyAndReport, boxes, redraw, setChips, templateStore],
+    [applyAndReport, boxes, redraw, setChips, showNextHeld, templateStore],
   )
 
   const grouping = useStrokeGrouping({ boxes, onCommit: handleCommit, log: inputLog })
@@ -452,6 +481,7 @@ export function PenSyntaxAnnotator({
       // 候補の枠の外を軽くタップしただけ＝「候補を閉じる」操作。一覧までは開かない
       settleStash('discard')
       redraw()
+      showNextHeld()
       return
     }
     // 候補が未確定のまま続けて書いた: 前の字を最有力候補で自動確定してから、この線を進める
@@ -537,6 +567,7 @@ export function PenSyntaxAnnotator({
       onEvent?.({ kind: 'failed', symbol: null, candidates: chips.candidates, lane: chips.lane, applied: false })
     }
     setChips(null)
+    showNextHeld()
   }
 
   const openFallback = () => {

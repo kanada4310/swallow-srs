@@ -32,6 +32,20 @@ export interface RecognizerTuning {
   wavyRelaxed: boolean
   /** 文字の行（上下の段）でも、波線らしい線は波線として拾う（項目2） */
   wavyInLetterLane: boolean
+  /** 括弧の「違いの出る部分」（へりの平らさ・真ん中の突き）を見る（項目2） */
+  bracketDetail: boolean
+}
+
+/**
+ * 続け書き時の自動確定（候補が未確定のまま次の字を書いたとき）に使う確信の下限。
+ * 判別の確定と同じ下限を使う（band=形の記号 / それ以外=文字）。
+ * 下限未満なら破棄も確定もせず、候補を保留したまま次の字を受け付ける（項目3）。
+ */
+export function autoConfirmFloor(
+  lane: 'above' | 'band' | 'below',
+  tuning: RecognizerTuning = DEFAULT_TUNING,
+): number {
+  return lane === 'band' ? tuning.confirmMinShape : tuning.confirmMinLetter
 }
 
 /** 着手前（2026-09-01 時点）の挙動。前後比較の「前」として使う。変更しないこと */
@@ -45,21 +59,23 @@ export const LEGACY_TUNING: RecognizerTuning = {
   roleGeometry: false,
   wavyRelaxed: false,
   wavyInLetterLane: false,
+  bracketDetail: false,
 }
 
 /**
- * 実運用の値。しきい値は機械計測（accuracy.test.ts）と実書きの実測で調整する。
+ * 実運用の値（改修後）。しきい値は機械計測（accuracy.test.ts）で「取り違え 0.5% 以下を
+ * 最優先・一発確定 85% 以上」に合わせて調整し、実書きの実測で見直す。
  * confirmMin* は「取り違え（誤ったまま確定）を 0.5% 以下へ」のための下限。
- * ※ 段階0（着手前の実測）の時点では LEGACY と同値。項目2・3の段階で更新する。
  */
 export const DEFAULT_TUNING: RecognizerTuning = {
   minScoreShape: 0.35,
   marginShape: 0.12,
   minScoreLetter: 0.3,
   marginLetter: 0.08,
-  confirmMinShape: 0,
-  confirmMinLetter: 0,
-  roleGeometry: false,
-  wavyRelaxed: false,
-  wavyInLetterLane: false,
+  confirmMinShape: 0.7,
+  confirmMinLetter: 0.55,
+  roleGeometry: true,
+  wavyRelaxed: true,
+  wavyInLetterLane: true,
+  bracketDetail: true,
 }

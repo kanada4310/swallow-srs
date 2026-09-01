@@ -20,6 +20,21 @@ import { GROUP_WAIT_MS } from './useStrokeGrouping'
 import { ROLE_ROW_H } from '@/lib/pen-syntax/snap'
 import type { SyntaxAnswer } from '@/lib/reading/syntax'
 
+/**
+ * 続け書きの自動確定に入った「確信の下限」（2026-09-01 項目3）をテストから操作する。
+ * jsdom で書ける模擬の線は判別の点数が安定しないため、
+ * 下限 0＝必ず自動確定 / 下限 1＝必ず保留、で両方の径路を決定的に検査する。
+ */
+let mockFloor: number | null = null
+vi.mock('@/lib/pen-syntax/tuning', async (importOriginal) => {
+  const orig = await importOriginal<typeof import('@/lib/pen-syntax/tuning')>()
+  return {
+    ...orig,
+    autoConfirmFloor: (lane: 'above' | 'band' | 'below', t?: never) =>
+      mockFloor ?? orig.autoConfirmFloor(lane, t),
+  }
+})
+
 const CHAR_W = 10
 
 /** 文書順で el より前にあるテキスト量と、el 自身のテキスト量を数える */
@@ -447,6 +462,7 @@ describe('PenSyntaxAnnotator 候補が出ている最中の書き始め（2026-0
   afterEach(() => {
     vi.restoreAllMocks()
     vi.useRealTimers()
+    mockFloor = null
   })
 
   /** 判別に迷う（候補チップが出る）ぐらい崩れた線を、単語 i の上の段に書く */
@@ -523,7 +539,9 @@ describe('PenSyntaxAnnotator 候補が出ている最中の書き始め（2026-0
   })
 
   it('候補が未確定のまま次の字を書き始めたら、前の字は最有力候補で自動確定する（2026-08-31）', () => {
-    // 従来は破棄され、書いた判定が黙って失われた（確定仕様3）
+    // 従来は破棄され、書いた判定が黙って失われた（確定仕様3）。
+    // 自動確定の径路を決定的に通すため、確信の下限は 0 に固定する（下限の検査は次のテスト）
+    mockFloor = 0
     vi.useFakeTimers()
     const log = createPenInputLog()
     const changes: SyntaxAnswer[] = []
@@ -555,6 +573,48 @@ describe('PenSyntaxAnnotator 候補が出ている最中の書き始め（2026-0
     expect(
       log.entries().some((e) => e.kind === 'note' && e.text.includes('自動確定')),
     ).toBe(true)
+  })
+
+  it('確信が下限未満なら自動確定せず、候補を保留して後から選び直せる（2026-09-01 項目3）', () => {
+    // 取り違えゼロ側の安全弁: 続け書き時の自動確定にも確信の下限を適用する。
+    // 下限を 1 に固定して「必ず下限未満」の径路を決定的に通す
+    mockFloor = 1
+    vi.useFakeTimers()
+    const log = createPenInputLog()
+    const changes: SyntaxAnswer[] = []
+    const { container } = render(
+      <PenSyntaxAnnotator
+        tokens={WORDS2}
+        answer={emptyAnswer(WORDS2.length)}
+        onChange={(next) => changes.push(next)}
+        inputLog={log}
+      />,
+    )
+    const canvas = container.querySelector('canvas') as HTMLCanvasElement
+    scribbleAbove(canvas, 0, 1)
+    act(() => {
+      vi.advanceTimersByTime(GROUP_WAIT_MS + 50)
+    })
+    expect(chipsShown(container)).toBe(true)
+
+    // 候補が出たまま次の字を書き始める → 誤ったまま確定せず、保留になる
+    scribbleAbove(canvas, 2, 2)
+    expect(chipsShown(container)).toBe(false)
+    expect(changes.length).toBe(0) // 解答は変わっていない（自動確定していない）
+    expect(log.entries().some((e) => e.kind === 'note' && e.text.includes('保留'))).toBe(true)
+
+    // 2つ目の線が確定（候補）した後、保留した候補は破棄されず選び直せる
+    act(() => {
+      vi.advanceTimersByTime(GROUP_WAIT_MS + 50)
+    })
+    expect(chipsShown(container)).toBe(true)
+    const panel = container.querySelector('div.z-20') as HTMLElement
+    const firstButton = panel.querySelector('button') as HTMLButtonElement
+    act(() => {
+      fireEvent.click(firstButton) // 2つ目の線の候補を確定
+    })
+    // 保留していた1つ目の線の候補が出し直される（破棄されていない）
+    expect(chipsShown(container)).toBe(true)
   })
 
   it('候補を押す操作は従来どおり効く（押した接触はキャンバスに届かない）', () => {
