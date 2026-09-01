@@ -9,7 +9,7 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import type { PenPoint, PenStroke, ShapeKind, SymbolId, TokenBox } from './types'
+import type { PenStroke, ShapeKind, SymbolId, TokenBox } from './types'
 import { classifyShape } from './shapes'
 import { classifyExceptionMark } from './recognize'
 import { classifyPosLetter, classifyRoleLetter, type UserTemplateStore } from './letters'

@@ -38,7 +38,6 @@ import {
   applySymbol,
   canMarkKariShin,
   emptyPenAnnotation,
-  OPEN_TO_SPAN,
   pruneExceptionMarks,
   roleCellParts,
   TOGGLE_EXCEPTIONS,
