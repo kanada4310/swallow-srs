@@ -16,9 +16,12 @@
 
 ## ADR 一覧 (新しい順)
 
+### 2026-08-31
+- [20260831-pen-ux-refinements](decisions/20260831-pen-ux-refinements.md) `#pen-syntax` `#reading` `#input` `#ux` `#grading` _(Phase 構文分析のペン入力)_ — 書き味と画面の改修5件（○囲みの選択式化・自動確定・働きの付け替え・行またぎ下線・入れ子カッコの縦ずらし）
+
 ### 2026-08-28
 - [20260828-symbol-halfwidth](decisions/20260828-symbol-halfwidth.md) `#pen` `#ui-ux` `#syntax` `#convention` _(Phase 読解アプリ)_ — 記号の見た目の幅をそろえる（丸括弧・山括弧を半角へ）
-- [20260828-instructor-key-teacher-gate](decisions/20260828-instructor-key-teacher-gate.md) `#reading` `#syntax` `#security` `#contracts` `#auth` _(Phase 読解アプリ)_ — 講師用の正解表を、講師だけが読める入口の向こうへ移す
+- [20260828-instructor-key-teacher-gate](decisions/20260828-instructor-key-teacher-gate.md) `#reading` `#syntax` `#security` `#contracts` `#auth` _(Phase 読解アプリ)_ — 講師用の正解表を、講師だけが読める入口の向こうへ移す（本番反映済み 2026-08-28）
 - [20260828-bracket-color-contrast](decisions/20260828-bracket-color-contrast.md) `#pen` `#ui-ux` `#syntax` `#accessibility` _(Phase 読解アプリ)_ — 入れ子カッコの4色を、白地で読める濃さに組み直す
 
 ### 2026-08-27
