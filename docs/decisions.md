@@ -16,6 +16,9 @@
 
 ## ADR 一覧 (新しい順)
 
+### 2026-09-02
+- [20260902-pen-autoconfirm](decisions/20260902-pen-autoconfirm.md) `#pen-syntax` `#recognition` `#ui` `#accuracy` _(Phase 構文分析のペン入力)_ — 全記号の自動確定への転換＋波線・タッチ修正・カッコ描画（実機確認の第2陣・5件）
+
 ### 2026-09-01
 - [20260901-syntax-grading-modes](decisions/20260901-syntax-grading-modes.md) `#reading` `#syntax` `#grading` `#pen-syntax` `#onboarding` _(Phase 構文分析のペン入力)_ — 採点ルールの拡張（任意のまとまり）と通常/MAXモードの新設
 - [20260901-pen-stroke-accumulation](decisions/20260901-pen-stroke-accumulation.md) `#pen-syntax` `#recognition` `#database` `#accuracy` _(Phase 構文分析のペン入力)_ — 手書き判定の精度向上: 実書き蓄積（データベース保存）＋見分け強化＋取り違えゼロ側調整
