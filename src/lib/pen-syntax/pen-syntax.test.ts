@@ -22,6 +22,7 @@ import {
   snapNearestToken,
   snapOpenBracket,
   underlineSegments,
+  wavyPath,
 } from './snap'
 import { shouldGroupStrokes } from './grouping'
 import {
@@ -672,6 +673,69 @@ describe('行をまたぐ下線の連結（2026-08-31 確定仕様4）', () => {
     const state = init([{ from: 0, to: 2, type: 'ul' }])
     const r = applySymbol(state, 'hline', strokeLine2Head, LINE2, { tokens: TOKENS6 })
     expect(r.next.answer.spans).toHaveLength(2)
+  })
+
+  /* ---- 波線も下線と同じ扱いで行またぎ連結する（2026-09-02 項目2） ---- */
+
+  const initWavy = (extras: Array<{ from: number; to: number }>) => {
+    const base = emptyPenAnnotation(emptyAnswer(problem))
+    return { ...base, extras: extras.map((x) => ({ kind: 'wavy' as const, ...x })) }
+  }
+
+  it('波線: 前の行の末尾まで達した波線があり、次の行の行頭から書けば連結する', () => {
+    const state = initWavy([{ from: 0, to: 2 }])
+    const r = applySymbol(state, 'wavy', strokeLine2Head, LINE2, {
+      tokens: TOKENS6,
+      allBoxes: ALL,
+    })
+    expect(r.applied).toBe(true)
+    expect(r.next.extras).toEqual([{ kind: 'wavy', from: 0, to: 4 }])
+    expect(r.message).toContain('つなげて')
+    expect(r.target).toEqual({ from: 0, to: 4 })
+  })
+
+  it('波線: 前の行の波線が行末に達していなければ連結しない', () => {
+    const state = initWavy([{ from: 0, to: 1 }])
+    const r = applySymbol(state, 'wavy', strokeLine2Head, LINE2, {
+      tokens: TOKENS6,
+      allBoxes: ALL,
+    })
+    expect(r.next.extras).toHaveLength(2)
+  })
+
+  it('波線: 新しい波線が行頭から始まっていなければ連結しない', () => {
+    const state = initWavy([{ from: 0, to: 2 }])
+    const r = applySymbol(state, 'wavy', [line([72, 175], [118, 176])], LINE2, {
+      tokens: TOKENS6,
+      allBoxes: ALL,
+    })
+    expect(r.next.extras).toEqual([
+      { kind: 'wavy', from: 0, to: 2 },
+      { kind: 'wavy', from: 4, to: 4 },
+    ])
+  })
+})
+
+describe('wavyPath（波線のひとつながり描画・2026-09-02 項目2）', () => {
+  it('幅ぶんの波を1本のパスで返す（M で始まり q の連なり）', () => {
+    const d = wavyPath(40)
+    expect(d.startsWith('M0,3')).toBe(true)
+    // 半周期4pxなので 40px なら10回の曲線
+    expect(d.match(/ q /g)?.length).toBe(10)
+  })
+
+  it('端数の幅でも最後の半周期を短くして幅ちょうどで終わる', () => {
+    const d = wavyPath(10)
+    // 4+4+2 の3区間
+    expect(d.match(/ q /g)?.length).toBe(3)
+    // 相対 x の合計が幅と一致する
+    const dxs = Array.from(d.matchAll(/ q [-\d.]+,[-\d.]+ ([-\d.]+),0/g)).map((m) => Number(m[1]))
+    expect(dxs.reduce((a, b) => a + b, 0)).toBeCloseTo(10, 5)
+  })
+
+  it('幅が0以下なら空文字（描かない）', () => {
+    expect(wavyPath(0)).toBe('')
+    expect(wavyPath(-5)).toBe('')
   })
 })
 

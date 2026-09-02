@@ -69,6 +69,8 @@ import {
   pickLine,
   ROLE_ROW_H,
   underlineSegments,
+  WAVY_H,
+  wavyPath,
 } from '@/lib/pen-syntax/snap'
 import { pathLength, strokesBBox } from '@/lib/pen-syntax/geometry'
 import type { UserTemplateStore } from '@/lib/pen-syntax/letters'
@@ -865,12 +867,10 @@ export function PenSyntaxAnnotator({
                   ref={(el) => {
                     wordRefs.current[i] = el
                   }}
-                  className={[
-                    // 下線そのものは単語間で途切れない連結線分として別レイヤーに描く
-                    // （下の「下線オーバーレイ」）。ここでは線ぶんの余白(3px)だけ確保する
-                    'whitespace-nowrap border-b-[3px] border-transparent px-1 py-0.5 font-serif text-lg',
-                    extraAt(i).some((x) => x.kind === 'wavy') ? '[text-decoration:underline_wavy_#c53030]' : '',
-                  ].join(' ')}
+                  // 下線・波線は単語間で途切れない連結線分として別レイヤーに描く
+                  // （下の「下線オーバーレイ」「波線オーバーレイ」）。
+                  // ここでは線ぶんの余白(3px)だけ確保する
+                  className="whitespace-nowrap border-b-[3px] border-transparent px-1 py-0.5 font-serif text-lg"
                 >
                   {tok}
                   {/* ベースラインの目印（中身なし・下端がベースライン＝下線の高さの基準） */}
@@ -915,6 +915,32 @@ export function PenSyntaxAnnotator({
                   className="pointer-events-none absolute bg-ink"
                   style={{ left: seg.left, top: seg.y, width: seg.right - seg.left, height: 1.5 }}
                 />
+              ))
+            : null,
+        )}
+
+        {/* 波線オーバーレイ: 熟語の印。下線と同じ連結線分で、単語の間で途切れない
+            （行をまたぐ場合も下線と同じく行ごとに1本ずつ・2026-09-02 項目2） */}
+        {ann.extras.map((x, idx) =>
+          x.kind === 'wavy'
+            ? underlineSegments(x, boxes, 1).map((seg, j) => (
+                <svg
+                  key={`wv${idx}-${j}`}
+                  className="pointer-events-none absolute"
+                  style={{ left: seg.left, top: seg.y }}
+                  width={Math.max(1, seg.right - seg.left)}
+                  height={WAVY_H}
+                  viewBox={`0 0 ${Math.max(1, seg.right - seg.left)} ${WAVY_H}`}
+                  aria-hidden
+                >
+                  <path
+                    d={wavyPath(seg.right - seg.left)}
+                    fill="none"
+                    stroke="#c53030"
+                    strokeWidth={1.5}
+                    strokeLinecap="round"
+                  />
+                </svg>
               ))
             : null,
         )}

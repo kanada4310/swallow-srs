@@ -186,6 +186,37 @@ export function underlineSegments(
   }))
 }
 
+/* ---------- 波線の重ね描き（下線と同じ連結線分＋波形の道筋） ---------- */
+
+/** 波線の描画の高さ（svg の縦幅・px）。波の中心はこの半分の位置 */
+export const WAVY_H = 6
+/** 波の半周期（px）と振幅（px）。見た目の調整用 */
+const WAVY_HALF = 4
+const WAVY_AMP = 2.2
+
+/**
+ * 波線1本ぶんの SVG パス（幅 width・高さ WAVY_H の箱の中に描く）。
+ *
+ * 従来は単語ごとの文字飾り（CSS の波線）だったため単語の間で途切れていた。
+ * 下線と同じく連結線分（underlineSegments）ごとに1本の波を描く（2026-09-02 項目2）。
+ * 端数の幅でも滑らかに終わるよう、最後の半周期だけ短くする。
+ */
+export function wavyPath(width: number): string {
+  if (width <= 0) return ''
+  const mid = WAVY_H / 2
+  let d = `M0,${mid}`
+  let x = 0
+  let up = true
+  while (x < width) {
+    const step = Math.min(WAVY_HALF, width - x)
+    const dy = (up ? -WAVY_AMP : WAVY_AMP) * (step / WAVY_HALF)
+    d += ` q ${(step / 2).toFixed(1)},${dy.toFixed(1)} ${step.toFixed(1)},0`
+    x += step
+    up = !up
+  }
+  return d
+}
+
 /* ---------- 括弧の重ね描き（単語の並びから外して置く） ---------- */
 
 /** 同じ深さの括弧が並ぶときの1つぶんの幅（px） */

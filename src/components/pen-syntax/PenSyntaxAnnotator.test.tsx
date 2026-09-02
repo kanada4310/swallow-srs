@@ -824,4 +824,35 @@ describe('PenSyntaxAnnotator 全記号の自動確定（2026-09-02）', () => {
     expect(taken).toHaveLength(1)
     expect(taken[0]).toMatchObject({ symbol: 'v', source: 'confirmed' })
   })
+
+  it('波線は単語の間で途切れないひとつながりの1本として描かれる（2026-09-02 項目2）', () => {
+    vi.useFakeTimers()
+    mockRecognition = {
+      best: { symbol: 'wavy', score: 0.9 },
+      candidates: [{ symbol: 'wavy', score: 0.9 }],
+      ambiguous: false,
+    }
+    const { container } = render(
+      <PenSyntaxAnnotator tokens={WORDS3} answer={emptyAnswer(WORDS3.length)} onChange={() => {}} />,
+    )
+    const canvas = container.querySelector('canvas') as HTMLCanvasElement
+    // 1語目の左端から2語目の右端まで、本文の帯の下寄り（y=66）に横線を書く
+    fireEvent.pointerDown(canvas, { pointerId: 1, pointerType: 'pen', clientX: 18, clientY: 66 })
+    fireEvent.pointerMove(canvas, { pointerId: 1, pointerType: 'pen', clientX: 70, clientY: 66 })
+    fireEvent.pointerMove(canvas, { pointerId: 1, pointerType: 'pen', clientX: 112, clientY: 66 })
+    fireEvent.pointerUp(canvas, { pointerId: 1, pointerType: 'pen', clientX: 114, clientY: 66 })
+    act(() => {
+      vi.advanceTimersByTime(GROUP_WAIT_MS + 50)
+    })
+    // 波線の重ね描き（svg の path）が1本だけあり、2語ぶんの幅をひとつながりで覆う
+    const waves = Array.from(container.querySelectorAll('svg path')).filter((p) =>
+      (p.getAttribute('d') ?? '').startsWith('M0,3'),
+    )
+    expect(waves).toHaveLength(1)
+    const svg = waves[0].closest('svg') as SVGSVGElement
+    expect(Number(svg.getAttribute('width'))).toBe(116 - 16)
+    expect(svg.style.left).toBe('16px')
+    // 一覧にも「波線（熟語）」のマークが出ている
+    expect(container.textContent).toContain('波線（熟語）')
+  })
 })

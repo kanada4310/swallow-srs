@@ -360,6 +360,50 @@ function mergeWithPreviousLineUnderline(
   }
 }
 
+/**
+ * 行をまたぐ波線の連結（2026-09-02 項目2・下線と同じ扱い）。
+ *
+ * 条件は下線の3条件のうち2つ（波線には働きの欄が無いため、条件2は対象外）:
+ * 1. 前の行の末尾まで波線が達している（末尾の句読点は無視）
+ * 3. 新しい波線がその行の行頭から始まっている（行頭の句読点は無視）
+ * 許容誤差は語単位（句読点のみ無視）。合わなければ従来どおり別の波線になる。
+ */
+function mergeWithPreviousLineWavy(
+  state: PenAnnotation,
+  range: { from: number; to: number },
+  opts: ApplyOptions,
+): ApplyOutcome | null {
+  const { allBoxes, tokens } = opts
+  if (!allBoxes || allBoxes.length === 0) return null
+  const lines = groupLines(allBoxes)
+  const li = lines.findIndex((l) => l.boxes.some((b) => b.index === range.from))
+  if (li <= 0) return null
+  const cur = lines[li]
+  const prev = lines[li - 1]
+  const isP = (i: number) => (tokens ? isPunct(tokens[i] ?? '') : false)
+  // 条件3: 行頭から始まっている
+  if (cur.boxes.some((b) => b.index < range.from && !isP(b.index))) return null
+  // 条件1: 前の行の末尾まで達している波線
+  const prevIdx = new Set(prev.boxes.map((b) => b.index))
+  const candidates = state.extras
+    .map((x, i) => ({ x, i }))
+    .filter(
+      ({ x }) =>
+        x.kind === 'wavy' &&
+        prevIdx.has(x.to) &&
+        prev.boxes.every((b) => b.index <= x.to || isP(b.index)),
+    )
+  if (candidates.length === 0) return null
+  const target = candidates.reduce((a, b) => (b.x.to > a.x.to ? b : a))
+  const extras = state.extras.map((x, i) => (i === target.i ? { ...x, to: range.to } : x))
+  return {
+    next: { ...state, extras },
+    applied: true,
+    message: '前の行の波線とつなげて、ひとつながりの印にしました',
+    target: { from: target.x.from, to: range.to },
+  }
+}
+
 /** 判別済みの記号1つを解答へ反映する */
 export function applySymbol(
   state: PenAnnotation,
@@ -536,6 +580,9 @@ export function applySymbol(
   if (symbol === 'wavy') {
     const range = snapHorizontalRange(strokes, boxes)
     if (!range) return { next: state, applied: false, message: '吸着先の単語が見つかりません' }
+    // 行またぎの連結（下線と同じ扱い・2026-09-02 項目2）
+    const merged = mergeWithPreviousLineWavy(state, range, opts)
+    if (merged) return merged
     return {
       next: { ...state, extras: [...state.extras, { kind: 'wavy', from: range.from, to: range.to }] },
       applied: true,

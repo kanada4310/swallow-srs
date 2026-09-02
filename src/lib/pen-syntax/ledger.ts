@@ -94,22 +94,26 @@ export const BRACKET_SYMBOLS: SymbolId[] = [
 export const ONBOARD_ROLE_LETTERS: SymbolId[] = ['S', 'V', 'O', 'C', 'P', 'Po', '▷']
 
 /**
- * 必須のお手本（登録の順もこの並び）: 括弧8種 → 働きの文字7種＝15種。
+ * 必須のお手本（登録の順もこの並び）: 括弧8種 → 働きの文字7種 → 波線＝16種。
  * P・▷ は働きの側に並べる（模範分析集の実書き込みどおり）。
  * 品詞の英字5種は 2026-08-31 に必須から任意へ移した（通常モードでは品詞の
  * 書き込みを求めないため。登録したい人だけ登録できる・塾長確定仕様4）。
+ * 波線は 2026-09-02 に必須へ昇格（下線との取り違えを本人の字で見分けるため。
+ * 登録済みの利用者には、足りない波線だけを追加登録する案内が自動で出る）。
  */
 export const REQUIRED_SYMBOLS: SymbolId[] = [
   ...BRACKET_SYMBOLS,
   ...ONBOARD_ROLE_LETTERS,
+  'wavy',
 ]
 
 /**
- * 任意のお手本: 品詞の英字5種（2026-08-31 に必須から移動）・下線・波線・＋。
+ * 任意のお手本: 品詞の英字5種（2026-08-31 に必須から移動）・下線・＋。
+ * 波線は 2026-09-02 に必須へ昇格した。
  * 例外の印（仮・真・強・同）は 2026-08-31 に手書き認識を廃止（タッチ選択式へ）した
  * ため、お手本の登録対象から外した（登録済みの字が残っていても使われないだけ）。
  */
-export const OPTIONAL_SYMBOLS: SymbolId[] = [...POS_LETTERS, 'hline', 'wavy', '＋']
+export const OPTIONAL_SYMBOLS: SymbolId[] = [...POS_LETTERS, 'hline', '＋']
 
 /** お手本登録の画面で選べる全記号 */
 export const ENROLLABLE_SYMBOLS: SymbolId[] = [

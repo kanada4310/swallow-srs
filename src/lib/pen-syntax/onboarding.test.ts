@@ -16,8 +16,8 @@ const stroke: PenStroke = [
 ]
 
 describe('初回お手本登録（義務化）', () => {
-  it('必須は括弧8種＋働き7種の15種（品詞は 2026-08-31 に任意へ・M・p は含まない）', () => {
-    expect(REQUIRED_SYMBOLS).toHaveLength(15)
+  it('必須は括弧8種＋働き7種＋波線の16種（品詞は 2026-08-31 に任意へ・M・p は含まない）', () => {
+    expect(REQUIRED_SYMBOLS).toHaveLength(16)
     expect(REQUIRED_SYMBOLS.map(String)).not.toContain('M')
     expect(REQUIRED_SYMBOLS.map(String)).not.toContain('p') // 前置詞は働きの段の P
     // 品詞の英字5種は必須に含まれない（通常モードでは品詞を求めないため・確定仕様4）
@@ -28,6 +28,8 @@ describe('初回お手本登録（義務化）', () => {
     for (const r of ['S', 'V', 'O', 'C', 'P', 'Po', '▷'] as const) {
       expect(REQUIRED_SYMBOLS).toContain(r)
     }
+    // 波線は 2026-09-02 に必須へ昇格（下線との取り違えを本人の字で見分けるため）
+    expect(REQUIRED_SYMBOLS).toContain('wavy')
   })
 
   it('P・▷ は働きの並び（括弧の後）に置かれる', () => {
@@ -35,15 +37,39 @@ describe('初回お手本登録（義務化）', () => {
     expect(REQUIRED_SYMBOLS.indexOf('▷')).toBeGreaterThan(REQUIRED_SYMBOLS.indexOf('brace-close'))
   })
 
-  it('任意は品詞5種＋下線・波線・＋（必須と重複しない・○で囲む漢字は 2026-08-31 に選択式化で除外）', () => {
-    expect(OPTIONAL_SYMBOLS).toEqual(['n', 'v', 'a', 'ad', 'aux', 'hline', 'wavy', '＋'])
+  it('任意は品詞5種＋下線・＋（必須と重複しない・波線は 2026-09-02 に必須へ昇格）', () => {
+    expect(OPTIONAL_SYMBOLS).toEqual(['n', 'v', 'a', 'ad', 'aux', 'hline', '＋'])
     for (const s of OPTIONAL_SYMBOLS) expect(REQUIRED_SYMBOLS).not.toContain(s)
   })
 
-  it('括弧は2本・文字は1本で必要数を満たす', () => {
+  it('括弧は2本・文字と波線は1本で必要数を満たす', () => {
     expect(samplesFor('angle-close')).toBe(2)
     expect(samplesFor('S')).toBe(1)
     expect(samplesFor('n')).toBe(1)
+    expect(samplesFor('wavy')).toBe(1)
+  })
+
+  it('★登録済み（旧15種）の利用者は、足りない波線だけが追加登録の対象になる', () => {
+    // 旧一覧で登録を終えた利用者の店構え（波線だけ無い）
+    const store: UserTemplateStore = {
+      'paren-open': [[stroke], [stroke]],
+      'paren-close': [[stroke], [stroke]],
+      'square-open': [[stroke], [stroke]],
+      'square-close': [[stroke], [stroke]],
+      'angle-open': [[stroke], [stroke]],
+      'angle-close': [[stroke], [stroke]],
+      'brace-open': [[stroke], [stroke]],
+      'brace-close': [[stroke], [stroke]],
+      S: [[stroke]],
+      V: [[stroke]],
+      O: [[stroke]],
+      C: [[stroke]],
+      P: [[stroke]],
+      Po: [[stroke]],
+      '▷': [[stroke]],
+    }
+    expect(isEnrollmentComplete(store)).toBe(false)
+    expect(missingRequired(store)).toEqual(['wavy'])
   })
 
   it('missingRequired は足りない記号を登録の順で返す（途中でやめても続きから）', () => {
@@ -86,6 +112,7 @@ describe('初回お手本登録（義務化）', () => {
       P: [[stroke]],
       Po: [[stroke]],
       '▷': [[stroke]],
+      wavy: [[stroke]],
     }
     expect(isEnrollmentComplete(store)).toBe(true)
     expect(missingRequired(store)).toEqual([])
