@@ -62,6 +62,9 @@ import { useStrokeCanvas, type DrawingStroke } from './useStrokeCanvas'
 import { useStrokeGrouping, type StrokeGrouping } from './useStrokeGrouping'
 import { BASELINE_PROBE_ATTR, useTokenBoxes } from './useTokenBoxes'
 import {
+  BRACKET_GLYPH_H,
+  BRACKET_GLYPH_W,
+  bracketGlyphPath,
   bracketMark,
   findLineAt,
   groupLines,
@@ -72,6 +75,7 @@ import {
   underlineSegments,
   WAVY_H,
   wavyPath,
+  type BracketSpanType,
   type LineHit,
 } from '@/lib/pen-syntax/snap'
 import { pathLength, strokesBBox } from '@/lib/pen-syntax/geometry'
@@ -786,6 +790,10 @@ export function PenSyntaxAnnotator({
       x: number
       y: number
       roleTop: number
+      /** 括弧の種類（字形の選択）と開き/閉じ（閉じは字形を左右反転して描く） */
+      type: BracketSpanType
+      side: 'open' | 'close'
+      /** 見た目に対応する字（データ属性・テストの照合用。描画はSVGの字形で行う） */
       glyph: string
       color: string
       role?: string
@@ -810,6 +818,8 @@ export function PenSyntaxAnnotator({
         out.push({
           key: `o${i}-${n}`,
           ...bracketMark(box, boxes, 'open', n, count),
+          type: s.type as BracketSpanType,
+          side: 'open',
           glyph: SPAN_TYPES[s.type].open,
           color: bracketColor(depth),
           role: s.role,
@@ -819,6 +829,8 @@ export function PenSyntaxAnnotator({
         out.push({
           key: `p${i}-${n}`,
           ...bracketMark(box, boxes, 'open', closed.length + n, count),
+          type: p.type as BracketSpanType,
+          side: 'open',
           glyph: SPAN_TYPES[p.type].open,
           color: PENDING_BRACKET_COLOR,
           role: p.role,
@@ -838,6 +850,8 @@ export function PenSyntaxAnnotator({
         out.push({
           key: `c${i}-${n}`,
           ...bracketMark(box, boxes, 'close', n, list.length),
+          type: s.type as BracketSpanType,
+          side: 'close',
           glyph: SPAN_TYPES[s.type].close,
           color: bracketColor(depth),
         })
@@ -1003,15 +1017,33 @@ export function PenSyntaxAnnotator({
             : null,
         )}
 
-        {/* 括弧オーバーレイ: 単語のすき間に重ねて描く（記号を足しても単語が動かない） */}
+        {/* 括弧オーバーレイ: 単語のすき間に重ねて描く（記号を足しても単語が動かない）。
+            字形はフォントの字ではなく自前の SVG（2026-09-02 項目5）。日本語フォントの
+            丸括弧が大きく基線より下へずれて描かれ、同じすき間で重なった ) と ⟩ が
+            読み分けられなかったため、4種とも同じ大きさ・同じ中心の線で描く */}
         {bracketOverlay.map((b) => (
           <span key={b.key}>
-            <span
-              className="pointer-events-none absolute select-none text-xl font-bold leading-none"
-              style={{ left: b.x, top: b.y, color: b.color, transform: 'translate(-50%, -50%)' }}
+            <svg
+              className="pointer-events-none absolute select-none"
+              style={{ left: b.x, top: b.y, transform: 'translate(-50%, -50%)' }}
+              width={BRACKET_GLYPH_W}
+              height={BRACKET_GLYPH_H}
+              viewBox={`0 0 ${BRACKET_GLYPH_W} ${BRACKET_GLYPH_H}`}
+              data-glyph={b.glyph}
+              aria-hidden
             >
-              {b.glyph}
-            </span>
+              <path
+                d={bracketGlyphPath(b.type)}
+                transform={
+                  b.side === 'close' ? `translate(${BRACKET_GLYPH_W},0) scale(-1,1)` : undefined
+                }
+                fill="none"
+                stroke={b.color}
+                strokeWidth={1.8}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
             {b.role ? (
               // 開始カッコの真下＝そのまとまり全体の働き。
               // 単語の下の働きのマス（Cell の min-h-6＝ROLE_ROW_H）と

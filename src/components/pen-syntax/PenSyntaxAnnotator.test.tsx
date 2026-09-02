@@ -185,16 +185,51 @@ describe('PenSyntaxAnnotator 重ね描き（下線・カッコ）', () => {
     // 修正前はカッコが単語の直前・直後に差し込まれ、後ろの単語が右へ押されていた
     expect(wordLefts()).toEqual(before)
 
-    // カッコは絶対配置の重ね描きとして出ている（開き2つ・閉じ2つ＋まとまりの働き）
+    // カッコは絶対配置の重ね描き（SVGの字形・2026-09-02）として出ている
+    // （開き2つ・閉じ2つ＋まとまりの働き）
     const overlay = Array.from(
-      container.querySelectorAll('div.relative > span > span.absolute'),
-    ).map((el) => el.textContent)
+      container.querySelectorAll('div.relative > span > svg.absolute'),
+    ).map((el) => el.getAttribute('data-glyph'))
     expect(overlay).toContain('[')
     expect(overlay).toContain(']')
     // 山括弧は半角の ⟨ ⟩（U+27E8 / U+27E9・2026-08-28 に幅をそろえた）
     expect(overlay).toContain('⟨')
     expect(overlay).toContain('⟩')
-    expect(overlay).toContain('S')
+    const roles = Array.from(
+      container.querySelectorAll('div.relative > span > span.absolute'),
+    ).map((el) => el.textContent)
+    expect(roles).toContain('S')
+  })
+
+  it('括弧の字形は4種とも同じ大きさ・同じ中心（SVG・フォントに依存しない）', () => {
+    // 再現文（2026-09-02 項目5）: The girl ⟨standing (by the door)⟩ is my sister.
+    // door の後ろに ) と ⟩ が同じすき間で重なる。従来はフォントの字で描いていたため
+    // 丸括弧だけ大きく・基線より下へずれた（日本語フォントの字面設計＋⟨⟩のフォント落ち）
+    const withNest: SyntaxAnswer = {
+      ...emptyAnswer(TOKENS.length),
+      spans: [
+        { from: 2, to: 5, type: 'adjm' },
+        { from: 3, to: 5, type: 'adv' },
+      ],
+    }
+    const { container } = render(
+      <PenSyntaxAnnotator tokens={TOKENS} answer={withNest} onChange={() => {}} />,
+    )
+    const glyphs = Array.from(
+      container.querySelectorAll('div.relative > span > svg.absolute'),
+    ) as SVGSVGElement[]
+    expect(glyphs.map((g) => g.getAttribute('data-glyph')).sort()).toEqual(['(', ')', '⟨', '⟩'])
+    // 4つとも同じ描画領域（大きさ）で、中心そろえ（translate(-50%,-50%)）
+    for (const g of glyphs) {
+      expect(g.getAttribute('width')).toBe('8')
+      expect(g.getAttribute('height')).toBe('20')
+      expect(g.style.transform).toContain('translate(-50%, -50%)')
+    }
+    // 同じすき間に重なる ) と ⟩ の縦の段差は、意図した控えめなずらし（8px）ちょうど
+    const closeParen = glyphs.find((g) => g.getAttribute('data-glyph') === ')') as SVGSVGElement
+    const closeAngle = glyphs.find((g) => g.getAttribute('data-glyph') === '⟩') as SVGSVGElement
+    const dy = parseFloat(closeParen.style.top) - parseFloat(closeAngle.style.top)
+    expect(dy).toBe(8)
   })
 
   it('採点しても単語の位置は1画素も動かない（指摘を文の流れから外して重ね描きする）', () => {

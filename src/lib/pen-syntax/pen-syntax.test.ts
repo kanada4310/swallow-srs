@@ -10,6 +10,9 @@ import {
 import { classifyShape } from './shapes'
 import { evaluatePointer, initialPalmState } from './palm'
 import {
+  BRACKET_GLYPH_H,
+  BRACKET_GLYPH_W,
+  bracketGlyphPath,
   bracketMark,
   BRACKET_SLOT_H,
   BRACKET_SLOT_W,
@@ -749,6 +752,32 @@ describe('findLineAt（下線・波線のタッチの当たり判定・2026-09-0
       BOXES2,
     )
     expect(both?.kind).toBe('wavy')
+  })
+})
+
+describe('bracketGlyphPath（括弧の字形・2026-09-02 項目5）', () => {
+  const types = ['adv', 'n', 'adjm', 'comp'] as const
+
+  it('4種とも同じ上端・下端（y=1.5〜18.5）で始終し、大きさ・基線がそろう', () => {
+    for (const t of types) {
+      const d = bracketGlyphPath(t)
+      expect(d.startsWith('M6.5,1.5 ')).toBe(true)
+      expect(d.endsWith(',10 6.5,18.5') || d.endsWith(' 6.5,18.5') || d.endsWith('L6.5,18.5')).toBe(
+        true,
+      )
+      // 描画領域（8×20）からはみ出す座標が無い
+      for (const m of Array.from(d.matchAll(/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/g))) {
+        expect(Number(m[1])).toBeGreaterThanOrEqual(0)
+        expect(Number(m[1])).toBeLessThanOrEqual(BRACKET_GLYPH_W)
+        expect(Number(m[2])).toBeGreaterThanOrEqual(0)
+        expect(Number(m[2])).toBeLessThanOrEqual(BRACKET_GLYPH_H)
+      }
+    }
+  })
+
+  it('4種の字形は互いに異なる（見分けられる）', () => {
+    const set = new Set(types.map((t) => bracketGlyphPath(t)))
+    expect(set.size).toBe(4)
   })
 })
 
