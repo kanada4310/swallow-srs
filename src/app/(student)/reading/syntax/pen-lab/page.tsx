@@ -350,13 +350,15 @@ export default function PenLabPage() {
       return
     }
     if (!task) return
-    if (rec.result.best && !rec.result.ambiguous) {
+    // 全記号の自動確定（2026-09-02・書き込み部品と同じ扱い）: 迷っていても
+    // 最上位候補で確定して数える（誤りは「誤判別」に入る＝修正されず残った誤りの読み）
+    if (rec.result.best) {
       record(task.symbol, rec.result.best.symbol, 'auto', strokes, rec.boxes, task.target)
       setTask(makeTask(mode))
       redraw()
       return
     }
-    // 迷ったとき: 候補チップから「書いたつもりの記号」をタップしてもらう。
+    // 拾えなかったとき: 候補チップから「書いたつもりの記号」をタップしてもらう。
     // 枠はいま書いた場所を避けて出す（書き込み部品と同じ chip-place.ts）
     const xs = strokes.flat()
     const stroke = {

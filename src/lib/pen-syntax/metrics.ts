@@ -7,10 +7,16 @@
  *   内訳として「候補の中に正解があった（タップ1回で確定できる）」と
  *   「候補にも正解が無かった（書き直しになる）」を分けて数える
  *
- * 判定の分類は画面の確定ロジックと同じ規則で行う:
- * best があり ambiguous=false のときだけ自動確定。それ以外は候補選び。
- * best が台帳外の形（○・?・ダッシュ等）で自動確定したときは、解答へは反映されず
- * 案内が出るだけなので「取り違え」ではなく「候補にも正解が無い（書き直し）」に数える。
+ * 判定の分類は画面の確定ロジックと同じ規則で行う。確定のしかた（style）は2通り:
+ * - 'chips'（着手前の見せ方）: best があり ambiguous=false のときだけ自動確定。
+ *   それ以外は候補選び
+ * - 'auto'（2026-09-02 の全記号の自動確定）: best があれば迷っていても確定。
+ *   このとき「取り違え」は**修正されず残った誤り**の読みになる（画面では
+ *   タッチで直せるが、この計測には修正の操作が無いため「要修正＝誤ったまま
+ *   確定した」件数がそのまま出る）。候補選びは「拾えず」だけになる
+ * どちらの style でも、best が台帳外の形（○・?・ダッシュ等）のときは解答へは
+ * 反映されず案内が出るだけなので「取り違え」ではなく「候補にも正解が無い
+ * （書き直し）」に数える。着手前との比較は同じ style どうしで行う。
  *
  * 同じ計測を「合成データ（機械生成・実機の実測ではない）」と「実書きデータ
  * （pen-lab の実書き計測で採った線）」の両方に使えるようにしてある。
@@ -30,9 +36,20 @@ export type TrialClass =
   | 'chip-rescued' // 候補選び（候補の中に正解あり＝タップ1回）
   | 'chip-lost' // 候補選び（候補にも正解なし＝一覧 or 書き直し）
 
+/**
+ * 確定のしかた。'chips'=着手前（迷ったら候補選び）／'auto'=全記号の自動確定
+ * （2026-09-02。best があれば迷っていても確定し、誤りはタッチで直す）。
+ */
+export type ConfirmStyle = 'chips' | 'auto'
+
 /** 画面の確定ロジックと同じ規則で、1回の判別結果を分類する */
-export function classifyTrial(intended: SymbolId, result: RecognitionResult): TrialClass {
-  if (result.best && !result.ambiguous) {
+export function classifyTrial(
+  intended: SymbolId,
+  result: RecognitionResult,
+  style: ConfirmStyle = 'chips',
+): TrialClass {
+  const confirmed = style === 'auto' ? result.best !== null : result.best && !result.ambiguous
+  if (confirmed && result.best) {
     if (result.best.symbol === intended) return 'auto-ok'
     // 台帳外の形での「確定」は解答に反映されない（案内のみ）＝記録は汚れない
     if (deprecatedGuidance(result.best.symbol)) return 'chip-lost'
@@ -58,8 +75,13 @@ export function newTally(): MetricsTally {
   return { total: 0, autoOk: 0, misfire: 0, chipRescued: 0, chipLost: 0, confusions: new Map() }
 }
 
-export function addTrial(t: MetricsTally, intended: SymbolId, result: RecognitionResult): TrialClass {
-  const cls = classifyTrial(intended, result)
+export function addTrial(
+  t: MetricsTally,
+  intended: SymbolId,
+  result: RecognitionResult,
+  style: ConfirmStyle = 'chips',
+): TrialClass {
+  const cls = classifyTrial(intended, result, style)
   t.total++
   if (cls === 'auto-ok') t.autoOk++
   else if (cls === 'misfire') {
@@ -143,16 +165,17 @@ export function recognizeSample(
 /** 記号種別の集計（全体合計は '合計' キー） */
 export function evaluateSamples(
   samples: LabeledSample[],
-  opts: { store?: UserTemplateStore | null; tuning?: RecognizerTuning } = {},
+  opts: { store?: UserTemplateStore | null; tuning?: RecognizerTuning; style?: ConfirmStyle } = {},
 ): Map<string, MetricsTally> {
   const per = new Map<string, MetricsTally>()
   const total = newTally()
+  const style = opts.style ?? 'chips'
   for (const s of samples) {
     const result = recognizeSample(s, opts.store ?? null, opts.tuning ?? DEFAULT_TUNING)
     const t = per.get(s.symbol) ?? newTally()
-    addTrial(t, s.symbol, result)
+    addTrial(t, s.symbol, result, style)
     per.set(s.symbol, t)
-    addTrial(total, s.symbol, result)
+    addTrial(total, s.symbol, result, style)
   }
   per.set('合計', total)
   return per

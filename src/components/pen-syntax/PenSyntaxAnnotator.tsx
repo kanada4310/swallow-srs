@@ -5,8 +5,9 @@
  *
  * 英文の上に透明なキャンバスを重ね、ペンで書いた線をその場で判別して
  * 単語位置に吸着させ、構文の練習の解答データ（SyntaxAnswer）に反映する。
- * - 判別に迷ったら線の近くに候補チップを出し、ワンタップで確定（構想 v1.1 論点3）
- * - それでも拾えないときは一覧から選ぶ（ボタン方式への逃げ道）
+ * - 全記号を**最上位候補で自動確定**して表示する（2026-09-02 塾長判断）。
+ *   誤りはあとから判定欄・下線のタッチで直す（候補の枠は原則出さない）
+ * - 最有力候補すら立てられない（拾えず）ときだけ候補チップ→一覧（従来の見せ方）
  * - 指・手のひらは線として拾わない（ペン専用。誤反応は数えて onPalm で報告）
  *
  * 共有部品 SyntaxAnnotator（タップ方式）には手を入れず、別部品として実装している。
@@ -174,8 +175,10 @@ export function PenSyntaxAnnotator({
   const historyRef = useRef<PenAnnotation[]>([])
 
   // 実書き蓄積のため込み（2026-09-01・関所つき）。判別が確定して反映された線だけがたまり、
-  // 取り消し・削除・値の変更で訂正されたらその場で外す。親が採点時に取り出して送る
-  const collectedRef = useRef<Array<PenSampleUpload & { key: string | null }>>([])
+  // 取り消し・削除・値の変更で訂正されたらその場で外す。親が採点時に取り出して送る。
+  // skip=true の行は蓄積には送らない**場所取り**（2026-09-02）: 迷いのある自動確定など
+  // 関所を通らない反映にも1行積むことで、「一手戻す」＝末尾1件の対応関係を保つ
+  const collectedRef = useRef<Array<PenSampleUpload & { key: string | null; skip?: boolean }>>([])
   const dropSamples = useCallback((keys: string[]) => {
     collectedRef.current = collectedRef.current.filter((c) => !c.key || !keys.includes(c.key))
   }, [])
@@ -183,7 +186,9 @@ export function PenSyntaxAnnotator({
     if (!sampleTakerRef) return
     const ref = sampleTakerRef
     ref.current = () => {
-      const out = collectedRef.current.map(({ key: _key, ...s }) => s)
+      const out = collectedRef.current
+        .filter((c) => !c.skip)
+        .map(({ key: _key, skip: _skip, ...s }) => s)
       collectedRef.current = []
       return out
     }
@@ -309,7 +314,9 @@ export function PenSyntaxAnnotator({
       lane: Lane,
       kind: PenRecognitionEvent['kind'],
       candidates: SymbolCandidate[],
+      opts: { accumulate?: boolean } = {},
     ) => {
+      const accumulate = opts.accumulate ?? true
       historyRef.current = [...historyRef.current.slice(-29), annotationRef.current]
       // tokens=句読点の見分け（働きの付け先）／allBoxes=全行の単語箱（行またぎ下線の連結）
       const out = applySymbol(annotationRef.current, symbol, strokes, lineBoxes, {
@@ -319,8 +326,11 @@ export function PenSyntaxAnnotator({
       if (out.message) showToast(out.message)
       if (out.applied) emitAnnotation(out.next)
       else historyRef.current.pop()
-      if (out.applied && out.target && isAccumulatable(symbol)) {
-        // 実書き蓄積へのため込み。候補から選んだ線（chip）は正解確定済みの最良のお手本
+      if (out.applied && out.target) {
+        // 実書き蓄積へのため込み。候補から選んだ線（chip）は正解確定済みの最良のお手本。
+        // 関所（skip=true で場所取りだけ積む・蓄積には送らない）:
+        // - 迷いのある自動確定（accumulate=false）＝誤確定の線でお手本を汚さない
+        // - 台帳の蓄積対象でない記号（isAccumulatable が false）
         collectedRef.current = [
           ...collectedRef.current,
           {
@@ -328,6 +338,7 @@ export function PenSyntaxAnnotator({
             symbol,
             strokes,
             source: kind === 'candidate' ? 'chip' : 'confirmed',
+            skip: !accumulate || !isAccumulatable(symbol),
           },
         ]
       }
@@ -430,19 +441,35 @@ export function PenSyntaxAnnotator({
   /**
    * 記号のまとまりが確定したとき（まとめの判定・待ち時間は useStrokeGrouping が持つ）。
    * 境界をまたいだ瞬間にも呼ばれるので、書き始めと同時に前の記号が確定する。
+   *
+   * 全記号の自動確定（2026-09-02 塾長判断・検討会の一部を上書き）:
+   * 候補が割れていても**最上位候補をその場で確定して表示**し、候補の枠は原則出さない。
+   * 誤りはあとから判定欄・下線のタッチで直す。候補の枠を出すのは、最有力候補すら
+   * 立てられない（拾えず）ときだけ（従来の見せ方への逃げ道）。
+   * 蓄積の関所: 迷いのある確定（ambiguous＝確信の下限未満・候補の差が小さい・
+   * お手本と意見割れ）は実書き蓄積に入れない（誤確定の線でお手本を汚さない）。
    */
   const handleCommit = useCallback(
     (strokes: PenStroke[]) => {
       const rec = recognizeGroup(strokes, boxes, templateStore)
       const { result } = rec
-      if (result.best && !result.ambiguous) {
-        applyAndReport(result.best.symbol, strokes, rec.boxes, rec.lane, 'auto', result.candidates)
+      if (result.best) {
+        if (result.ambiguous) {
+          logRef.current?.push({
+            kind: 'note',
+            at: performance.now(),
+            text: `迷いのある線を最上位候補「${symbolLabel(result.best.symbol)}」で自動確定（タッチで直せます・実書き蓄積には入れない）`,
+          })
+        }
+        applyAndReport(result.best.symbol, strokes, rec.boxes, rec.lane, 'auto', result.candidates, {
+          accumulate: !result.ambiguous,
+        })
         redraw()
-        // 手が空いたので、保留しておいた候補（確信の下限に届かなかった線）を出し直す
+        // 手が空いたので、保留しておいた候補（拾えなかった線）を出し直す
         showNextHeld()
         return
       }
-      // 迷った・拾えなかった: 候補チップを出してワンタップ確定。
+      // 拾えなかった（最有力候補なし）: 従来どおり候補チップを出してワンタップ確定。
       // 台帳から外れた形（?・ダッシュ・Ø・単語囲みの○）は候補に出さない（記号の台帳）
       const usable = result.candidates.filter((c) => !deprecatedGuidance(c.symbol))
       const b = strokesBBox(strokes)

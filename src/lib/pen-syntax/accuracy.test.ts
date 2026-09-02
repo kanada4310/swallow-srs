@@ -25,6 +25,7 @@ import {
   evaluateSamples,
   formatEvaluation,
   formatTallyLine,
+  type ConfirmStyle,
   type LabeledSample,
   type SampleSet,
 } from './metrics'
@@ -128,8 +129,9 @@ function report(
   samples: LabeledSample[],
   store: UserTemplateStore | null,
   tuning: RecognizerTuning,
+  style: ConfirmStyle = 'chips',
 ) {
-  const per = evaluateSamples(samples, { store, tuning })
+  const per = evaluateSamples(samples, { store, tuning, style })
   for (const line of formatEvaluation(label, per)) console.log(line)
   return per.get('合計')!
 }
@@ -156,6 +158,25 @@ describe('精度計測: 合成データ（種固定・実機の実測ではな�
     expect(after.misfire / after.total).toBeLessThanOrEqual(0.015)
     // 癖のある書き手も、候補（上位3）からタップ1回で拾える割合が高いこと
     expect((afterQuirk.autoOk + afterQuirk.chipRescued) / afterQuirk.total).toBeGreaterThanOrEqual(0.9)
+
+    // 全記号の自動確定（2026-09-02 塾長判断）の読み: best があれば迷っていても確定する。
+    // 「取り違え」＝修正されず残った誤り（画面ではタッチで直せるが、この計測には
+    // 修正の操作が無いため「要修正＝誤ったまま確定」の件数がそのまま出る）
+    const autoStd = report('自動確定 合成・標準（お手本8種あり）', samples, std, DEFAULT_TUNING, 'auto')
+    const autoQuirk = report(
+      '自動確定 合成・癖のある閉じ括弧（お手本8種あり）',
+      quirkSamples(),
+      quirkStore(),
+      DEFAULT_TUNING,
+      'auto',
+    )
+    console.log(formatTallyLine('自動確定 合成 総合計', mergeAll(autoStd, autoQuirk)))
+    // 自動確定は「候補選びに回していた線」を確定に変えるだけなので、
+    // 一発確定は候補選び方式（chips）以上・誤ったままの確定も同数以上になる
+    expect(autoStd.autoOk).toBeGreaterThanOrEqual(after.autoOk)
+    expect(autoStd.misfire).toBeGreaterThanOrEqual(after.misfire)
+    // 標準的な書き手: 自動確定でも要修正（誤ったまま確定）は小さく収まること
+    expect(autoStd.misfire / autoStd.total).toBeLessThanOrEqual(0.05)
   })
 })
 
@@ -207,6 +228,7 @@ describe('精度計測: 実書きデータ（samples/*.json・pen-lab の実書�
       console.log(`--- 実書きデータ: ${file}（${set.samples.length}本・${set.device ?? '端末不明'}）`)
       report(`実書き ${file} 着手前`, set.samples, null, LEGACY_TUNING)
       report(`実書き ${file} 現行`, set.samples, null, DEFAULT_TUNING)
+      report(`実書き ${file} 自動確定`, set.samples, null, DEFAULT_TUNING, 'auto')
     }
     expect(sets.every((s) => s.set.samples.length > 0)).toBe(true)
   })

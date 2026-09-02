@@ -18,6 +18,8 @@ import { PenSyntaxAnnotator } from './PenSyntaxAnnotator'
 import { createPenInputLog } from '@/lib/pen-syntax/input-log'
 import { GROUP_WAIT_MS } from './useStrokeGrouping'
 import { ROLE_ROW_H } from '@/lib/pen-syntax/snap'
+import type { RecognitionResult } from '@/lib/pen-syntax/types'
+import type { PenSampleUpload } from './usePenTemplates'
 import type { SyntaxAnswer } from '@/lib/reading/syntax'
 
 /**
@@ -34,6 +36,34 @@ vi.mock('@/lib/pen-syntax/tuning', async (importOriginal) => {
       mockFloor ?? orig.autoConfirmFloor(lane, t),
   }
 })
+
+/**
+ * 判別結果をテストから決定的に差し替える（2026-09-02）。
+ * jsdom で書ける模擬の線は判別の点数が安定しないため、
+ * 「迷いのある最有力候補」「拾えず（候補のみ）」の各径路を狙って通すのに使う。
+ * null のときは本物の判別をそのまま使う。
+ */
+let mockRecognition: RecognitionResult | null = null
+vi.mock('@/lib/pen-syntax/recognize', async (importOriginal) => {
+  const orig = await importOriginal<typeof import('@/lib/pen-syntax/recognize')>()
+  return {
+    ...orig,
+    recognizeGroup: (...args: Parameters<typeof orig.recognizeGroup>) => {
+      const real = orig.recognizeGroup(...args)
+      return mockRecognition ? { ...real, result: mockRecognition } : real
+    },
+  }
+})
+
+/** 拾えず（最有力候補なし・候補チップだけ出る）の判別結果 */
+const UNRECOGNIZED: RecognitionResult = {
+  best: null,
+  candidates: [
+    { symbol: 'n', score: 0.2 },
+    { symbol: 'v', score: 0.15 },
+  ],
+  ambiguous: true,
+}
 
 const CHAR_W = 10
 
@@ -441,6 +471,9 @@ describe('PenSyntaxAnnotator 候補が出ている最中の書き始め（2026-0
   const boxOf2 = (i: number) => ({ left: 16 + i * 60, right: 56 + i * 60, top: 40, bottom: 68 })
 
   beforeEach(() => {
+    // 候補チップが出るのは「拾えず」のときだけになった（2026-09-02 全記号の自動確定）ため、
+    // この一連のテストでは判別結果を拾えずに固定して候補の径路を通す
+    mockRecognition = UNRECOGNIZED
     vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (
       this: Element,
     ) {
@@ -463,6 +496,7 @@ describe('PenSyntaxAnnotator 候補が出ている最中の書き始め（2026-0
     vi.restoreAllMocks()
     vi.useRealTimers()
     mockFloor = null
+    mockRecognition = null
   })
 
   /** 判別に迷う（候補チップが出る）ぐらい崩れた線を、単語 i の上の段に書く */
@@ -669,5 +703,125 @@ describe('PenSyntaxAnnotator 候補が出ている最中の書き始め（2026-0
       d.className.includes('z-[60]'),
     )
     expect(pickerOpen).toBe(false)
+  })
+})
+
+/**
+ * 全記号の自動確定（2026-09-02 塾長判断・方針転換）。
+ * 候補が割れていても最上位候補で確定して表示し、候補の枠は出さない。
+ * あわせて蓄積の関所: 迷いのある確定は実書き蓄積に入れない。
+ */
+describe('PenSyntaxAnnotator 全記号の自動確定（2026-09-02）', () => {
+  const WORDS3 = ['aa', 'bb', 'cc', 'dd']
+  const boxOf3 = (i: number) => ({ left: 16 + i * 60, right: 56 + i * 60, top: 40, bottom: 68 })
+
+  beforeEach(() => {
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: Element,
+    ) {
+      const text = this.textContent ?? ''
+      const i = WORDS3.indexOf(text)
+      const isWord = i >= 0 && (this as HTMLElement).className?.includes('font-serif')
+      const r = isWord ? boxOf3(i) : { left: 0, right: 400, top: 0, bottom: 140 }
+      return {
+        ...r,
+        width: r.right - r.left,
+        height: r.bottom - r.top,
+        x: r.left,
+        y: r.top,
+        toJSON: () => ({}),
+      } as DOMRect
+    })
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.useRealTimers()
+    mockRecognition = null
+  })
+
+  function writeAbove(canvas: Element, i: number, pointerId: number) {
+    const cx = (boxOf3(i).left + boxOf3(i).right) / 2
+    fireEvent.pointerDown(canvas, { pointerId, pointerType: 'pen', clientX: cx - 5, clientY: 20 })
+    fireEvent.pointerMove(canvas, { pointerId, pointerType: 'pen', clientX: cx + 5, clientY: 30 })
+    fireEvent.pointerUp(canvas, { pointerId, pointerType: 'pen', clientX: cx + 4, clientY: 36 })
+  }
+
+  it('候補が割れていても最上位候補で自動確定し、候補の枠は出ない', () => {
+    vi.useFakeTimers()
+    mockRecognition = {
+      best: { symbol: 'n', score: 0.4 },
+      candidates: [
+        { symbol: 'n', score: 0.4 },
+        { symbol: 'v', score: 0.36 },
+      ],
+      ambiguous: true, // 従来なら候補チップに回っていた「迷い」の結果
+    }
+    const log = createPenInputLog()
+    const changes: SyntaxAnswer[] = []
+    const { container } = render(
+      <PenSyntaxAnnotator
+        tokens={WORDS3}
+        answer={emptyAnswer(WORDS3.length)}
+        onChange={(next) => changes.push(next)}
+        inputLog={log}
+      />,
+    )
+    const canvas = container.querySelector('canvas') as HTMLCanvasElement
+    writeAbove(canvas, 0, 1)
+    act(() => {
+      vi.advanceTimersByTime(GROUP_WAIT_MS + 50)
+    })
+    // 候補の枠は出さず、最上位候補が解答に入っている
+    expect((container.textContent ?? '').includes('どの記号ですか？')).toBe(false)
+    expect(changes.length).toBeGreaterThan(0)
+    expect(changes[changes.length - 1].pos[0]).toBe('n')
+    // 迷いのある自動確定は入力の記録に残る（タッチで直せる旨）
+    expect(
+      log.entries().some((e) => e.kind === 'note' && e.text.includes('自動確定')),
+    ).toBe(true)
+  })
+
+  it('蓄積の関所: 迷いのある自動確定の線は実書き蓄積に入れない（確定に自信のある線は入れる）', () => {
+    vi.useFakeTimers()
+    const sampleTakerRef: { current: (() => PenSampleUpload[]) | null } = { current: null }
+    const { container } = render(
+      <PenSyntaxAnnotator
+        tokens={WORDS3}
+        answer={emptyAnswer(WORDS3.length)}
+        onChange={() => {}}
+        sampleTakerRef={sampleTakerRef}
+      />,
+    )
+    const canvas = container.querySelector('canvas') as HTMLCanvasElement
+
+    // ①迷いのある自動確定 → 反映はされるが、蓄積には入らない
+    mockRecognition = {
+      best: { symbol: 'n', score: 0.4 },
+      candidates: [
+        { symbol: 'n', score: 0.4 },
+        { symbol: 'v', score: 0.36 },
+      ],
+      ambiguous: true,
+    }
+    writeAbove(canvas, 0, 1)
+    act(() => {
+      vi.advanceTimersByTime(GROUP_WAIT_MS + 50)
+    })
+    expect(sampleTakerRef.current?.() ?? []).toHaveLength(0)
+
+    // ②確定に自信のある線 → 従来どおり蓄積に入る
+    mockRecognition = {
+      best: { symbol: 'v', score: 0.9 },
+      candidates: [{ symbol: 'v', score: 0.9 }],
+      ambiguous: false,
+    }
+    writeAbove(canvas, 2, 2)
+    act(() => {
+      vi.advanceTimersByTime(GROUP_WAIT_MS + 50)
+    })
+    const taken = sampleTakerRef.current?.() ?? []
+    expect(taken).toHaveLength(1)
+    expect(taken[0]).toMatchObject({ symbol: 'v', source: 'confirmed' })
   })
 })
