@@ -186,6 +186,59 @@ export function underlineSegments(
   }))
 }
 
+/* ---------- 下線・波線のタッチの当たり判定（2026-09-02 項目3） ---------- */
+
+/** タッチが当たった線（下線 or 波線）。index は spans / extras の中の位置 */
+export interface LineHit {
+  kind: 'ul' | 'wavy'
+  index: number
+  from: number
+  to: number
+}
+
+/** 線の当たりとみなす縦の許容（px）。働きの欄（本文の下）とは lane で切り分ける */
+const LINE_HIT_TOL = 9
+/** 線の当たりとみなす横の許容（px） */
+const LINE_HIT_SLOP = 4
+
+/**
+ * タッチした位置に描かれている下線・波線を探す（項目3・タッチ修正の入口）。
+ *
+ * 表示と同じ underlineSegments で線の位置を出し、横は線分の幅の中・縦は
+ * 線から LINE_HIT_TOL px 以内なら当たりとする。下線と波線の両方に当たるとき
+ * （ほぼ同じ場所に重なって描かれているとき）は波線を先にする
+ * （誤って下線と判定された波線を直すのが主目的のため）。同じ種類どうしは近いほう。
+ */
+export function findLineAt(
+  point: { x: number; y: number },
+  spans: Array<{ from: number; to: number; type: string }>,
+  extras: Array<{ kind: string; from: number; to: number }>,
+  boxes: TokenBox[],
+): LineHit | null {
+  const hits: Array<LineHit & { dist: number }> = []
+  const check = (kind: 'ul' | 'wavy', index: number, range: { from: number; to: number }) => {
+    for (const seg of underlineSegments(range, boxes, 1)) {
+      if (point.x < seg.left - LINE_HIT_SLOP || point.x > seg.right + LINE_HIT_SLOP) continue
+      // 波線は高さのある波形なので、当たりの中心を波の中央に置く
+      const y = kind === 'wavy' ? seg.y + WAVY_H / 2 : seg.y
+      const dist = Math.abs(point.y - y)
+      if (dist <= LINE_HIT_TOL) hits.push({ kind, index, from: range.from, to: range.to, dist })
+    }
+  }
+  spans.forEach((s, i) => {
+    if (s.type === 'ul') check('ul', i, s)
+  })
+  extras.forEach((x, i) => {
+    if (x.kind === 'wavy') check('wavy', i, x)
+  })
+  if (hits.length === 0) return null
+  hits.sort(
+    (a, b) => (a.kind === b.kind ? 0 : a.kind === 'wavy' ? -1 : 1) || a.dist - b.dist,
+  )
+  const { dist: _dist, ...hit } = hits[0]
+  return hit
+}
+
 /* ---------- 波線の重ね描き（下線と同じ連結線分＋波形の道筋） ---------- */
 
 /** 波線の描画の高さ（svg の縦幅・px）。波の中心はこの半分の位置 */

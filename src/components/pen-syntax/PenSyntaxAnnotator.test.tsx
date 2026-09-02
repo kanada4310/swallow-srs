@@ -285,13 +285,23 @@ describe('PenSyntaxAnnotator 例外の印のタッチ選択（2026-08-31 ○囲�
     return a
   }
 
-  /** 働きのマス（Cell）を探してタップし、一覧（picker）を開く */
-  function openRolePicker(container: HTMLElement, text: string) {
+  /**
+   * 働きのマス（Cell）を探してタップし、2分岐（2026-09-02 項目4）を通って
+   * 指定の枝（edit=修正／marks=印の追加）まで開く
+   */
+  function openRolePicker(container: HTMLElement, text: string, stage: 'edit' | 'marks' = 'marks') {
     const cell = Array.from(container.querySelectorAll('button')).find(
       (el) => el.className.includes('min-h-6') && (el.textContent ?? '').startsWith(text),
     ) as HTMLButtonElement
     expect(cell).toBeTruthy()
     fireEvent.click(cell)
+    // 2分岐: 「修正」と「印の追加」が並ぶ
+    const label = stage === 'edit' ? '修正（値の変更・削除）' : '印の追加（仮・真・強）'
+    const branch = Array.from(container.querySelectorAll('button')).find((el) =>
+      (el.textContent ?? '').includes(label),
+    ) as HTMLButtonElement
+    expect(branch).toBeTruthy()
+    fireEvent.click(branch)
   }
 
   it('S のマスをタッチすると「○仮」を付けられ、働きの欄に「仮S」と出る（採点データは不変）', () => {
@@ -359,8 +369,8 @@ describe('PenSyntaxAnnotator 例外の印のタッチ選択（2026-08-31 ○囲�
         (el.textContent ?? '').startsWith('仮S'),
       ),
     ).toBe(true)
-    // もう一度マスを開き、働きを V に変える
-    openRolePicker(container, '仮S')
+    // もう一度マスを開き、「修正」の枝から働きを V に変える
+    openRolePicker(container, '仮S', 'edit')
     act(() => {
       const options = Array.from(container.querySelectorAll('button')).filter(
         (el) => el.textContent === 'V',
@@ -854,5 +864,120 @@ describe('PenSyntaxAnnotator 全記号の自動確定（2026-09-02）', () => {
     expect(svg.style.left).toBe('16px')
     // 一覧にも「波線（熟語）」のマークが出ている
     expect(container.textContent).toContain('波線（熟語）')
+  })
+})
+
+/**
+ * 下線のタッチ修正（2026-09-02 項目3）と働きのタッチの2分岐（項目4）。
+ * 誤って下線と判定された波線を、その場のタッチで直せること。
+ */
+describe('PenSyntaxAnnotator 下線のタッチ修正（2026-09-02）', () => {
+  const WORDS4 = ['aa', 'bb', 'cc', 'dd']
+  const boxOf4 = (i: number) => ({ left: 16 + i * 60, right: 56 + i * 60, top: 40, bottom: 68 })
+
+  beforeEach(() => {
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: Element,
+    ) {
+      const text = this.textContent ?? ''
+      const i = WORDS4.indexOf(text)
+      const isWord = i >= 0 && (this as HTMLElement).className?.includes('font-serif')
+      const r = isWord ? boxOf4(i) : { left: 0, right: 400, top: 0, bottom: 140 }
+      return {
+        ...r,
+        width: r.right - r.left,
+        height: r.bottom - r.top,
+        x: r.left,
+        y: r.top,
+        toJSON: () => ({}),
+      } as DOMRect
+    })
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  /** 下線の高さ（単語の外枠の下端+1=69 のすぐ上・本文の帯の中）を軽くタップする */
+  function tapLine(canvas: Element) {
+    fireEvent.pointerDown(canvas, { pointerId: 7, pointerType: 'pen', clientX: 30, clientY: 66 })
+    fireEvent.pointerUp(canvas, { pointerId: 7, pointerType: 'pen', clientX: 30, clientY: 66 })
+  }
+
+  function withUnderline(): SyntaxAnswer {
+    return { ...emptyAnswer(WORDS4.length), spans: [{ from: 0, to: 1, type: 'ul' }] }
+  }
+
+  it('下線をタッチすると修正メニューが開き、波線（熟語）に変更できる', () => {
+    const changes: SyntaxAnswer[] = []
+    const { container } = render(
+      <PenSyntaxAnnotator
+        tokens={WORDS4}
+        answer={withUnderline()}
+        onChange={(next) => changes.push(next)}
+      />,
+    )
+    tapLine(container.querySelector('canvas') as HTMLCanvasElement)
+    expect(container.textContent).toContain('「aa bb」の下線')
+    const btn = Array.from(container.querySelectorAll('button')).find((el) =>
+      (el.textContent ?? '').includes('波線（熟語）に変更'),
+    ) as HTMLButtonElement
+    act(() => {
+      fireEvent.click(btn)
+    })
+    // 下線（採点対象の span）は消え、波線（採点対象外の印）に置き換わる
+    expect(changes[changes.length - 1].spans).toEqual([])
+    expect(container.textContent).toContain('波線（熟語） aa bb')
+  })
+
+  it('下線をタッチして削除できる', () => {
+    const changes: SyntaxAnswer[] = []
+    const { container } = render(
+      <PenSyntaxAnnotator
+        tokens={WORDS4}
+        answer={withUnderline()}
+        onChange={(next) => changes.push(next)}
+      />,
+    )
+    tapLine(container.querySelector('canvas') as HTMLCanvasElement)
+    const btn = Array.from(container.querySelectorAll('button')).find(
+      (el) => (el.textContent ?? '') === '削除',
+    ) as HTMLButtonElement
+    act(() => {
+      fireEvent.click(btn)
+    })
+    expect(changes[changes.length - 1].spans).toEqual([])
+    expect(container.textContent).not.toContain('波線（熟語）')
+  })
+
+  it('波線に変更したあと、もう一度タッチすると下線に戻せる', () => {
+    const changes: SyntaxAnswer[] = []
+    const { container } = render(
+      <PenSyntaxAnnotator
+        tokens={WORDS4}
+        answer={withUnderline()}
+        onChange={(next) => changes.push(next)}
+      />,
+    )
+    const canvas = container.querySelector('canvas') as HTMLCanvasElement
+    tapLine(canvas)
+    act(() => {
+      fireEvent.click(
+        Array.from(container.querySelectorAll('button')).find((el) =>
+          (el.textContent ?? '').includes('波線（熟語）に変更'),
+        ) as HTMLButtonElement,
+      )
+    })
+    tapLine(canvas)
+    expect(container.textContent).toContain('「aa bb」の波線（熟語）')
+    act(() => {
+      fireEvent.click(
+        Array.from(container.querySelectorAll('button')).find((el) =>
+          (el.textContent ?? '').includes('下線に変更'),
+        ) as HTMLButtonElement,
+      )
+    })
+    expect(changes[changes.length - 1].spans).toEqual([{ from: 0, to: 1, type: 'ul' }])
+    expect(container.textContent).not.toContain('波線（熟語） aa bb')
   })
 })

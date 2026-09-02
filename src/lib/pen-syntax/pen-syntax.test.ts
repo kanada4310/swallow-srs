@@ -13,6 +13,7 @@ import {
   bracketMark,
   BRACKET_SLOT_H,
   BRACKET_SLOT_W,
+  findLineAt,
   laneOf,
   noteMark,
   ROLE_ROW_H,
@@ -713,6 +714,41 @@ describe('行をまたぐ下線の連結（2026-08-31 確定仕様4）', () => {
       { kind: 'wavy', from: 0, to: 2 },
       { kind: 'wavy', from: 4, to: 4 },
     ])
+  })
+})
+
+describe('findLineAt（下線・波線のタッチの当たり判定・2026-09-02 項目3）', () => {
+  const BOXES2: TokenBox[] = [
+    { index: 0, left: 10, right: 60, top: 40, bottom: 70, baseline: 64 },
+    { index: 1, left: 70, right: 120, top: 40, bottom: 70, baseline: 64 },
+    { index: 2, left: 130, right: 180, top: 40, bottom: 70, baseline: 64 },
+  ]
+  const spans = [{ from: 0, to: 1, type: 'ul' }]
+  const extras = [{ kind: 'wavy', from: 2, to: 2 }]
+
+  it('下線の真上のタッチは下線に当たる（線はベースライン+1の高さ）', () => {
+    const hit = findLineAt({ x: 30, y: 66 }, spans, extras, BOXES2)
+    expect(hit).toEqual({ kind: 'ul', index: 0, from: 0, to: 1 })
+  })
+
+  it('波線の範囲のタッチは波線に当たる', () => {
+    const hit = findLineAt({ x: 150, y: 66 }, spans, extras, BOXES2)
+    expect(hit).toEqual({ kind: 'wavy', index: 0, from: 2, to: 2 })
+  })
+
+  it('線から縦に離れたタッチ・横の範囲外のタッチは当たらない', () => {
+    expect(findLineAt({ x: 30, y: 45 }, spans, extras, BOXES2)).toBeNull()
+    expect(findLineAt({ x: 178, y: 66 }, spans, [], BOXES2)).toBeNull()
+  })
+
+  it('下線と波線が同じ範囲に重なるときは波線を先にする（直すのは主に波線のため）', () => {
+    const both = findLineAt(
+      { x: 30, y: 66 },
+      [{ from: 0, to: 1, type: 'ul' }],
+      [{ kind: 'wavy', from: 0, to: 1 }],
+      BOXES2,
+    )
+    expect(both?.kind).toBe('wavy')
   })
 })
 

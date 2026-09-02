@@ -63,6 +63,7 @@ import { useStrokeGrouping, type StrokeGrouping } from './useStrokeGrouping'
 import { BASELINE_PROBE_ATTR, useTokenBoxes } from './useTokenBoxes'
 import {
   bracketMark,
+  findLineAt,
   groupLines,
   laneOf,
   noteMark,
@@ -71,6 +72,7 @@ import {
   underlineSegments,
   WAVY_H,
   wavyPath,
+  type LineHit,
 } from '@/lib/pen-syntax/snap'
 import { pathLength, strokesBBox } from '@/lib/pen-syntax/geometry'
 import type { UserTemplateStore } from '@/lib/pen-syntax/letters'
@@ -240,7 +242,20 @@ export function PenSyntaxAnnotator({
   // この接触で候補を閉じたか（閉じただけのタップで一覧まで開かないようにする）
   const dismissedByStrokeRef = useRef(false)
   const [toast, setToast] = useState<string | null>(null)
-  const [picker, setPicker] = useState<{ kind: 'pos' | 'role'; index: number; viaFallback?: boolean } | null>(null)
+  /**
+   * タッチで開く小さな一覧（picker）。
+   * - pos: 品詞の一覧（従来どおり1段）
+   * - role: **2分岐**（2026-09-02 項目4）。branch=「修正」か「印の追加」かを選ぶ →
+   *   edit=働きの一覧（変更・削除）／marks=例外の印（仮・真・強）の付け外し。
+   *   同格の「同」は働きの値なので edit の一覧に入っている（従来どおり）
+   * - line: タッチした下線・波線の修正（2026-09-02 項目3。種類の変更と削除）
+   */
+  const [picker, setPicker] = useState<
+    | { kind: 'pos'; index: number; viaFallback?: boolean }
+    | { kind: 'role'; index: number; viaFallback?: boolean; stage: 'branch' | 'edit' | 'marks' }
+    | { kind: 'line'; line: LineHit }
+    | null
+  >(null)
 
   // 外から answer が差し替えられたら（リセット・問題切替・タップ方式での編集）内部状態を追従させる
   useEffect(() => {
@@ -529,7 +544,12 @@ export function PenSyntaxAnnotator({
         }
         if (nearest && lane === 'above') setPicker({ kind: 'pos', index: nearest.index })
         else if (nearest && lane === 'below' && !isPunct(tokens[nearest.index])) {
-          setPicker({ kind: 'role', index: nearest.index })
+          // 働きのマスのタッチは「修正」と「印の追加」の2分岐から（項目4）
+          setPicker({ kind: 'role', index: nearest.index, stage: 'branch' })
+        } else if (lane === 'band') {
+          // 本文の帯のタッチ: 描かれている下線・波線に当たれば修正メニュー（項目3）
+          const hit = findLineAt(p, annotationRef.current.answer.spans, annotationRef.current.extras, boxes)
+          if (hit) setPicker({ kind: 'line', line: hit })
         }
       }
       redraw()
@@ -615,7 +635,9 @@ export function PenSyntaxAnnotator({
     }
     onEvent?.({ kind: 'fallback', symbol: null, candidates: chips.candidates, lane, applied: false })
     setChips(null)
-    setPicker({ kind: lane === 'above' ? 'pos' : 'role', index: nearest, viaFallback: true })
+    // 拾えなかった線の入力し直しなので、働きは分岐を飛ばして一覧（edit）を直接開く
+    if (lane === 'above') setPicker({ kind: 'pos', index: nearest, viaFallback: true })
+    else setPicker({ kind: 'role', index: nearest, viaFallback: true, stage: 'edit' })
   }
 
   const undo = () => {
@@ -651,6 +673,42 @@ export function PenSyntaxAnnotator({
       dropSamples([key])
     }
     emitAnnotation({ ...a, extras: a.extras.filter((_, i) => i !== idx) })
+  }
+
+  /**
+   * 下線↔波線の種類の変更（2026-09-02 項目3・タッチ修正）。
+   * 誤って下線と判定された波線（またはその逆）をその場で直す。
+   * 判別の訂正なので、その線は実書き蓄積から外す（誤ラベルのお手本にしない。
+   * 直した後の記号として採り直すこともしない＝まっすぐな線を波線の見本にすると
+   * かえってお手本が汚れるため）。
+   */
+  const convertLine = (hit: LineHit) => {
+    if (disabled) return
+    const a = annotationRef.current
+    const at = performance.now()
+    if (hit.kind === 'ul') {
+      const s = a.answer.spans[hit.index]
+      if (!s || s.type !== 'ul') return
+      dropSamples([`span:ul:${s.from}-${s.to}`])
+      onOrderEvent?.({ kind: 'remove', key: `span:ul:${s.from}-${s.to}`, at })
+      onOrderEvent?.({ kind: 'apply', key: `extra:wavy:${s.from}-${s.to}`, symbol: 'wavy', from: s.from, to: s.to, at, via: 'list' })
+      emitAnnotation({
+        ...a,
+        answer: { ...a.answer, spans: a.answer.spans.filter((_, i) => i !== hit.index) },
+        extras: [...a.extras, { kind: 'wavy', from: s.from, to: s.to }],
+      })
+    } else {
+      const x = a.extras[hit.index]
+      if (!x || x.kind !== 'wavy') return
+      dropSamples([`extra:wavy:${x.from}-${x.to}`])
+      onOrderEvent?.({ kind: 'remove', key: `extra:wavy:${x.from}-${x.to}`, at })
+      onOrderEvent?.({ kind: 'apply', key: `span:ul:${x.from}-${x.to}`, symbol: 'hline', from: x.from, to: x.to, at, via: 'list' })
+      emitAnnotation({
+        ...a,
+        extras: a.extras.filter((_, i) => i !== hit.index),
+        answer: { ...a.answer, spans: [...a.answer.spans, { from: x.from, to: x.to, type: 'ul' }] },
+      })
+    }
   }
 
   const removePendingOpen = (idx: number) => {
@@ -896,7 +954,7 @@ export function PenSyntaxAnnotator({
                         : undefined
                     }
                     depthMark={dashesForDepth(depthOfToken(ann.answer.spans, i))}
-                    onClick={() => !disabled && setPicker({ kind: 'role', index: i })}
+                    onClick={() => !disabled && setPicker({ kind: 'role', index: i, stage: 'branch' })}
                   />
                 )}
                 {/* 採点の注記は単語の並びに入れない（下の「注記オーバーレイ」で重ねて描く） */}
@@ -1102,7 +1160,7 @@ export function PenSyntaxAnnotator({
         </div>
       )}
 
-      {/* 品詞・働きの一覧（タップ編集＝ボタン方式への逃げ道） */}
+      {/* タッチで開く一覧（品詞／働きの2分岐／下線・波線の修正）＝ボタン方式への逃げ道 */}
       {picker && (
         <div
           className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 sm:items-center"
@@ -1114,49 +1172,79 @@ export function PenSyntaxAnnotator({
             onClick={(e) => e.stopPropagation()}
             onPointerUp={(e) => e.stopPropagation()}
           >
-            <p className="mb-2 text-sm font-bold text-ai">
-              「{tokens[picker.index]}」の{picker.kind === 'pos' ? '品詞' : '働き'}
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {(picker.kind === 'pos' ? POS_LETTER_OPTIONS : ROLE_LETTER_OPTIONS).map((o) => (
-                <button
-                  key={o}
-                  type="button"
-                  {...penTap(() => {
-                    setSlot(picker.kind, picker.index, o)
-                    setPicker(null)
-                  })}
-                  className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-ai"
-                >
-                  {o}
-                  {picker.kind === 'pos' && (
-                    <span className="ml-1 text-[10px] font-normal text-ink-3">
-                      {POS_LETTER_LEGEND[o]}
+            {picker.kind === 'line' ? (
+              // 下線・波線のタッチ修正（2026-09-02 項目3）: 種類の変更と削除。
+              // まとまり（範囲）の変更は含めない（削除して書き直すほうが速く、
+              // 範囲指定のタッチ操作を足すと画面が複雑になるため・実装者判断）
+              <>
+                <p className="mb-2 text-sm font-bold text-ai">
+                  「{tokens.slice(picker.line.from, picker.line.to + 1).join(' ')}」の
+                  {picker.line.kind === 'ul' ? '下線' : '波線（熟語）'}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    {...penTap(() => {
+                      convertLine(picker.line)
+                      setPicker(null)
+                    })}
+                    className="rounded-xl border border-sora bg-white px-3 py-2 text-sm font-bold text-sora-dark"
+                  >
+                    {picker.line.kind === 'ul' ? '〰 波線（熟語）に変更' : '― 下線に変更'}
+                  </button>
+                  <button
+                    type="button"
+                    {...penTap(() => {
+                      if (picker.line.kind === 'ul') removeSpan(picker.line.index)
+                      else removeExtra(picker.line.index)
+                      setPicker(null)
+                    })}
+                    className="rounded-xl border border-again bg-white px-3 py-2 text-sm font-bold text-again"
+                  >
+                    削除
+                  </button>
+                </div>
+              </>
+            ) : picker.kind === 'role' && picker.stage === 'branch' ? (
+              // 働きのタッチの2分岐（2026-09-02 項目4）: 修正か、印の追加かを先に選ぶ
+              <>
+                <p className="mb-2 text-sm font-bold text-ai">
+                  「{tokens[picker.index]}」の働き
+                  {roleCellAt(picker.index).text && (
+                    <span className="ml-1 font-normal text-ink-3">
+                      （いまの値: {roleCellAt(picker.index).text}）
                     </span>
                   )}
-                </button>
-              ))}
-              <button
-                type="button"
-                {...penTap(() => {
-                  setSlot(picker.kind, picker.index, null)
-                  setPicker(null)
-                })}
-                className="rounded-xl border border-again bg-white px-3 py-2 text-sm font-bold text-again"
-              >
-                消す
-              </button>
-            </div>
-            {picker.kind === 'role' && (
+                </p>
+                <div className="flex flex-col gap-1.5">
+                  <button
+                    type="button"
+                    {...penTap(() => setPicker({ ...picker, stage: 'edit' }))}
+                    className="rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-left text-sm font-bold text-ai"
+                  >
+                    ✏️ 修正（値の変更・削除）
+                  </button>
+                  <button
+                    type="button"
+                    {...penTap(() => setPicker({ ...picker, stage: 'marks' }))}
+                    className="rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-left text-sm font-bold text-ai"
+                  >
+                    ○ 印の追加（仮・真・強）
+                  </button>
+                </div>
+              </>
+            ) : picker.kind === 'role' && picker.stage === 'marks' ? (
               // 例外の印はタッチで付け外しする（○囲みの手書き認識は 2026-08-31 に廃止）。
               // 仮・真は判定済みの S / O にだけ付けられる（確定仕様1）
-              <div className="mt-3 border-t border-gray-200 pt-2">
-                <p className="mb-1.5 text-xs font-bold text-ink-3">
-                  例外の印（タッチで付け外し）
-                  {!canMarkKariShin(ann.answer.role[picker.index]) && (
-                    <span className="ml-1 font-normal">— 仮・真は S / O を書いた単語にだけ付けられます</span>
-                  )}
+              <>
+                <p className="mb-1.5 text-sm font-bold text-ai">
+                  「{tokens[picker.index]}」の例外の印（タッチで付け外し）
                 </p>
+                {!canMarkKariShin(ann.answer.role[picker.index]) && (
+                  <p className="mb-1.5 text-xs text-ink-3">
+                    仮・真は S / O を書いた単語にだけ付けられます
+                  </p>
+                )}
                 <div className="flex flex-wrap gap-1.5">
                   {TOGGLE_EXCEPTIONS.map((k) => {
                     const on = ann.extras.some(
@@ -1191,7 +1279,43 @@ export function PenSyntaxAnnotator({
                     )
                   })}
                 </div>
-              </div>
+              </>
+            ) : (
+              <>
+                <p className="mb-2 text-sm font-bold text-ai">
+                  「{tokens[picker.index]}」の{picker.kind === 'pos' ? '品詞' : '働き'}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {(picker.kind === 'pos' ? POS_LETTER_OPTIONS : ROLE_LETTER_OPTIONS).map((o) => (
+                    <button
+                      key={o}
+                      type="button"
+                      {...penTap(() => {
+                        setSlot(picker.kind, picker.index, o)
+                        setPicker(null)
+                      })}
+                      className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-ai"
+                    >
+                      {o}
+                      {picker.kind === 'pos' && (
+                        <span className="ml-1 text-[10px] font-normal text-ink-3">
+                          {POS_LETTER_LEGEND[o]}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    {...penTap(() => {
+                      setSlot(picker.kind, picker.index, null)
+                      setPicker(null)
+                    })}
+                    className="rounded-xl border border-again bg-white px-3 py-2 text-sm font-bold text-again"
+                  >
+                    消す
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </div>
