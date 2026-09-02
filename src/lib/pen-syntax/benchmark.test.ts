@@ -8,7 +8,7 @@
  *    /reading/syntax/pen-lab ページで人の手により行う（完了報告に区別して記載）。
  */
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { PenStroke, ShapeKind, SymbolId, TokenBox } from './types'
 import { classifyShape } from './shapes'
 import { classifyExceptionMark } from './recognize'
@@ -73,6 +73,11 @@ function report(label: string, t: Tally) {
       `・拾えず ${pct(t.failed, t.total)}（n=${t.total}）${conf ? ` 主な取り違え: ${conf}` : ''}`,
   )
 }
+
+// 全件まとめて実行して機械に負荷がかかっているとき、この計測だけ既定の5秒制限を
+// 超えて落ちることがある（線を何百本も生成して数えるため）。このファイルに限り
+// 制限時間を30秒へ延ばす（計測の中身・しきい値は一切変えない）
+vi.setConfig({ testTimeout: 30_000 })
 
 const N = 40
 
