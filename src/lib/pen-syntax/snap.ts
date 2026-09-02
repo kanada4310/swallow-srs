@@ -235,8 +235,8 @@ export function findLineAt(
   hits.sort(
     (a, b) => (a.kind === b.kind ? 0 : a.kind === 'wavy' ? -1 : 1) || a.dist - b.dist,
   )
-  const { dist: _dist, ...hit } = hits[0]
-  return hit
+  const best = hits[0]
+  return { kind: best.kind, index: best.index, from: best.from, to: best.to }
 }
 
 /* ---------- 波線の重ね描き（下線と同じ連結線分＋波形の道筋） ---------- */
